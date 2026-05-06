@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 const features = [
@@ -48,7 +48,7 @@ const fadeInUp = {
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.08, duration: 0.5, ease: 'easeOut' },
+    transition: { delay: i * 0.08, duration: 0.5, ease: 'easeOut' as const },
   }),
 };
 
@@ -76,7 +76,7 @@ export default function LandingPage() {
 
       {/* ── Hero ───────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-20 text-center">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -97,7 +97,7 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <motion.button
+            <m.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate('/audit')}
@@ -107,13 +107,13 @@ export default function LandingPage() {
               id="hero-cta"
             >
               Audit My AI Stack — Free →
-            </motion.button>
+            </m.button>
             <p className="text-sm text-[#64748b]">Takes 2 minutes · No signup needed</p>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Tool pills */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
@@ -127,14 +127,14 @@ export default function LandingPage() {
               {tool}
             </span>
           ))}
-        </motion.div>
+        </m.div>
       </section>
 
       {/* ── Stats ──────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat, i) => (
-            <motion.div
+            <m.div
               key={stat.label}
               custom={i}
               initial="hidden"
@@ -145,21 +145,21 @@ export default function LandingPage() {
             >
               <div className="text-4xl font-extrabold gradient-text-green mb-2">{stat.value}</div>
               <div className="text-sm text-[#94a3b8]">{stat.label}</div>
-            </motion.div>
+            </m.div>
           ))}
         </div>
       </section>
 
       {/* ── How It Works ───────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
-        <motion.h2
+        <m.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="text-3xl sm:text-4xl font-bold text-center mb-4"
         >
           How it works
-        </motion.h2>
+        </m.h2>
         <p className="text-center text-[#94a3b8] mb-12 max-w-xl mx-auto">
           Three steps from landing here to knowing exactly where your AI budget is leaking.
         </p>
@@ -169,7 +169,7 @@ export default function LandingPage() {
             { step: '02', title: 'Run the audit', desc: 'Our engine checks for overpaid plans, unused seats, tool overlap, and cheaper alternatives.' },
             { step: '03', title: 'See your savings', desc: 'Get per-tool recommendations with exact dollar amounts. Share your report or book a Credex consultation.' },
           ].map((step, i) => (
-            <motion.div
+            <m.div
               key={step.step}
               custom={i}
               initial="hidden"
@@ -181,24 +181,24 @@ export default function LandingPage() {
               <div className="text-5xl font-black text-[#1e1e35] mb-4 select-none">{step.step}</div>
               <h3 className="text-xl font-semibold mb-3 text-white">{step.title}</h3>
               <p className="text-[#94a3b8] leading-relaxed">{step.desc}</p>
-            </motion.div>
+            </m.div>
           ))}
         </div>
       </section>
 
       {/* ── Features Grid ──────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
-        <motion.h2
+        <m.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="text-3xl sm:text-4xl font-bold text-center mb-12"
         >
           Everything you need to right-size your AI spend
-        </motion.h2>
+        </m.h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {features.map((feature, i) => (
-            <motion.div
+            <m.div
               key={feature.title}
               custom={i}
               initial="hidden"
@@ -209,8 +209,8 @@ export default function LandingPage() {
             >
               <div className="text-3xl mb-4" role="img" aria-label={feature.title}>{feature.icon}</div>
               <h3 className="text-lg font-semibold mb-2 text-white">{feature.title}</h3>
-              <p className="text-[#94a3b8] text-sm leading-relaxed">{feature.desc}</p>
-            </motion.div>
+              <p className="text-[#94a3b8] text-sm leading-relaxed">{feature.description}</p>
+            </m.div>
           ))}
         </div>
       </section>
@@ -228,7 +228,7 @@ export default function LandingPage() {
 
       {/* ── Final CTA ──────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-20 text-center">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -240,7 +240,7 @@ export default function LandingPage() {
           <p className="text-[#94a3b8] text-lg mb-10 max-w-xl mx-auto">
             Free audit. No credit card. No login. Your results in under 60 seconds.
           </p>
-          <motion.button
+          <m.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/audit')}
@@ -250,8 +250,8 @@ export default function LandingPage() {
             id="bottom-cta"
           >
             Start My Free Audit →
-          </motion.button>
-        </motion.div>
+          </m.button>
+        </m.div>
       </section>
 
       {/* ── Footer ─────────────────────────────────────────── */}

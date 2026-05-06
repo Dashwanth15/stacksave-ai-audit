@@ -3,7 +3,7 @@
 // Plans and pricing kept in sync with backend/audit-engine/catalog.ts
 // ============================================================
 
-import { ToolInfo } from '../types';
+import type { ToolInfo } from '../types';
 
 export const TOOLS: ToolInfo[] = [
   {

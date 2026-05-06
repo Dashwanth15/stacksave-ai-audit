@@ -4,7 +4,7 @@
 // ============================================================
 
 import axios from 'axios';
-import { AuditRequest, AuditResult, LeadCaptureRequest } from '../types';
+import type { AuditRequest, AuditResult, LeadCaptureRequest } from '../types';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',

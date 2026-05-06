@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { AuditResult, Insight } from '../types';
+import { m, AnimatePresence } from 'framer-motion';
+import type { AuditResult, Insight } from '../types';
 import { fetchAudit, captureLead } from '../services/api';
 import { formatCurrencyFull, formatRelativeTime, severityLabel, insightTypeLabel } from '../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -15,7 +15,7 @@ const SEVERITY_COLORS = {
 
 function InsightCard({ insight, index }: { insight: Insight; index: number }) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06 }}
@@ -45,7 +45,7 @@ function InsightCard({ insight, index }: { insight: Insight; index: number }) {
         <p className="text-indigo-300 text-sm leading-relaxed">{insight.suggestion}</p>
       </div>
       <p className="text-xs text-[#475569] mt-3 italic leading-relaxed">{insight.reason}</p>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -82,7 +82,7 @@ function EmailCaptureModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Save your audit report">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <motion.div
+      <m.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="relative glass-card p-8 max-w-md w-full border border-indigo-500/20 glow-primary"
@@ -152,7 +152,7 @@ function EmailCaptureModal({
           </button>
           <p className="text-xs text-[#475569] text-center">No spam. One email with your audit link.</p>
         </form>
-      </motion.div>
+      </m.div>
     </div>
   );
 }
@@ -258,7 +258,7 @@ export default function ResultsPage() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-12 space-y-8">
         {/* ── Savings Hero ──────────────────────────────────── */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           className={`glass-card p-8 sm:p-12 text-center ${audit.isAlreadyOptimal ? 'border-emerald-500/20' : 'border-indigo-500/20 glow-primary'}`}
@@ -293,11 +293,11 @@ export default function ResultsPage() {
               </div>
             </>
           )}
-        </motion.div>
+        </m.div>
 
         {/* ── Credex CTA for high savings ───────────────────── */}
         {audit.isHighSavings && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -319,12 +319,12 @@ export default function ResultsPage() {
             >
               Book a Free Credex Consultation →
             </a>
-          </motion.div>
+          </m.div>
         )}
 
         {/* ── Savings Chart ─────────────────────────────────── */}
         {chartData.length > 0 && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
@@ -348,12 +348,12 @@ export default function ResultsPage() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </motion.div>
+          </m.div>
         )}
 
         {/* ── AI Summary ────────────────────────────────────── */}
         {audit.aiSummary && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
@@ -365,7 +365,7 @@ export default function ResultsPage() {
               </span>
             </div>
             <p className="text-[#c7d2fe] leading-relaxed text-lg italic">"{audit.aiSummary}"</p>
-          </motion.div>
+          </m.div>
         )}
 
         {/* ── Insights ─────────────────────────────────────── */}
@@ -390,7 +390,7 @@ export default function ResultsPage() {
 
         {/* ── "Notify me" CTA for optimal stacks ───────────── */}
         {audit.isAlreadyOptimal && !emailCaptured && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="glass-card p-8 text-center"
@@ -404,11 +404,11 @@ export default function ResultsPage() {
             >
               Notify me when this changes →
             </button>
-          </motion.div>
+          </m.div>
         )}
 
         {/* ── Share CTA ─────────────────────────────────────── */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
@@ -445,7 +445,7 @@ export default function ResultsPage() {
               Share on X/Twitter
             </a>
           </div>
-        </motion.div>
+        </m.div>
 
         <div className="text-center pb-4">
           <button

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { TOOLS, USE_CASES } from '../data/tools';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { submitAudit } from '../services/api';
-import { ToolEntry, UseCase } from '../types';
+import type { ToolEntry, UseCase } from '../types';
 
 interface FormState {
   tools: ToolEntry[];
@@ -103,7 +103,7 @@ export default function AuditPage() {
 
       <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
         {/* Step 1: Team info */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="glass-card p-6"
@@ -161,10 +161,10 @@ export default function AuditPage() {
               </select>
             </div>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Step 2: Select tools */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -199,12 +199,12 @@ export default function AuditPage() {
               );
             })}
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Step 3: Tool details */}
         <AnimatePresence>
           {form.tools.length > 0 && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -301,24 +301,24 @@ export default function AuditPage() {
                   );
                 })}
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
         {/* Error */}
         {error && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm"
             role="alert"
           >
             {error}
-          </motion.div>
+          </m.div>
         )}
 
         {/* Submit */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
@@ -347,7 +347,7 @@ export default function AuditPage() {
           {form.tools.length === 0 && (
             <p className="text-sm text-[#475569] mt-3">Select at least one tool above to continue</p>
           )}
-        </motion.div>
+        </m.div>
       </form>
     </div>
   );
