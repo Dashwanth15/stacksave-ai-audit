@@ -83,25 +83,26 @@ export default function AuditPage() {
   }
 
   return (
-    <div className="min-h-screen grid-bg py-12 px-4 sm:px-6">
+    <div className="min-h-screen grid-bg">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 md:py-16">
       {/* Header */}
-      <div className="max-w-3xl mx-auto mb-10 text-center">
+      <div className="mb-12 text-center">
         <button
           onClick={() => navigate('/')}
-          className="text-indigo-400 text-sm hover:text-indigo-300 mb-6 inline-flex items-center gap-1"
+          className="text-indigo-400 text-sm hover:text-indigo-300 mb-6 inline-flex items-center gap-1 transition-colors"
           aria-label="Back to home"
         >
           ← Back to home
         </button>
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4 leading-tight">
           Audit Your <span className="gradient-text">AI Stack</span>
         </h1>
-        <p className="text-[#94a3b8] text-lg">
+        <p className="text-[#94a3b8] text-lg max-w-xl mx-auto leading-relaxed">
           Select your tools, enter what you're paying, and we'll find where you're overspending.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Step 1: Team info */}
         <m.div
           initial={{ opacity: 0, y: 20 }}
@@ -349,6 +350,7 @@ export default function AuditPage() {
           )}
         </m.div>
       </form>
+      </div>
     </div>
   );
 }

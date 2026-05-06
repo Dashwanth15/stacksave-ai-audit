@@ -27,15 +27,15 @@
   --radius-xl: 24px;
 }
 
-/* ── Base Reset ────────────────────────────────────────────── */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* ── Base ──────────────────────────────────────────────────── */
+/* NOTE: Tailwind v4's preflight (included via @import "tailwindcss")
+   already resets box-sizing, margins, and paddings.
+   Do NOT add a manual * { margin:0; padding:0 } reset — it competes
+   with Tailwind utility specificity and breaks spacing classes. */
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -46,6 +46,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 #root {
@@ -110,10 +111,17 @@ body {
 
 /* ── Grid Background ───────────────────────────────────────── */
 .grid-bg {
+  background-color: var(--bg-base);
   background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99, 102, 241, 0.12), transparent),
     linear-gradient(rgba(129, 140, 248, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(129, 140, 248, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
+  background-size: 100% 100%, 60px 60px, 60px 60px;
+}
+
+/* ── Placeholder color (used in form inputs) ───────────────── */
+.placeholder-muted::placeholder {
+  color: #475569;
 }
 
 /* ── Animations ────────────────────────────────────────────── */
