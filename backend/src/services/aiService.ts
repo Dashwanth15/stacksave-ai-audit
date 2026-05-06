@@ -1,6 +1,6 @@
 // ============================================================
 // AI Service — StackSave AI Audit
-// Uses xAI Grok API (OpenAI-compatible) to generate a
+// Uses Groq API (OpenAI-compatible) to generate a
 // ~100-word personalized audit summary paragraph.
 //
 // Full prompts documented in /PROMPTS.md
@@ -10,27 +10,27 @@
 import OpenAI from 'openai';
 import { AuditResult } from '../types';
 
-// xAI Grok is OpenAI-compatible — same SDK, different base URL + model
-function getGrokClient(): OpenAI {
+// Groq is OpenAI-compatible — same SDK, different base URL + model
+function getGroqClient(): OpenAI {
   return new OpenAI({
-    apiKey: process.env.XAI_API_KEY || '',
-    baseURL: 'https://api.x.ai/v1',
+    apiKey: process.env.GROQ_API_KEY || '',
+    baseURL: 'https://api.groq.com/openai/v1',
   });
 }
 
 // ── Main Export ───────────────────────────────────────────────
 export async function generateAuditSummary(audit: AuditResult): Promise<string> {
   try {
-    return await callGrokAPI(audit);
+    return await callGroqAPI(audit);
   } catch (err) {
-    console.warn('⚠️  Grok API failed, using template summary:', (err as Error).message);
+    console.warn('⚠️  Groq API failed, using template summary:', (err as Error).message);
     return generateTemplateSummary(audit);
   }
 }
 
-// ── Grok API Call ─────────────────────────────────────────────
-async function callGrokAPI(audit: AuditResult): Promise<string> {
-  const client = getGrokClient();
+// ── Groq API Call ─────────────────────────────────────────────
+async function callGroqAPI(audit: AuditResult): Promise<string> {
+  const client = getGroqClient();
 
   const topInsights = audit.insights
     .slice(0, 3)
@@ -56,7 +56,7 @@ ${topInsights || 'Stack is already well-optimized.'}
 Write the summary in second person ("Your team..."). Be specific about the dollar amounts. If they are already optimal, acknowledge it genuinely — don't manufacture urgency. End with one concrete next step.`;
 
   const response = await client.chat.completions.create({
-    model: 'grok-3-mini',
+    model: 'llama-3.3-70b-versatile',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
@@ -66,7 +66,7 @@ Write the summary in second person ("Your team..."). Be specific about the dolla
   });
 
   const content = response.choices[0]?.message?.content;
-  if (!content) throw new Error('Empty response from Grok API');
+  if (!content) throw new Error('Empty response from Groq API');
 
   return content.trim();
 }
