@@ -2,7 +2,7 @@
 // ChatBot — Floating AI assistant for pricing questions
 // ============================================================
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -18,6 +18,11 @@ const QUICK_QUESTIONS = [
   'How do I reduce AI SaaS spend?',
   'Should I choose annual or monthly billing?',
 ];
+
+const GREETING: Message = {
+  role: 'assistant',
+  content: 'Hey! 👋 I\'m StackSave AI — your AI SaaS pricing expert.\n\nAsk me anything about tool pricing, plan comparisons, or how to optimize your AI spend. I can help you figure out which plan is right for your team!',
+};
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -38,15 +43,18 @@ export default function ChatBot() {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
     }
-    // Add greeting on first open
-    if (isOpen && !hasGreeted) {
-      setMessages([{
-        role: 'assistant',
-        content: 'Hey! 👋 I\'m StackSave AI — your AI SaaS pricing expert.\n\nAsk me anything about tool pricing, plan comparisons, or how to optimize your AI spend. I can help you figure out which plan is right for your team!',
-      }]);
-      setHasGreeted(true);
-    }
-  }, [isOpen, hasGreeted]);
+  }, [isOpen]);
+
+  const handleToggle = useCallback(() => {
+    setIsOpen((prev) => {
+      const willOpen = !prev;
+      if (willOpen && !hasGreeted) {
+        setMessages([GREETING]);
+        setHasGreeted(true);
+      }
+      return willOpen;
+    });
+  }, [hasGreeted]);
 
   async function sendMessage(text?: string) {
     const messageText = text || input.trim();
@@ -91,7 +99,7 @@ export default function ChatBot() {
   function formatMessage(text: string) {
     return text
       .split('\n')
-      .map((line, i) => {
+      .map((line) => {
         // Bold
         const formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         // Bullet points
@@ -108,7 +116,7 @@ export default function ChatBot() {
     <>
       {/* Floating button */}
       <m.button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-2xl shadow-indigo-500/30 flex items-center justify-center hover:scale-110 transition-transform"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}

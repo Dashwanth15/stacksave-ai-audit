@@ -4,7 +4,7 @@ import { m, AnimatePresence } from 'framer-motion';
 import { TOOLS, USE_CASES } from '../data/tools';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { submitAudit } from '../services/api';
-import type { ToolEntry, UseCase, BillingType } from '../types';
+import type { ToolEntry, UseCase } from '../types';
 
 type BillingPeriod = 'monthly' | 'annual';
 

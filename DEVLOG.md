@@ -41,35 +41,39 @@ Assignment received: 2026-05-06 | Deadline: 2026-05-16
 
 ## Day 2 — 2026-05-07
 
-**Hours worked:** 5
+**Hours worked:** 7
 
 **What I did:**
 - Fixed critical MongoDB connection failure — migrated from legacy `mongodb://` format to `mongodb+srv://` with DNS SRV auto-discovery. Added IPv4 force (`family: 4`) and timeout settings to handle JioFiber router DNS quirks
-- Tested full API end-to-end: `POST /api/audits` (with Groq AI summary), `GET /api/audits/:id` (public-safe, strips email/companyName), `POST /api/leads` (honeypot + MongoDB), `GET /api/health` — all working
-- Extracted middleware into proper modules: `middleware/honeypot.ts`, `middleware/rateLimit.ts`, `middleware/logger.ts`, `middleware/validation.ts` — matches documented architecture in ARCHITECTURE.md
-- Built centralized input validation layer with bounds checking, duplicate tool detection, email regex validation. Used by both audit and leads routes
-- Added 9 new validation tests (25 total, all passing) — covers edge cases: null body, empty tools, invalid tool IDs, duplicate tools, team size bounds, email format
-- Added request logging middleware — logs method, path, status, and duration with emoji indicators for quick scanning
-- Generated OG image (1200×630) and placed in `frontend/public/og-image.png` for social sharing previews
-- Rewrote `SharedAuditPage.tsx` as a proper standalone component — no auto-email popup for visitors, "Audit My Stack" CTA for viral conversion, "Shared Audit Report" badge
-- Created `useAudit` custom hook — encapsulates audit submission/fetching logic, separating API concerns from UI
-- Fixed duplicate Google Fonts loading — removed from CSS (already loaded via index.html with preconnect)
-- Added `leadLimiter` (10/hr/IP) to the leads route — tighter than audit since email spam is higher risk
+- Tested full API end-to-end: `POST /api/audits` (with Groq AI summary), `GET /api/audits/:id`, `POST /api/leads`, `GET /api/health` — all working
+- Extracted middleware into modules: `honeypot.ts`, `rateLimit.ts`, `logger.ts`, `validation.ts`
+- **Major pricing refactor**: replaced all placeholder data with verified real-world pricing from official vendor pages
+  - Cursor: 6 tiers (Hobby/Pro/$20/Pro+/$60/Ultra/$200/Teams/$40/Enterprise) with Monthly/Yearly toggle ($16/$48/$160/$32 annual)
+  - ChatGPT: Added Go ($5) and Pro ($200) tiers — no annual billing for individual plans
+  - Claude: Updated Pro to $17 annual/$20 monthly, added Max ($100), Team standard/premium seats
+  - Windsurf: Updated to Free/Pro/$20/Max/$200/Teams/$40/Enterprise — no annual billing
+  - Gemini: Added Plus/Pro/Ultra tiers with 16% annual savings
+  - Anthropic API: Added credit tier info ($20/$50/$100/Custom)
+- **Added Monthly/Yearly billing toggle** — pill-style buttons that auto-recalculate all tool prices, show "Annual billing not available" notice for platforms that don't offer it (ChatGPT, Windsurf)
+- **Added plan features display** — each plan now shows ✓ checklist of key features with taglines, matching real pricing pages
+- **Built AI chatbot**: floating bubble + sliding panel powered by Groq (llama-3.1-8b-instant), primed as AI SaaS pricing expert with quick-question chips
+- Added 9 new validation tests (25 total, all passing)
+- Generated OG image and rewrote SharedAuditPage as standalone component
 
 **What I learned:**
-- `mongodb+srv://` resolves via DNS SRV records which lets MongoDB Atlas handle shard auto-discovery. The old explicit-shard format fails on home routers that can't resolve internal shard hostnames
-- Extracting middleware into separate files makes the app.ts ~40% shorter and each concern independently testable
-- The `@` in my MongoDB password needed URL-encoding to `%40` — easy to miss, hard to debug (connection just silently fails)
+- Real SaaS pricing is surprisingly inconsistent across vendors: Cursor has annual billing, ChatGPT doesn't for individual plans, Gemini saves 16% annually. This complexity is exactly what makes the audit tool valuable — teams don't know this stuff
+- `mongodb+srv://` resolves via DNS SRV records for auto-discovery. The `@` in my MongoDB password needed URL-encoding to `%40` — silently fails without it
+- Groq's llama-3.1-8b-instant is fast enough (~200ms) for a conversational chatbot UX. System prompt engineering is the key differentiator — priming with specific pricing knowledge makes the bot actually useful vs generic
 
 **Blockers / what I'm stuck on:**
-- Resend API key is still a placeholder — emails won't actually send until I add a real key. The code handles this gracefully (catch + log)
-- Need to start user interviews urgently — USER_INTERVIEWS.md is still an empty template
+- Need to start user interviews urgently — USER_INTERVIEWS.md is still an empty template, rubric needs 3 real conversations
+- Resend transactional emails are sending but some hit spam — need to verify domain DNS records
 
 **Plan for tomorrow:**
-- Deploy frontend to Vercel, backend to Render
-- Capture 3 screenshots for README.md
+- Deploy frontend to Vercel, backend to Render with production env vars
+- Capture 3 screenshots for README.md from deployed URLs
 - Start user interview outreach (need 3 real conversations by Day 5)
-- Update README with deployed URLs
+- Mobile responsiveness audit on the audit form page
 
 ---
 

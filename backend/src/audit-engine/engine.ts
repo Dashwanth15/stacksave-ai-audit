@@ -6,7 +6,7 @@
 // ============================================================
 
 import { v4 as uuidv4 } from 'uuid';
-import { AuditRequest, AuditResult, Insight, ToolEntry } from '../types';
+import { AuditRequest, AuditResult, Insight } from '../types';
 import { ALL_RULES } from './rules';
 
 export function runAudit(req: AuditRequest, aiSummary: string, baseUrl: string): AuditResult {

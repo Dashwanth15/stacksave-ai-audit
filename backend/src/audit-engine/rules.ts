@@ -10,7 +10,7 @@
 // ============================================================
 
 import { ToolEntry, Insight, InsightType, InsightSeverity, UseCase } from '../types';
-import { TOOL_CATALOG, getToolById } from './catalog';
+import { getToolById } from './catalog';
 
 interface RuleContext {
   teamSize: number;
@@ -24,7 +24,7 @@ type RuleResult = Insight | null;
 // RULE 1: Overpaid Plan
 // Team size doesn't justify the plan tier they're on
 // ──────────────────────────────────────────────────────────────
-export function ruleOverpaidPlan(entry: ToolEntry, ctx: RuleContext): RuleResult {
+export function ruleOverpaidPlan(entry: ToolEntry, _ctx: RuleContext): RuleResult {
   const tool = getToolById(entry.toolId);
   if (!tool) return null;
 
@@ -206,7 +206,7 @@ export function ruleCheaperAlternative(entry: ToolEntry, ctx: RuleContext): Rule
 // RULE 5: Annual Billing Discount
 // User on monthly billing when annual saves ≥ 15%
 // ──────────────────────────────────────────────────────────────
-export function ruleAnnualDiscount(entry: ToolEntry, ctx: RuleContext): RuleResult {
+export function ruleAnnualDiscount(entry: ToolEntry, _ctx: RuleContext): RuleResult {
   const tool = getToolById(entry.toolId);
   if (!tool) return null;
 
@@ -250,7 +250,7 @@ export function ruleAnnualDiscount(entry: ToolEntry, ctx: RuleContext): RuleResu
 // Users spending >$200/mo on retail API should know about
 // Credex credit discounts
 // ──────────────────────────────────────────────────────────────
-export function ruleRetailVsCredits(entry: ToolEntry, ctx: RuleContext): RuleResult {
+export function ruleRetailVsCredits(entry: ToolEntry, _ctx: RuleContext): RuleResult {
   const isApiTool = entry.toolId === 'anthropic-api' || entry.toolId === 'openai-api';
   if (!isApiTool) return null;
 
