@@ -7,35 +7,24 @@ import { Router, Request, Response } from 'express';
 import { LeadCaptureRequest } from '../types';
 import { LeadModel, AuditModel } from '../services/dbService';
 import { sendAuditConfirmation } from '../services/emailService';
+import { honeypotCheck } from '../middleware/honeypot';
+import { validateEmail } from '../middleware/validation';
 
 const router = Router();
 
 // ── POST /api/leads ───────────────────────────────────────────
-router.post('/', async (req: Request, res: Response) => {
+// Honeypot middleware runs first, silently blocks bots
+router.post('/', honeypotCheck, async (req: Request, res: Response) => {
   try {
     const body = req.body as LeadCaptureRequest;
 
-    // ── Honeypot check ────────────────────────────────────────
-    // The _hp field is hidden from real users (CSS display:none).
-    // Bots fill all fields, humans don't touch hidden ones.
-    // If it's non-empty, silently succeed (don't reveal the trap).
-    if (body._hp && body._hp.length > 0) {
-      console.warn('🤖 Honeypot triggered — bot submission blocked');
-      return res.status(200).json({ success: true }); // silent success
-    }
-
     // ── Validation ────────────────────────────────────────────
-    if (!body.email) {
-      return res.status(400).json({ success: false, error: 'Email is required' });
+    const emailCheck = validateEmail(body.email);
+    if (!emailCheck.valid) {
+      return res.status(400).json({ success: false, error: emailCheck.error });
     }
-    if (!body.auditId) {
+    if (!body.auditId || typeof body.auditId !== 'string') {
       return res.status(400).json({ success: false, error: 'Audit ID is required' });
-    }
-
-    // Basic email format check
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(body.email)) {
-      return res.status(400).json({ success: false, error: 'Invalid email address' });
     }
 
     // ── Find the audit ────────────────────────────────────────

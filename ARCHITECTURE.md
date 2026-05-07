@@ -20,8 +20,13 @@ graph TB
         Engine[Audit Engine\ndeterministic rules]
         AIService[AI Service\nGrok API]
         EmailService[Email Service\nResend]
-        RateLimit[Rate Limiter\n20 audits/hr/IP]
+    end
+
+    subgraph Middleware ["Middleware Layer"]
+        RateLimit[Rate Limiter\nglobal + per-route]
         Honeypot[Honeypot\nAbuse Protection]
+        Validation[Input Validation\nbounds + format]
+        Logger[Request Logger\nmethod + status + duration]
     end
 
     subgraph Data ["Data Layer"]
@@ -32,17 +37,18 @@ graph TB
 
     User --> LP
     LP --> AF
-    AF -->|POST form data| AuditRoute
-    AuditRoute --> RateLimit
-    RateLimit --> Engine
+    AF -->|POST form data| RateLimit
+    RateLimit --> Validation
+    Validation --> AuditRoute
+    AuditRoute --> Engine
     Engine -->|audit result| AIService
     AIService --> GrokAPI
     GrokAPI -->|summary text| AIService
     AIService -->|full result| MongoDB
     AuditRoute -->|AuditResult JSON| RP
-    RP -->|POST email| LeadsRoute
-    LeadsRoute --> Honeypot
-    Honeypot --> MongoDB
+    RP -->|POST email| Honeypot
+    Honeypot --> LeadsRoute
+    LeadsRoute --> MongoDB
     LeadsRoute --> EmailService
     EmailService --> ResendAPI
     SA -->|GET| GetAudit

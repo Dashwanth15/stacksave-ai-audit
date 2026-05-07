@@ -1,4 +1,321 @@
-// SharedAuditPage.tsx — public read-only view
-// Same component as ResultsPage, just loaded by auditId from URL
-// Re-exports ResultsPage since it already handles fetch-by-id
-export { default } from './ResultsPage';
+// ============================================================
+// SharedAuditPage — Public read-only audit view
+//
+// Renders the same results view but in "shared" mode:
+// - No auto-popup email modal (visitor didn't create this audit)
+// - Shows a "Run your own audit" CTA instead
+// - Strips private data server-side (GET /api/audits/:id)
+// ============================================================
+
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { m } from 'framer-motion';
+import type { AuditResult, Insight } from '../types';
+import { fetchAudit } from '../services/api';
+import { formatCurrencyFull, formatRelativeTime, severityLabel, insightTypeLabel } from '../utils/formatters';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+
+const SEVERITY_COLORS = {
+  high: '#f87171',
+  medium: '#fbbf24',
+  low: '#34d399',
+  info: '#818cf8',
+};
+
+function SharedInsightCard({ insight, index }: { insight: Insight; index: number }) {
+  return (
+    <m.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.06 }}
+      className="glass-card p-6"
+    >
+      <div className="flex items-start justify-between gap-4 mb-3">
+        <div className="flex items-center gap-3">
+          <div>
+            <div className="font-semibold text-white text-lg">{insight.toolName}</div>
+            <div className="text-xs text-[#64748b]">{insightTypeLabel(insight.type)}</div>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <span className={`text-xs px-2 py-1 rounded-full font-medium badge-${insight.severity}`}>
+            {severityLabel(insight.severity)}
+          </span>
+          {insight.potentialMonthlySaving > 0 && (
+            <span className="text-emerald-400 font-bold text-sm">
+              Save {formatCurrencyFull(insight.potentialMonthlySaving)}/mo
+            </span>
+          )}
+        </div>
+      </div>
+      <p className="text-[#94a3b8] text-sm mb-3 leading-relaxed">{insight.message}</p>
+      <div className="flex items-start gap-2 p-3 rounded-lg bg-indigo-500/5 border border-indigo-500/10">
+        <span className="text-indigo-400 text-sm font-medium shrink-0">→</span>
+        <p className="text-indigo-300 text-sm leading-relaxed">{insight.suggestion}</p>
+      </div>
+      <p className="text-xs text-[#475569] mt-3 italic leading-relaxed">{insight.reason}</p>
+    </m.div>
+  );
+}
+
+export default function SharedAuditPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [audit, setAudit] = useState<AuditResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      fetchAudit(id)
+        .then(setAudit)
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+    }
+  }, [id]);
+
+  function copyShareUrl() {
+    if (!audit) return;
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen grid-bg flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[#94a3b8]">Loading audit report…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !audit) {
+    return (
+      <div className="min-h-screen grid-bg flex items-center justify-center">
+        <div className="glass-card p-8 text-center max-w-md">
+          <div className="text-4xl mb-4">🔍</div>
+          <h2 className="text-xl font-semibold mb-2">Audit not found</h2>
+          <p className="text-[#94a3b8] mb-6">{error || 'This audit link may have expired or is invalid.'}</p>
+          <button
+            onClick={() => navigate('/audit')}
+            className="px-6 py-3 rounded-xl font-semibold text-white transition-all hover:scale-105"
+            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+          >
+            Run Your Own Free Audit →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const chartData = audit.insights
+    .filter((i) => i.potentialMonthlySaving > 0)
+    .slice(0, 6)
+    .map((i) => ({
+      name: i.toolName,
+      saving: i.potentialMonthlySaving,
+      severity: i.severity,
+    }));
+
+  return (
+    <div className="min-h-screen grid-bg pb-20">
+      {/* Shared audit banner */}
+      <nav className="border-b border-white/5 backdrop-blur-sm sticky top-0 z-40 bg-[#0b0b15]/80">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <button onClick={() => navigate('/')} className="text-indigo-400 font-bold text-lg">StackSave</button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={copyShareUrl}
+              className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white border border-white/10 text-sm font-medium transition-all"
+              aria-label="Copy share link"
+            >
+              {copied ? '✓ Copied!' : '🔗 Share'}
+            </button>
+            <button
+              onClick={() => navigate('/audit')}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-all"
+              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+              aria-label="Start your own audit"
+            >
+              Audit My Stack →
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-12 space-y-8">
+        {/* Shared badge */}
+        <div className="text-center">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium">
+            📊 Shared Audit Report
+          </span>
+        </div>
+
+        {/* Savings Hero */}
+        <m.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`glass-card p-8 sm:p-12 text-center ${audit.isAlreadyOptimal ? 'border-emerald-500/20' : 'border-indigo-500/20 glow-primary'}`}
+          style={{ borderColor: audit.isAlreadyOptimal ? 'rgba(52, 211, 153, 0.2)' : 'rgba(129, 140, 248, 0.2)' }}
+        >
+          <div className="text-sm text-[#64748b] uppercase tracking-wider mb-2">
+            AI Stack Audit · {formatRelativeTime(audit.createdAt)}
+          </div>
+          {audit.isAlreadyOptimal ? (
+            <>
+              <div className="text-6xl mb-4">🏆</div>
+              <h1 className="text-4xl sm:text-5xl font-extrabold mb-3 text-emerald-400">
+                Stack is well-optimized
+              </h1>
+              <p className="text-[#94a3b8] text-lg max-w-xl mx-auto">
+                This team's AI stack is appropriately sized. No significant waste found.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-[#94a3b8] text-sm mb-2">Potential monthly savings found</p>
+              <div className="text-6xl sm:text-8xl font-black gradient-text-green mb-2">
+                {formatCurrencyFull(audit.estimatedMonthlySavings)}
+              </div>
+              <div className="text-2xl text-[#94a3b8] mb-4">
+                {formatCurrencyFull(audit.estimatedAnnualSavings)}/year · {audit.savingsPercentage}% reduction
+              </div>
+              <div className="flex items-center justify-center gap-6 text-sm text-[#64748b]">
+                <span>Current: <strong className="text-white">{formatCurrencyFull(audit.totalMonthlySpend)}/mo</strong></span>
+                <span>→</span>
+                <span>Optimized: <strong className="text-emerald-400">{formatCurrencyFull(audit.optimizedMonthlySpend)}/mo</strong></span>
+              </div>
+            </>
+          )}
+        </m.div>
+
+        {/* Credex CTA for high savings */}
+        {audit.isHighSavings && (
+          <m.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-2xl p-6 sm:p-8 text-center"
+            style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2))', border: '1px solid rgba(99, 102, 241, 0.3)' }}
+          >
+            <div className="text-3xl mb-3">💡</div>
+            <h2 className="text-2xl font-bold mb-2">Save even more with Credex</h2>
+            <p className="text-[#94a3b8] mb-6 max-w-lg mx-auto">
+              Credex sources discounted AI infrastructure credits — 20–40% below retail.
+            </p>
+            <a
+              href="https://credex.rocks"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-8 py-3 rounded-xl font-semibold text-white transition-all hover:scale-105"
+              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+            >
+              Book a Free Consultation →
+            </a>
+          </m.div>
+        )}
+
+        {/* Savings Chart */}
+        {chartData.length > 0 && (
+          <m.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="glass-card p-6"
+          >
+            <h2 className="text-xl font-semibold mb-6">Savings breakdown by tool</h2>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
+                  <Tooltip
+                    contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#f8fafc' }}
+                    formatter={(value: number) => [`$${value}/mo`, 'Potential saving']}
+                  />
+                  <Bar dataKey="saving" radius={[6, 6, 0, 0]}>
+                    {chartData.map((entry, i) => (
+                      <Cell key={i} fill={SEVERITY_COLORS[entry.severity as keyof typeof SEVERITY_COLORS] || '#818cf8'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </m.div>
+        )}
+
+        {/* AI Summary */}
+        {audit.aiSummary && (
+          <m.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="glass-card p-6 border border-indigo-500/10"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-indigo-400 text-sm font-medium px-2 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+                🤖 AI Summary
+              </span>
+            </div>
+            <p className="text-[#c7d2fe] leading-relaxed text-lg italic">"{audit.aiSummary}"</p>
+          </m.div>
+        )}
+
+        {/* Insights */}
+        {audit.insights.length > 0 ? (
+          <div>
+            <h2 className="text-2xl font-bold mb-6">
+              Per-tool recommendations
+              <span className="ml-3 text-sm font-normal text-[#64748b]">({audit.insights.length} finding{audit.insights.length > 1 ? 's' : ''})</span>
+            </h2>
+            <div className="space-y-4">
+              {audit.insights.map((insight, i) => (
+                <SharedInsightCard key={`${insight.toolId}-${insight.type}`} insight={insight} index={i} />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="glass-card p-8 text-center">
+            <div className="text-4xl mb-3">✅</div>
+            <p className="text-[#94a3b8]">No specific issues found — this stack is well-optimized.</p>
+          </div>
+        )}
+
+        {/* CTA for visitors */}
+        <m.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="glass-card p-8 text-center"
+          style={{ borderColor: 'rgba(129, 140, 248, 0.2)' }}
+        >
+          <h3 className="text-2xl font-bold mb-2">Want to audit your own AI stack?</h3>
+          <p className="text-[#94a3b8] text-sm mb-6">Free · No login · Results in 60 seconds</p>
+          <button
+            onClick={() => navigate('/audit')}
+            className="px-10 py-4 rounded-xl font-bold text-lg text-white glow-primary transition-all hover:scale-105"
+            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+            aria-label="Start your own AI spend audit"
+          >
+            Start My Free Audit →
+          </button>
+        </m.div>
+
+        {/* Footer */}
+        <div className="text-center py-6 border-t border-white/5">
+          <p className="text-sm text-[#475569]">
+            Powered by{' '}
+            <a href="https://credex.rocks" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300">
+              Credex
+            </a>{' '}
+            · Discounted AI infrastructure credits
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

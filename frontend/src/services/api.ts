@@ -25,12 +25,33 @@ api.interceptors.request.use((config) => {
 // ── Response Interceptor ─────────────────────────────────────
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    const message =
-      error.response?.data?.error ||
-      error.message ||
-      'Something went wrong. Please try again.';
-    return Promise.reject(new Error(message));
+  async (error) => {
+    const config = error.config;
+
+    // Retry once on network errors or 429 (rate limited)
+    if (
+      !config._retried &&
+      (error.code === 'ERR_NETWORK' || error.response?.status === 429)
+    ) {
+      config._retried = true;
+      const waitMs = error.response?.status === 429 ? 2000 : 1000;
+      await new Promise((r) => setTimeout(r, waitMs));
+      return api(config);
+    }
+
+    // User-friendly error messages
+    const status = error.response?.status;
+    let message = error.response?.data?.error || error.message;
+
+    if (status === 429) {
+      message = 'Too many requests. Please wait a moment and try again.';
+    } else if (error.code === 'ERR_NETWORK') {
+      message = 'Unable to reach the server. Please check your connection.';
+    } else if (status === 500) {
+      message = 'Server error. Please try again in a moment.';
+    }
+
+    return Promise.reject(new Error(message || 'Something went wrong. Please try again.'));
   }
 );
 

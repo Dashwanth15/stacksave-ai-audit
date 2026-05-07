@@ -6,12 +6,13 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 
 import { connectDB } from './services/dbService';
 import auditRouter from './routes/audit';
 import leadsRouter from './routes/leads';
 import healthRouter from './routes/health';
+import { globalLimiter, auditLimiter, leadLimiter } from './middleware/rateLimit';
+import { requestLogger } from './middleware/logger';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -34,31 +35,16 @@ app.use(
 app.use(express.json({ limit: '10kb' })); // 10kb max — audits are small
 app.use(express.urlencoded({ extended: true }));
 
-// ── Global Rate Limiting ─────────────────────────────────────
-// 100 requests per 15 minutes per IP — generous for real users,
-// blocks automated abuse. Documented in README.
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
-  message: { success: false, error: 'Too many requests, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use(globalLimiter);
+// ── Request Logging ──────────────────────────────────────────
+app.use(requestLogger);
 
-// ── Stricter limit for audit creation ────────────────────────
-const auditLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20, // 20 audits/hour per IP — enough for testing, blocks spam
-  message: { success: false, error: 'Too many audits created. Please wait before trying again.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// ── Global Rate Limiting ─────────────────────────────────────
+app.use(globalLimiter);
 
 // ── Routes ────────────────────────────────────────────────────
 app.use('/api/health', healthRouter);
 app.use('/api/audits', auditLimiter, auditRouter);
-app.use('/api/leads', leadsRouter);
+app.use('/api/leads', leadLimiter, leadsRouter);
 
 // ── 404 Handler ──────────────────────────────────────────────
 app.use((_req, res) => {

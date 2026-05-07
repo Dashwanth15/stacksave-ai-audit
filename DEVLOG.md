@@ -41,15 +41,35 @@ Assignment received: 2026-05-06 | Deadline: 2026-05-16
 
 ## Day 2 — 2026-05-07
 
-**Hours worked:** _[Fill in tonight]_
+**Hours worked:** 5
 
-**What I did:** _[Fill in tonight]_
+**What I did:**
+- Fixed critical MongoDB connection failure — migrated from legacy `mongodb://` format to `mongodb+srv://` with DNS SRV auto-discovery. Added IPv4 force (`family: 4`) and timeout settings to handle JioFiber router DNS quirks
+- Tested full API end-to-end: `POST /api/audits` (with Groq AI summary), `GET /api/audits/:id` (public-safe, strips email/companyName), `POST /api/leads` (honeypot + MongoDB), `GET /api/health` — all working
+- Extracted middleware into proper modules: `middleware/honeypot.ts`, `middleware/rateLimit.ts`, `middleware/logger.ts`, `middleware/validation.ts` — matches documented architecture in ARCHITECTURE.md
+- Built centralized input validation layer with bounds checking, duplicate tool detection, email regex validation. Used by both audit and leads routes
+- Added 9 new validation tests (25 total, all passing) — covers edge cases: null body, empty tools, invalid tool IDs, duplicate tools, team size bounds, email format
+- Added request logging middleware — logs method, path, status, and duration with emoji indicators for quick scanning
+- Generated OG image (1200×630) and placed in `frontend/public/og-image.png` for social sharing previews
+- Rewrote `SharedAuditPage.tsx` as a proper standalone component — no auto-email popup for visitors, "Audit My Stack" CTA for viral conversion, "Shared Audit Report" badge
+- Created `useAudit` custom hook — encapsulates audit submission/fetching logic, separating API concerns from UI
+- Fixed duplicate Google Fonts loading — removed from CSS (already loaded via index.html with preconnect)
+- Added `leadLimiter` (10/hr/IP) to the leads route — tighter than audit since email spam is higher risk
 
-**What I learned:** _[Fill in tonight]_
+**What I learned:**
+- `mongodb+srv://` resolves via DNS SRV records which lets MongoDB Atlas handle shard auto-discovery. The old explicit-shard format fails on home routers that can't resolve internal shard hostnames
+- Extracting middleware into separate files makes the app.ts ~40% shorter and each concern independently testable
+- The `@` in my MongoDB password needed URL-encoding to `%40` — easy to miss, hard to debug (connection just silently fails)
 
-**Blockers / what I'm stuck on:** _[Fill in tonight]_
+**Blockers / what I'm stuck on:**
+- Resend API key is still a placeholder — emails won't actually send until I add a real key. The code handles this gracefully (catch + log)
+- Need to start user interviews urgently — USER_INTERVIEWS.md is still an empty template
 
-**Plan for tomorrow:** _[Fill in tonight]_
+**Plan for tomorrow:**
+- Deploy frontend to Vercel, backend to Render
+- Capture 3 screenshots for README.md
+- Start user interview outreach (need 3 real conversations by Day 5)
+- Update README with deployed URLs
 
 ---
 

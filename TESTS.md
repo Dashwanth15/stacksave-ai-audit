@@ -9,7 +9,7 @@ npm test
 npm run test:watch
 ```
 
-**Expected output:** 16 tests, all passing.
+**Expected output:** 25 tests, all passing.
 
 ---
 
@@ -17,7 +17,7 @@ npm run test:watch
 
 **File:** `backend/tests/audit-engine.test.ts`
 **Framework:** Vitest
-**Coverage scope:** All 7 audit engine rules + 3 integration tests
+**Coverage scope:** All 7 audit engine rules + 3 integration tests + 9 validation tests
 
 ---
 
@@ -41,6 +41,15 @@ npm run test:watch
 | 14 | `runAudit (integration)` | returns a complete AuditResult with correct totals | End-to-end: 2-tool audit produces valid AuditResult with correct totalMonthlySpend, annualSavings = monthlySavings × 12, savings ≤ total spend, publicUrl contains auditId |
 | 15 | `runAudit (integration)` | marks audit as already optimal when stack is well-optimized | Single individual-plan user → savings < $20 → isAlreadyOptimal behavior |
 | 16 | `runAudit (integration)` | marks high savings audits correctly | $5,000/mo API spend → isHighSavings = true |
+| 17 | `validateAuditRequest` | rejects empty request body | null/undefined body → validation error |
+| 18 | `validateAuditRequest` | rejects request with no tools | Empty tools array → validation error |
+| 19 | `validateAuditRequest` | rejects invalid tool ID | Unknown tool ID → validation error |
+| 20 | `validateAuditRequest` | rejects duplicate tools | Same tool twice → validation error |
+| 21 | `validateAuditRequest` | rejects team size over 10,000 | Bounds check — prevents absurd inputs |
+| 22 | `validateAuditRequest` | accepts valid audit request | Well-formed request → valid |
+| 23 | `validateEmail` | rejects empty email | Empty string → validation error |
+| 24 | `validateEmail` | rejects invalid email format | Missing @ → validation error |
+| 25 | `validateEmail` | accepts valid email | Standard email → valid |
 
 ---
 

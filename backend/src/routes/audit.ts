@@ -7,6 +7,7 @@ import { AuditRequest } from '../types';
 import { runAudit } from '../audit-engine/engine';
 import { generateAuditSummary } from '../services/aiService';
 import { AuditModel } from '../services/dbService';
+import { validateAuditRequest } from '../middleware/validation';
 
 const router = Router();
 
@@ -17,25 +18,10 @@ router.post('/', async (req: Request, res: Response) => {
   try {
     const body = req.body as AuditRequest;
 
-    // Basic validation
-    if (!body.tools || !Array.isArray(body.tools) || body.tools.length === 0) {
-      return res.status(400).json({ success: false, error: 'At least one tool is required' });
-    }
-    if (!body.teamSize || body.teamSize < 1) {
-      return res.status(400).json({ success: false, error: 'Team size must be at least 1' });
-    }
-    if (!body.useCase) {
-      return res.status(400).json({ success: false, error: 'Primary use case is required' });
-    }
-
-    // Validate each tool entry
-    for (const tool of body.tools) {
-      if (!tool.toolId || !tool.plan || tool.monthlySpend < 0 || tool.seats < 1) {
-        return res.status(400).json({
-          success: false,
-          error: `Invalid tool entry for ${tool.toolId || 'unknown'}`,
-        });
-      }
+    // Centralized validation (bounds checking, duplicate detection, use case validation)
+    const validation = validateAuditRequest(body);
+    if (!validation.valid) {
+      return res.status(400).json({ success: false, error: validation.error });
     }
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';

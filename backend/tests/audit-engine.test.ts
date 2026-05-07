@@ -17,6 +17,7 @@ import {
 } from '../src/audit-engine/rules';
 import { runAudit } from '../src/audit-engine/engine';
 import { ToolEntry, UseCase } from '../src/types';
+import { validateAuditRequest, validateEmail } from '../src/middleware/validation';
 
 const defaultCtx = {
   teamSize: 5,
@@ -312,5 +313,84 @@ describe('runAudit (integration)', () => {
 
     const result = runAudit(request, '', 'https://stacksave.ai');
     expect(result.isHighSavings).toBe(true);
+  });
+});
+
+// ── TEST 7: Validation Helpers ────────────────────────────────
+describe('validateAuditRequest', () => {
+  it('rejects empty request body', () => {
+    const result = validateAuditRequest(null);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('required');
+  });
+
+  it('rejects request with no tools', () => {
+    const result = validateAuditRequest({
+      tools: [],
+      teamSize: 5,
+      useCase: 'coding',
+    });
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('tool');
+  });
+
+  it('rejects invalid tool ID', () => {
+    const result = validateAuditRequest({
+      tools: [{ toolId: 'fake-tool', plan: 'pro', monthlySpend: 20, seats: 1, useCase: 'coding' }],
+      teamSize: 5,
+      useCase: 'coding',
+    });
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('Invalid tool ID');
+  });
+
+  it('rejects duplicate tools', () => {
+    const result = validateAuditRequest({
+      tools: [
+        { toolId: 'cursor', plan: 'pro', monthlySpend: 20, seats: 1, useCase: 'coding' },
+        { toolId: 'cursor', plan: 'business', monthlySpend: 40, seats: 1, useCase: 'coding' },
+      ],
+      teamSize: 5,
+      useCase: 'coding',
+    });
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('Duplicate');
+  });
+
+  it('rejects team size over 10,000', () => {
+    const result = validateAuditRequest({
+      tools: [{ toolId: 'cursor', plan: 'pro', monthlySpend: 20, seats: 1, useCase: 'coding' }],
+      teamSize: 50000,
+      useCase: 'coding',
+    });
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('10,000');
+  });
+
+  it('accepts valid audit request', () => {
+    const result = validateAuditRequest({
+      tools: [{ toolId: 'cursor', plan: 'pro', monthlySpend: 20, seats: 1, useCase: 'coding' }],
+      teamSize: 5,
+      useCase: 'coding',
+    });
+    expect(result.valid).toBe(true);
+  });
+});
+
+describe('validateEmail', () => {
+  it('rejects empty email', () => {
+    const result = validateEmail('');
+    expect(result.valid).toBe(false);
+  });
+
+  it('rejects invalid email format', () => {
+    const result = validateEmail('not-an-email');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('Invalid');
+  });
+
+  it('accepts valid email', () => {
+    const result = validateEmail('user@startup.com');
+    expect(result.valid).toBe(true);
   });
 });
