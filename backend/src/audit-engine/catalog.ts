@@ -2,7 +2,7 @@
 // Tool Pricing Catalog — StackSave AI Audit
 // All prices verified from official vendor pricing pages.
 // Sources documented in /PRICING_DATA.md
-// Last verified: 2026-05-06
+// Last verified: 2026-05-07
 // ============================================================
 
 import { ToolCatalog } from '../types';
@@ -18,7 +18,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
     category: 'ide',
     useCases: ['coding'],
     pricingUrl: 'https://cursor.com/pricing',
-    pricingVerifiedDate: '2026-05-06',
+    pricingVerifiedDate: '2026-05-07',
     plans: [
       {
         id: 'hobby',
@@ -30,7 +30,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
         id: 'pro',
         label: 'Pro',
         monthlyPricePerSeat: 20,
-        annualPricePerSeat: 16, // $192/yr = $16/mo billed annually
+        annualPricePerSeat: 16,
       },
       {
         id: 'business',
@@ -65,7 +65,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
     category: 'ide',
     useCases: ['coding'],
     pricingUrl: 'https://github.com/features/copilot#pricing',
-    pricingVerifiedDate: '2026-05-06',
+    pricingVerifiedDate: '2026-05-07',
     plans: [
       {
         id: 'free',
@@ -76,7 +76,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
         id: 'individual',
         label: 'Individual',
         monthlyPricePerSeat: 10,
-        annualPricePerSeat: 8.33, // $100/yr
+        annualPricePerSeat: 8.33,
       },
       {
         id: 'business',
@@ -104,6 +104,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
   // ──────────────────────────────────────────────
   // CLAUDE (Anthropic)
   // Source: https://www.anthropic.com/pricing
+  // Updated: Pro $17 annual / $20 monthly
   // ──────────────────────────────────────────────
   {
     id: 'claude',
@@ -111,7 +112,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
     category: 'chat',
     useCases: ['writing', 'research', 'coding', 'data', 'mixed'],
     pricingUrl: 'https://www.anthropic.com/pricing',
-    pricingVerifiedDate: '2026-05-06',
+    pricingVerifiedDate: '2026-05-07',
     plans: [
       {
         id: 'free',
@@ -122,7 +123,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
         id: 'pro',
         label: 'Pro',
         monthlyPricePerSeat: 20,
-        annualPricePerSeat: 18, // $216/yr
+        annualPricePerSeat: 17,
       },
       {
         id: 'max',
@@ -134,13 +135,13 @@ export const TOOL_CATALOG: ToolCatalog[] = [
         id: 'team',
         label: 'Team',
         monthlyPricePerSeat: 25,
-        annualPricePerSeat: 25,
+        annualPricePerSeat: 20,
         minSeats: 5,
       },
       {
         id: 'enterprise',
         label: 'Enterprise',
-        monthlyPricePerSeat: 0, // custom pricing
+        monthlyPricePerSeat: 0,
       },
     ],
     alternatives: [
@@ -156,6 +157,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
   // ──────────────────────────────────────────────
   // CHATGPT (OpenAI)
   // Source: https://openai.com/chatgpt/pricing
+  // Updated: Added Go ($5) and Pro ($200) tiers
   // ──────────────────────────────────────────────
   {
     id: 'chatgpt',
@@ -163,12 +165,17 @@ export const TOOL_CATALOG: ToolCatalog[] = [
     category: 'chat',
     useCases: ['writing', 'research', 'coding', 'data', 'mixed'],
     pricingUrl: 'https://openai.com/chatgpt/pricing',
-    pricingVerifiedDate: '2026-05-06',
+    pricingVerifiedDate: '2026-05-07',
     plans: [
       {
         id: 'free',
         label: 'Free',
         monthlyPricePerSeat: 0,
+      },
+      {
+        id: 'go',
+        label: 'Go',
+        monthlyPricePerSeat: 5,
       },
       {
         id: 'plus',
@@ -177,22 +184,21 @@ export const TOOL_CATALOG: ToolCatalog[] = [
         annualPricePerSeat: 20,
       },
       {
+        id: 'pro',
+        label: 'Pro',
+        monthlyPricePerSeat: 200,
+      },
+      {
         id: 'team',
         label: 'Team',
         monthlyPricePerSeat: 25,
-        annualPricePerSeat: 20.83, // $250/yr per user
+        annualPricePerSeat: 20.83,
         minSeats: 2,
       },
       {
         id: 'enterprise',
         label: 'Enterprise',
-        monthlyPricePerSeat: 0, // custom
-      },
-      {
-        id: 'api',
-        label: 'API Direct',
         monthlyPricePerSeat: 0,
-        isPayPerUse: true,
       },
     ],
     alternatives: [
@@ -215,7 +221,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
     category: 'api',
     useCases: ['coding', 'writing', 'data', 'research', 'mixed'],
     pricingUrl: 'https://www.anthropic.com/pricing',
-    pricingVerifiedDate: '2026-05-06',
+    pricingVerifiedDate: '2026-05-07',
     plans: [
       {
         id: 'pay-as-you-go',
@@ -244,7 +250,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
     category: 'api',
     useCases: ['coding', 'writing', 'data', 'research', 'mixed'],
     pricingUrl: 'https://openai.com/api/pricing',
-    pricingVerifiedDate: '2026-05-06',
+    pricingVerifiedDate: '2026-05-07',
     plans: [
       {
         id: 'pay-as-you-go',
@@ -266,6 +272,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
   // ──────────────────────────────────────────────
   // GEMINI (Google)
   // Source: https://one.google.com/about/ai-premium
+  // Updated: Plus/Pro/Ultra tiers, Workspace, API
   // ──────────────────────────────────────────────
   {
     id: 'gemini',
@@ -273,7 +280,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
     category: 'chat',
     useCases: ['writing', 'research', 'coding', 'data', 'mixed'],
     pricingUrl: 'https://one.google.com/about/ai-premium',
-    pricingVerifiedDate: '2026-05-06',
+    pricingVerifiedDate: '2026-05-07',
     plans: [
       {
         id: 'free',
@@ -281,10 +288,21 @@ export const TOOL_CATALOG: ToolCatalog[] = [
         monthlyPricePerSeat: 0,
       },
       {
-        id: 'advanced',
-        label: 'Advanced (Google One AI Premium)',
-        monthlyPricePerSeat: 19.99,
-        annualPricePerSeat: 19.99,
+        id: 'plus',
+        label: 'Google AI Plus',
+        monthlyPricePerSeat: 4.99,
+        annualPricePerSeat: 4.17,
+      },
+      {
+        id: 'pro',
+        label: 'Google AI Pro',
+        monthlyPricePerSeat: 24.99,
+        annualPricePerSeat: 20.83,
+      },
+      {
+        id: 'ultra',
+        label: 'Google AI Ultra',
+        monthlyPricePerSeat: 249.99,
       },
       {
         id: 'workspace',
@@ -303,8 +321,8 @@ export const TOOL_CATALOG: ToolCatalog[] = [
       {
         toolId: 'claude',
         toolName: 'Claude',
-        reason: 'For teams not using Google Workspace, Claude Pro matches Gemini Advanced pricing with stronger reasoning performance on most benchmarks',
-        estimatedSaving: '$0 — same price, evaluate by workflow fit',
+        reason: 'For teams not using Google Workspace, Claude Pro matches Gemini pricing with stronger reasoning on most benchmarks',
+        estimatedSaving: '$0 — same price tier, evaluate by workflow fit',
       },
     ],
   },
@@ -319,7 +337,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
     category: 'ide',
     useCases: ['coding'],
     pricingUrl: 'https://windsurf.com/pricing',
-    pricingVerifiedDate: '2026-05-06',
+    pricingVerifiedDate: '2026-05-07',
     plans: [
       {
         id: 'free',
@@ -330,7 +348,7 @@ export const TOOL_CATALOG: ToolCatalog[] = [
         id: 'pro',
         label: 'Pro',
         monthlyPricePerSeat: 15,
-        annualPricePerSeat: 12, // $144/yr
+        annualPricePerSeat: 12,
       },
       {
         id: 'teams',

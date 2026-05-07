@@ -81,12 +81,15 @@ export interface LeadCaptureRequest {
   _hp?: string;
 }
 
+export type BillingType = 'per-seat' | 'usage-based' | 'flat' | 'custom';
+
 // Tool display info (static, frontend only)
 export interface ToolInfo {
   id: ToolId;
   name: string;
   icon: string;        // emoji for now, can swap for SVG
   category: string;
+  description: string; // one-line tagline for the tool
   plans: PlanOption[];
   defaultPlan: string;
 }
@@ -95,5 +98,12 @@ export interface PlanOption {
   id: string;
   label: string;
   monthlyPricePerSeat: number;
+  billingType: BillingType;
   isPayPerUse?: boolean;
+  isEnterprise?: boolean; // true = "Contact Sales" instead of price
+  minSeats?: number;      // minimum seat requirement
+  maxSeats?: number;      // maximum seat limit
+  annualPrice?: number;   // annual per-seat price (if discount exists)
+  features?: string[];    // key plan features for display
+  tagline?: string;       // short plan description
 }

@@ -218,7 +218,10 @@ export default function AuditPage() {
                 >
                   <div className="text-2xl mb-1" role="img" aria-hidden="true">{tool.icon}</div>
                   <div className="text-xs font-medium leading-tight">{tool.name}</div>
-                  <div className="text-[10px] text-[#475569] mt-1">{tool.category}</div>
+                  <div className="text-[9px] text-[#475569] mt-0.5 leading-tight">{tool.description}</div>
+                  <div className={`text-[10px] mt-1.5 px-2 py-0.5 rounded-full inline-block ${
+                    selected ? 'bg-indigo-500/20 text-indigo-300' : 'bg-white/5 text-[#475569]'
+                  }`}>{tool.category}</div>
                 </button>
               );
             })}
@@ -244,15 +247,51 @@ export default function AuditPage() {
                   const tool = TOOLS.find((t) => t.id === entry.toolId)!;
                   const currentPlan = tool.plans.find((p) => p.id === entry.plan);
                   const isPayPerUse = currentPlan?.isPayPerUse;
+                  const isEnterprise = currentPlan?.isEnterprise;
+                  const billingType = currentPlan?.billingType || 'per-seat';
+                  const minSeats = currentPlan?.minSeats;
+                  const hasAnnualDiscount = currentPlan?.annualPrice && currentPlan.annualPrice < currentPlan.monthlyPricePerSeat;
+
+                  // Format plan label with price
+                  function formatPlanLabel(p: typeof tool.plans[0]) {
+                    if (p.isEnterprise) return `${p.label} (Contact Sales)`;
+                    if (p.isPayPerUse) return `${p.label} (Usage-based)`;
+                    if (p.monthlyPricePerSeat === 0) return `${p.label} (Free)`;
+                    return `${p.label} ($${p.monthlyPricePerSeat}/user/mo)`;
+                  }
 
                   return (
                     <div key={entry.toolId} className="border border-white/8 rounded-xl p-5 bg-white/2">
-                      <div className="flex items-center gap-2 mb-4">
-                        <span className="text-xl" role="img" aria-hidden="true">{tool.icon}</span>
-                        <span className="font-semibold text-white">{tool.name}</span>
+                      {/* Tool header with description */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl" role="img" aria-hidden="true">{tool.icon}</span>
+                          <div>
+                            <span className="font-semibold text-white">{tool.name}</span>
+                            <p className="text-[10px] text-[#64748b] leading-tight">{tool.description}</p>
+                          </div>
+                        </div>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                          billingType === 'usage-based' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                          billingType === 'custom' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                          'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        }`}>
+                          {billingType === 'usage-based' ? '📊 Usage-based' :
+                           billingType === 'custom' ? '🏢 Enterprise' :
+                           billingType === 'flat' ? '💳 Flat rate' : '👥 Per-seat'}
+                        </span>
                       </div>
+
+                      {/* Enterprise notice */}
+                      {isEnterprise && (
+                        <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/10 mb-4 text-center">
+                          <p className="text-purple-300 text-sm font-medium">Enterprise — Contact Sales for pricing</p>
+                          <p className="text-[#64748b] text-xs mt-1">Enter your estimated monthly spend below</p>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {/* Plan */}
+                        {/* Plan selector */}
                         <div>
                           <label className="block text-xs text-[#64748b] mb-1.5" htmlFor={`plan-${entry.toolId}`}>
                             Current plan
@@ -264,7 +303,9 @@ export default function AuditPage() {
                               const plan = tool.plans.find((p) => p.id === e.target.value);
                               updateToolEntry(entry.toolId, {
                                 plan: e.target.value,
-                                monthlySpend: plan?.isPayPerUse ? entry.monthlySpend : (plan?.monthlyPricePerSeat || 0) * entry.seats,
+                                monthlySpend: plan?.isPayPerUse || plan?.isEnterprise
+                                  ? entry.monthlySpend
+                                  : (plan?.monthlyPricePerSeat || 0) * entry.seats,
                               });
                             }}
                             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:border-indigo-500/50 focus:outline-none"
@@ -272,32 +313,35 @@ export default function AuditPage() {
                           >
                             {tool.plans.map((p) => (
                               <option key={p.id} value={p.id} className="bg-[#1a1a2e]">
-                                {p.label}
+                                {formatPlanLabel(p)}
                               </option>
                             ))}
                           </select>
                         </div>
 
-                        {/* Monthly spend */}
+                        {/* Monthly spend — always shown */}
                         <div>
                           <label className="block text-xs text-[#64748b] mb-1.5" htmlFor={`spend-${entry.toolId}`}>
-                            Monthly spend ($)
+                            {isPayPerUse ? 'Monthly API spend ($)' : 'Monthly spend ($)'}
                           </label>
                           <input
                             id={`spend-${entry.toolId}`}
                             type="number"
                             min={0}
-                            step={0.01}
+                            step={isPayPerUse ? 1 : 0.01}
                             value={entry.monthlySpend}
                             onChange={(e) => updateToolEntry(entry.toolId, { monthlySpend: parseFloat(e.target.value) || 0 })}
-                            placeholder={isPayPerUse ? 'Enter actual spend' : 'Auto-calculated'}
+                            placeholder={isPayPerUse ? 'e.g. 500' : isEnterprise ? 'Estimated spend' : 'Auto-calculated'}
                             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:border-indigo-500/50 focus:outline-none placeholder-[#475569]"
                             aria-label={`Monthly spend for ${tool.name}`}
                           />
+                          {isPayPerUse && (
+                            <p className="text-[10px] text-amber-400/60 mt-1">Enter your actual monthly API bill</p>
+                          )}
                         </div>
 
-                        {/* Seats */}
-                        {!isPayPerUse && (
+                        {/* Seats — only for seat-based plans */}
+                        {!isPayPerUse && !isEnterprise && currentPlan && currentPlan.monthlyPricePerSeat > 0 && (
                           <div>
                             <label className="block text-xs text-[#64748b] mb-1.5" htmlFor={`seats-${entry.toolId}`}>
                               Seats / licenses
@@ -305,22 +349,52 @@ export default function AuditPage() {
                             <input
                               id={`seats-${entry.toolId}`}
                               type="number"
-                              min={1}
+                              min={minSeats || 1}
                               value={entry.seats}
                               onChange={(e) => {
-                                const seats = parseInt(e.target.value) || 1;
+                                const seats = Math.max(minSeats || 1, parseInt(e.target.value) || 1);
                                 const plan = tool.plans.find((p) => p.id === entry.plan);
                                 updateToolEntry(entry.toolId, {
                                   seats,
-                                  monthlySpend: plan?.isPayPerUse ? entry.monthlySpend : (plan?.monthlyPricePerSeat || 0) * seats,
+                                  monthlySpend: (plan?.monthlyPricePerSeat || 0) * seats,
                                 });
                               }}
                               className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:border-indigo-500/50 focus:outline-none"
                               aria-label={`Seats for ${tool.name}`}
                             />
+                            {minSeats && (
+                              <p className="text-[10px] text-[#64748b] mt-1">Min {minSeats} seats required</p>
+                            )}
                           </div>
                         )}
                       </div>
+
+                      {/* Annual discount hint */}
+                      {hasAnnualDiscount && !isPayPerUse && !isEnterprise && (
+                        <div className="mt-3 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 flex items-center gap-2">
+                          <span className="text-emerald-400 text-xs">💡</span>
+                          <p className="text-emerald-400/80 text-xs">
+                            Annual billing available at ${currentPlan!.annualPrice}/user/mo — saves {Math.round(((currentPlan!.monthlyPricePerSeat - currentPlan!.annualPrice!) / currentPlan!.monthlyPricePerSeat) * 100)}%
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Plan features */}
+                      {currentPlan?.features && currentPlan.features.length > 0 && (
+                        <div className="mt-3 p-3 rounded-lg bg-white/2 border border-white/5">
+                          {currentPlan.tagline && (
+                            <p className="text-xs text-[#94a3b8] mb-2 font-medium">{currentPlan.tagline}</p>
+                          )}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                            {currentPlan.features.map((feature, i) => (
+                              <div key={i} className="flex items-start gap-1.5">
+                                <span className="text-emerald-400 text-[10px] mt-0.5 shrink-0">✓</span>
+                                <span className="text-[11px] text-[#64748b] leading-tight">{feature}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Per-tool use case */}
                       <div className="mt-3">
