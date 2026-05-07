@@ -5,6 +5,7 @@ import AuditPage from './pages/AuditPage';
 import ResultsPage from './pages/ResultsPage';
 import SharedAuditPage from './pages/SharedAuditPage';
 import NotFoundPage from './pages/NotFoundPage';
+import ChatBot from './components/ChatBot';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/audit/:id" element={<SharedAuditPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        <ChatBot />
       </BrowserRouter>
     </LazyMotion>
   );

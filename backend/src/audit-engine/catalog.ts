@@ -20,24 +20,12 @@ export const TOOL_CATALOG: ToolCatalog[] = [
     pricingUrl: 'https://cursor.com/pricing',
     pricingVerifiedDate: '2026-05-07',
     plans: [
-      {
-        id: 'hobby',
-        label: 'Hobby',
-        monthlyPricePerSeat: 0,
-        annualPricePerSeat: 0,
-      },
-      {
-        id: 'pro',
-        label: 'Pro',
-        monthlyPricePerSeat: 20,
-        annualPricePerSeat: 16,
-      },
-      {
-        id: 'business',
-        label: 'Business',
-        monthlyPricePerSeat: 40,
-        annualPricePerSeat: 40,
-      },
+      { id: 'hobby', label: 'Hobby', monthlyPricePerSeat: 0, annualPricePerSeat: 0 },
+      { id: 'pro', label: 'Pro', monthlyPricePerSeat: 20, annualPricePerSeat: 16 },
+      { id: 'pro-plus', label: 'Pro+', monthlyPricePerSeat: 60, annualPricePerSeat: 48 },
+      { id: 'ultra', label: 'Ultra', monthlyPricePerSeat: 200, annualPricePerSeat: 160 },
+      { id: 'teams', label: 'Teams', monthlyPricePerSeat: 40, annualPricePerSeat: 32 },
+      { id: 'enterprise', label: 'Enterprise', monthlyPricePerSeat: 0 },
     ],
     alternatives: [
       {
@@ -339,30 +327,18 @@ export const TOOL_CATALOG: ToolCatalog[] = [
     pricingUrl: 'https://windsurf.com/pricing',
     pricingVerifiedDate: '2026-05-07',
     plans: [
-      {
-        id: 'free',
-        label: 'Free',
-        monthlyPricePerSeat: 0,
-      },
-      {
-        id: 'pro',
-        label: 'Pro',
-        monthlyPricePerSeat: 15,
-        annualPricePerSeat: 12,
-      },
-      {
-        id: 'teams',
-        label: 'Teams',
-        monthlyPricePerSeat: 35,
-        annualPricePerSeat: 30,
-      },
+      { id: 'free', label: 'Free', monthlyPricePerSeat: 0 },
+      { id: 'pro', label: 'Pro', monthlyPricePerSeat: 20 },
+      { id: 'max', label: 'Max', monthlyPricePerSeat: 200 },
+      { id: 'teams', label: 'Teams', monthlyPricePerSeat: 40 },
+      { id: 'enterprise', label: 'Enterprise', monthlyPricePerSeat: 0 },
     ],
     alternatives: [
       {
         toolId: 'cursor',
         toolName: 'Cursor',
         reason: 'For teams needing the most advanced agentic coding (multi-file edits, composer), Cursor Pro provides deeper capabilities',
-        estimatedSaving: 'Cursor Pro costs $5/user/mo more but may increase productivity',
+        estimatedSaving: 'Same price at $20/user/mo — evaluate by feature fit',
       },
     ],
   },

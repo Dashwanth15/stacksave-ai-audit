@@ -11,6 +11,7 @@ import { connectDB } from './services/dbService';
 import auditRouter from './routes/audit';
 import leadsRouter from './routes/leads';
 import healthRouter from './routes/health';
+import chatRouter from './routes/chat';
 import { globalLimiter, auditLimiter, leadLimiter } from './middleware/rateLimit';
 import { requestLogger } from './middleware/logger';
 
@@ -45,6 +46,7 @@ app.use(globalLimiter);
 app.use('/api/health', healthRouter);
 app.use('/api/audits', auditLimiter, auditRouter);
 app.use('/api/leads', leadLimiter, leadsRouter);
+app.use('/api/chat', chatRouter);
 
 // ── 404 Handler ──────────────────────────────────────────────
 app.use((_req, res) => {

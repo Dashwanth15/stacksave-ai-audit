@@ -4,13 +4,16 @@ import { m, AnimatePresence } from 'framer-motion';
 import { TOOLS, USE_CASES } from '../data/tools';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { submitAudit } from '../services/api';
-import type { ToolEntry, UseCase } from '../types';
+import type { ToolEntry, UseCase, BillingType } from '../types';
+
+type BillingPeriod = 'monthly' | 'annual';
 
 interface FormState {
   tools: ToolEntry[];
   teamSize: number;
   companyName: string;
   useCase: UseCase;
+  billingPeriod: BillingPeriod;
 }
 
 const DEFAULT_FORM: FormState = {
@@ -18,6 +21,7 @@ const DEFAULT_FORM: FormState = {
   teamSize: 5,
   companyName: '',
   useCase: 'mixed',
+  billingPeriod: 'monthly',
 };
 
 export default function AuditPage() {
@@ -26,8 +30,17 @@ export default function AuditPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isAnnual = form.billingPeriod === 'annual';
+
   // Which tools are toggled on
   const selectedToolIds = form.tools.map((t) => t.toolId);
+
+  // Get effective price for a plan based on billing period
+  function getEffectivePrice(plan: { monthlyPricePerSeat: number; annualPrice?: number; isPayPerUse?: boolean; isEnterprise?: boolean }) {
+    if (plan.isPayPerUse || plan.isEnterprise) return 0;
+    if (isAnnual && plan.annualPrice) return plan.annualPrice;
+    return plan.monthlyPricePerSeat;
+  }
 
   function toggleTool(toolId: string) {
     const isSelected = selectedToolIds.includes(toolId as ToolEntry['toolId']);
@@ -36,15 +49,29 @@ export default function AuditPage() {
     } else {
       const tool = TOOLS.find((t) => t.id === toolId)!;
       const defaultPlan = tool.plans.find((p) => p.id === tool.defaultPlan) || tool.plans[0];
+      const price = getEffectivePrice(defaultPlan);
       const newEntry: ToolEntry = {
         toolId: toolId as ToolEntry['toolId'],
         plan: defaultPlan.id,
-        monthlySpend: defaultPlan.isPayPerUse ? 0 : (defaultPlan.monthlyPricePerSeat * 1),
+        monthlySpend: defaultPlan.isPayPerUse ? 0 : price * 1,
         seats: 1,
         useCase: form.useCase,
       };
       setForm((prev) => ({ ...prev, tools: [...prev.tools, newEntry] }));
     }
+  }
+
+  function toggleBillingPeriod(period: BillingPeriod) {
+    setForm((prev) => {
+      const updatedTools = prev.tools.map((entry) => {
+        const tool = TOOLS.find((t) => t.id === entry.toolId)!;
+        const plan = tool.plans.find((p) => p.id === entry.plan);
+        if (!plan || plan.isPayPerUse || plan.isEnterprise) return entry;
+        const price = period === 'annual' && plan.annualPrice ? plan.annualPrice : plan.monthlyPricePerSeat;
+        return { ...entry, monthlySpend: price * entry.seats };
+      });
+      return { ...prev, billingPeriod: period, tools: updatedTools };
+    });
   }
 
   function updateToolEntry(toolId: string, updates: Partial<ToolEntry>) {
@@ -194,10 +221,41 @@ export default function AuditPage() {
           transition={{ delay: 0.1 }}
           className="glass-card p-6"
         >
-          <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
-            <span className="w-7 h-7 rounded-full bg-indigo-500/20 text-indigo-400 text-sm font-bold flex items-center justify-center">2</span>
-            Which AI tools do you pay for?
-          </h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <span className="w-7 h-7 rounded-full bg-indigo-500/20 text-indigo-400 text-sm font-bold flex items-center justify-center">2</span>
+              Which AI tools do you pay for?
+            </h2>
+
+            {/* Monthly / Annual toggle */}
+            <div className="flex items-center gap-1 bg-white/5 rounded-full p-1 border border-white/10">
+              <button
+                type="button"
+                onClick={() => toggleBillingPeriod('monthly')}
+                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  !isAnnual
+                    ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                    : 'text-[#64748b] hover:text-white'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleBillingPeriod('annual')}
+                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${
+                  isAnnual
+                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                    : 'text-[#64748b] hover:text-white'
+                }`}
+              >
+                Annual
+                {!isAnnual && (
+                  <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">Save up to 20%</span>
+                )}
+              </button>
+            </div>
+          </div>
           <p className="text-sm text-[#64748b] mb-6">Select all that apply. You can add details for each below.</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {TOOLS.map((tool) => {
@@ -252,12 +310,17 @@ export default function AuditPage() {
                   const minSeats = currentPlan?.minSeats;
                   const hasAnnualDiscount = currentPlan?.annualPrice && currentPlan.annualPrice < currentPlan.monthlyPricePerSeat;
 
-                  // Format plan label with price
+                  // Format plan label with price based on billing period
                   function formatPlanLabel(p: typeof tool.plans[0]) {
                     if (p.isEnterprise) return `${p.label} (Contact Sales)`;
                     if (p.isPayPerUse) return `${p.label} (Usage-based)`;
                     if (p.monthlyPricePerSeat === 0) return `${p.label} (Free)`;
-                    return `${p.label} ($${p.monthlyPricePerSeat}/user/mo)`;
+                    const price = getEffectivePrice(p);
+                    const suffix = isAnnual && p.annualPrice ? '/mo billed annually' : '/user/mo';
+                    if (isAnnual && p.annualPrice && p.annualPrice < p.monthlyPricePerSeat) {
+                      return `${p.label} ($${price}${suffix})`;
+                    }
+                    return `${p.label} ($${price}/user/mo)`;
                   }
 
                   return (
@@ -301,11 +364,12 @@ export default function AuditPage() {
                             value={entry.plan}
                             onChange={(e) => {
                               const plan = tool.plans.find((p) => p.id === e.target.value);
+                              const price = plan ? getEffectivePrice(plan) : 0;
                               updateToolEntry(entry.toolId, {
                                 plan: e.target.value,
                                 monthlySpend: plan?.isPayPerUse || plan?.isEnterprise
                                   ? entry.monthlySpend
-                                  : (plan?.monthlyPricePerSeat || 0) * entry.seats,
+                                  : price * entry.seats,
                               });
                             }}
                             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:border-indigo-500/50 focus:outline-none"
@@ -354,9 +418,10 @@ export default function AuditPage() {
                               onChange={(e) => {
                                 const seats = Math.max(minSeats || 1, parseInt(e.target.value) || 1);
                                 const plan = tool.plans.find((p) => p.id === entry.plan);
+                                const price = plan ? getEffectivePrice(plan) : 0;
                                 updateToolEntry(entry.toolId, {
                                   seats,
-                                  monthlySpend: (plan?.monthlyPricePerSeat || 0) * seats,
+                                  monthlySpend: price * seats,
                                 });
                               }}
                               className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:border-indigo-500/50 focus:outline-none"
@@ -375,6 +440,16 @@ export default function AuditPage() {
                           <span className="text-emerald-400 text-xs">💡</span>
                           <p className="text-emerald-400/80 text-xs">
                             Annual billing available at ${currentPlan!.annualPrice}/user/mo — saves {Math.round(((currentPlan!.monthlyPricePerSeat - currentPlan!.annualPrice!) / currentPlan!.monthlyPricePerSeat) * 100)}%
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Annual not available notice */}
+                      {isAnnual && !isPayPerUse && !isEnterprise && currentPlan && currentPlan.monthlyPricePerSeat > 0 && !currentPlan.annualPrice && (
+                        <div className="mt-3 p-2 rounded-lg bg-amber-500/5 border border-amber-500/10 flex items-center gap-2">
+                          <span className="text-amber-400 text-xs">⚠️</span>
+                          <p className="text-amber-400/80 text-xs">
+                            Annual billing not available for {tool.name} {currentPlan.label}. Subscribe monthly at ${currentPlan.monthlyPricePerSeat}/mo.
                           </p>
                         </div>
                       )}
