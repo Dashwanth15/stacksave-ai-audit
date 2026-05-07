@@ -64,14 +64,18 @@ function EmailCaptureModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [hp, setHp] = useState(''); // honeypot
+  const [sent, setSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email) { setError('Email is required'); return; }
     setLoading(true);
+    setError('');
     try {
       await captureLead({ email, auditId, companyName: company, role, _hp: hp });
-      onSuccess();
+      setSent(true);
+      // Show success for 2.5 seconds then close
+      setTimeout(() => onSuccess(), 2500);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -88,70 +92,93 @@ function EmailCaptureModal({
         className="relative glass-card p-8 max-w-md w-full border border-indigo-500/20 glow-primary"
       >
         <button onClick={onClose} className="absolute top-4 right-4 text-[#475569] hover:text-white text-xl" aria-label="Close">×</button>
-        <h3 className="text-2xl font-bold mb-2">Save your report ✉️</h3>
-        <p className="text-[#94a3b8] text-sm mb-6">
-          We'll email you a link to this audit and notify you when new optimizations apply to your stack.
-        </p>
-        {error && <p className="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg" role="alert">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Honeypot — hidden from real users */}
-          <input
-            type="text"
-            name="_hp"
-            value={hp}
-            onChange={(e) => setHp(e.target.value)}
-            tabIndex={-1}
-            aria-hidden="true"
-            style={{ position: 'absolute', left: '-9999px', opacity: 0 }}
-            autoComplete="off"
-          />
-          <div>
-            <label className="block text-sm text-[#94a3b8] mb-1.5" htmlFor="lead-email">Email address *</label>
-            <input
-              id="lead-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@startup.com"
-              required
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-[#475569] focus:border-indigo-500/50 focus:outline-none"
-            />
+
+        {sent ? (
+          /* ── Success state ── */
+          <div className="text-center py-6">
+            <m.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+              className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4"
+            >
+              <span className="text-3xl">✓</span>
+            </m.div>
+            <h3 className="text-2xl font-bold text-emerald-400 mb-2">Email sent! 🎉</h3>
+            <p className="text-[#94a3b8] text-sm">
+              Check your inbox at <strong className="text-white">{email}</strong> for your audit report.
+            </p>
+            <p className="text-xs text-[#475569] mt-3">Also check your spam folder if you don't see it.</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm text-[#94a3b8] mb-1.5" htmlFor="lead-company">Company</label>
+        ) : (
+          /* ── Form state ── */
+          <>
+            <h3 className="text-2xl font-bold mb-2">Save your report ✉️</h3>
+            <p className="text-[#94a3b8] text-sm mb-6">
+              We'll email you a link to this audit and notify you when new optimizations apply to your stack.
+            </p>
+            {error && <p className="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg" role="alert">{error}</p>}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Honeypot — hidden from real users */}
               <input
-                id="lead-company"
                 type="text"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                placeholder="Optional"
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-[#475569] focus:border-indigo-500/50 focus:outline-none text-sm"
+                name="_hp"
+                value={hp}
+                onChange={(e) => setHp(e.target.value)}
+                tabIndex={-1}
+                aria-hidden="true"
+                style={{ position: 'absolute', left: '-9999px', opacity: 0 }}
+                autoComplete="off"
               />
-            </div>
-            <div>
-              <label className="block text-sm text-[#94a3b8] mb-1.5" htmlFor="lead-role">Role</label>
-              <input
-                id="lead-role"
-                type="text"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                placeholder="Optional"
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-[#475569] focus:border-indigo-500/50 focus:outline-none text-sm"
-              />
-            </div>
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            aria-label="Submit email to save audit"
-            className="w-full py-3 rounded-xl font-semibold text-white disabled:opacity-50 transition-all"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
-          >
-            {loading ? 'Saving…' : 'Send me the report →'}
-          </button>
-          <p className="text-xs text-[#475569] text-center">No spam. One email with your audit link.</p>
-        </form>
+              <div>
+                <label className="block text-sm text-[#94a3b8] mb-1.5" htmlFor="lead-email">Email address *</label>
+                <input
+                  id="lead-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@startup.com"
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-[#475569] focus:border-indigo-500/50 focus:outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-[#94a3b8] mb-1.5" htmlFor="lead-company">Company</label>
+                  <input
+                    id="lead-company"
+                    type="text"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    placeholder="Optional"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-[#475569] focus:border-indigo-500/50 focus:outline-none text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-[#94a3b8] mb-1.5" htmlFor="lead-role">Role</label>
+                  <input
+                    id="lead-role"
+                    type="text"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    placeholder="Optional"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-[#475569] focus:border-indigo-500/50 focus:outline-none text-sm"
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                aria-label="Submit email to save audit"
+                className="w-full py-3 rounded-xl font-semibold text-white disabled:opacity-50 transition-all"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+              >
+                {loading ? 'Sending…' : 'Send me the report →'}
+              </button>
+              <p className="text-xs text-[#475569] text-center">No spam. One email with your audit link.</p>
+            </form>
+          </>
+        )}
       </m.div>
     </div>
   );
@@ -442,7 +469,16 @@ export default function ResultsPage() {
               className="px-4 py-2 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 text-sm font-medium transition-all"
               aria-label="Share on Twitter/X"
             >
-              Share on X/Twitter
+              Share on X
+            </a>
+            <a
+              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(audit.publicUrl)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/20 text-sm font-medium transition-all"
+              aria-label="Share on LinkedIn"
+            >
+              Share on LinkedIn
             </a>
           </div>
         </m.div>
@@ -455,6 +491,17 @@ export default function ResultsPage() {
           >
             ← Run a new audit
           </button>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center py-6 border-t border-white/5">
+          <p className="text-sm text-[#475569]">
+            Powered by{' '}
+            <a href="https://credex.rocks" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300">
+              Credex
+            </a>{' '}
+            · Discounted AI infrastructure credits
+          </p>
         </div>
       </div>
 

@@ -102,6 +102,29 @@ export default function AuditPage() {
         </p>
       </div>
 
+      {/* Progress indicator */}
+      <div className="flex items-center justify-center gap-2 mb-10">
+        {[
+          { label: 'Team Info', done: form.teamSize > 0 },
+          { label: 'Select Tools', done: form.tools.length > 0 },
+          { label: 'Plan Details', done: form.tools.length > 0 && form.tools.every(t => t.monthlySpend > 0) },
+        ].map((step, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+              step.done
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                : 'bg-white/5 text-[#64748b] border border-white/10'
+            }`}>
+              {step.done ? '✓' : i + 1}
+            </div>
+            <span className={`text-xs font-medium hidden sm:block ${step.done ? 'text-emerald-400' : 'text-[#64748b]'}`}>
+              {step.label}
+            </span>
+            {i < 2 && <div className={`w-8 h-0.5 ${step.done ? 'bg-emerald-500/30' : 'bg-white/8'}`} />}
+          </div>
+        ))}
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Step 1: Team info */}
         <m.div
@@ -298,10 +321,58 @@ export default function AuditPage() {
                           </div>
                         )}
                       </div>
+
+                      {/* Per-tool use case */}
+                      <div className="mt-3">
+                        <label className="block text-xs text-[#64748b] mb-1.5" htmlFor={`usecase-${entry.toolId}`}>
+                          How does your team primarily use {tool.name}?
+                        </label>
+                        <select
+                          id={`usecase-${entry.toolId}`}
+                          value={entry.useCase}
+                          onChange={(e) => updateToolEntry(entry.toolId, { useCase: e.target.value as UseCase })}
+                          className="w-full sm:w-1/2 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:border-indigo-500/50 focus:outline-none"
+                          aria-label={`Use case for ${tool.name}`}
+                        >
+                          {USE_CASES.map((uc) => (
+                            <option key={uc.id} value={uc.id} className="bg-[#1a1a2e]">
+                              {uc.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   );
                 })}
               </div>
+
+              {/* Live cost summary */}
+              {form.tools.length > 0 && (
+                <div className="mt-6 pt-5 border-t border-white/8">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-[#94a3b8]">
+                      Total monthly AI spend ({form.tools.length} tool{form.tools.length > 1 ? 's' : ''})
+                    </span>
+                    <span className="text-2xl font-bold text-white">
+                      ${form.tools.reduce((sum, t) => sum + t.monthlySpend, 0).toLocaleString()}<span className="text-sm font-normal text-[#64748b]">/mo</span>
+                    </span>
+                  </div>
+                  <div className="mt-2 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(100, (form.tools.reduce((sum, t) => sum + t.monthlySpend, 0) / 500) * 100)}%`,
+                        background: 'linear-gradient(90deg, #34d399, #6366f1, #f87171)',
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-[#475569] mt-1">
+                    {form.tools.reduce((sum, t) => sum + t.monthlySpend, 0) > 200
+                      ? '💡 Higher spend = more optimization opportunities'
+                      : 'Enter accurate numbers for the best audit results'}
+                  </p>
+                </div>
+              )}
             </m.div>
           )}
         </AnimatePresence>

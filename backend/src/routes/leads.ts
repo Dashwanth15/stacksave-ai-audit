@@ -47,12 +47,12 @@ router.post('/', honeypotCheck, async (req: Request, res: Response) => {
       // Update audit with email for internal tracking
       await AuditModel.updateOne({ auditId: body.auditId }, { email: body.email.toLowerCase() });
     } catch (err: unknown) {
-      // Duplicate key = same email submitted twice for same audit → that's fine
+      // Duplicate key = same email submitted twice for same audit → that's fine, continue to send email
       const mongoErr = err as { code?: number };
-      if (mongoErr.code === 11000) {
-        return res.status(200).json({ success: true, message: 'Already captured' });
+      if (mongoErr.code !== 11000) {
+        throw err; // only re-throw if it's NOT a duplicate
       }
-      throw err;
+      console.log('ℹ️  Lead already exists, resending email');
     }
 
     // ── Send transactional confirmation email ─────────────────
@@ -68,7 +68,9 @@ router.post('/', honeypotCheck, async (req: Request, res: Response) => {
       });
     } catch (emailErr) {
       // Email failure doesn't block the response — lead is already saved
-      console.error('⚠️  Resend email failed:', (emailErr as Error).message);
+      const err = emailErr as Error & { statusCode?: number };
+      console.error('⚠️  Resend email failed:', err.message);
+      console.error('   Full error:', JSON.stringify(emailErr, null, 2));
     }
 
     return res.status(201).json({ success: true });

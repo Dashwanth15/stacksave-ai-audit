@@ -96,12 +96,19 @@ export async function sendAuditConfirmation(params: SendAuditConfirmationParams)
     </html>
   `;
 
-  await resend.emails.send({
-    from: 'StackSave <audit@stacksave.ai>',
+  const { data, error } = await resend.emails.send({
+    from: 'StackSave <onboarding@resend.dev>',
     to: email,
     subject: monthlySavings > 0
       ? `Your audit found $${monthlySavings.toLocaleString()}/mo in AI savings`
       : 'Your StackSave audit is ready',
     html,
   });
+
+  if (error) {
+    console.error('❌ Resend API error:', JSON.stringify(error));
+    throw new Error(error.message);
+  }
+
+  console.log('✅ Email sent to', email, '— Resend ID:', data?.id);
 }
