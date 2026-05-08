@@ -330,7 +330,7 @@ export default function AuditPage() {
                 Enter your plan details
               </h2>
               <p className="text-sm text-[#64748b] mb-6">Be as accurate as possible — the audit quality depends on real numbers.</p>
-              <div className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {form.tools.map((entry) => {
                   const tool = TOOLS.find((t) => t.id === entry.toolId)!;
                   const currentPlan = tool.plans.find((p) => p.id === entry.plan);
@@ -354,40 +354,39 @@ export default function AuditPage() {
                   }
 
                   return (
-                    <div key={entry.toolId} className="border border-white/8 rounded-xl p-5 bg-white/2">
-                      {/* Tool header with description */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl" role="img" aria-hidden="true">{tool.icon}</span>
-                          <div>
-                            <span className="font-semibold text-white">{tool.name}</span>
-                            <p className="text-[10px] text-[#64748b] leading-tight">{tool.description}</p>
+                    <div key={entry.toolId} className="border border-white/6 rounded-xl p-4 bg-white/2 flex flex-col">
+                      {/* Tool header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-lg" role="img" aria-hidden="true">{tool.icon}</span>
+                          <div className="min-w-0">
+                            <span className="font-semibold text-white text-sm">{tool.name}</span>
+                            <p className="text-[9px] text-[#64748b] leading-tight truncate">{tool.description}</p>
                           </div>
                         </div>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${
                           billingType === 'usage-based' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
                           billingType === 'custom' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
                           'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                         }`}>
-                          {billingType === 'usage-based' ? '📊 Usage-based' :
-                           billingType === 'custom' ? '🏢 Enterprise' :
-                           billingType === 'flat' ? '💳 Flat rate' : '👥 Per-seat'}
+                          {billingType === 'usage-based' ? 'Usage' :
+                           billingType === 'custom' ? 'Enterprise' :
+                           billingType === 'flat' ? 'Flat' : 'Per-seat'}
                         </span>
                       </div>
 
-                      {/* Enterprise notice */}
                       {isEnterprise && (
-                        <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/10 mb-4 text-center">
-                          <p className="text-purple-300 text-sm font-medium">Enterprise — Contact Sales for pricing</p>
-                          <p className="text-[#64748b] text-xs mt-1">Enter your estimated monthly spend below</p>
+                        <div className="p-2 rounded-lg bg-purple-500/5 border border-purple-500/10 mb-3 text-center">
+                          <p className="text-purple-300 text-xs font-medium">Enterprise — Contact Sales</p>
+                          <p className="text-[#64748b] text-[10px] mt-0.5">Enter estimated monthly spend</p>
                         </div>
                       )}
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="space-y-3">
                         {/* Plan selector */}
                         <div>
-                          <label className="block text-xs text-[#64748b] mb-1.5" htmlFor={`plan-${entry.toolId}`}>
-                            Current plan
+                          <label className="block text-[10px] text-[#64748b] mb-1" htmlFor={`plan-${entry.toolId}`}>
+                            Plan
                           </label>
                           <select
                             id={`plan-${entry.toolId}`}
@@ -402,119 +401,99 @@ export default function AuditPage() {
                                   : price * entry.seats,
                               });
                             }}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:border-indigo-500/50 focus:outline-none"
+                            className="w-full bg-white/5 border border-white/8 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500/50 focus:outline-none"
                             aria-label={`Plan for ${tool.name}`}
                           >
                             {tool.plans.map((p) => (
-                              <option key={p.id} value={p.id} className="bg-[#1a1a2e]">
+                              <option key={p.id} value={p.id} className="bg-[#0f1320]">
                                 {formatPlanLabel(p)}
                               </option>
                             ))}
                           </select>
                         </div>
 
-                        {/* Monthly spend — always shown */}
-                        <div>
-                          <label className="block text-xs text-[#64748b] mb-1.5" htmlFor={`spend-${entry.toolId}`}>
-                            {isPayPerUse ? 'Monthly API spend ($)' : 'Monthly spend ($)'}
-                          </label>
-                          <input
-                            id={`spend-${entry.toolId}`}
-                            type="number"
-                            min={0}
-                            step={isPayPerUse ? 1 : 0.01}
-                            value={entry.monthlySpend}
-                            onChange={(e) => updateToolEntry(entry.toolId, { monthlySpend: parseFloat(e.target.value) || 0 })}
-                            placeholder={isPayPerUse ? 'e.g. 500' : isEnterprise ? 'Estimated spend' : 'Auto-calculated'}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:border-indigo-500/50 focus:outline-none placeholder-[#475569]"
-                            aria-label={`Monthly spend for ${tool.name}`}
-                          />
-                          {isPayPerUse && (
-                            <p className="text-[10px] text-amber-400/60 mt-1">Enter your actual monthly API bill</p>
-                          )}
-                        </div>
-
-                        {/* Seats — only for seat-based plans */}
-                        {!isPayPerUse && !isEnterprise && currentPlan && currentPlan.monthlyPricePerSeat > 0 && (
+                        {/* Spend + Seats in a row */}
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs text-[#64748b] mb-1.5" htmlFor={`seats-${entry.toolId}`}>
-                              Seats / licenses
+                            <label className="block text-[10px] text-[#64748b] mb-1" htmlFor={`spend-${entry.toolId}`}>
+                              {isPayPerUse ? 'API spend ($/mo)' : 'Spend ($/mo)'}
                             </label>
                             <input
-                              id={`seats-${entry.toolId}`}
+                              id={`spend-${entry.toolId}`}
                               type="number"
-                              min={minSeats || 1}
-                              value={entry.seats}
-                              onChange={(e) => {
-                                const seats = Math.max(minSeats || 1, parseInt(e.target.value) || 1);
-                                const plan = tool.plans.find((p) => p.id === entry.plan);
-                                const price = plan ? getEffectivePrice(plan) : 0;
-                                updateToolEntry(entry.toolId, {
-                                  seats,
-                                  monthlySpend: price * seats,
-                                });
-                              }}
-                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:border-indigo-500/50 focus:outline-none"
-                              aria-label={`Seats for ${tool.name}`}
+                              min={0}
+                              step={isPayPerUse ? 1 : 0.01}
+                              value={entry.monthlySpend}
+                              onChange={(e) => updateToolEntry(entry.toolId, { monthlySpend: parseFloat(e.target.value) || 0 })}
+                              placeholder={isPayPerUse ? '500' : '0'}
+                              className="w-full bg-white/5 border border-white/8 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500/50 focus:outline-none placeholder-[#475569]"
+                              aria-label={`Monthly spend for ${tool.name}`}
                             />
-                            {minSeats && (
-                              <p className="text-[10px] text-[#64748b] mt-1">Min {minSeats} seats required</p>
-                            )}
                           </div>
-                        )}
+
+                          {!isPayPerUse && !isEnterprise && currentPlan && currentPlan.monthlyPricePerSeat > 0 ? (
+                            <div>
+                              <label className="block text-[10px] text-[#64748b] mb-1" htmlFor={`seats-${entry.toolId}`}>
+                                Seats{minSeats ? ` (min ${minSeats})` : ''}
+                              </label>
+                              <input
+                                id={`seats-${entry.toolId}`}
+                                type="number"
+                                min={minSeats || 1}
+                                value={entry.seats}
+                                onChange={(e) => {
+                                  const seats = Math.max(minSeats || 1, parseInt(e.target.value) || 1);
+                                  const plan = tool.plans.find((p) => p.id === entry.plan);
+                                  const price = plan ? getEffectivePrice(plan) : 0;
+                                  updateToolEntry(entry.toolId, {
+                                    seats,
+                                    monthlySpend: price * seats,
+                                  });
+                                }}
+                                className="w-full bg-white/5 border border-white/8 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500/50 focus:outline-none"
+                                aria-label={`Seats for ${tool.name}`}
+                              />
+                            </div>
+                          ) : (
+                            <div />
+                          )}
+                        </div>
                       </div>
 
                       {/* Annual discount hint */}
                       {hasAnnualDiscount && !isPayPerUse && !isEnterprise && (
                         <div className="mt-3 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 flex items-center gap-2">
-                          <span className="text-emerald-400 text-xs">💡</span>
-                          <p className="text-emerald-400/80 text-xs">
-                            Annual billing available at ${currentPlan!.annualPrice}/user/mo — saves {Math.round(((currentPlan!.monthlyPricePerSeat - currentPlan!.annualPrice!) / currentPlan!.monthlyPricePerSeat) * 100)}%
+                          <span className="text-emerald-400 text-[10px]">💡</span>
+                          <p className="text-emerald-400/80 text-[10px]">
+                            Annual: ${currentPlan!.annualPrice}/mo — save {Math.round(((currentPlan!.monthlyPricePerSeat - currentPlan!.annualPrice!) / currentPlan!.monthlyPricePerSeat) * 100)}%
                           </p>
                         </div>
                       )}
 
-                      {/* Annual not available notice */}
+                      {/* Annual not available */}
                       {isAnnual && !isPayPerUse && !isEnterprise && currentPlan && currentPlan.monthlyPricePerSeat > 0 && !currentPlan.annualPrice && (
                         <div className="mt-3 p-2 rounded-lg bg-amber-500/5 border border-amber-500/10 flex items-center gap-2">
-                          <span className="text-amber-400 text-xs">⚠️</span>
-                          <p className="text-amber-400/80 text-xs">
-                            Annual billing not available for {tool.name} {currentPlan.label}. Subscribe monthly at ${currentPlan.monthlyPricePerSeat}/mo.
+                          <span className="text-amber-400 text-[10px]">⚠️</span>
+                          <p className="text-amber-400/80 text-[10px]">
+                            No annual billing for {tool.name} {currentPlan.label}
                           </p>
                         </div>
                       )}
 
-                      {/* Plan features */}
-                      {currentPlan?.features && currentPlan.features.length > 0 && (
-                        <div className="mt-3 p-3 rounded-lg bg-white/2 border border-white/5">
-                          {currentPlan.tagline && (
-                            <p className="text-xs text-[#94a3b8] mb-2 font-medium">{currentPlan.tagline}</p>
-                          )}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
-                            {currentPlan.features.map((feature, i) => (
-                              <div key={i} className="flex items-start gap-1.5">
-                                <span className="text-emerald-400 text-[10px] mt-0.5 shrink-0">✓</span>
-                                <span className="text-[11px] text-[#64748b] leading-tight">{feature}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Per-tool use case */}
+                      {/* Use case — compact inline */}
                       <div className="mt-3">
-                        <label className="block text-xs text-[#64748b] mb-1.5" htmlFor={`usecase-${entry.toolId}`}>
-                          How does your team primarily use {tool.name}?
+                        <label className="block text-[10px] text-[#64748b] mb-1" htmlFor={`usecase-${entry.toolId}`}>
+                          Primary use case
                         </label>
                         <select
                           id={`usecase-${entry.toolId}`}
                           value={entry.useCase}
                           onChange={(e) => updateToolEntry(entry.toolId, { useCase: e.target.value as UseCase })}
-                          className="w-full sm:w-1/2 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:border-indigo-500/50 focus:outline-none"
+                          className="w-full bg-white/5 border border-white/8 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500/50 focus:outline-none"
                           aria-label={`Use case for ${tool.name}`}
                         >
                           {USE_CASES.map((uc) => (
-                            <option key={uc.id} value={uc.id} className="bg-[#1a1a2e]">
+                            <option key={uc.id} value={uc.id} className="bg-[#0f1320]">
                               {uc.label}
                             </option>
                           ))}
