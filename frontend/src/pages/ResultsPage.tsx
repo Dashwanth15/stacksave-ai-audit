@@ -52,37 +52,55 @@ function SavingsCounter({ amount }: { amount: number }) {
 }
 
 function InsightCard({ insight, index }: { insight: Insight; index: number }) {
+  const severityCopy: Record<string, string> = {
+    high: 'High Confidence',
+    medium: 'Optimization Opportunity',
+    low: 'Worth Exploring',
+    info: 'Insight',
+  };
+
   return (
     <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.06 }}
-      className="glass-card insight-card p-6"
+      transition={{ delay: index * 0.08, duration: 0.4 }}
+      className="insight-card p-6 sm:p-7"
+      data-severity={insight.severity}
     >
-      <div className="flex items-start justify-between gap-4 mb-3">
-        <div className="flex items-center gap-3">
-          <div>
-            <div className="font-semibold text-white text-lg">{insight.toolName}</div>
-            <div className="text-xs text-[#64748b]">{insightTypeLabel(insight.type)}</div>
-          </div>
+      {/* Header: Tool + Severity + Savings */}
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 className="font-bold text-white text-xl tracking-tight">{insight.toolName}</h3>
+          <span className="text-xs text-[#64748b] mt-0.5 block">{insightTypeLabel(insight.type)}</span>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <span className={`text-xs px-2 py-1 rounded-full font-medium badge-${insight.severity}`}>
-            {severityLabel(insight.severity)}
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <span className={`text-[11px] px-2.5 py-1 rounded-full font-medium severity-label-${insight.severity}`}>
+            {severityCopy[insight.severity] || severityLabel(insight.severity)}
           </span>
           {insight.potentialMonthlySaving > 0 && (
-            <span className="text-emerald-400 font-bold text-sm">
-              Save {formatCurrencyFull(insight.potentialMonthlySaving)}/mo
+            <span className="savings-badge text-emerald-400 font-bold text-sm whitespace-nowrap">
+              Recover {formatCurrencyFull(insight.potentialMonthlySaving)}/mo
             </span>
           )}
         </div>
       </div>
-      <p className="text-[#94a3b8] text-sm mb-3 leading-relaxed">{insight.message}</p>
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-indigo-500/5 border border-indigo-500/10">
-        <span className="text-indigo-400 text-sm font-medium shrink-0">→</span>
-        <p className="text-indigo-300 text-sm leading-relaxed">{insight.suggestion}</p>
+
+      {/* Issue description */}
+      <p className="text-[#b0bec5] text-sm mb-4 leading-relaxed">{insight.message}</p>
+
+      {/* Recommendation action box */}
+      <div className="recommendation-box p-4 flex items-start gap-3">
+        <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5">
+          <span className="text-indigo-400 text-xs font-bold">→</span>
+        </div>
+        <div>
+          <p className="text-[11px] text-indigo-400/70 font-medium uppercase tracking-wider mb-1">Recommended Action</p>
+          <p className="text-indigo-200 text-sm leading-relaxed font-medium">{insight.suggestion}</p>
+        </div>
       </div>
-      <p className="text-xs text-[#475569] mt-3 italic leading-relaxed">{insight.reason}</p>
+
+      {/* Supporting rationale */}
+      <p className="text-xs text-[#64748b] mt-4 leading-relaxed border-t border-white/5 pt-3">{insight.reason}</p>
     </m.div>
   );
 }
@@ -462,11 +480,14 @@ export default function ResultsPage() {
         {/* ── Insights ─────────────────────────────────────── */}
         {audit.insights.length > 0 ? (
           <div>
-            <h2 className="text-2xl font-bold mb-6">
-              Per-tool recommendations
-              <span className="ml-3 text-sm font-normal text-[#64748b]">({audit.insights.length} finding{audit.insights.length > 1 ? 's' : ''})</span>
-            </h2>
-            <div className="space-y-4">
+            <div className="flex items-center gap-3 mb-2">
+              <h2 className="text-2xl font-bold">Optimization Report</h2>
+              <span className="text-xs px-2.5 py-1 rounded-full bg-white/5 border border-white/8 text-[#94a3b8] font-medium">
+                {audit.insights.length} finding{audit.insights.length > 1 ? 's' : ''}
+              </span>
+            </div>
+            <p className="text-sm text-[#64748b] mb-8">Per-tool spend analysis and actionable recommendations</p>
+            <div className="space-y-5">
               {audit.insights.map((insight, i) => (
                 <InsightCard key={`${insight.toolId}-${insight.type}`} insight={insight} index={i} />
               ))}

@@ -359,14 +359,95 @@ body {
   border-radius: var(--radius-md);
 }
 
-/* ── Insight Card Enhancement ──────────────────────────────── */
+/* ── Insight Card — Premium Recommendation Card ────────────── */
 .insight-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.06) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  overflow: hidden;
+}
+
+.insight-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+  background: linear-gradient(180deg, var(--accent-color, #818cf8), transparent);
+  opacity: 0.7;
+  transition: opacity 0.25s ease;
 }
 
 .insight-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(99, 102, 241, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.insight-card:hover::before {
+  opacity: 1;
+}
+
+/* Severity accent overrides */
+.insight-card[data-severity="high"]::before {
+  background: linear-gradient(180deg, #f87171, #ef4444);
+}
+.insight-card[data-severity="medium"]::before {
+  background: linear-gradient(180deg, #fbbf24, #f59e0b);
+}
+.insight-card[data-severity="low"]::before {
+  background: linear-gradient(180deg, #34d399, #10b981);
+}
+.insight-card[data-severity="info"]::before {
+  background: linear-gradient(180deg, #818cf8, #6366f1);
+}
+
+/* Savings badge */
+.savings-badge {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.12), rgba(34, 211, 238, 0.08));
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Recommendation action box */
+.recommendation-box {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(139, 92, 246, 0.04));
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  border-radius: var(--radius-md);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.recommendation-box:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.07));
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+/* Severity label styling */
+.severity-label-high {
+  background: rgba(248, 113, 113, 0.1);
+  color: #fca5a5;
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
+.severity-label-medium {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fde68a;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+.severity-label-low {
+  background: rgba(52, 211, 153, 0.1);
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+}
+.severity-label-info {
+  background: rgba(129, 140, 248, 0.1);
+  color: #a5b4fc;
+  border: 1px solid rgba(129, 140, 248, 0.2);
 }
 
 /* ── Tool Select Card ──────────────────────────────────────── */
