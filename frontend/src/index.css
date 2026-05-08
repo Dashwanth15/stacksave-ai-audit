@@ -2,12 +2,12 @@
 
 /* ── Design Tokens ─────────────────────────────────────────── */
 :root {
-  --bg-base: #0b0b15;
-  --bg-surface: #111827;
-  --bg-card: rgba(255, 255, 255, 0.04);
-  --bg-card-hover: rgba(255, 255, 255, 0.07);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-accent: rgba(129, 140, 248, 0.3);
+  --bg-base: #0a0a14;
+  --bg-surface: #0f1320;
+  --bg-card: rgba(255, 255, 255, 0.025);
+  --bg-card-hover: rgba(255, 255, 255, 0.055);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-accent: rgba(129, 140, 248, 0.25);
 
   --color-primary: #818cf8;
   --color-primary-dark: #6366f1;
@@ -71,29 +71,31 @@ body {
 
 /* ── Glass Card ────────────────────────────────────────────── */
 .glass-card {
-  background: var(--bg-card);
+  background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .glass-card:hover {
-  background: var(--bg-card-hover);
+  background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025));
   border-color: var(--border-accent);
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25), 0 0 24px rgba(99, 102, 241, 0.06);
 }
 
 /* Variant: no hover lift (for content cards that shouldn't move) */
 .glass-card-static {
-  background: var(--bg-card);
+  background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: background 0.25s ease, border-color 0.25s ease;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 /* ── Gradient Text ─────────────────────────────────────────── */
@@ -139,10 +141,11 @@ body {
 .grid-bg {
   background-color: var(--bg-base);
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99, 102, 241, 0.12), transparent),
-    linear-gradient(rgba(129, 140, 248, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(129, 140, 248, 0.03) 1px, transparent 1px);
-  background-size: 100% 100%, 60px 60px, 60px 60px;
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99, 102, 241, 0.1), transparent),
+    radial-gradient(ellipse 60% 30% at 80% 100%, rgba(139, 92, 246, 0.05), transparent),
+    linear-gradient(rgba(129, 140, 248, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(129, 140, 248, 0.025) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 60px 60px, 60px 60px;
 }
 
 /* ── Hero Background Orbs (depth + premium feel) ───────────── */
@@ -452,15 +455,17 @@ body {
 
 /* ── Tool Select Card ──────────────────────────────────────── */
 .tool-select-card {
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .tool-select-card:hover {
   transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .tool-select-card[aria-pressed="true"] {
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.12), 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 /* ── Focus styles for accessibility ────────────────────────── */
@@ -491,6 +496,8 @@ a, button {
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
 .cta-gradient::after {
@@ -499,16 +506,44 @@ a, button {
   inset: 0;
   background: linear-gradient(135deg, #7c3aed, #6366f1);
   opacity: 0;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.3s ease;
+}
+
+.cta-gradient:hover {
+  box-shadow: 0 6px 28px rgba(99, 102, 241, 0.35), 0 0 40px rgba(139, 92, 246, 0.1);
+  transform: translateY(-1px);
 }
 
 .cta-gradient:hover::after {
   opacity: 1;
 }
 
+.cta-gradient:active {
+  transform: translateY(0);
+}
+
 .cta-gradient > * {
   position: relative;
   z-index: 1;
+}
+
+/* ── Form Inputs ───────────────────────────────────────────── */
+.form-input {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.form-input:focus {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+  outline: none;
+}
+
+.form-input::placeholder {
+  color: #475569;
 }
 
 /* ── Progress bar animated fill ────────────────────────────── */

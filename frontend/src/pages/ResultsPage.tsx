@@ -344,7 +344,7 @@ export default function ResultsPage() {
   return (
     <div className="min-h-screen grid-bg pb-20">
       {/* Nav */}
-      <nav className="border-b border-white/5 backdrop-blur-sm sticky top-0 z-40 bg-[#0b0b15]/80">
+      <nav className="border-b border-white/5 backdrop-blur-md sticky top-0 z-40 bg-[#0a0a14]/80">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <button onClick={() => navigate('/')} className="text-indigo-400 font-bold text-lg">StackSave</button>
           <div className="flex items-center gap-3">
@@ -389,16 +389,16 @@ export default function ResultsPage() {
             </>
           ) : (
             <>
-              <p className="text-[#94a3b8] text-sm mb-2">Potential monthly savings</p>
+              <p className="text-[#94a3b8] text-sm font-medium uppercase tracking-widest mb-3">Potential Monthly Recovery</p>
               <SavingsCounter amount={audit.estimatedMonthlySavings} />
               <div className="sr-only">{formatCurrencyFull(audit.estimatedMonthlySavings)}</div>
-              <div className="text-2xl text-[#94a3b8] mb-4">
+              <div className="text-xl text-[#94a3b8] mb-6">
                 {formatCurrencyFull(audit.estimatedAnnualSavings)}/year · {audit.savingsPercentage}% reduction
               </div>
-              <div className="flex items-center justify-center gap-6 text-sm text-[#64748b]">
-                <span>Current: <strong className="text-white">{formatCurrencyFull(audit.totalMonthlySpend)}/mo</strong></span>
-                <span>→</span>
-                <span>Optimized: <strong className="text-emerald-400">{formatCurrencyFull(audit.optimizedMonthlySpend)}/mo</strong></span>
+              <div className="inline-flex items-center gap-4 text-sm bg-white/3 rounded-xl px-6 py-3 border border-white/5">
+                <span className="text-[#94a3b8]">Current <strong className="text-white ml-1">{formatCurrencyFull(audit.totalMonthlySpend)}/mo</strong></span>
+                <span className="text-[#475569]">→</span>
+                <span className="text-[#94a3b8]">Optimized <strong className="text-emerald-400 ml-1">{formatCurrencyFull(audit.optimizedMonthlySpend)}/mo</strong></span>
               </div>
             </>
           )}
@@ -410,23 +410,22 @@ export default function ResultsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="rounded-2xl p-6 sm:p-8 text-center"
-            style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2))', border: '1px solid rgba(99, 102, 241, 0.3)' }}
+            className="glass-card-static rounded-2xl p-6 sm:p-8 text-center"
+            style={{ borderColor: 'rgba(99, 102, 241, 0.15)' }}
           >
             <div className="text-3xl mb-3">💡</div>
-            <h2 className="text-2xl font-bold mb-2">You could save even more with Credex</h2>
+            <h2 className="text-2xl font-bold mb-2">Unlock additional savings with Credex</h2>
             <p className="text-[#94a3b8] mb-6 max-w-lg mx-auto">
-              Credex sources discounted AI infrastructure credits — Cursor, Claude, ChatGPT Enterprise — from companies that overforecast. The discount is real: 20–40% below retail.
+              Credex sources discounted AI infrastructure credits — Cursor, Claude, ChatGPT Enterprise — from companies that overforecast. Save 20–40% below retail.
             </p>
             <a
               href="https://credex.rocks"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block px-8 py-3 rounded-xl font-semibold text-white transition-all hover:scale-105"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+              className="cta-gradient inline-block px-8 py-3 rounded-xl font-semibold text-white"
               aria-label="Book a free Credex consultation"
             >
-              Book a Free Credex Consultation →
+              <span>Book a Free Consultation →</span>
             </a>
           </m.div>
         )}
@@ -437,17 +436,19 @@ export default function ResultsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
-            className="glass-card p-6"
+            className="glass-card-static p-6 sm:p-8"
           >
-            <h2 className="text-xl font-semibold mb-6">Savings breakdown by tool</h2>
-            <div className="h-48" aria-label="Savings chart by tool">
+            <h2 className="text-lg font-semibold mb-1">Savings Breakdown</h2>
+            <p className="text-xs text-[#64748b] mb-6">Potential monthly recovery by tool</p>
+            <div className="h-52" aria-label="Savings chart by tool">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                <BarChart data={chartData} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
                   <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
+                  <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} width={45} />
                   <Tooltip
-                    contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#f8fafc' }}
-                    formatter={(value: number) => [`$${value}/mo`, 'Potential saving']}
+                    contentStyle={{ background: '#0f1320', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', color: '#f8fafc', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
+                    formatter={(value: number) => [`$${value}/mo`, 'Potential recovery']}
+                    cursor={{ fill: 'rgba(255,255,255,0.02)' }}
                   />
                   <Bar dataKey="saving" radius={[8, 8, 0, 0]}>
                     {chartData.map((_entry, i) => (
