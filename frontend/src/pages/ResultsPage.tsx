@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import type { AuditResult, Insight } from '../types';
@@ -9,35 +9,27 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 // Curated chart palette — avoids muddy yellows, uses vibrant SaaS-grade colors
 const CHART_COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#34d399', '#f472b6', '#818cf8'];
 
-const SEVERITY_COLORS = {
-  high: '#f87171',
-  medium: '#fbbf24',
-  low: '#34d399',
-  info: '#818cf8',
-};
-
 // Animated counter hook — counts from 0 to target for wow-factor
 function useAnimatedCounter(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
   const frameRef = useRef<number>(0);
   const startRef = useRef<number>(0);
 
-  const animate = useCallback((timestamp: number) => {
-    if (!startRef.current) startRef.current = timestamp;
-    const progress = Math.min((timestamp - startRef.current) / duration, 1);
-    // Ease-out cubic for satisfying deceleration
-    const eased = 1 - Math.pow(1 - progress, 3);
-    setValue(Math.round(eased * target));
-    if (progress < 1) {
-      frameRef.current = requestAnimationFrame(animate);
-    }
-  }, [target, duration]);
-
   useEffect(() => {
     startRef.current = 0;
-    frameRef.current = requestAnimationFrame(animate);
+    const step = (timestamp: number) => {
+      if (!startRef.current) startRef.current = timestamp;
+      const progress = Math.min((timestamp - startRef.current) / duration, 1);
+      // Ease-out cubic for satisfying deceleration
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(eased * target));
+      if (progress < 1) {
+        frameRef.current = requestAnimationFrame(step);
+      }
+    };
+    frameRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(frameRef.current);
-  }, [animate]);
+  }, [target, duration]);
 
   return value;
 }

@@ -1,4 +1,4 @@
-import { type ReactNode, useState, useEffect, useRef, useCallback } from 'react';
+import { type ReactNode, useState, useEffect, useRef } from 'react';
 import { m, useInView } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,21 +15,20 @@ function AnimatedStat({ value, label }: { value: string; label: string }) {
   const frameRef = useRef<number>(0);
   const startRef = useRef<number>(0);
 
-  const animate = useCallback((timestamp: number) => {
-    if (!startRef.current) startRef.current = timestamp;
-    const progress = Math.min((timestamp - startRef.current) / 1000, 1);
-    const eased = 1 - Math.pow(1 - progress, 3);
-    setCurrent(Math.round(eased * target));
-    if (progress < 1) frameRef.current = requestAnimationFrame(animate);
-  }, [target]);
-
   useEffect(() => {
     if (isInView && target > 0) {
       startRef.current = 0;
-      frameRef.current = requestAnimationFrame(animate);
+      const step = (timestamp: number) => {
+        if (!startRef.current) startRef.current = timestamp;
+        const progress = Math.min((timestamp - startRef.current) / 1000, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setCurrent(Math.round(eased * target));
+        if (progress < 1) frameRef.current = requestAnimationFrame(step);
+      };
+      frameRef.current = requestAnimationFrame(step);
       return () => cancelAnimationFrame(frameRef.current);
     }
-  }, [isInView, animate, target]);
+  }, [isInView, target]);
 
   return (
     <div ref={ref}>

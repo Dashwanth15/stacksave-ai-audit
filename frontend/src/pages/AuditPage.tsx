@@ -23,18 +23,18 @@ function useLoadingStage(isLoading: boolean) {
 
   useEffect(() => {
     if (isLoading) {
-      setStage(0);
       intervalRef.current = setInterval(() => {
         setStage((prev) => Math.min(prev + 1, LOADING_STAGES.length - 1));
       }, 1500);
-      return () => clearInterval(intervalRef.current);
-    } else {
-      setStage(0);
-      clearInterval(intervalRef.current);
+      return () => {
+        clearInterval(intervalRef.current);
+        setStage(0);
+      };
     }
+    clearInterval(intervalRef.current);
   }, [isLoading]);
 
-  return LOADING_STAGES[stage];
+  return isLoading ? LOADING_STAGES[stage] : LOADING_STAGES[0];
 }
 
 interface FormState {

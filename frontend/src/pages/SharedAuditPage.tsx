@@ -17,12 +17,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 
 const CHART_COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#34d399', '#f472b6', '#818cf8'];
 
-const SEVERITY_COLORS = {
-  high: '#f87171',
-  medium: '#fbbf24',
-  low: '#34d399',
-  info: '#818cf8',
-};
+
+
 
 function SharedInsightCard({ insight, index }: { insight: Insight; index: number }) {
   const severityCopy: Record<string, string> = {
