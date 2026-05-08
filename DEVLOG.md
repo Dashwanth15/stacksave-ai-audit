@@ -79,15 +79,45 @@ Assignment received: 2026-05-06 | Deadline: 2026-05-16
 
 ## Day 3 — 2026-05-08
 
-**Hours worked:** _[Fill in tonight]_
+**Hours worked:** 8
 
-**What I did:** _[Fill in tonight]_
+**What I did:**
+- **Premium dashboard UI overhaul** — transformed the AuditPage tool configuration cards from MVP-quality to production-grade YC-style SaaS onboarding:
+  - Redesigned card surfaces with gradient glassmorphism (`from-white/[0.035] to-white/[0.015]`), refined borders (`border-white/[0.06]`), and hover glow effects (`hover:shadow-indigo-500/[0.03]`)
+  - Added Framer Motion `whileHover={{ y: -2 }}` lift animation on cards
+  - Replaced all raw emoji icons (💡, ⚠️, ✓, ▶) with SVG icon components — lock icons, checkmarks, chevrons — for professional aesthetic
+  - Improved typography contrast: descriptions from `#64748b` → `#7a8ba8`, labels to `font-medium text-[#94a3b8]`
+  - Upgraded input styling: `rounded-xl px-4 py-3` with `focus:ring-2 focus:ring-indigo-500/10` focus states
+- **Progressive disclosure** — added collapsible "View included features" accordion with animated SVG chevron rotation and `border-t border-white/[0.05]` separator for cleaner card density
+- **Adaptive grid layout** — cards now use single-column centered layout (`max-w-2xl mx-auto`) when ≤4 tools selected, and switch to 2-column grid (`lg:grid-cols-2`) for 5+ tools. Prevents awkward empty space with small selections
+- **Fixed-plan pricing lock** — monthly spend input is now `readOnly` for fixed subscription plans (Pro, Business, Plus etc.), auto-calculated from `plan price × seats`. Shows a lock icon (🔒) and helper text "Auto-calculated from plan pricing". Usage-based/Enterprise plans remain editable
+- **API pricing intelligence** — OpenAI and Anthropic API cards now initialize with realistic defaults ($25, $30) instead of $0. Added preset spend chips (`$25/mo`, `$100/mo`, `$500/mo`) with active state highlighting. Added contextual pricing hints: "GPT-4o: $2.50/$10 per 1M tokens" and "Sonnet: $3/$15 per 1M tokens · Credits: $20/$50/$100 tiers"
+- **Card alignment fix** — wrapped spend/seats inputs and helper text in a unified container with `min-h-[24px]` helper region to prevent layout shift between per-seat and usage-based cards in the same row
+- **Scroll-to-top fix** — added `ScrollToTop` component using `useLocation()` in `App.tsx` so navigating from `/audit` to `/results/:id` starts at the top of the page
+- **CI pipeline fix (all green ✅)** — diagnosed why commits showed "1/2" failing checks. Root cause: 5 ESLint errors across 4 files:
+  - `AuditPage.tsx`: `setState` called synchronously in effect body → moved to cleanup function
+  - `LandingPage.tsx` + `ResultsPage.tsx`: `animate` variable self-referenced before declaration → refactored to inline `step()` function inside `useEffect`
+  - `ResultsPage.tsx` + `SharedAuditPage.tsx`: unused `SEVERITY_COLORS` constant → removed
+  - `LandingPage.tsx` + `ResultsPage.tsx`: unused `useCallback` import → removed
+- All 25 backend tests passing, frontend lint + typecheck both clean
 
-**What I learned:** _[Fill in tonight]_
+**What I learned:**
+- React 19's strict ESLint rules (`react-hooks/set-state-in-effect`, `react-hooks/refs`, `react-hooks/immutability`) are significantly stricter than React 18 — patterns like `setStage(0)` directly in an effect body or assigning `ref.current` during render are now flagged as errors, not warnings. The fix is to move state resets into cleanup functions and use inline closures inside effects
+- `useCallback` with self-referencing recursive animation frames (e.g. `requestAnimationFrame(animate)` inside its own declaration) creates a "variable accessed before declaration" error in React 19's linter. The correct pattern is to define the `step()` function inline inside `useEffect` — this avoids the circular reference entirely and removes the need for `useCallback`
+- Fixed-price locking for subscription plans is critical UX trust signal — letting users manually override official pricing (e.g. changing Cursor Pro from $20 to $5) breaks audit credibility. The `readOnly` + lock icon pattern is standard in financial SaaS
+- Adaptive grid layouts (single-column for ≤4 items, 2-column for 5+) are a Stripe/Vercel pattern that prevents "lonely card syndrome" — one small card in a massive 2-column grid looks unprofessional
 
-**Blockers / what I'm stuck on:** _[Fill in tonight]_
+**Blockers / what I'm stuck on:**
+- USER_INTERVIEWS.md still needs 3 real conversations — this is becoming urgent with deadline on May 16
+- Need to verify CI is green on GitHub (pushed fix at commit `883b177`)
+- Resend email domain verification still pending
 
-**Plan for tomorrow:** _[Fill in tonight]_
+**Plan for tomorrow:**
+- Conduct at least 2 user interviews and document in USER_INTERVIEWS.md
+- Deploy frontend to Vercel with production env vars
+- Polish ResultsPage — add PDF export, improve insight cards, add share functionality
+- Write REFLECTION.md with honest engineering retrospective
+- Mobile responsiveness testing pass across all pages
 
 ---
 
