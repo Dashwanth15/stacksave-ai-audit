@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import type { AuditResult, Insight } from '../types';
 import { fetchAudit, captureLead } from '../services/api';
 import { formatCurrencyFull, formatRelativeTime, severityLabel, insightTypeLabel } from '../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+
+// Curated chart palette — avoids muddy yellows, uses vibrant SaaS-grade colors
+const CHART_COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#34d399', '#f472b6', '#818cf8'];
 
 const SEVERITY_COLORS = {
   high: '#f87171',
@@ -13,13 +16,48 @@ const SEVERITY_COLORS = {
   info: '#818cf8',
 };
 
+// Animated counter hook — counts from 0 to target for wow-factor
+function useAnimatedCounter(target: number, duration = 1200) {
+  const [value, setValue] = useState(0);
+  const frameRef = useRef<number>(0);
+  const startRef = useRef<number>(0);
+
+  const animate = useCallback((timestamp: number) => {
+    if (!startRef.current) startRef.current = timestamp;
+    const progress = Math.min((timestamp - startRef.current) / duration, 1);
+    // Ease-out cubic for satisfying deceleration
+    const eased = 1 - Math.pow(1 - progress, 3);
+    setValue(Math.round(eased * target));
+    if (progress < 1) {
+      frameRef.current = requestAnimationFrame(animate);
+    }
+  }, [target, duration]);
+
+  useEffect(() => {
+    startRef.current = 0;
+    frameRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [animate]);
+
+  return value;
+}
+
+function SavingsCounter({ amount }: { amount: number }) {
+  const animatedValue = useAnimatedCounter(amount);
+  return (
+    <div className="text-6xl sm:text-8xl font-black gradient-text-green mb-2 tabular-nums">
+      ${animatedValue.toLocaleString()}
+    </div>
+  );
+}
+
 function InsightCard({ insight, index }: { insight: Insight; index: number }) {
   return (
     <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06 }}
-      className="glass-card p-6"
+      className="glass-card insight-card p-6"
     >
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex items-center gap-3">
@@ -224,10 +262,37 @@ export default function ResultsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen grid-bg flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#94a3b8]">Loading your audit…</p>
+      <div className="min-h-screen grid-bg">
+        {/* Skeleton nav */}
+        <div className="border-b border-white/5 h-16" />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-12 space-y-8">
+          {/* Skeleton hero card */}
+          <div className="glass-card-static p-8 sm:p-12 space-y-4">
+            <div className="skel-block h-4 w-48 mx-auto" />
+            <div className="skel-block h-20 w-56 mx-auto" />
+            <div className="skel-block h-5 w-64 mx-auto" />
+            <div className="skel-block h-4 w-80 mx-auto" />
+          </div>
+          {/* Skeleton chart */}
+          <div className="glass-card-static p-6 space-y-4">
+            <div className="skel-block h-5 w-52" />
+            <div className="flex items-end gap-4 h-40 pt-4">
+              {[70, 50, 35, 55].map((h, i) => (
+                <div key={i} className="skel-block flex-1" style={{ height: `${h}%` }} />
+              ))}
+            </div>
+          </div>
+          {/* Skeleton insights */}
+          {[1, 2].map((i) => (
+            <div key={i} className="glass-card-static p-6 space-y-3">
+              <div className="flex justify-between">
+                <div className="skel-block h-5 w-32" />
+                <div className="skel-block h-5 w-20" />
+              </div>
+              <div className="skel-block h-4 w-full" />
+              <div className="skel-block h-4 w-3/4" />
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -288,8 +353,8 @@ export default function ResultsPage() {
         <m.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`glass-card p-8 sm:p-12 text-center ${audit.isAlreadyOptimal ? 'border-emerald-500/20' : 'border-indigo-500/20 glow-primary'}`}
-          style={{ borderColor: audit.isAlreadyOptimal ? 'rgba(52, 211, 153, 0.2)' : 'rgba(129, 140, 248, 0.2)' }}
+          className={`glass-card-static p-8 sm:p-12 text-center ${audit.isAlreadyOptimal ? 'border-emerald-500/20' : 'savings-hero-card glow-savings'}`}
+          style={{ borderColor: audit.isAlreadyOptimal ? 'rgba(52, 211, 153, 0.2)' : 'rgba(52, 211, 153, 0.15)' }}
         >
           <div className="text-sm text-[#64748b] uppercase tracking-wider mb-2">
             {audit.companyName || 'Your AI Stack'} · Audited {formatRelativeTime(audit.createdAt)}
@@ -307,9 +372,8 @@ export default function ResultsPage() {
           ) : (
             <>
               <p className="text-[#94a3b8] text-sm mb-2">Potential monthly savings</p>
-              <div className="text-6xl sm:text-8xl font-black gradient-text-green mb-2">
-                {formatCurrencyFull(audit.estimatedMonthlySavings)}
-              </div>
+              <SavingsCounter amount={audit.estimatedMonthlySavings} />
+              <div className="sr-only">{formatCurrencyFull(audit.estimatedMonthlySavings)}</div>
               <div className="text-2xl text-[#94a3b8] mb-4">
                 {formatCurrencyFull(audit.estimatedAnnualSavings)}/year · {audit.savingsPercentage}% reduction
               </div>
@@ -367,9 +431,9 @@ export default function ResultsPage() {
                     contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#f8fafc' }}
                     formatter={(value: number) => [`$${value}/mo`, 'Potential saving']}
                   />
-                  <Bar dataKey="saving" radius={[6, 6, 0, 0]}>
-                    {chartData.map((entry, i) => (
-                      <Cell key={i} fill={SEVERITY_COLORS[entry.severity as keyof typeof SEVERITY_COLORS] || '#818cf8'} />
+                  <Bar dataKey="saving" radius={[8, 8, 0, 0]}>
+                    {chartData.map((_entry, i) => (
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} fillOpacity={0.85} />
                     ))}
                   </Bar>
                 </BarChart>

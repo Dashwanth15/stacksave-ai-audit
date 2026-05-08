@@ -15,6 +15,8 @@ import { fetchAudit } from '../services/api';
 import { formatCurrencyFull, formatRelativeTime, severityLabel, insightTypeLabel } from '../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
+const CHART_COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#34d399', '#f472b6', '#818cf8'];
+
 const SEVERITY_COLORS = {
   high: '#f87171',
   medium: '#fbbf24',
@@ -28,7 +30,7 @@ function SharedInsightCard({ insight, index }: { insight: Insight; index: number
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06 }}
-      className="glass-card p-6"
+      className="glass-card insight-card p-6"
     >
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex items-center gap-3">
@@ -84,10 +86,28 @@ export default function SharedAuditPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen grid-bg flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#94a3b8]">Loading audit report…</p>
+      <div className="min-h-screen grid-bg">
+        <div className="border-b border-white/5 h-16" />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-12 space-y-8">
+          <div className="glass-card-static p-8 sm:p-12 space-y-4">
+            <div className="skel-block h-4 w-48 mx-auto" />
+            <div className="skel-block h-20 w-56 mx-auto" />
+            <div className="skel-block h-5 w-64 mx-auto" />
+          </div>
+          <div className="glass-card-static p-6 space-y-4">
+            <div className="skel-block h-5 w-52" />
+            <div className="flex items-end gap-4 h-40 pt-4">
+              {[70, 50, 35, 55].map((h, i) => (
+                <div key={i} className="skel-block flex-1" style={{ height: `${h}%` }} />
+              ))}
+            </div>
+          </div>
+          {[1, 2].map((i) => (
+            <div key={i} className="glass-card-static p-6 space-y-3">
+              <div className="flex justify-between"><div className="skel-block h-5 w-32" /><div className="skel-block h-5 w-20" /></div>
+              <div className="skel-block h-4 w-full" /><div className="skel-block h-4 w-3/4" />
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -159,8 +179,8 @@ export default function SharedAuditPage() {
         <m.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`glass-card p-8 sm:p-12 text-center ${audit.isAlreadyOptimal ? 'border-emerald-500/20' : 'border-indigo-500/20 glow-primary'}`}
-          style={{ borderColor: audit.isAlreadyOptimal ? 'rgba(52, 211, 153, 0.2)' : 'rgba(129, 140, 248, 0.2)' }}
+          className={`glass-card-static p-8 sm:p-12 text-center ${audit.isAlreadyOptimal ? 'border-emerald-500/20' : 'savings-hero-card glow-savings'}`}
+          style={{ borderColor: audit.isAlreadyOptimal ? 'rgba(52, 211, 153, 0.2)' : 'rgba(52, 211, 153, 0.15)' }}
         >
           <div className="text-sm text-[#64748b] uppercase tracking-wider mb-2">
             AI Stack Audit · {formatRelativeTime(audit.createdAt)}
@@ -237,9 +257,9 @@ export default function SharedAuditPage() {
                     contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#f8fafc' }}
                     formatter={(value: number) => [`$${value}/mo`, 'Potential saving']}
                   />
-                  <Bar dataKey="saving" radius={[6, 6, 0, 0]}>
-                    {chartData.map((entry, i) => (
-                      <Cell key={i} fill={SEVERITY_COLORS[entry.severity as keyof typeof SEVERITY_COLORS] || '#818cf8'} />
+                  <Bar dataKey="saving" radius={[8, 8, 0, 0]}>
+                    {chartData.map((_entry, i) => (
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} fillOpacity={0.85} />
                     ))}
                   </Bar>
                 </BarChart>

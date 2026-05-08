@@ -1,6 +1,45 @@
-import type { ReactNode } from 'react';
-import { m } from 'framer-motion';
+import { type ReactNode, useState, useEffect, useRef, useCallback } from 'react';
+import { m, useInView } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+
+// Animated counter — counts up when element scrolls into view
+function AnimatedStat({ value, label }: { value: string; label: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-50px' });
+  const numericPart = value.replace(/[^0-9]/g, '');
+  const prefix = value.match(/^[^0-9]*/)?.[0] || '';
+  const suffix = value.match(/[^0-9]*$/)?.[0] || '';
+  const target = parseInt(numericPart) || 0;
+
+  const [current, setCurrent] = useState(0);
+  const frameRef = useRef<number>(0);
+  const startRef = useRef<number>(0);
+
+  const animate = useCallback((timestamp: number) => {
+    if (!startRef.current) startRef.current = timestamp;
+    const progress = Math.min((timestamp - startRef.current) / 1000, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    setCurrent(Math.round(eased * target));
+    if (progress < 1) frameRef.current = requestAnimationFrame(animate);
+  }, [target]);
+
+  useEffect(() => {
+    if (isInView && target > 0) {
+      startRef.current = 0;
+      frameRef.current = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(frameRef.current);
+    }
+  }, [isInView, animate, target]);
+
+  return (
+    <div ref={ref}>
+      <div className="text-3xl md:text-4xl font-extrabold gradient-text-green mb-2 tabular-nums">
+        {target > 0 ? `${prefix}${current.toLocaleString()}${suffix}` : value}
+      </div>
+      <div className="text-sm text-[#94a3b8]">{label}</div>
+    </div>
+  );
+}
 
 const features = [
   {
@@ -143,8 +182,8 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ────────────────────────────────────────────── */}
-      <section className="pt-24 pb-20 md:pt-32 md:pb-28 lg:pt-40 lg:pb-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="pt-24 pb-20 md:pt-32 md:pb-28 lg:pt-40 lg:pb-32 hero-glow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             {/* Badge */}
             <m.div
@@ -234,10 +273,7 @@ export default function LandingPage() {
                 variants={fadeUp}
                 className="glass-card p-6 md:p-8 text-center"
               >
-                <div className="text-3xl md:text-4xl font-extrabold gradient-text-green mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-sm text-[#94a3b8]">{stat.label}</div>
+                <AnimatedStat value={stat.value} label={stat.label} />
               </m.div>
             ))}
           </div>

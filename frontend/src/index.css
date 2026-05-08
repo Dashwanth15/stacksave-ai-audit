@@ -76,12 +76,24 @@ body {
   border-radius: var(--radius-lg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .glass-card:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
+}
+
+/* Variant: no hover lift (for content cards that shouldn't move) */
+.glass-card-static {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background 0.25s ease, border-color 0.25s ease;
 }
 
 /* ── Gradient Text ─────────────────────────────────────────── */
@@ -99,13 +111,28 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+.gradient-text-gold {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 /* ── Glow Effects ──────────────────────────────────────────── */
 .glow-primary {
   box-shadow: 0 0 30px rgba(129, 140, 248, 0.15), 0 0 60px rgba(129, 140, 248, 0.05);
 }
 
+.glow-primary-strong {
+  box-shadow: 0 0 40px rgba(129, 140, 248, 0.25), 0 0 80px rgba(129, 140, 248, 0.1), 0 0 120px rgba(99, 102, 241, 0.05);
+}
+
 .glow-success {
   box-shadow: 0 0 30px rgba(52, 211, 153, 0.2), 0 0 60px rgba(52, 211, 153, 0.05);
+}
+
+.glow-savings {
+  box-shadow: 0 0 60px rgba(52, 211, 153, 0.15), 0 0 120px rgba(34, 211, 238, 0.08);
 }
 
 /* ── Grid Background ───────────────────────────────────────── */
@@ -116,6 +143,53 @@ body {
     linear-gradient(rgba(129, 140, 248, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(129, 140, 248, 0.03) 1px, transparent 1px);
   background-size: 100% 100%, 60px 60px, 60px 60px;
+}
+
+/* ── Hero Background Orbs (depth + premium feel) ───────────── */
+.hero-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-glow::before,
+.hero-glow::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-glow::before {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%);
+  top: -200px;
+  left: -100px;
+  animation: float-orb 8s ease-in-out infinite;
+}
+
+.hero-glow::after {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.2) 0%, transparent 70%);
+  bottom: -150px;
+  right: -100px;
+  animation: float-orb 10s ease-in-out infinite reverse;
+}
+
+@keyframes float-orb {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -20px) scale(1.05);
+  }
+  66% {
+    transform: translate(-20px, 15px) scale(0.95);
+  }
 }
 
 /* ── Placeholder color (used in form inputs) ───────────────── */
@@ -153,8 +227,33 @@ body {
   }
 }
 
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 .animate-fade-in-up {
   animation: fadeInUp 0.5s ease forwards;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
 }
 
 .skeleton {
@@ -168,6 +267,18 @@ body {
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-sm);
 }
+
+/* ── Staggered entry animations ────────────────────────────── */
+.stagger-enter > * {
+  animation: fadeInUp 0.5s ease forwards;
+  opacity: 0;
+}
+.stagger-enter > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-enter > *:nth-child(2) { animation-delay: 0.10s; }
+.stagger-enter > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-enter > *:nth-child(4) { animation-delay: 0.20s; }
+.stagger-enter > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger-enter > *:nth-child(6) { animation-delay: 0.30s; }
 
 /* ── Severity Badges ───────────────────────────────────────── */
 .badge-high {
@@ -194,6 +305,83 @@ body {
   border: 1px solid rgba(129, 140, 248, 0.3);
 }
 
+/* ── Recharts Tooltip Override ──────────────────────────────── */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: #1a1a2e !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ── Savings Card Animated Border ──────────────────────────── */
+.savings-hero-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.savings-hero-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(52, 211, 153, 0.3),
+    rgba(34, 211, 238, 0.2),
+    rgba(99, 102, 241, 0.2),
+    rgba(52, 211, 153, 0.3)
+  );
+  background-size: 300% 300%;
+  animation: gradient-shift 4s ease infinite;
+  z-index: -1;
+  opacity: 0.5;
+}
+
+/* ── Results Loading Skeleton ──────────────────────────────── */
+.results-skeleton {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.skel-block {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ── Insight Card Enhancement ──────────────────────────────── */
+.insight-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.insight-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Tool Select Card ──────────────────────────────────────── */
+.tool-select-card {
+  transition: all 0.2s ease;
+}
+
+.tool-select-card:hover {
+  transform: translateY(-2px);
+}
+
+.tool-select-card[aria-pressed="true"] {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+}
+
 /* ── Focus styles for accessibility ────────────────────────── */
 :focus-visible {
   outline: 2px solid var(--color-primary);
@@ -215,4 +403,41 @@ input, select, textarea {
 /* ── Smooth transitions ────────────────────────────────────── */
 a, button {
   transition: all 0.2s ease;
+}
+
+/* ── Gradient CTA Button Hover ─────────────────────────────── */
+.cta-gradient {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-gradient::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.cta-gradient:hover::after {
+  opacity: 1;
+}
+
+.cta-gradient > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Progress bar animated fill ────────────────────────────── */
+.progress-fill {
+  background: linear-gradient(90deg, #34d399, #6366f1, #f87171);
+  background-size: 200% 100%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* ── Audit submission overlay ──────────────────────────────── */
+.audit-processing-overlay {
+  background: radial-gradient(circle at center, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
 }

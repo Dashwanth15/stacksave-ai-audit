@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { TOOLS, USE_CASES } from '../data/tools';
@@ -7,6 +7,35 @@ import { submitAudit } from '../services/api';
 import type { ToolEntry, UseCase } from '../types';
 
 type BillingPeriod = 'monthly' | 'annual';
+
+// Staged loading messages for realistic processing feel
+const LOADING_STAGES = [
+  'Analyzing your stack…',
+  'Checking plan pricing…',
+  'Finding overlapping tools…',
+  'Calculating savings…',
+  'Generating AI summary…',
+];
+
+function useLoadingStage(isLoading: boolean) {
+  const [stage, setStage] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+
+  useEffect(() => {
+    if (isLoading) {
+      setStage(0);
+      intervalRef.current = setInterval(() => {
+        setStage((prev) => Math.min(prev + 1, LOADING_STAGES.length - 1));
+      }, 1500);
+      return () => clearInterval(intervalRef.current);
+    } else {
+      setStage(0);
+      clearInterval(intervalRef.current);
+    }
+  }, [isLoading]);
+
+  return LOADING_STAGES[stage];
+}
 
 interface FormState {
   tools: ToolEntry[];
@@ -29,6 +58,7 @@ export default function AuditPage() {
   const [form, setForm, clearForm] = useLocalStorage<FormState>('stacksave-audit-form', DEFAULT_FORM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const loadingText = useLoadingStage(loading);
 
   const isAnnual = form.billingPeriod === 'annual';
 
@@ -268,7 +298,7 @@ export default function AuditPage() {
                   id={`tool-toggle-${tool.id}`}
                   aria-pressed={selected}
                   aria-label={`Toggle ${tool.name}`}
-                  className={`p-4 rounded-xl border transition-all text-center ${
+                  className={`tool-select-card p-4 rounded-xl border text-center ${
                     selected
                       ? 'border-indigo-500/50 bg-indigo-500/10 text-white'
                       : 'border-white/8 bg-white/3 text-[#64748b] hover:border-white/20 hover:text-white'
@@ -508,10 +538,9 @@ export default function AuditPage() {
                   </div>
                   <div className="mt-2 h-1.5 rounded-full bg-white/5 overflow-hidden">
                     <div
-                      className="h-full rounded-full transition-all duration-500"
+                      className="h-full rounded-full transition-all duration-500 progress-fill"
                       style={{
                         width: `${Math.min(100, (form.tools.reduce((sum, t) => sum + t.monthlySpend, 0) / 500) * 100)}%`,
-                        background: 'linear-gradient(90deg, #34d399, #6366f1, #f87171)',
                       }}
                     />
                   </div>
@@ -559,7 +588,7 @@ export default function AuditPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Analyzing your stack…
+                {loadingText}
               </span>
             ) : (
               `Run Audit → ${form.tools.length > 0 ? `(${form.tools.length} tool${form.tools.length > 1 ? 's' : ''})` : ''}`
