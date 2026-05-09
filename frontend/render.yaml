@@ -3,7 +3,7 @@
 
 services:
   - type: web
-    name: stacksave-frontend
+    name: stacksave-ai-audit
     runtime: node
     plan: free
     region: oregon
