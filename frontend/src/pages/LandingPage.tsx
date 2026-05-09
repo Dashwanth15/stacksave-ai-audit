@@ -181,7 +181,7 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ────────────────────────────────────────────── */}
-      <section className="pt-24 pb-20 md:pt-32 md:pb-28 lg:pt-40 lg:pb-32 hero-glow">
+      <section className="pt-20 pb-16 md:pt-28 md:pb-24 lg:pt-32 lg:pb-28 hero-glow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             {/* Badge */}
@@ -189,7 +189,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm font-medium mb-10"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm font-medium mb-8"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               Free · No login required · Results in 60 seconds
@@ -222,7 +222,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.15 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
             >
               <m.button
                 whileHover={{ scale: 1.03 }}

@@ -13,9 +13,55 @@ import { m } from 'framer-motion';
 import type { AuditResult, Insight } from '../types';
 import { fetchAudit } from '../services/api';
 import { formatCurrencyFull, formatRelativeTime, severityLabel, insightTypeLabel } from '../utils/formatters';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 
 const CHART_COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#34d399', '#f472b6', '#818cf8'];
+
+function clampTextLabel(label: unknown, max = 12) {
+  const s = String(label ?? '');
+  if (s.length <= max) return s;
+  return `${s.slice(0, Math.max(0, max - 1))}…`;
+}
+
+function hexToRgba(hex: string, alpha: number) {
+  const h = hex.replace('#', '').trim();
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function SavingsTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ value?: number; payload?: { name?: string }; color?: string }>;
+}) {
+  if (!active || !payload || payload.length === 0) return null;
+  const row = payload[0];
+  const name = row?.payload?.name ?? '';
+  const value = typeof row?.value === 'number' ? row.value : 0;
+  const color = row?.color || '#818cf8';
+
+  return (
+    <div
+      className="rounded-xl border border-white/10 bg-[#0f1320]/95 px-3.5 py-3 shadow-[0_16px_60px_rgba(0,0,0,0.55)] backdrop-blur-md"
+      style={{ minWidth: 180 }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <span
+          className="h-2.5 w-2.5 rounded-full"
+          style={{ background: color, boxShadow: `0 0 0 3px ${hexToRgba(color, 0.12)}` }}
+        />
+        <div className="text-sm font-semibold text-white leading-none">{name}</div>
+      </div>
+      <div className="text-xs text-[#94a3b8]">Potential recovery</div>
+      <div className="text-lg font-bold text-emerald-300 tabular-nums">{`$${value}/mo`}</div>
+    </div>
+  );
+}
 
 
 
@@ -257,16 +303,52 @@ export default function SharedAuditPage() {
             <h2 className="text-xl font-semibold mb-6">Savings breakdown by tool</h2>
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
-                  <Tooltip
-                    contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#f8fafc' }}
-                    formatter={(value: number) => [`$${value}/mo`, 'Potential saving']}
+                <BarChart data={chartData} margin={{ top: 6, right: 6, bottom: 0, left: 0 }} barCategoryGap="26%">
+                  <defs>
+                    {chartData.map((_entry, i) => {
+                      const base = CHART_COLORS[i % CHART_COLORS.length];
+                      return (
+                        <linearGradient key={i} id={`ss-bar-grad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={hexToRgba(base, 0.98)} />
+                          <stop offset="65%" stopColor={hexToRgba(base, 0.78)} />
+                          <stop offset="100%" stopColor={hexToRgba(base, 0.58)} />
+                        </linearGradient>
+                      );
+                    })}
+                  </defs>
+                  <CartesianGrid stroke="rgba(255,255,255,0.045)" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }}
+                    tickFormatter={(v) => clampTextLabel(v, 11)}
+                    axisLine={false}
+                    tickLine={false}
+                    tickMargin={10}
+                    height={38}
                   />
-                  <Bar dataKey="saving" radius={[8, 8, 0, 0]}>
+                  <YAxis
+                    tick={{ fill: '#7b8aa0', fontSize: 11, fontWeight: 500 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v) => `$${v}`}
+                    width={46}
+                  />
+                  <Tooltip content={<SavingsTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                  <Bar
+                    dataKey="saving"
+                    radius={[12, 12, 6, 6]}
+                    isAnimationActive
+                    animationDuration={850}
+                    animationEasing="ease-out"
+                    barSize={34}
+                  >
                     {chartData.map((_entry, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} fillOpacity={0.85} />
+                      <Cell
+                        key={i}
+                        fill={`url(#ss-bar-grad-${i})`}
+                        stroke={hexToRgba(CHART_COLORS[i % CHART_COLORS.length], 0.28)}
+                        strokeWidth={1}
+                      />
                     ))}
                   </Bar>
                 </BarChart>
