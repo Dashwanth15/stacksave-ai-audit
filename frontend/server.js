@@ -10,17 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 // SPA fallback - redirect all non-file requests to index.html
-app.use(history({
-  rewrites: [
-    {
-      from: /^\/api\/.*$/,
-      to: function(context) {
-        // Don't rewrite API routes
-        return context.parsedUrl.pathname;
-      }
-    }
-  ]
-}));
+app.use(history());
 
 // Serve static files from dist directory
 app.use(express.static(path.join(__dirname, 'dist')));
