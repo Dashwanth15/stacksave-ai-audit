@@ -17,7 +17,7 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: FRONTEND_URL
-        value: https://stacksave-frontend.onrender.com
+        value: https://stacksave-ai-audit.onrender.com
         # IMPORTANT: Update this value after deploying the frontend
       - key: PORT
         value: 10000
