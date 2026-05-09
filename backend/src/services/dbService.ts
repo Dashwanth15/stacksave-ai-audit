@@ -90,11 +90,7 @@ export async function connectDB(): Promise<void> {
   }
 
   try {
-    await mongoose.connect(uri, {
-      family: 4,                        // Force IPv4 — avoids IPv6 DNS issues
-      serverSelectionTimeoutMS: 15000,   // Fail faster for better error feedback
-      connectTimeoutMS: 15000,
-    });
+    await mongoose.connect(uri);
     isConnected = true;
     console.log('✅ MongoDB connected');
   } catch (err) {
