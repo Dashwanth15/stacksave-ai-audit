@@ -6,13 +6,21 @@ import { fetchAudit, captureLead } from '../services/api';
 import { formatCurrencyFull, formatRelativeTime, severityLabel, insightTypeLabel } from '../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 
-// Curated chart palette — avoids muddy yellows, uses vibrant SaaS-grade colors
-const CHART_COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#34d399', '#f472b6', '#818cf8'];
+// Cohesive chart palette — unified blue/purple/cyan family
+const CHART_COLORS = ['#6366f1', '#7c3aed', '#4f46e5', '#06b6d4', '#3b82f6', '#22d3ee'];
 
-function clampTextLabel(label: unknown, max = 12) {
-  const s = String(label ?? '');
-  if (s.length <= max) return s;
-  return `${s.slice(0, Math.max(0, max - 1))}…`;
+function toolAlias(name: string) {
+  const n = name.toLowerCase();
+  if (n.includes('github') && n.includes('copilot')) return 'GitHub';
+  if (n.includes('copilot')) return 'GitHub';
+  if (n.includes('anthropic')) return 'Anthropic';
+  if (n.includes('openai')) return 'OpenAI';
+  if (n.includes('chatgpt')) return 'ChatGPT';
+  if (n.includes('claude')) return 'Claude';
+  if (n.includes('cursor')) return 'Cursor';
+  if (n.includes('gemini')) return 'Gemini';
+  if (n.includes('windsurf')) return 'Windsurf';
+  return name;
 }
 
 function hexToRgba(hex: string, alpha: number) {
@@ -124,7 +132,7 @@ function InsightCard({ insight, index }: { insight: Insight; index: number }) {
       </div>
 
       {/* Issue description */}
-      <p className="text-[#b0bec5] text-sm mb-4 leading-relaxed">{insight.message}</p>
+      <p className="text-[#c0cbd6] text-sm mb-4 leading-relaxed">{insight.message}</p>
 
       {/* Recommendation action box */}
       <div className="recommendation-box p-4 flex items-start gap-3">
@@ -138,7 +146,7 @@ function InsightCard({ insight, index }: { insight: Insight; index: number }) {
       </div>
 
       {/* Supporting rationale */}
-      <p className="text-xs text-[#64748b] mt-4 leading-relaxed border-t border-white/5 pt-3">{insight.reason}</p>
+      <p className="text-xs text-[#76879f] mt-4 leading-relaxed border-t border-white/5 pt-3">{insight.reason}</p>
     </m.div>
   );
 }
@@ -375,27 +383,42 @@ export default function ResultsPage() {
     .slice(0, 6)
     .map((i) => ({
       name: i.toolName,
+      label: toolAlias(i.toolName),
       saving: i.potentialMonthlySaving,
       severity: i.severity,
     }));
 
+  const highCount = audit.insights.filter((i) => i.severity === 'high').length;
+  const overlapCount = audit.insights.filter((i) => i.type === 'overlapping_tools').length;
+  const supportingInsight =
+    overlapCount > 0
+      ? 'Largest opportunity detected in overlapping AI subscriptions.'
+      : highCount > 0
+        ? `${highCount} high-confidence optimization opportunit${highCount === 1 ? 'y' : 'ies'} detected.`
+        : `${audit.insights.length} actionable optimization finding${audit.insights.length === 1 ? '' : 's'} identified.`;
+
   return (
     <div className="min-h-screen grid-bg pb-20">
       {/* Nav */}
-      <nav className="border-b border-white/5 backdrop-blur-md sticky top-0 z-40 bg-[#0a0a14]/80">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <button onClick={() => navigate('/')} className="text-indigo-400 font-bold text-lg">StackSave</button>
+      <nav className="border-b border-white/[0.07] backdrop-blur-xl sticky top-0 z-40 bg-[#0a0a14]/88 shadow-[0_10px_40px_rgba(0,0,0,0.18)]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate('/')} className="text-indigo-400 font-bold text-lg tracking-tight">StackSave</button>
+            <span className="hidden sm:inline-flex text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[#94a3b8] font-medium">
+              Audited {formatRelativeTime(audit.createdAt)}
+            </span>
+          </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowEmailModal(true)}
-              className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 text-sm font-medium transition-all"
+              className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all"
               aria-label="Save audit report"
             >
               Save Report
             </button>
             <button
               onClick={copyShareUrl}
-              className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white border border-white/10 text-sm font-medium transition-all"
+              className="px-4 py-2 rounded-lg bg-white/[0.045] hover:bg-white/10 text-slate-100 border border-white/10 text-sm font-medium transition-all"
               aria-label="Copy share link"
             >
               {copied ? '✓ Copied!' : '🔗 Share'}
@@ -438,6 +461,12 @@ export default function ResultsPage() {
                 <span className="text-[#475569]">→</span>
                 <span className="text-[#94a3b8]">Optimized <strong className="text-emerald-400 ml-1">{formatCurrencyFull(audit.optimizedMonthlySpend)}/mo</strong></span>
               </div>
+              <div className="mt-4 text-sm text-[#7b8aa0]">
+                <span className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.02] border border-white/5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-400/70" />
+                  {supportingInsight}
+                </span>
+              </div>
             </>
           )}
         </m.div>
@@ -477,7 +506,7 @@ export default function ResultsPage() {
             className="glass-card-static p-6 sm:p-8"
           >
             <h2 className="text-lg font-semibold mb-1">Savings Breakdown</h2>
-            <p className="text-xs text-[#64748b] mb-6">Potential monthly recovery by tool</p>
+            <p className="text-xs text-[#7486a0] mb-6">Potential monthly recovery by tool</p>
             <div className="h-52" aria-label="Savings chart by tool">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -499,9 +528,9 @@ export default function ResultsPage() {
                   </defs>
                   <CartesianGrid stroke="rgba(255,255,255,0.045)" vertical={false} />
                   <XAxis
-                    dataKey="name"
+                    dataKey="label"
                     tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }}
-                    tickFormatter={(v) => clampTextLabel(v, 11)}
+                    tickFormatter={(v) => String(v)}
                     axisLine={false}
                     tickLine={false}
                     tickMargin={10}
@@ -567,7 +596,7 @@ export default function ResultsPage() {
                 {audit.insights.length} finding{audit.insights.length > 1 ? 's' : ''}
               </span>
             </div>
-            <p className="text-sm text-[#64748b] mb-8">Per-tool spend analysis and actionable recommendations</p>
+            <p className="text-sm text-[#73849c] mb-8">Per-tool spend analysis and actionable recommendations</p>
             <div className="space-y-5">
               {audit.insights.map((insight, i) => (
                 <InsightCard key={`${insight.toolId}-${insight.type}`} insight={insight} index={i} />
@@ -605,27 +634,37 @@ export default function ResultsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="glass-card p-8 text-center"
+          className="glass-card-static p-8 text-center border border-white/10 shadow-[0_14px_50px_rgba(0,0,0,0.2)]"
         >
           <h3 className="text-xl font-semibold mb-2">Share this audit</h3>
           <p className="text-[#94a3b8] text-sm mb-5">
             Your public audit URL — company name and email are not included in the shared version.
           </p>
-          <div className="flex items-center gap-3 max-w-md mx-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-md mx-auto">
             <input
               type="text"
               value={audit.publicUrl}
               readOnly
-              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-[#94a3b8] text-sm focus:outline-none"
+              className="share-url-input flex-1 px-4 py-3 text-sm"
               aria-label="Shareable audit URL"
             />
             <button
               onClick={copyShareUrl}
-              className="px-5 py-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 text-sm font-medium whitespace-nowrap transition-all"
+              className="copy-button px-5 py-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium whitespace-nowrap transition-all"
               aria-label="Copy share URL to clipboard"
             >
-              {copied ? '✓' : 'Copy'}
+              {copied ? 'Copied' : 'Copy'}
             </button>
+          </div>
+          <div className="mt-3 text-xs text-[#76879e]">
+            {copied ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="text-emerald-300">✓</span>
+                Link copied to clipboard
+              </span>
+            ) : (
+              <span>Copy the link to share with your team or CFO.</span>
+            )}
           </div>
           <div className="flex gap-3 justify-center mt-4">
             <a

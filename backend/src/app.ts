@@ -18,14 +18,21 @@ import { requestLogger } from './middleware/logger';
 const app = express();
 const PORT = process.env.PORT || 5000;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // ── Security Headers ─────────────────────────────────────────
 app.use(helmet());
 
 // ── CORS ─────────────────────────────────────────────────────
+// In production, only allow the production frontend URL
+// In development, allow localhost for testing
+const allowedOrigins = NODE_ENV === 'production'
+  ? [FRONTEND_URL]
+  : [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000'];
+
 app.use(
   cors({
-    origin: [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000'],
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -63,8 +70,10 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 async function start() {
   await connectDB();
   app.listen(PORT, () => {
-    console.log(`🚀 StackSave API running at http://localhost:${PORT}`);
-    console.log(`   Health: http://localhost:${PORT}/api/health`);
+    const serverUrl = NODE_ENV === 'production' ? `https://your-backend-url.onrender.com` : `http://localhost:${PORT}`;
+    console.log(`🚀 StackSave API running at ${serverUrl}`);
+    console.log(`   Health: ${serverUrl}/api/health`);
+    console.log(`   Environment: ${NODE_ENV}`);
   });
 }
 

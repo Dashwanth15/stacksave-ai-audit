@@ -15,12 +15,21 @@ import { fetchAudit } from '../services/api';
 import { formatCurrencyFull, formatRelativeTime, severityLabel, insightTypeLabel } from '../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 
-const CHART_COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#34d399', '#f472b6', '#818cf8'];
+// Cohesive chart palette — unified blue/purple/cyan family
+const CHART_COLORS = ['#6366f1', '#7c3aed', '#4f46e5', '#06b6d4', '#3b82f6', '#22d3ee'];
 
-function clampTextLabel(label: unknown, max = 12) {
-  const s = String(label ?? '');
-  if (s.length <= max) return s;
-  return `${s.slice(0, Math.max(0, max - 1))}…`;
+function toolAlias(name: string) {
+  const n = name.toLowerCase();
+  if (n.includes('github') && n.includes('copilot')) return 'GitHub';
+  if (n.includes('copilot')) return 'GitHub';
+  if (n.includes('anthropic')) return 'Anthropic';
+  if (n.includes('openai')) return 'OpenAI';
+  if (n.includes('chatgpt')) return 'ChatGPT';
+  if (n.includes('claude')) return 'Claude';
+  if (n.includes('cursor')) return 'Cursor';
+  if (n.includes('gemini')) return 'Gemini';
+  if (n.includes('windsurf')) return 'Windsurf';
+  return name;
 }
 
 function hexToRgba(hex: string, alpha: number) {
@@ -98,7 +107,7 @@ function SharedInsightCard({ insight, index }: { insight: Insight; index: number
           )}
         </div>
       </div>
-      <p className="text-[#b0bec5] text-sm mb-4 leading-relaxed">{insight.message}</p>
+      <p className="text-[#c0cbd6] text-sm mb-4 leading-relaxed">{insight.message}</p>
       <div className="recommendation-box p-4 flex items-start gap-3">
         <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5">
           <span className="text-indigo-400 text-xs font-bold">→</span>
@@ -108,7 +117,7 @@ function SharedInsightCard({ insight, index }: { insight: Insight; index: number
           <p className="text-indigo-200 text-sm leading-relaxed font-medium">{insight.suggestion}</p>
         </div>
       </div>
-      <p className="text-xs text-[#64748b] mt-4 leading-relaxed border-t border-white/5 pt-3">{insight.reason}</p>
+      <p className="text-xs text-[#76879f] mt-4 leading-relaxed border-t border-white/5 pt-3">{insight.reason}</p>
     </m.div>
   );
 }
@@ -190,20 +199,35 @@ export default function SharedAuditPage() {
     .slice(0, 6)
     .map((i) => ({
       name: i.toolName,
+      label: toolAlias(i.toolName),
       saving: i.potentialMonthlySaving,
       severity: i.severity,
     }));
 
+  const highCount = audit.insights.filter((i) => i.severity === 'high').length;
+  const overlapCount = audit.insights.filter((i) => i.type === 'overlapping_tools').length;
+  const supportingInsight =
+    overlapCount > 0
+      ? 'Largest opportunity detected in overlapping AI subscriptions.'
+      : highCount > 0
+        ? `${highCount} high-confidence optimization opportunit${highCount === 1 ? 'y' : 'ies'} detected.`
+        : `${audit.insights.length} actionable optimization finding${audit.insights.length === 1 ? '' : 's'} identified.`;
+
   return (
     <div className="min-h-screen grid-bg pb-20">
       {/* Shared audit banner */}
-      <nav className="border-b border-white/5 backdrop-blur-sm sticky top-0 z-40 bg-[#0b0b15]/80">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <button onClick={() => navigate('/')} className="text-indigo-400 font-bold text-lg">StackSave</button>
+      <nav className="border-b border-white/[0.07] backdrop-blur-xl sticky top-0 z-40 bg-[#0a0a14]/88 shadow-[0_10px_40px_rgba(0,0,0,0.18)]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate('/')} className="text-indigo-400 font-bold text-lg tracking-tight">StackSave</button>
+            <span className="hidden sm:inline-flex text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[#94a3b8] font-medium">
+              Shared report
+            </span>
+          </div>
           <div className="flex items-center gap-3">
             <button
               onClick={copyShareUrl}
-              className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white border border-white/10 text-sm font-medium transition-all"
+              className="px-4 py-2 rounded-lg bg-white/[0.045] hover:bg-white/10 text-slate-100 border border-white/10 text-sm font-medium transition-all"
               aria-label="Copy share link"
             >
               {copied ? '✓ Copied!' : '🔗 Share'}
@@ -262,6 +286,12 @@ export default function SharedAuditPage() {
                 <span>→</span>
                 <span>Optimized: <strong className="text-emerald-400">{formatCurrencyFull(audit.optimizedMonthlySpend)}/mo</strong></span>
               </div>
+              <div className="mt-4 text-sm text-[#7b8aa0]">
+                <span className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.02] border border-white/5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-400/70" />
+                  {supportingInsight}
+                </span>
+              </div>
             </>
           )}
         </m.div>
@@ -318,9 +348,9 @@ export default function SharedAuditPage() {
                   </defs>
                   <CartesianGrid stroke="rgba(255,255,255,0.045)" vertical={false} />
                   <XAxis
-                    dataKey="name"
+                    dataKey="label"
                     tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }}
-                    tickFormatter={(v) => clampTextLabel(v, 11)}
+                    tickFormatter={(v) => String(v)}
                     axisLine={false}
                     tickLine={false}
                     tickMargin={10}
@@ -383,7 +413,7 @@ export default function SharedAuditPage() {
                 {audit.insights.length} finding{audit.insights.length > 1 ? 's' : ''}
               </span>
             </div>
-            <p className="text-sm text-[#64748b] mb-8">Per-tool spend analysis and actionable recommendations</p>
+            <p className="text-sm text-[#73849c] mb-8">Per-tool spend analysis and actionable recommendations</p>
             <div className="space-y-5">
               {audit.insights.map((insight, i) => (
                 <SharedInsightCard key={`${insight.toolId}-${insight.type}`} insight={insight} index={i} />

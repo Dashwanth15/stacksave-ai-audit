@@ -1,0 +1,31 @@
+# Render Deployment Configuration — StackSave AI Audit Backend
+# This file configures automatic deployment from GitHub to Render
+
+services:
+  - type: web
+    name: stacksave-backend
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        value: https://stacksave-frontend.onrender.com
+        # IMPORTANT: Update this value after deploying the frontend
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+    # Health check
+    healthcheckPath: /api/health
+    # Auto-deploy from main branch
+    branch: main
+    # Build from the backend directory
+    rootDirectory: backend
