@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "start": "vite preview",
+    "start": "node server.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview"
@@ -14,7 +14,9 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.2.4",
     "axios": "^1.16.0",
+    "connect-history-api-fallback": "^2.0.0",
     "es-toolkit": "^1.46.1",
+    "express": "^5.2.1",
     "framer-motion": "^12.38.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
