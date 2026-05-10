@@ -194,11 +194,25 @@ StackSave/
 
 ---
 
+## Engineering & Strategy Docs
+
+Comprehensive documentation covering technical architecture, product strategy, and development process:
+
+* [`ARCHITECTURE.md`](./ARCHITECTURE.md) — system design, scaling strategy, and audit-engine flow
+* [`DEPLOYMENT.md`](./DEPLOYMENT.md) — production deployment guide and environment setup
+* [`DEVLOG.md`](./DEVLOG.md) — daily development progress and engineering insights
+* [`ECONOMICS.md`](./ECONOMICS.md) — unit economics and conversion funnel analysis
+* [`GTM.md`](./GTM.md) — go-to-market strategy and distribution channels
+* [`LANDING_COPY.md`](./LANDING_COPY.md) — landing page copy and messaging framework
+* [`METRICS.md`](./METRICS.md) — success metrics and KPI tracking strategy
+* [`PRICING_DATA.md`](./PRICING_DATA.md) — verified vendor pricing and catalog sources
+* [`PROMPTS.md`](./PROMPTS.md) — AI prompt engineering and chatbot configuration
+* [`REFLECTION.md`](./REFLECTION.md) — engineering retrospective and lessons learned
+* [`TESTS.md`](./TESTS.md) — automated audit-engine testing strategy and coverage
+* [`USER_INTERVIEWS.md`](./USER_INTERVIEWS.md) — customer discovery and validation insights
+
+---
+
 ## Entrepreneurial Context
 
-StackSave is a lead-generation tool for [Credex](https://credex.rocks), which sources discounted AI infrastructure credits. The product strategy — funnel economics, GTM, success metrics — is documented in:
-
-- [ECONOMICS.md](./ECONOMICS.md) — unit economics and conversion funnel math
-- [GTM.md](./GTM.md) — launch channels and distribution plan
-- [METRICS.md](./METRICS.md) — what success looks like at each stage
-- [ARCHITECTURE.md](./ARCHITECTURE.md) — system design and scaling plan
+StackSave is a lead-generation tool for [Credex](https://credex.rocks), which sources discounted AI infrastructure credits. The product strategy — funnel economics, GTM, success metrics — is documented in the comprehensive engineering and strategy docs above.
