@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import type { AuditResult } from '../types';
+import type { AuditResult, ToolEntry } from '../types';
 
 export function generateAuditPDF(audit: AuditResult): void {
   const doc = new jsPDF();
@@ -180,12 +180,12 @@ export function generateAuditPDF(audit: AuditResult): void {
     addText('Tool Breakdown', margin, yPosition, 13, brandDark, true);
     yPosition += 10;
 
-    audit.tools.slice(0, 8).forEach((tool: any) => {
+    audit.tools.slice(0, 8).forEach((tool: ToolEntry) => {
       checkPageBreak(20);
 
-      const toolName = tool.name || tool.toolName || 'Tool';
-      const plan = tool.plan || tool.selectedPlan || 'Standard';
-      const spend = tool.monthlySpend || tool.spend || 0;
+      const toolName = tool.toolId;
+      const plan = tool.plan;
+      const spend = tool.monthlySpend;
 
       addText(toolName, margin, yPosition, 10, primaryColor, true);
       yPosition += 4;
