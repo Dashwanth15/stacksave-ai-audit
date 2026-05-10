@@ -16,13 +16,33 @@ Enter your AI tool subscriptions, get an instant audit showing where you're over
 
 ---
 
-## Screenshots
+## Product Preview
 
-| Landing | Audit Form | Results |
-|---|---|---|
-| ![Landing page hero](docs/screenshots/landing.png) | ![Audit form — tool selection](docs/screenshots/audit.png) | ![Results — savings dashboard](docs/screenshots/results.png) |
+### 🏠 Landing Page
+Clean, conversion-optimized landing page with clear value proposition and instant audit access.
 
-> _Full walkthrough: [Loom demo link — add after recording]_
+![Landing page](frontend/src/assets/Screenshots/Landing_page.png)
+
+### ⚙️ Audit Configuration
+Intuitive tool selection with real-time pricing, plan features, and smart seat calculations.
+
+![Audit configuration](frontend/src/assets/Screenshots/Audit_page.png)
+
+### 📊 Optimization Report
+Comprehensive savings dashboard with per-tool insights, AI summary, and actionable recommendations.
+
+![Results dashboard](frontend/src/assets/Screenshots/Results_page.png)
+
+---
+
+**Key Features Shown:**
+- ✅ Real-time pricing from official vendor sources
+- ✅ Intelligent seat optimization and plan recommendations  
+- ✅ Interactive audit flow with progressive disclosure
+- ✅ Professional report with shareable URLs
+- ✅ PDF export for executive presentations
+
+> _Full product walkthrough available on the live demo: [stacksave-ai-audit.onrender.com](https://stacksave-ai-audit.onrender.com)_
 
 ---
 
