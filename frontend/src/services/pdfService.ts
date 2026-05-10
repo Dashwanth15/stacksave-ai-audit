@@ -10,12 +10,16 @@ export function generateAuditPDF(audit: AuditResult): void {
   
   let yPosition = margin;
 
-  // Professional document color palette
+  // Premium SaaS color palette - modern and professional
+  const brandColor = [99, 102, 241]; // Indigo-500 (StackSave brand)
+  const brandDark = [79, 70, 229]; // Indigo-600
   const primaryColor = [30, 41, 59]; // Slate-900
   const secondaryColor = [71, 85, 105]; // Slate-600
   const mutedColor = [148, 163, 184]; // Slate-400
-  const accentColor = [16, 185, 129]; // Emerald-500
+  const accentDark = [5, 150, 105]; // Emerald-600
   const lineColor = [226, 232, 240]; // Slate-200
+  const bgLight = [248, 250, 252]; // Slate-50
+  const bgSubtle = [241, 245, 249]; // Slate-100
 
   // Helper: Add text with consistent styling
   const addText = (text: string | string[], x: number, y: number, fontSize: number, color: number[] = primaryColor, isBold = false, align: 'left' | 'center' = 'left') => {
@@ -25,9 +29,15 @@ export function generateAuditPDF(audit: AuditResult): void {
     doc.text(text, x, y, { align });
   };
 
+  // Helper: Add background rectangle
+  const addBackground = (y: number, height: number, color: number[] = bgLight) => {
+    doc.setFillColor(color[0], color[1], color[2]);
+    doc.rect(margin, y, contentWidth, height, 'F');
+  };
+
   // Helper: Add horizontal line
-  const addLine = (y: number) => {
-    doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
+  const addLine = (y: number, color: number[] = lineColor) => {
+    doc.setDrawColor(color[0], color[1], color[2]);
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
   };
@@ -41,7 +51,11 @@ export function generateAuditPDF(audit: AuditResult): void {
   };
 
   // ── HEADER SECTION ────────────────────────────────────────
-  addText('StackSave AI Audit', pageWidth / 2, yPosition, 24, primaryColor, true, 'center');
+  // Subtle brand background
+  addBackground(yPosition, 50, bgSubtle);
+  yPosition += 15;
+
+  addText('StackSave', pageWidth / 2, yPosition, 28, brandDark, true, 'center');
   yPosition += 8;
   
   addText('AI Stack Optimization Report', pageWidth / 2, yPosition, 12, secondaryColor, false, 'center');
@@ -53,36 +67,48 @@ export function generateAuditPDF(audit: AuditResult): void {
     day: 'numeric'
   });
   addText(date, pageWidth / 2, yPosition, 10, mutedColor, false, 'center');
-  yPosition += 15;
+  yPosition += 18;
 
-  addLine(yPosition);
+  // Brand accent line
+  doc.setDrawColor(brandColor[0], brandColor[1], brandColor[2]);
+  doc.setLineWidth(2);
+  doc.line(margin + 40, yPosition, pageWidth - margin - 40, yPosition);
   yPosition += 25;
 
   // ── HERO METRICS SECTION ───────────────────────────────────
-  checkPageBreak(80);
+  checkPageBreak(90);
 
   if (!audit.isAlreadyOptimal) {
-    // Large centered savings number
-    addText('$' + audit.estimatedMonthlySavings.toLocaleString(), pageWidth / 2, yPosition, 42, accentColor, true, 'center');
-    yPosition += 10;
+    // Light background for hero section
+    addBackground(yPosition, 85, bgLight);
+    yPosition += 15;
+
+    // Large centered savings number with brand accent
+    addText('$' + audit.estimatedMonthlySavings.toLocaleString(), pageWidth / 2, yPosition, 44, accentDark, true, 'center');
+    yPosition += 12;
     
     addText('Potential Monthly Recovery', pageWidth / 2, yPosition, 11, secondaryColor, false, 'center');
     yPosition += 20;
 
-    // Supporting metrics
-    addText('$' + audit.estimatedAnnualSavings.toLocaleString() + ' per year', pageWidth / 2, yPosition, 12, primaryColor, true, 'center');
+    // Supporting metrics with subtle background
+    addBackground(yPosition, 35, bgSubtle);
+    yPosition += 10;
+    
+    addText('$' + audit.estimatedAnnualSavings.toLocaleString() + ' per year', pageWidth / 2, yPosition, 13, primaryColor, true, 'center');
     yPosition += 8;
     
-    addText(audit.savingsPercentage + '% reduction in spend', pageWidth / 2, yPosition, 11, secondaryColor, false, 'center');
-    yPosition += 15;
+    addText(audit.savingsPercentage + '% reduction in spend', pageWidth / 2, yPosition, 11, brandColor, false, 'center');
+    yPosition += 12;
 
     // Spend comparison
     addText('Current Spend: $' + audit.totalMonthlySpend.toLocaleString() + '/mo', pageWidth / 2, yPosition, 10, secondaryColor, false, 'center');
     yPosition += 6;
-    addText('Optimized Spend: $' + audit.optimizedMonthlySpend.toLocaleString() + '/mo', pageWidth / 2, yPosition, 10, accentColor, true, 'center');
+    addText('Optimized Spend: $' + audit.optimizedMonthlySpend.toLocaleString() + '/mo', pageWidth / 2, yPosition, 11, accentDark, true, 'center');
     yPosition += 20;
   } else {
-    addText('Your stack is well optimized', pageWidth / 2, yPosition, 20, accentColor, true, 'center');
+    addBackground(yPosition, 60, bgLight);
+    yPosition += 15;
+    addText('Your stack is well optimized', pageWidth / 2, yPosition, 22, accentDark, true, 'center');
     yPosition += 8;
     addText('No significant optimization opportunities identified', pageWidth / 2, yPosition, 11, secondaryColor, false, 'center');
     yPosition += 20;
@@ -93,14 +119,18 @@ export function generateAuditPDF(audit: AuditResult): void {
 
   // ── AI SUMMARY SECTION ───────────────────────────────────────
   if (audit.aiSummary) {
-    checkPageBreak(50);
+    checkPageBreak(60);
     
-    addText('AI Summary', margin, yPosition, 14, primaryColor, true);
+    addText('AI Summary', margin, yPosition, 15, brandDark, true);
     yPosition += 12;
 
-    const summaryLines = doc.splitTextToSize(audit.aiSummary, contentWidth);
-    addText(summaryLines, margin, yPosition, 11, secondaryColor);
-    yPosition += summaryLines.length * 6 + 20;
+    // Light background for AI summary
+    const summaryLines = doc.splitTextToSize(audit.aiSummary, contentWidth - 16);
+    const summaryHeight = summaryLines.length * 6 + 20;
+    addBackground(yPosition, summaryHeight, bgLight);
+    
+    addText(summaryLines, margin + 8, yPosition + 10, 11, secondaryColor);
+    yPosition += summaryHeight + 25;
 
     addLine(yPosition);
     yPosition += 25;
@@ -112,33 +142,40 @@ export function generateAuditPDF(audit: AuditResult): void {
   if (insightsWithSavings.length > 0) {
     checkPageBreak(40);
     
-    addText('Optimization Recommendations', margin, yPosition, 14, primaryColor, true);
+    addText('Optimization Recommendations', margin, yPosition, 15, brandDark, true);
     yPosition += 8;
     addText(insightsWithSavings.length + ' opportunity' + (insightsWithSavings.length > 1 ? 'ies' : '') + ' identified', margin, yPosition, 10, mutedColor);
     yPosition += 15;
 
     insightsWithSavings.slice(0, 10).forEach((insight, index) => {
-      checkPageBreak(45);
+      checkPageBreak(50);
+
+      // Light background for each recommendation
+      const cardHeight = 42;
+      addBackground(yPosition, cardHeight, bgLight);
+      
+      let innerY = yPosition + 8;
 
       // Tool name and savings
-      addText((index + 1) + '. ' + insight.toolName, margin, yPosition, 12, primaryColor, true);
-      yPosition += 6;
+      addText((index + 1) + '. ' + insight.toolName, margin + 8, innerY, 12, primaryColor, true);
+      innerY += 7;
       
-      addText('Recover $' + insight.potentialMonthlySaving.toLocaleString() + '/mo', margin, yPosition, 10, accentColor, true);
-      yPosition += 8;
+      addText('Recover $' + insight.potentialMonthlySaving.toLocaleString() + '/mo', margin + 8, innerY, 10, accentDark, true);
+      innerY += 8;
 
       // Issue description
-      const issueLines = doc.splitTextToSize(insight.message, contentWidth);
-      addText(issueLines, margin, yPosition, 10, secondaryColor);
-      yPosition += issueLines.length * 5 + 6;
+      const issueLines = doc.splitTextToSize(insight.message, contentWidth - 24);
+      addText(issueLines, margin + 8, innerY, 10, secondaryColor);
+      innerY += issueLines.length * 5 + 6;
 
-      // Recommendation
-      addText('Recommended Action:', margin, yPosition, 9, primaryColor, true);
-      yPosition += 4;
+      // Recommendation with brand accent
+      addText('Recommended Action:', margin + 8, innerY, 9, brandColor, true);
+      innerY += 4;
       
-      const recLines = doc.splitTextToSize(insight.suggestion, contentWidth - 10);
-      addText(recLines, margin + 10, yPosition, 10, secondaryColor);
-      yPosition += recLines.length * 5 + 12;
+      const recLines = doc.splitTextToSize(insight.suggestion, contentWidth - 26);
+      addText(recLines, margin + 12, innerY, 10, secondaryColor);
+      
+      yPosition += cardHeight + 10;
     });
 
     if (insightsWithSavings.length > 10) {
@@ -154,11 +191,11 @@ export function generateAuditPDF(audit: AuditResult): void {
   if (audit.tools && audit.tools.length > 0) {
     checkPageBreak(40);
     
-    addText('Tool Breakdown', margin, yPosition, 14, primaryColor, true);
+    addText('Tool Breakdown', margin, yPosition, 15, brandDark, true);
     yPosition += 12;
 
     audit.tools.slice(0, 8).forEach((tool: any) => {
-      checkPageBreak(20);
+      checkPageBreak(22);
 
       const toolName = tool.name || tool.toolName || 'Tool';
       const plan = tool.plan || tool.selectedPlan || 'Standard';
@@ -180,9 +217,9 @@ export function generateAuditPDF(audit: AuditResult): void {
   }
 
   // ── FOOTER SECTION ──────────────────────────────────────────
-  checkPageBreak(30);
+  checkPageBreak(35);
 
-  addLine(yPosition);
+  addLine(yPosition, brandColor);
   yPosition += 12;
 
   addText('Generated by StackSave AI Audit', margin, yPosition, 9, mutedColor);
