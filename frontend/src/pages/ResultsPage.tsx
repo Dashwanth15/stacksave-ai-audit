@@ -5,6 +5,7 @@ import type { AuditResult, Insight } from '../types';
 import { fetchAudit, captureLead } from '../services/api';
 import { formatCurrencyFull, formatRelativeTime, severityLabel, insightTypeLabel } from '../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
+import { generateAuditPDF } from '../services/pdfService';
 
 // Cohesive chart palette — unified blue/purple/cyan family
 const CHART_COLORS = ['#6366f1', '#7c3aed', '#4f46e5', '#06b6d4', '#3b82f6', '#22d3ee'];
@@ -299,6 +300,7 @@ export default function ResultsPage() {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailCaptured, setEmailCaptured] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [generatingPDF, setGeneratingPDF] = useState(false);
 
   useEffect(() => {
     if (!audit && id) {
@@ -322,6 +324,20 @@ export default function ResultsPage() {
     navigator.clipboard.writeText(audit.publicUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleDownloadPDF() {
+    if (!audit) return;
+    setGeneratingPDF(true);
+    try {
+      // Small delay to allow UI to update
+      await new Promise(resolve => setTimeout(resolve, 100));
+      generateAuditPDF(audit);
+    } catch (error) {
+      console.error('Failed to generate PDF:', error);
+    } finally {
+      setGeneratingPDF(false);
+    }
   }
 
   if (loading) {
@@ -409,6 +425,14 @@ export default function ResultsPage() {
             </span>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleDownloadPDF}
+              disabled={generatingPDF}
+              className="px-4 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Download PDF report"
+            >
+              {generatingPDF ? 'Generating...' : '📄 Download PDF'}
+            </button>
             <button
               onClick={() => setShowEmailModal(true)}
               className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all"
