@@ -75,41 +75,30 @@ export function generateAuditPDF(audit: AuditResult): void {
   yPosition += 20;
 
   // ── SAVINGS HERO SECTION ───────────────────────────────────
-  checkPageBreak(80);
+  checkPageBreak(100);
   
   if (!audit.isAlreadyOptimal) {
-    // Centered hero section
-    let heroY = yPosition;
-    
     // Section label
-    addText('SAVINGS SUMMARY', pageWidth / 2, heroY, 9, textLight, true, 'center');
-    heroY += 8;
+    addText('SAVINGS SUMMARY', margin, yPosition, 9, textLight, true);
+    yPosition += 14;
+
+    // Label above savings number
+    addText('Potential Monthly Recovery', margin, yPosition, 11, textMedium);
+    yPosition += 12;
 
     // Main savings number - large and centered
-    addText('$' + audit.estimatedMonthlySavings.toLocaleString(), pageWidth / 2, heroY, 36, successColor, true, 'center');
-    heroY += 10;
+    addText('$' + audit.estimatedMonthlySavings.toLocaleString(), pageWidth / 2, yPosition, 40, successColor, true, 'center');
+    yPosition += 18;
 
-    // Label below savings
-    addText('Potential Monthly Recovery', pageWidth / 2, heroY, 10, textMedium, false, 'center');
-    heroY += 12;
+    // Supporting metrics
+    addText('$' + audit.estimatedAnnualSavings.toLocaleString() + '/year · ' + audit.savingsPercentage + '% reduction', pageWidth / 2, yPosition, 12, textDark, true, 'center');
+    yPosition += 20;
 
-    // Secondary metrics in a row
-    const metricsY = heroY;
-    addText('$' + audit.estimatedAnnualSavings.toLocaleString() + '/year', pageWidth / 2 - 40, metricsY, 11, textDark, true, 'center');
-    addText('· ' + audit.savingsPercentage + '% reduction', pageWidth / 2 + 40, metricsY, 11, textDark, true, 'center');
-    heroY += 14;
-
-    // Current vs Optimized comparison
-    const comparisonY = heroY;
-    addText('Current:', pageWidth / 2 - 35, comparisonY, 9, textMuted, false, 'center');
-    addText('$' + audit.totalMonthlySpend.toLocaleString() + '/mo', pageWidth / 2 - 35, comparisonY + 6, 10, textMedium, true, 'center');
-    
-    addText('→', pageWidth / 2, comparisonY + 3, 9, textLight, false, 'center');
-    
-    addText('Optimized:', pageWidth / 2 + 35, comparisonY, 9, textMuted, false, 'center');
-    addText('$' + audit.optimizedMonthlySpend.toLocaleString() + '/mo', pageWidth / 2 + 35, comparisonY + 6, 10, successColor, true, 'center');
-    
-    yPosition = heroY + 20;
+    // Spend comparison
+    addText('Current Spend: $' + audit.totalMonthlySpend.toLocaleString() + '/mo', pageWidth / 2, yPosition, 10, textMedium, false, 'center');
+    yPosition += 8;
+    addText('→ Optimized Spend: $' + audit.optimizedMonthlySpend.toLocaleString() + '/mo', pageWidth / 2, yPosition, 10, successColor, true, 'center');
+    yPosition += 20;
   } else {
     addText('STACK STATUS', pageWidth / 2, yPosition, 9, textLight, true, 'center');
     yPosition += 8;
