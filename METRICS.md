@@ -9,6 +9,9 @@
 - Total audits is a vanity metric — someone can complete 100 audits with dummy data.
 - A "qualified lead" represents someone who: (1) completed a real audit, (2) saw real savings, (3) trusted us enough to give their email. This person is actually convertible to a Credex consultation.
 - "Per week" gives a fast feedback loop — weekly trends tell us if distribution is working before monthly summaries do.
+- This metric maps directly to Credex revenue potential. A qualified lead with ≥$100/month in savings is someone spending real money on AI infrastructure — the exact customer Credex exists to serve. Ten qualified leads per week is worth more than 10,000 page views from the wrong audience.
+
+**Leading vs. lagging:** Qualified leads/week is the lagging outcome — it tells you whether the business is working. Audit completion rate, email capture rate, and share rate are the leading indicators that predict it. If those three are healthy, qualified leads follow. If the north star is weak, the leading metrics tell you exactly where the funnel is leaking.
 
 ---
 
@@ -32,6 +35,8 @@
 **Target:** ≥15% (1 in 7 audit results gets shared)
 **Why it matters:** Organic sharing is the free growth engine. Each share is a free impression with warm context ("my colleague found $340/mo in savings"). If sharing isn't happening, either the savings aren't impressive or the share UX is broken.
 
+At MVP stage, shareability matters more than retention. Most users will run one audit and not return — that's fine and expected. The question is whether that single session generates a referral. One user sharing their results with three colleagues is worth more than three users returning to a product they've already extracted value from. A shared audit link is warm-context acquisition: the recipient already knows what was found and approximately what to expect, which drives higher completion rates than cold traffic.
+
 ---
 
 ## What We'd Instrument First
@@ -49,6 +54,17 @@ Tools: Start with **Posthog** (free, self-hostable, session replay + events). Ad
 
 ---
 
+## Metrics We Intentionally Ignore
+
+- **DAU / WAU / MAU** — Irrelevant for a tool people use once or twice. High DAU on a one-time audit tool means bots or confused users, not engagement.
+- **Time on site** — Optimizing for time on site would push toward adding unnecessary complexity. A fast audit that converts is better than an elaborate one that entertains.
+- **Raw page views** — Page views without audit completions are just ad impressions. Traffic that doesn't convert tells you nothing about product-market fit.
+- **Total signups / emails collected** — Volume without savings context is noise. An email from someone who found $12/month in savings is not equivalent to one from someone who found $800/month. Aggregating them together obscures what the funnel is actually producing.
+
+The pattern: at this stage, vanity metrics are actively dangerous because they create the impression of traction before it exists. A small number of high-intent actions is a better signal than large numbers of low-intent ones.
+
+---
+
 ## Pivot Trigger Numbers
 
 | Metric | Current Target | Pivot Trigger |
@@ -60,3 +76,5 @@ Tools: Start with **Posthog** (free, self-hostable, session replay + events). Ad
 | Credex CTA CTR (high savings) | ≥15% | <5% → Credex value prop on results page isn't clear enough |
 
 **The big pivot trigger:** If after 1,000 audit completions the average savings found is <$30/month, the tool isn't finding real waste and the audit engine needs to be recalibrated against fresher pricing data or more nuanced rules.
+
+Low average savings is the existential risk for this product — more so than low traffic or low email capture. Those are distribution and UX problems, which are fixable. But if the engine consistently surfaces weak recommendations, trust collapses fast. A user who acts on a suggestion and finds it was wrong, or who shows the audit to their CFO and can't defend the numbers, won't come back and won't share. "No savings found" is an honest and acceptable result — some stacks are genuinely well-optimized. Consistently finding $8/month across every audit is worse than that, because it signals the engine is reaching rather than finding real waste, and that's the kind of thing word-of-mouth kills quickly.

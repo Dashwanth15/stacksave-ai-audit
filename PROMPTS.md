@@ -12,6 +12,26 @@ The full LLM prompts used in the AI summary feature, why they were written this 
 
 ---
 
+## Why Grok
+
+The requirements for the summary feature are narrow: generate one 80-120 word paragraph per audit, in a consistent professional tone, with low latency. Grok fits this well for a few practical reasons.
+
+First, it's OpenAI SDK-compatible — switching from OpenAI to Grok is a two-line change (`baseURL` and `model`), which made it easy to evaluate without rewriting the integration. Second, the free API tier is sufficient for MVP-scale usage, which matters when the product isn't yet generating revenue. Third, response latency on `grok-3-mini` for a 200-token output is fast enough (~300-600ms) that it doesn't meaningfully degrade perceived audit speed.
+
+The tradeoff: Grok is less battle-tested than GPT-4o or Claude for production workloads, and its behavior on edge-case prompts is less predictable. For a use case this constrained — fixed prompt, fixed output format, graceful fallback if it fails — that's an acceptable risk at MVP stage. If reliability became a problem at scale, swapping to a more established model is a one-line change.
+
+---
+
+## Prompt Safety Boundaries
+
+The prompts are deliberately written to prevent the model from doing any calculation or generating any savings numbers. Every dollar amount in the summary prompt comes from the deterministic engine output — the model is only asked to write prose around figures it's been given.
+
+This is an intentional architectural constraint, not a limitation. LLMs produce plausible-looking numbers confidently. A hallucinated "$340/month savings" that doesn't match the actual audit output would undermine the entire product — a founder who acts on a wrong number and finds the savings don't materialize stops trusting the tool immediately. Financial recommendations need to be traceable to a specific rule, a specific plan price, and a specific seat count. Prose can be approximate; math cannot.
+
+The rule is simple: **the engine owns the numbers, the model owns the words.** The system prompt enforces this by framing the model as a communicator ("write a summary of this audit") rather than an analyst ("analyze this data and find savings"). The user prompt provides the pre-computed figures explicitly so the model has no reason to generate its own.
+
+---
+
 ## Final System Prompt
 
 ```
@@ -95,4 +115,4 @@ When the Grok API fails (network error, rate limit, invalid key), the AI service
 `Your team of ${teamSize} is spending $${totalMonthlySpend}/month across ${toolCount} AI tools. This audit identified $${estimatedMonthlySavings}/month in potential savings...`
 ```
 
-The template is explicitly data-driven (uses real numbers) so it reads as legitimate even without the model's prose polish.
+The template is explicitly data-driven (uses real numbers) so it reads as legitimate even without the model's prose polish. This matters because the LLM layer is additive, not load-bearing — the audit's value comes from the engine output (the insights, the savings amounts, the recommendations), not the summary paragraph. A user who gets a template fallback still sees their full results, still gets every insight card, and can still act on the recommendations. Graceful degradation here means an API outage is a minor quality reduction, not a product failure.

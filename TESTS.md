@@ -1,6 +1,20 @@
-# Tests — StackSave AI Audit
+# TESTS.md
 
-## How to Run
+List every automated test you wrote: filename, what it covers, how to run it
+
+---
+
+## Testing Philosophy
+
+The audit engine received the highest testing priority because it's the only part of the codebase where a bug directly produces wrong financial advice. A miscalculated saving, a rule that fires when it shouldn't, or a boundary condition off by one character gives a real user a recommendation to cancel a subscription they should keep — or miss one they should cancel. That's a credibility problem, not just a code bug.
+
+Deterministic financial logic needs edge-case tests specifically because the interesting behavior lives at the boundaries: exactly 25% unused seats, exactly $200/mo API spend, two tools with identical cost. Manual testing naturally gravitates to the "obvious" cases. Unit tests with controlled inputs force the boundary conditions to be explicit and verified.
+
+Integration tests were included in addition to unit tests because individual rule correctness doesn't guarantee the engine orchestration is correct. The deduplication logic, savings cap (`min(savings, totalSpend)`), and `isAlreadyOptimal`/`isHighSavings` flags only exist at the engine level — those needed an end-to-end test to confirm the wiring was right.
+
+---
+
+## How to Run Tests
 
 ```bash
 cd backend
@@ -13,19 +27,22 @@ npm run test:watch
 
 ---
 
-## Test File
+## Primary Test File
 
-**File:** `backend/tests/audit-engine.test.ts`
-**Framework:** Vitest
-**Coverage scope:** All 7 audit engine rules + 3 integration tests + 9 validation tests
+**Filename:** `backend/tests/audit-engine.test.ts`  
+**Framework:** Vitest  
+**Coverage:** All 7 audit engine rules + 3 integration tests + 9 validation tests  
+**How to run:** `cd backend && npm test`
 
 ---
 
-## Test List
+## Complete Test List (25 Tests Total)
+
+### Audit Engine Rules (13 Tests)
 
 | # | Test Suite | Test Name | What It Covers |
 |---|---|---|---|
-| 1 | `ruleOverpaidPlan` | flags team plan for a 1-person team | Detects when a team plan is chosen for a single user, calculates correct saving |
+| 1 | `ruleOverpaidPlan` | flags team plan for a 1-person team | Detects when team plan chosen for single user, calculates correct saving |
 | 2 | `ruleOverpaidPlan` | does NOT flag Pro plan for a 1-person team | Ensures cheapest paid plan isn't falsely flagged |
 | 3 | `ruleOverpaidPlan` | does NOT flag Business plan for a 10-person team | Ensures appropriately-sized plans aren't incorrectly downgraded |
 | 4 | `ruleUnusedSeats` | flags 8 seats paid for a 3-person team (>25% unused) | Detects seat waste, verifies exact saving calculation (5 unused × $19 = $95) |
@@ -38,9 +55,19 @@ npm run test:watch
 | 11 | `ruleRetailVsCredits` | flags high OpenAI API spend (>$200/mo) | High API spend triggers credits recommendation, 25% of $800 = $200 saving |
 | 12 | `ruleRetailVsCredits` | does NOT flag low API spend (<$200/mo) | $150/mo is below threshold |
 | 13 | `ruleRetailVsCredits` | does NOT fire on non-API tools (e.g., ChatGPT Plus) | Credits rule only applies to raw API tools, not chat subscriptions |
+
+### Integration Tests (3 Tests)
+
+| # | Test Suite | Test Name | What It Covers |
+|---|---|---|---|
 | 14 | `runAudit (integration)` | returns a complete AuditResult with correct totals | End-to-end: 2-tool audit produces valid AuditResult with correct totalMonthlySpend, annualSavings = monthlySavings × 12, savings ≤ total spend, publicUrl contains auditId |
 | 15 | `runAudit (integration)` | marks audit as already optimal when stack is well-optimized | Single individual-plan user → savings < $20 → isAlreadyOptimal behavior |
 | 16 | `runAudit (integration)` | marks high savings audits correctly | $5,000/mo API spend → isHighSavings = true |
+
+### Validation Tests (9 Tests)
+
+| # | Test Suite | Test Name | What It Covers |
+|---|---|---|---|
 | 17 | `validateAuditRequest` | rejects empty request body | null/undefined body → validation error |
 | 18 | `validateAuditRequest` | rejects request with no tools | Empty tools array → validation error |
 | 19 | `validateAuditRequest` | rejects invalid tool ID | Unknown tool ID → validation error |
@@ -53,18 +80,44 @@ npm run test:watch
 
 ---
 
-## CI Integration
+## GitHub Actions CI Workflow
 
-Tests run automatically on every push to `main` via GitHub Actions.
-See `.github/workflows/ci.yml` — the `backend-lint-test` job runs `npm test`.
+**File:** `.github/workflows/ci.yml`
 
-CI must show green checks on the latest commit. Verify at:
-`https://github.com/<your-username>/stacksave/actions`
+### Purpose
+
+CI exists specifically to prevent regression in audit calculations. Because the engine is deterministic, its outputs should never silently change — a rule that saved $95 last week should save $95 this week unless the pricing data was intentionally updated. Automated checks on every push to main mean that a catalog change or rule edit that accidentally breaks the math fails loudly in CI before it reaches users, rather than quietly producing wrong financial recommendations in production.
+
+### What It Covers:
+- **Backend Lint & Tests**: Runs TypeScript type check and all 25 tests on every push to main/develop
+- **Frontend Lint & Type Check**: Runs TypeScript type check and ESLint on frontend code
+- **Triggers**: Push to main/develop branches, pull requests to main
+- **Node Version**: 20
+- **Cache**: npm dependencies for faster builds
+
+### How to Verify Green Checks:
+1. Go to: `https://github.com/Dashwanth15/stacksave-ai-audit/actions`
+2. Latest commit should show green ✓ checks for both jobs
+3. `backend-lint-test` job must show "25 tests passed"
+
+### CI Commands:
+```yaml
+# Backend tests
+npm test                    # Runs all 25 tests
+npm run typecheck          # TypeScript compilation check
+
+# Frontend checks  
+npm run typecheck          # TypeScript compilation check
+npm run lint               # ESLint code quality check
+```
 
 ---
 
 ## What Is NOT Tested (and Why)
 
+The testing priority was the core business logic — the audit engine rules, savings calculations, and input validation. These are the only parts of the codebase where a bug produces a wrong answer that a user acts on. Infrastructure and external services were intentionally left out of the automated test suite at MVP stage; mocking them adds setup complexity without increasing confidence in the logic that actually matters.
+
 - **MongoDB integration** — Requires live Atlas connection; not suitable for CI without secrets. The DB layer (`dbService.ts`) is simple Mongoose CRUD — the interesting logic is in the engine, which is fully unit-tested.
-- **Grok API** — External API; mocked in production tests would require additional setup. The graceful fallback is implicitly tested by the engine integration tests (AI summary defaults to empty string in test environment).
+- **Grok API** — External API; deeply mocking it would test the mock, not the behavior. The graceful fallback is implicitly covered by the integration tests (AI summary defaults to empty string in test environment).
 - **Resend email** — External service. Not mocked in unit tests; tested manually during deployment validation.
+- **PDF generation** — Visual output testing requires browser automation; core logic is tested through the audit engine tests that generate the data used in PDFs.
