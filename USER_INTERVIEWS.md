@@ -106,6 +106,6 @@ He also asked whether the tool would eventually support more tools. He uses Noti
 
 I assumed the main value was identifying the waste. Jashvanth's point was that identifying it and acting on it are two different things — and the gap between them is where most users drop off. He's probably right. A recommendation that requires three more steps to act on has a much lower completion rate than one with a direct link or a one-click path. The audit is only useful if people actually make the changes.
 
-### What It Changed
+### What I want to  Change in future
 
-Added direct pricing page links to each insight card (e.g., "Switch to Cursor annual billing" links to `cursor.com/pricing`). That's a small change with real impact on follow-through. The larger suggestion — in-platform switching, affiliate integrations — is a Week 2 or later consideration, but Jashvanth's framing of "optimization platform vs. audit tool" is the right direction for where this goes if it gets traction.
+Add direct pricing page links to each insight card (e.g., "Switch to Cursor annual billing" links to `cursor.com/pricing`). That's a small change with real impact on follow-through. The larger suggestion — in-platform switching, affiliate integrations — is a Week 2 or later consideration, but Jashvanth's framing of "optimization platform vs. audit tool" is the right direction for where this goes if it gets traction.
