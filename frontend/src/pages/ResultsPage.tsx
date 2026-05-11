@@ -653,6 +653,44 @@ export default function ResultsPage() {
           </m.div>
         )}
 
+        {/* ── Credex CTA ─────────────────────────────────────── */}
+        <m.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="glass-card-static rounded-2xl p-6 sm:p-8 text-center"
+          style={{ 
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(139, 92, 246, 0.05) 100%)',
+            borderColor: 'rgba(99, 102, 241, 0.12)'
+          }}
+        >
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center">
+              <span className="text-indigo-300 text-sm">💡</span>
+            </div>
+            <h2 className="text-xl font-bold text-white">Need deeper AI infrastructure savings?</h2>
+          </div>
+          <p className="text-[#94a3b8] text-sm mb-6 max-w-lg mx-auto leading-relaxed">
+            Credex helps startups reduce AI infrastructure costs with enterprise-grade credits and volume discounts. Teams with larger AI spend may qualify for additional savings beyond standard optimizations.
+          </p>
+          <a
+            href="https://credex.rocks"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all hover:scale-105 active:scale-95"
+            style={{ 
+              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+              boxShadow: '0 4px 20px rgba(99, 102, 241, 0.25)'
+            }}
+            aria-label="Explore Credex for additional AI savings"
+          >
+            <span>Explore Credex</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6m0 0L4 6m0 0v12m0 0l2-2m6-6h4m0 0l2 2m0 0v12m0 0l-2-2" />
+            </svg>
+          </a>
+        </m.div>
+
         {/* ── Share CTA ─────────────────────────────────────── */}
         <m.div
           initial={{ opacity: 0, y: 20 }}
