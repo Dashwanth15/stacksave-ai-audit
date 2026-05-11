@@ -728,10 +728,10 @@ export default function ResultsPage() {
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border border-indigo-500/25 flex items-center justify-center">
               <span className="text-indigo-300 text-sm">💡</span>
             </div>
-            <h2 className="text-xl font-bold text-white mb-1">Looking for larger AI infrastructure savings?</h2>
+            <h2 className="text-xl font-bold text-white mb-1">Need deeper AI infrastructure savings?</h2>
           </div>
           <p className="text-[#94a3b8] text-sm mb-6 max-w-md mx-auto leading-relaxed">
-            Credex helps startups reduce AI infrastructure costs with enterprise-grade credits and volume discounts. Teams with larger AI spend may qualify for additional savings beyond standard StackSave optimizations.
+            Credex helps startups reduce AI infrastructure costs with enterprise-grade credits and volume discounts. Teams with larger AI spend may qualify for additional savings beyond standard optimizations.
           </p>
           <a
             href="https://credex.rocks"
@@ -742,12 +742,9 @@ export default function ResultsPage() {
               background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
               boxShadow: '0 4px 16px rgba(99, 102, 241, 0.2)'
             }}
-            aria-label="Get additional AI savings with Credex"
+            aria-label="Explore Credex for additional AI savings"
           >
-            <span>Get Additional Savings</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6m0 0L4 6m0 0v12m0 0l2-2m6-6h4m0 0l2 2m0 0v12m0 0l-2-2" />
-            </svg>
+            <span>Explore Credex →</span>
           </a>
         </m.div>
 
