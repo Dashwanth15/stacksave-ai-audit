@@ -653,45 +653,6 @@ export default function ResultsPage() {
           </m.div>
         )}
 
-        {/* ── Credex CTA ─────────────────────────────────────── */}
-        <m.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="glass-card-static rounded-2xl p-6 sm:p-8 text-center"
-          style={{ 
-            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.02) 0%, rgba(139, 92, 246, 0.04) 100%)',
-            borderColor: 'rgba(99, 102, 241, 0.08)',
-            boxShadow: '0 8px 32px rgba(99, 102, 241, 0.15)'
-          }}
-        >
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border border-indigo-500/25 flex items-center justify-center">
-              <span className="text-indigo-300 text-sm">💡</span>
-            </div>
-            <h2 className="text-xl font-bold text-white mb-1">Looking for larger AI infrastructure savings?</h2>
-          </div>
-          <p className="text-[#94a3b8] text-sm mb-6 max-w-md mx-auto leading-relaxed">
-            Credex helps startups reduce AI infrastructure costs with enterprise-grade credits and volume discounts. Teams with larger AI spend may qualify for additional savings beyond standard StackSave optimizations.
-          </p>
-          <a
-            href="https://credex.rocks"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all hover:scale-105 active:scale-95"
-            style={{ 
-              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.2)'
-            }}
-            aria-label="Get additional AI savings with Credex"
-          >
-            <span>Get Additional Savings</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6m0 0L4 6m0 0v12m0 0l2-2m6-6h4m0 0l2 2m0 0v12m0 0l-2-2" />
-            </svg>
-          </a>
-        </m.div>
-
         {/* ── Share CTA ─────────────────────────────────────── */}
         <m.div
           initial={{ opacity: 0, y: 20 }}
@@ -749,6 +710,45 @@ export default function ResultsPage() {
               Share on LinkedIn
             </a>
           </div>
+        </m.div>
+
+        {/* ── Credex CTA ─────────────────────────────────────── */}
+        <m.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="glass-card-static rounded-2xl p-6 sm:p-8 text-center"
+          style={{ 
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.02) 0%, rgba(139, 92, 246, 0.04) 100%)',
+            borderColor: 'rgba(99, 102, 241, 0.08)',
+            boxShadow: '0 8px 32px rgba(99, 102, 241, 0.15)'
+          }}
+        >
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border border-indigo-500/25 flex items-center justify-center">
+              <span className="text-indigo-300 text-sm">💡</span>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-1">Looking for larger AI infrastructure savings?</h2>
+          </div>
+          <p className="text-[#94a3b8] text-sm mb-6 max-w-md mx-auto leading-relaxed">
+            Credex helps startups reduce AI infrastructure costs with enterprise-grade credits and volume discounts. Teams with larger AI spend may qualify for additional savings beyond standard StackSave optimizations.
+          </p>
+          <a
+            href="https://credex.rocks"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all hover:scale-105 active:scale-95"
+            style={{ 
+              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.2)'
+            }}
+            aria-label="Get additional AI savings with Credex"
+          >
+            <span>Get Additional Savings</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6m0 0L4 6m0 0v12m0 0l2-2m6-6h4m0 0l2 2m0 0v12m0 0l-2-2" />
+            </svg>
+          </a>
         </m.div>
 
         <div className="text-center pb-4">
