@@ -146,3 +146,73 @@ export interface PricingSnapshot {
 export interface AuditRequestWithEmail extends AuditRequest {
   email?: string;  // user email for notifications and identification
 }
+
+// ============================================================
+// Batch 2: Pricing Change Detection
+// ============================================================
+
+/**
+ * Represents price change for a single plan
+ */
+export interface PlanPriceChange {
+  planId: string;
+  planLabel: string;
+  oldMonthlyPrice: number;
+  newMonthlyPrice: number;
+  monthlyDelta: number;       // can be negative (decrease) or positive (increase)
+  oldAnnualPrice?: number;
+  newAnnualPrice?: number;
+  annualDelta?: number;
+  priceChangePercent: number; // e.g. 10 for 10% increase
+}
+
+/**
+ * Represents all price changes for a single tool
+ */
+export interface ToolPriceChange {
+  toolId: ToolId;
+  toolName: string;
+  hasAnyChange: boolean;
+  planChanges: PlanPriceChange[];
+  isNewTool?: boolean;        // tool not in old snapshot
+  isRemovedTool?: boolean;    // tool no longer in new snapshot
+}
+
+/**
+ * Comparison result between two pricing snapshots
+ */
+export interface PricingComparison {
+  changedTools: ToolPriceChange[];
+  hasPricingChange: boolean;
+  affectedToolCount: number;
+  oldCatalogVersion: string;
+  newCatalogVersion: string;
+  comparedAt: string;        // ISO timestamp
+}
+
+/**
+ * Pricing change metadata for a specific audit
+ * Used in change detection results
+ */
+export interface AuditPricingChange {
+  auditId: string;
+  userEmail?: string;
+  companyName?: string;
+  auditCreatedAt: string;
+  detectedAt: string;        // ISO timestamp when change was detected
+  changedTools: ToolPriceChange[];
+  hasPricingChange: boolean;
+  summary: string;           // human-readable summary (e.g. "3 tools affected: Cursor +$5/mo, GitHub Copilot -$2/mo")
+}
+
+/**
+ * Result from pricing change detection sweep
+ */
+export interface PricingChangeDetectionResult {
+  success: boolean;
+  detectionTimestamp: string;   // ISO timestamp
+  auditsScanned: number;
+  auditsWithChanges: number;
+  affectedAudits: AuditPricingChange[];
+  error?: string;
+}

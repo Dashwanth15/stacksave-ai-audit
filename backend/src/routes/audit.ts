@@ -9,6 +9,7 @@ import { generateAuditSummary } from '../services/aiService';
 import { AuditModel } from '../services/dbService';
 import { validateAuditRequest } from '../middleware/validation';
 import { capturePricingSnapshot } from '../services/pricingService';
+import { scanAuditsForPricingChanges } from '../services/pricingChangeDetectionService';
 
 const router = Router();
 
@@ -153,6 +154,37 @@ router.get('/:id/full', async (req: Request, res: Response) => {
   } catch (err) {
     console.error('GET /api/audits/:id/full error:', err);
     return res.status(500).json({ success: false, error: 'Failed to fetch audit' });
+  }
+});
+
+// ── POST /api/audits/detect-pricing-changes ──────────────────
+// Batch 2: Manual detection endpoint
+// Scans all audits and detects which ones are affected by pricing changes
+// Compares each audit's pricing snapshot against current catalog pricing
+// Note: Called manually (no cron job) for simplicity and easier debugging
+router.post('/detect-pricing-changes', async (req: Request, res: Response) => {
+  try {
+    console.log('🔍 Starting pricing change detection...');
+    
+    const result = await scanAuditsForPricingChanges();
+    
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        error: result.error || 'Detection failed',
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    console.error('POST /api/audits/detect-pricing-changes error:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to detect pricing changes',
+    });
   }
 });
 

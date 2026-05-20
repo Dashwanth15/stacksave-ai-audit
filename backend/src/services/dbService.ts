@@ -7,6 +7,7 @@ import { PricingSnapshot } from '../types';
 
 // ── Audit Schema ─────────────────────────────────────────────
 // Batch 1: Extended for persistent audit storage + pricing snapshots
+// Batch 2: Added pricing change detection fields
 export interface AuditDocument extends Document {
   auditId: string;
   createdAt: Date;
@@ -39,6 +40,16 @@ export interface AuditDocument extends Document {
   reAuditOf?: string;           // If this is re-audit, points to original audit ID
   isLatestVersion?: boolean;    // Marks which version is "current" (default true)
   auditVersion?: number;        // Increments on each re-audit (default 1)
+  
+  // ── Batch 2: Pricing Change Detection Fields ──────────────
+  // Whether any pricing has changed since this audit was created
+  pricingChanged?: boolean;
+  
+  // When we last checked for pricing changes
+  lastPricingCheck?: Date;
+  
+  // Why this audit became outdated (e.g., "Cursor price increased $5/mo")
+  outdatedReason?: string;
 }
 
 const AuditSchema = new Schema<AuditDocument>(
@@ -76,6 +87,16 @@ const AuditSchema = new Schema<AuditDocument>(
     reAuditOf: { type: String },     // Points to original audit if this is re-audit
     isLatestVersion: { type: Boolean, default: true }, // Mark "current" version
     auditVersion: { type: Number, default: 1 }, // Increments on re-audit
+    
+    // ── Batch 2: Pricing Change Detection Fields ──────────────
+    // Whether any pricing has changed since this audit was created
+    pricingChanged: { type: Boolean, default: false },
+    
+    // When we last checked for pricing changes
+    lastPricingCheck: { type: Date },
+    
+    // Why this audit became outdated
+    outdatedReason: { type: String },
   },
   { timestamps: false }
 );
