@@ -153,11 +153,20 @@ export interface AuditDiff {
   generatedAt: string;
 }
 
+export interface AuditVersionInfo {
+  auditId: string;
+  auditVersion: number;
+  createdAt: string;
+  estimatedMonthlySavings: number;
+  isLatestVersion: boolean;
+}
+
 export interface ReAuditResponse {
   oldAuditId: string;
   newAuditId: string;
   oldAudit: AuditResult;
   newAudit: AuditResult;
   diff: AuditDiff;
+  allVersions?: AuditVersionInfo[];
 }
 

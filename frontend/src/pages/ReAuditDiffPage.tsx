@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { fetchAuditDiff } from '../services/api';
+import { generateReAuditDiffPDF } from '../services/pdfService';
 import type { ReAuditResponse } from '../types';
 import {
   formatCurrencyFull,
@@ -73,6 +74,7 @@ export default function ReAuditDiffPage() {
   const oldAudit = data?.oldAudit;
   const newAudit = data?.newAudit;
   const diff = data?.diff;
+  const allVersions = data?.allVersions;
 
   if (error || !data || !oldAudit || !newAudit || !diff) {
     return (
@@ -129,6 +131,12 @@ export default function ReAuditDiffPage() {
           </div>
           <div className="flex items-center gap-3">
             <button
+              onClick={() => generateReAuditDiffPDF(oldAudit, newAudit, diff)}
+              className="px-4 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 text-sm font-medium transition-all flex items-center gap-1.5"
+            >
+              📄 Download PDF
+            </button>
+            <button
               onClick={() => navigate(`/results/${newAudit?.auditId || ''}`)}
               className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all"
             >
@@ -139,6 +147,38 @@ export default function ReAuditDiffPage() {
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-12 space-y-8">
+        {/* Version Timeline Selector */}
+        {allVersions && allVersions.length > 1 && (
+          <div className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl space-y-4">
+            <h3 className="text-xs font-bold text-[#6b7b93] uppercase tracking-wider">
+              Audit Version Timeline
+            </h3>
+            <div className="flex items-center gap-4 overflow-x-auto py-2">
+              {allVersions.map((v) => {
+                const isActive = v.auditId === newAudit?.auditId;
+                return (
+                  <button
+                    key={v.auditId}
+                    onClick={() => {
+                      if (!isActive) {
+                        navigate(`/reaudit/${v.auditId}`);
+                      }
+                    }}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${
+                      isActive
+                        ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10 text-[#94a3b8]'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-indigo-400' : 'bg-slate-500'}`} />
+                    v{v.auditVersion || 1} ({formatRelativeTime(v.createdAt)})
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Version & Context Header */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white/[0.02] border border-white/5 p-4 rounded-xl">
           <div className="space-y-1">

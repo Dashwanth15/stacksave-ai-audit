@@ -228,6 +228,14 @@ router.get('/:id/diff', async (req: Request, res: Response) => {
 
     const diff = generateAuditDiff(oldAudit, newAudit);
 
+    const rootAuditId = newAudit.reAuditOf || oldAudit.auditId;
+    const allVersionsDocs = await AuditModel.find({
+      $or: [{ auditId: rootAuditId }, { reAuditOf: rootAuditId }],
+    })
+      .select('auditId auditVersion createdAt estimatedMonthlySavings isLatestVersion')
+      .sort({ auditVersion: 1 })
+      .exec();
+
     return res.json({
       success: true,
       data: {
@@ -236,6 +244,13 @@ router.get('/:id/diff', async (req: Request, res: Response) => {
         oldAudit,
         newAudit,
         diff,
+        allVersions: allVersionsDocs.map(v => ({
+          auditId: v.auditId,
+          auditVersion: v.auditVersion || 1,
+          createdAt: v.createdAt,
+          estimatedMonthlySavings: v.estimatedMonthlySavings,
+          isLatestVersion: !!v.isLatestVersion
+        }))
       },
     });
   } catch (err) {
