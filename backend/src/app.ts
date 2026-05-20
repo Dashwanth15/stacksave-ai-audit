@@ -26,9 +26,17 @@ app.use(helmet());
 // ── CORS ─────────────────────────────────────────────────────
 // In production, only allow the production frontend URL
 // In development, allow localhost for testing
+const cleanFrontendUrl = FRONTEND_URL.replace(/\/$/, '');
 const allowedOrigins = NODE_ENV === 'production'
-  ? [FRONTEND_URL]
-  : [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000'];
+  ? [cleanFrontendUrl, `${cleanFrontendUrl}/`]
+  : [
+      cleanFrontendUrl,
+      `${cleanFrontendUrl}/`,
+      'http://localhost:5173',
+      'http://localhost:5173/',
+      'http://localhost:3000',
+      'http://localhost:3000/'
+    ];
 
 app.use(
   cors({

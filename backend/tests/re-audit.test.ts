@@ -3,7 +3,7 @@
 // Run: cd backend && npm test
 // ============================================================
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import mongoose from 'mongoose';
 import 'dotenv/config';
 
@@ -14,6 +14,7 @@ import {
   runReAudit,
 } from '../src/services/reAuditService';
 import { ToolEntry, UseCase, PricingSnapshot, AuditResult } from '../src/types';
+import * as emailService from '../src/services/emailService';
 
 describe('1. recalculateInputStack pricing update', () => {
   it('updates monthly spend for seat-based plans to match current catalog pricing', () => {
@@ -204,7 +205,6 @@ describe('3. runReAudit integration tests with MongoDB', () => {
     await AuditModel.deleteMany({
       $or: [{ auditId: rootAuditId }, { reAuditOf: rootAuditId }],
     });
-    await mongoose.connection.close();
   });
 
   it('runs first re-audit, preserves history, creates version 2 and generates diff', async () => {
@@ -326,3 +326,101 @@ describe('3. runReAudit integration tests with MongoDB', () => {
     expect(v2?.isLatestVersion).toBe(false);
   });
 });
+
+describe('4. pricingChangeDetectionService notifications & duplicate protection', () => {
+  let originalAuditId = 'test-notify-audit-' + Date.now();
+  let rootAuditId = originalAuditId;
+
+  beforeAll(async () => {
+    await connectDB();
+  });
+
+  afterAll(async () => {
+    // Cleanup
+    await AuditModel.deleteMany({
+      $or: [{ auditId: rootAuditId }, { reAuditOf: rootAuditId }],
+    });
+    await mongoose.connection.close();
+  });
+
+  it('detects changes, triggers a background re-audit, sends email, and prevents duplicate notification', async () => {
+    // 1. Mock email sending
+    const sendEmailSpy = vi.spyOn(emailService, 'sendReAuditNotification').mockResolvedValue(undefined);
+
+    // 2. Create an audit document with outdated pricing
+    const oldSnapshot: PricingSnapshot = {
+      capturedAt: new Date(Date.now() - 86400000).toISOString(),
+      catalogVersion: '1.0',
+      tools: {
+        cursor: {
+          name: 'Cursor',
+          plans: {
+            pro: { monthlyPricePerSeat: 10 }, // Outdated catalog price ($10 vs current $20)
+          },
+        },
+      },
+    };
+
+    await AuditModel.create({
+      auditId: originalAuditId,
+      totalMonthlySpend: 20, // 2 seats * $10
+      optimizedMonthlySpend: 20,
+      estimatedMonthlySavings: 0,
+      estimatedAnnualSavings: 0,
+      savingsPercentage: 0,
+      insights: [],
+      publicUrl: `http://localhost:5173/audit/${originalAuditId}`,
+      teamSize: 2,
+      tools: [
+        {
+          toolId: 'cursor',
+          plan: 'pro',
+          monthlySpend: 20,
+          seats: 2,
+          useCase: 'coding',
+        },
+      ],
+      inputStack: [
+        {
+          toolId: 'cursor',
+          plan: 'pro',
+          monthlySpend: 20,
+          seats: 2,
+          useCase: 'coding',
+        },
+      ],
+      pricingSnapshot: oldSnapshot,
+      isLatestVersion: true,
+      auditVersion: 1,
+      email: 'user-to-notify@stacksave.ai',
+    });
+
+    // 3. Scan first time: Should trigger re-audit and send email
+    const { scanAuditsForPricingChanges } = await import('../src/services/pricingChangeDetectionService');
+    const result1 = await scanAuditsForPricingChanges();
+
+    expect(result1.success).toBe(true);
+    expect(result1.auditsWithChanges).toBe(1);
+
+    // Verify re-audit was run (which invalidates v1 as latest)
+    const updatedOriginal = await AuditModel.findOne({ auditId: originalAuditId });
+    expect(updatedOriginal?.pricingChanged).toBe(true);
+    expect(updatedOriginal?.lastNotificationSentAt).toBeDefined();
+
+    // Verify spy was called once
+    expect(sendEmailSpy).toHaveBeenCalledTimes(1);
+
+    // Reset spy history
+    sendEmailSpy.mockClear();
+
+    // 4. Scan second time immediately: Should NOT send duplicate notification email
+    const result2 = await scanAuditsForPricingChanges();
+    expect(result2.success).toBe(true);
+    // Original is no longer latest (v1 isLatestVersion = false), and the new latest is v2 which is up-to-date.
+    // So there shouldn't be any active updates or duplicate emails sent.
+    expect(sendEmailSpy).not.toHaveBeenCalled();
+
+    sendEmailSpy.mockRestore();
+  });
+});
+

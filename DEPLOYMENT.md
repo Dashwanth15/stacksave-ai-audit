@@ -230,6 +230,18 @@ npm run dev
 - Verify backend `/api/chat` endpoint is accessible
 - Check Grok API key is valid and has credits
 
+### Issue: Page Refresh / Deep-Links (404 on Refresh / Direct Navigation)
+**Solution:**
+- **If deployed as a Web Service:** The frontend uses `server.js` with `connect-history-api-fallback` which automatically handles routing correctly. Ensure your start command is set to `npm run start` (which runs `node server.js`) and not `vite preview`.
+- **If deployed as a Render Static Site:** (Instead of a Web Service):
+  1. Go to your frontend Static Site dashboard in Render.
+  2. Click **Redirects/Rewrites** in the sidebar.
+  3. Add a rule:
+     - **Source**: `/*`
+     - **Destination**: `/index.html`
+     - **Action**: `Rewrite`
+  This will forward all routing requests directly to your React app's SPA entrypoint without throwing 404 errors.
+
 ## Future-Safe Architecture
 
 This deployment setup supports:

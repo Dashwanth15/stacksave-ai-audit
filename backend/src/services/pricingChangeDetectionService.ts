@@ -8,6 +8,8 @@ import { PricingSnapshot, PricingComparison, ToolPriceChange, PlanPriceChange, A
 import { TOOL_CATALOG } from '../audit-engine/catalog';
 import { AuditModel } from './dbService';
 import { capturePricingSnapshot } from './pricingService';
+import { sendReAuditNotification } from './emailService';
+import { runReAudit } from './reAuditService';
 
 /**
  * Compares two pricing snapshots and identifies what changed
@@ -211,6 +213,11 @@ export async function scanAuditsForPricingChanges(): Promise<PricingChangeDetect
 
     // Compare each audit against current pricing
     for (const audit of allAudits) {
+      // Skip historical versions — we only check and notify for the latest active version
+      if (audit.isLatestVersion === false) {
+        continue;
+      }
+      
       auditsScanned++;
 
       // Skip audits without pricing snapshot (shouldn't happen, but be safe)
@@ -252,6 +259,43 @@ export async function scanAuditsForPricingChanges(): Promise<PricingChangeDetect
             outdatedReason: summary,
           }
         );
+
+        // ── Batch 5: Send transactional notification & trigger runReAudit ──
+        const alreadyNotified = audit.pricingChanged || 
+          (audit.lastNotificationSentAt && audit.notificationVersion === (audit.auditVersion || 1));
+
+        if (audit.email && !alreadyNotified) {
+          try {
+            console.log(`✉️ Sending re-audit notification to ${audit.email} for audit ${audit.auditId}...`);
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+            
+            // Run re-audit immediately so comparison page is fully ready
+            const { diff } = await runReAudit(audit.auditId, frontendUrl);
+            const comparisonUrl = `${frontendUrl}/audit/${audit.auditId}/diff`;
+
+            await sendReAuditNotification({
+              email: audit.email,
+              auditId: audit.auditId,
+              comparisonUrl,
+              companyName: audit.companyName,
+              changedToolsSummary: summary,
+              savingsDelta: diff.savingsDelta,
+              oldSavings: diff.oldSavings,
+              newSavings: diff.newSavings,
+            });
+
+            // Record notification metrics for duplicate protection
+            await AuditModel.updateOne(
+              { auditId: audit.auditId },
+              {
+                lastNotificationSentAt: new Date(),
+                notificationVersion: audit.auditVersion || 1,
+              }
+            );
+          } catch (err) {
+            console.error(`❌ Failed to send re-audit notification for audit ${audit.auditId}:`, err);
+          }
+        }
       }
     }
 

@@ -50,6 +50,11 @@ export interface AuditDocument extends Document {
   
   // Why this audit became outdated (e.g., "Cursor price increased $5/mo")
   outdatedReason?: string;
+
+  // ── Batch 5: Duplicate Notification Protection Fields ──────
+  lastNotificationSentAt?: Date;
+  notificationVersion?: number;
+  hasPendingNotification?: boolean;
 }
 
 const AuditSchema = new Schema<AuditDocument>(
@@ -97,6 +102,11 @@ const AuditSchema = new Schema<AuditDocument>(
     
     // Why this audit became outdated
     outdatedReason: { type: String },
+
+    // ── Batch 5: Duplicate Notification Protection Fields ──────
+    lastNotificationSentAt: { type: Date },
+    notificationVersion: { type: Number },
+    hasPendingNotification: { type: Boolean, default: false },
   },
   { timestamps: false }
 );

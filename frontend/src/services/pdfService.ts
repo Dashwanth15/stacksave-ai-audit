@@ -138,31 +138,37 @@ export function generateAuditPDF(audit: AuditResult): void {
     yPosition += 12;
 
     insightsWithSavings.slice(0, 10).forEach((insight, index) => {
-      checkPageBreak(42);
+      // Split texts to compute dynamic height
+      const issueLines = doc.splitTextToSize(insight.message, contentWidth - 28);
+      const suggestionLines = doc.splitTextToSize('→ ' + insight.suggestion, contentWidth - 28);
+
+      // Compute dynamic card height:
+      // - static spaces/padding = 32
+      const dynamicCardHeight = 32 + (issueLines.length * 4) + (suggestionLines.length * 4);
+
+      checkPageBreak(dynamicCardHeight + 8);
 
       // Premium card for each recommendation
-      const cardHeight = 38;
-      addCard(yPosition, cardHeight);
+      addCard(yPosition, dynamicCardHeight);
       
       let innerY = yPosition + 8;
 
-      // Tool name and savings badge
+      // Tool name
       addText((index + 1) + '. ' + insight.toolName, margin + 10, innerY, 11, primaryColor, true);
-      innerY += 6;
+      innerY += 8;
       
       // Savings badge with accent
       addText('Recover $' + insight.potentialMonthlySaving.toLocaleString() + '/mo', margin + 10, innerY, 9, accentDark, true);
-      innerY += 6;
+      innerY += 8;
 
       // Issue description
-      const issueLines = doc.splitTextToSize(insight.message, contentWidth - 28);
       addText(issueLines, margin + 10, innerY, 9, secondaryColor);
-      innerY += issueLines.length * 4 + 5;
+      innerY += (issueLines.length * 4) + 4;
 
       // Recommendation with brand accent
-      addText('→ ' + insight.suggestion, margin + 10, innerY, 9, brandColor, false);
+      addText(suggestionLines, margin + 10, innerY, 9, brandColor, false);
       
-      yPosition += cardHeight + 8;
+      yPosition += dynamicCardHeight + 8;
     });
 
     if (insightsWithSavings.length > 10) {

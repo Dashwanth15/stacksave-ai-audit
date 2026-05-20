@@ -591,3 +591,75 @@ button:disabled {
 .audit-processing-overlay {
   background: radial-gradient(circle at center, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
 }
+
+/* ── Print Styles (Batch 5: PDF / Export Stability) ────────── */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  /* Hide non-printable elements */
+  nav,
+  button,
+  .chatbot-container,
+  .no-print,
+  a[role="button"],
+  .audit-processing-overlay,
+  .version-banner,
+  .re-audit-banner {
+    display: none !important;
+  }
+
+  /* Reset layout grids and glassmorphism */
+  .grid-bg {
+    background: none !important;
+  }
+
+  .glass-card,
+  .glass-card-static,
+  .insight-card,
+  .recommendation-box,
+  .pricing-card {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    color: #1e293b !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    transform: none !important;
+    margin-bottom: 12pt !important;
+  }
+
+  /* Text color overrides for print readability */
+  .text-white,
+  h1, h2, h3, h4, h5, h6 {
+    color: #0f172a !important;
+  }
+
+  .text-indigo-400,
+  .text-indigo-300 {
+    color: #4f46e5 !important;
+  }
+
+  .text-emerald-400,
+  .text-emerald-300 {
+    color: #15803d !important;
+  }
+
+  .text-[#94a3b8],
+  .text-[#6b7b93],
+  .text-[#7b8aa0] {
+    color: #475569 !important;
+  }
+
+  /* Fix container width for printing */
+  .max-w-4xl {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
