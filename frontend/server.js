@@ -50,8 +50,16 @@ app.use('/api', (req, res) => {
 // Must come AFTER the /api proxy so API routes aren't swallowed
 app.use(history());
 
-// Serve static files from dist directory
-app.use(express.static(path.join(__dirname, 'dist')));
+// Serve static files from dist directory with correct MIME types
+app.use(express.static(path.join(__dirname, 'dist'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+  },
+}));
 
 app.listen(PORT, () => {
   console.log(`Frontend server running on port ${PORT}`);
