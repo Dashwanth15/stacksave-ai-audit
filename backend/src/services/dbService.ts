@@ -6,14 +6,18 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { PricingSnapshot } from '../types';
 
 export function getFrontendUrl(): string {
+  let url = 'https://stacksave-round2-frontend.onrender.com';
   if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
     const envUrl = process.env.FRONTEND_URL;
     if (envUrl && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
-      return envUrl;
+      url = envUrl;
+    } else {
+      url = 'http://localhost:5173';
     }
-    return 'http://localhost:5173';
+  } else if (process.env.FRONTEND_URL) {
+    url = process.env.FRONTEND_URL;
   }
-  return process.env.FRONTEND_URL || 'https://stacksave-round2-frontend.onrender.com';
+  return url.replace(/\/+$/, '');
 }
 
 // ── Audit Schema ─────────────────────────────────────────────

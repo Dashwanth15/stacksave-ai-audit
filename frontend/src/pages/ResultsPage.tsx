@@ -6,6 +6,7 @@ import { fetchAudit, captureLead, triggerReAudit } from '../services/api';
 import { formatCurrencyFull, formatRelativeTime, severityLabel, insightTypeLabel } from '../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 import { generateAuditPDF } from '../services/pdfService';
+import ReAuditDiffPage from './ReAuditDiffPage';
 
 // Cohesive chart palette — unified blue/purple/cyan family
 const CHART_COLORS = ['#6366f1', '#7c3aed', '#4f46e5', '#06b6d4', '#3b82f6', '#22d3ee'];
@@ -292,6 +293,14 @@ export default function ResultsPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const isOwner = !!(
+    (location.state as { isOwner?: boolean })?.isOwner ||
+    (id && localStorage.getItem(`owned_${id}`) === 'true')
+  );
+
+  const queryParams = new URLSearchParams(location.search);
+  const viewSingle = queryParams.get('view') === 'single';
+
   const [audit, setAudit] = useState<AuditResult | null>(
     (location.state as { audit?: AuditResult })?.audit || null
   );
@@ -334,13 +343,13 @@ export default function ResultsPage() {
     }
   }, [id, audit]);
 
-  // Show email modal after 3s if not already captured
+  // Show email modal after 3s if not already captured and is owner
   useEffect(() => {
-    if (audit && !emailCaptured) {
+    if (isOwner && audit && !emailCaptured) {
       const timer = setTimeout(() => setShowEmailModal(true), 3000);
       return () => clearTimeout(timer);
     }
-  }, [audit, emailCaptured]);
+  }, [audit, emailCaptured, isOwner]);
 
   function copyShareUrl() {
     if (!audit) return;
@@ -416,6 +425,11 @@ export default function ResultsPage() {
     );
   }
 
+  // If this is a versioned re-audit, mount ReAuditDiffPage directly
+  if (!viewSingle && ((audit.auditVersion ?? 1) > 1 || audit.reAuditOf)) {
+    return <ReAuditDiffPage auditId={audit.auditId} isOwner={isOwner} />;
+  }
+
   // Chart data
   const chartData = audit.insights
     .filter((i) => i.potentialMonthlySaving > 0)
@@ -443,9 +457,15 @@ export default function ResultsPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate('/')} className="text-indigo-400 font-bold text-lg tracking-tight">StackSave</button>
-            <span className="hidden sm:inline-flex text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[#94a3b8] font-medium">
-              Audited {formatRelativeTime(audit.createdAt)}
-            </span>
+            {isOwner ? (
+              <span className="hidden sm:inline-flex text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[#94a3b8] font-medium">
+                Audited {formatRelativeTime(audit.createdAt)}
+              </span>
+            ) : (
+              <span className="hidden sm:inline-flex text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-medium">
+                Shared Audit Report
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -456,13 +476,15 @@ export default function ResultsPage() {
             >
               {generatingPDF ? 'Generating...' : '📄 Download PDF'}
             </button>
-            <button
-              onClick={() => setShowEmailModal(true)}
-              className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all"
-              aria-label="Save audit report"
-            >
-              Save Report
-            </button>
+            {isOwner && (
+              <button
+                onClick={() => setShowEmailModal(true)}
+                className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all"
+                aria-label="Save audit report"
+              >
+                Save Report
+              </button>
+            )}
             <button
               onClick={copyShareUrl}
               className="px-4 py-2 rounded-lg bg-white/[0.045] hover:bg-white/10 text-slate-100 border border-white/10 text-sm font-medium transition-all"
@@ -556,7 +578,7 @@ export default function ResultsPage() {
                     key={v.auditId}
                     onClick={() => {
                       if (!isActive) {
-                        navigate(`/results/${v.auditId}`);
+                        navigate(`/audit/${v.auditId}`, { state: { isOwner } });
                       }
                     }}
                     className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
@@ -778,64 +800,85 @@ export default function ResultsPage() {
           </m.div>
         )}
 
-        {/* ── Share CTA ─────────────────────────────────────── */}
-        <m.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="glass-card-static p-8 text-center border border-white/10 shadow-[0_14px_50px_rgba(0,0,0,0.2)]"
-        >
-          <h3 className="text-xl font-semibold mb-2">Share this audit</h3>
-          <p className="text-[#94a3b8] text-sm mb-5">
-            Your public audit URL — company name and email are not included in the shared version.
-          </p>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-md mx-auto">
-            <input
-              type="text"
-              value={audit.publicUrl}
-              readOnly
-              className="share-url-input flex-1 px-4 py-3 text-sm"
-              aria-label="Shareable audit URL"
-            />
+        {/* ── Share CTA (Owner only) / Start Audit CTA (Visitor only) ── */}
+        {isOwner ? (
+          <m.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="glass-card-static p-8 text-center border border-white/10 shadow-[0_14px_50px_rgba(0,0,0,0.2)]"
+          >
+            <h3 className="text-xl font-semibold mb-2">Share this audit</h3>
+            <p className="text-[#94a3b8] text-sm mb-5">
+              Your public audit URL — company name and email are not included in the shared version.
+            </p>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-md mx-auto">
+              <input
+                type="text"
+                value={audit.publicUrl}
+                readOnly
+                className="share-url-input flex-1 px-4 py-3 text-sm"
+                aria-label="Shareable audit URL"
+              />
+              <button
+                onClick={copyShareUrl}
+                className="copy-button px-5 py-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium whitespace-nowrap transition-all"
+                aria-label="Copy share URL to clipboard"
+              >
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+            <div className="mt-3 text-xs text-[#76879e]">
+              {copied ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="text-emerald-300">✓</span>
+                  Link copied to clipboard
+                </span>
+              ) : (
+                <span>Copy the link to share with your team or CFO.</span>
+              )}
+            </div>
+            <div className="flex gap-3 justify-center mt-4">
+              <a
+                href={`https://twitter.com/intent/tweet?text=I%20just%20found%20out%20my%20team%20could%20save%20%24${audit.estimatedMonthlySavings}%2Fmonth%20on%20AI%20tools%20with%20%40StackSaveAI%20%F0%9F%A4%AF&url=${encodeURIComponent(audit.publicUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 text-sm font-medium transition-all"
+                aria-label="Share on Twitter/X"
+              >
+                Share on X
+              </a>
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(audit.publicUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/20 text-sm font-medium transition-all"
+                aria-label="Share on LinkedIn"
+              >
+                Share on LinkedIn
+              </a>
+            </div>
+          </m.div>
+        ) : (
+          <m.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="glass-card p-8 text-center"
+            style={{ borderColor: 'rgba(129, 140, 248, 0.2)' }}
+          >
+            <h3 className="text-2xl font-bold mb-2">Want to audit your own AI stack?</h3>
+            <p className="text-[#94a3b8] text-sm mb-6">Free · No login · Results in 60 seconds</p>
             <button
-              onClick={copyShareUrl}
-              className="copy-button px-5 py-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium whitespace-nowrap transition-all"
-              aria-label="Copy share URL to clipboard"
+              onClick={() => navigate('/audit')}
+              className="px-10 py-4 rounded-xl font-bold text-lg text-white glow-primary transition-all hover:scale-105"
+              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+              aria-label="Start your own AI spend audit"
             >
-              {copied ? 'Copied' : 'Copy'}
+              Start My Free Audit →
             </button>
-          </div>
-          <div className="mt-3 text-xs text-[#76879e]">
-            {copied ? (
-              <span className="inline-flex items-center gap-2">
-                <span className="text-emerald-300">✓</span>
-                Link copied to clipboard
-              </span>
-            ) : (
-              <span>Copy the link to share with your team or CFO.</span>
-            )}
-          </div>
-          <div className="flex gap-3 justify-center mt-4">
-            <a
-              href={`https://twitter.com/intent/tweet?text=I%20just%20found%20out%20my%20team%20could%20save%20%24${audit.estimatedMonthlySavings}%2Fmonth%20on%20AI%20tools%20with%20%40StackSaveAI%20%F0%9F%A4%AF&url=${encodeURIComponent(audit.publicUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 text-sm font-medium transition-all"
-              aria-label="Share on Twitter/X"
-            >
-              Share on X
-            </a>
-            <a
-              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(audit.publicUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/20 text-sm font-medium transition-all"
-              aria-label="Share on LinkedIn"
-            >
-              Share on LinkedIn
-            </a>
-          </div>
-        </m.div>
+          </m.div>
+        )}
 
         {/* ── Credex CTA ─────────────────────────────────────── */}
         <m.div

@@ -135,8 +135,9 @@ export default function AuditPage() {
       if (!result || !result.auditId) {
         throw new Error('Audit completed but no valid audit identifier was returned.');
       }
+      localStorage.setItem(`owned_${result.auditId}`, 'true');
       clearForm();
-      navigate(`/results/${result.auditId}`, { state: { audit: result } });
+      navigate(`/audit/${result.auditId}`, { state: { audit: result, isOwner: true } });
     } catch (err) {
       setError((err as Error).message || 'Failed to run audit. Please try again.');
     } finally {

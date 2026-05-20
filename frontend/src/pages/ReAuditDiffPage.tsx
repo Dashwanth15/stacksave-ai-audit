@@ -17,8 +17,14 @@ import {
   severityLabel,
 } from '../utils/formatters';
 
-export default function ReAuditDiffPage() {
-  const { id } = useParams<{ id: string }>();
+interface ReAuditDiffPageProps {
+  auditId?: string;
+  isOwner?: boolean;
+}
+
+export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditDiffPageProps = {}) {
+  const { id: paramId } = useParams<{ id: string }>();
+  const id = auditId || paramId;
   const navigate = useNavigate();
 
   const [data, setData] = useState<ReAuditResponse | null>(null);
@@ -143,7 +149,7 @@ export default function ReAuditDiffPage() {
               📄 Download PDF
             </button>
             <button
-              onClick={() => navigate(`/results/${newAudit?.auditId || ''}`)}
+              onClick={() => navigate(`/audit/${newAudit?.auditId || ''}?view=single`)}
               className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all"
             >
               View Full Audit →
@@ -167,7 +173,7 @@ export default function ReAuditDiffPage() {
                     key={v.auditId}
                     onClick={() => {
                       if (!isActive) {
-                        navigate(`/reaudit/${v.auditId}`);
+                        navigate(`/audit/${v.auditId}`);
                       }
                     }}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${
@@ -591,7 +597,7 @@ export default function ReAuditDiffPage() {
 
         <div className="text-center pt-8 border-t border-white/5">
           <button
-            onClick={() => navigate(`/results/${newAudit?.auditId || ''}`)}
+            onClick={() => navigate(`/audit/${newAudit?.auditId || ''}?view=single`)}
             className="text-indigo-400 hover:text-indigo-300 text-sm font-semibold"
           >
             Go to Results Dashboard →
