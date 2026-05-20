@@ -12,7 +12,7 @@ import auditRouter from './routes/audit';
 import leadsRouter from './routes/leads';
 import healthRouter from './routes/health';
 import chatRouter from './routes/chat';
-import { globalLimiter, auditLimiter, leadLimiter } from './middleware/rateLimit';
+import { globalLimiter, leadLimiter } from './middleware/rateLimit';
 import { requestLogger } from './middleware/logger';
 
 const app = express();
@@ -69,7 +69,7 @@ app.use(globalLimiter);
 
 // ── Routes ────────────────────────────────────────────────────
 app.use('/api/health', healthRouter);
-app.use('/api/audits', auditLimiter, auditRouter);
+app.use('/api/audits', auditRouter);
 app.use('/api/leads', leadLimiter, leadsRouter);
 app.use('/api/chat', chatRouter);
 

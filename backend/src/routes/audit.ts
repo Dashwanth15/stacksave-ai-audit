@@ -11,6 +11,7 @@ import { validateAuditRequest } from '../middleware/validation';
 import { capturePricingSnapshot } from '../services/pricingService';
 import { scanAuditsForPricingChanges } from '../services/pricingChangeDetectionService';
 import { runReAudit, generateAuditDiff } from '../services/reAuditService';
+import { auditLimiter } from '../middleware/rateLimit';
 
 const router = Router();
 
@@ -18,7 +19,7 @@ const router = Router();
 // Main audit endpoint. Runs the engine, generates AI summary,
 // saves to DB with pricing snapshot, returns full result.
 // Batch 1: Persistent audit storage with pricing snapshot
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', auditLimiter, async (req: Request, res: Response) => {
   try {
     const body = req.body as AuditRequest & { email?: string };
 
@@ -205,7 +206,7 @@ router.get('/:id/full', async (req: Request, res: Response) => {
 
 // ── POST /api/audits/:id/re-audit ───────────────────────────
 // Batch 3: Re-audit generation endpoint
-router.post('/:id/re-audit', async (req: Request, res: Response) => {
+router.post('/:id/re-audit', auditLimiter, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
