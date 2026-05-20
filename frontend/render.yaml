@@ -2,21 +2,18 @@
 # This file configures automatic deployment from GitHub to Render
 
 services:
-  - type: web
+  - type: static
     name: stacksave-round2-frontend
-    runtime: node
-    plan: free
-    region: oregon
     buildCommand: npm install && npm run build
-    startCommand: npm run start
+    publishPath: dist
     envVars:
       - key: VITE_API_BASE_URL
         value: https://stacksave-round2-backend.onrender.com/api
+      - key: VITE_API_URL
+        value: https://stacksave-round2-backend.onrender.com/api
       - key: BACKEND_URL
         value: https://stacksave-round2-backend.onrender.com
-    # Health check
-    healthcheckPath: /
-    # Auto-deploy from main branch
+    # Auto-deploy from round-2-reaudit branch
     branch: round-2-reaudit
     # Build from the frontend directory
     rootDirectory: frontend

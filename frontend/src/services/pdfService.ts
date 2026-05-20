@@ -127,7 +127,7 @@ export function generateAuditPDF(audit: AuditResult): void {
   }
 
   // ── RECOMMENDATIONS SECTION ─────────────────────────────────
-  const insightsWithSavings = audit.insights.filter(i => i.potentialMonthlySaving > 0);
+  const insightsWithSavings = (audit.insights || []).filter(i => i.potentialMonthlySaving > 0);
   
   if (insightsWithSavings.length > 0) {
     checkPageBreak(35);
@@ -225,6 +225,7 @@ export function generateAuditPDF(audit: AuditResult): void {
   addText('Powered by Credex · Discounted AI Infrastructure Credits', margin, yPosition, 8, mutedColor);
 
   // ── SAVE PDF ────────────────────────────────────────────────
-  const fileName = `stacksave-audit-${audit.auditId.slice(0, 8)}.pdf`;
+  const auditIdSafe = audit.auditId || 'draft';
+  const fileName = `stacksave-audit-${auditIdSafe.slice(0, 8)}.pdf`;
   doc.save(fileName);
 }

@@ -6,8 +6,26 @@
 import axios from 'axios';
 import type { AuditRequest, AuditResult, LeadCaptureRequest, ReAuditResponse } from '../types';
 
+const getBaseUrl = (): string => {
+  const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  // Auto-detect production environment to avoid build-time env configuration issues
+  if (typeof window !== 'undefined' && window.location) {
+    const hostname = window.location.hostname;
+    if (hostname.includes('stacksave-round2-frontend.onrender.com')) {
+      return 'https://stacksave-round2-backend.onrender.com/api';
+    }
+    if (hostname.includes('onrender.com')) {
+      return window.location.origin.replace('-frontend', '-backend') + '/api';
+    }
+  }
+  return '/api';
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: getBaseUrl(),
   timeout: 30000, // 30s — AI summary can take a few seconds
   headers: {
     'Content-Type': 'application/json',

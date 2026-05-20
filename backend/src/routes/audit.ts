@@ -28,7 +28,7 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: validation.error });
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://stacksave-round2-frontend.onrender.com' : 'http://localhost:5173');
     const publicUrlBase = frontendUrl;
 
     // Run deterministic audit engine
@@ -170,7 +170,7 @@ router.post('/:id/re-audit', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: 'Audit not found' });
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://stacksave-round2-frontend.onrender.com' : 'http://localhost:5173');
     const publicUrlBase = frontendUrl;
 
     const { newAudit, diff } = await runReAudit(id, publicUrlBase);
@@ -252,22 +252,43 @@ router.get('/:id/diff', async (req: Request, res: Response) => {
 router.post('/detect-pricing-changes', async (req: Request, res: Response) => {
   try {
     console.log('🔍 Starting pricing change detection...');
-    
     const result = await scanAuditsForPricingChanges();
-    
     if (!result.success) {
       return res.status(500).json({
         success: false,
         error: result.error || 'Detection failed',
       });
     }
-
     return res.json({
       success: true,
       data: result,
     });
   } catch (err) {
     console.error('POST /api/audits/detect-pricing-changes error:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to detect pricing changes',
+    });
+  }
+});
+
+// GET alias for manual browser triggering/easier curls
+router.get('/detect-pricing-changes', async (req: Request, res: Response) => {
+  try {
+    console.log('🔍 Starting pricing change detection via GET...');
+    const result = await scanAuditsForPricingChanges();
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        error: result.error || 'Detection failed',
+      });
+    }
+    return res.json({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    console.error('GET /api/audits/detect-pricing-changes error:', err);
     return res.status(500).json({
       success: false,
       error: 'Failed to detect pricing changes',

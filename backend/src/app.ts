@@ -17,7 +17,7 @@ import { requestLogger } from './middleware/logger';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://stacksave-round2-frontend.onrender.com' : 'http://localhost:5173');
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // ── Security Headers ─────────────────────────────────────────
@@ -88,7 +88,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 async function start() {
   await connectDB();
   app.listen(PORT, () => {
-    const serverUrl = NODE_ENV === 'production' ? `https://your-backend-url.onrender.com` : `http://localhost:${PORT}`;
+    const serverUrl = NODE_ENV === 'production' ? `https://stacksave-round2-backend.onrender.com` : `http://localhost:${PORT}`;
     console.log(`🚀 StackSave API running at ${serverUrl}`);
     console.log(`   Health: ${serverUrl}/api/health`);
     console.log(`   Environment: ${NODE_ENV}`);

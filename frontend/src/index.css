@@ -649,9 +649,9 @@ button:disabled {
     color: #15803d !important;
   }
 
-  .text-[#94a3b8],
-  .text-[#6b7b93],
-  .text-[#7b8aa0] {
+  .text-\[\#94a3b8\],
+  .text-\[\#6b7b93\],
+  .text-\[\#7b8aa0\] {
     color: #475569 !important;
   }
 
