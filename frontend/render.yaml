@@ -11,8 +11,9 @@ services:
     startCommand: npm run start
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://stacksave-backend.onrender.com/api
-        # IMPORTANT: Update this value after deploying the backend
+        value: https://stacksave-round2-backend.onrender.com/api
+      - key: BACKEND_URL
+        value: https://stacksave-round2-backend.onrender.com
     # Health check
     healthcheckPath: /
     # Auto-deploy from main branch

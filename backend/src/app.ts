@@ -27,11 +27,21 @@ app.use(helmet());
 // In production, only allow the production frontend URL
 // In development, allow localhost for testing
 const cleanFrontendUrl = FRONTEND_URL.replace(/\/$/, '');
+
+// Always allow known production URLs in addition to env-configured URL
+const ROUND2_FRONTEND = 'https://stacksave-round2-frontend.onrender.com';
 const allowedOrigins = NODE_ENV === 'production'
-  ? [cleanFrontendUrl, `${cleanFrontendUrl}/`]
+  ? [
+      cleanFrontendUrl,
+      `${cleanFrontendUrl}/`,
+      ROUND2_FRONTEND,
+      `${ROUND2_FRONTEND}/`,
+    ]
   : [
       cleanFrontendUrl,
       `${cleanFrontendUrl}/`,
+      ROUND2_FRONTEND,
+      `${ROUND2_FRONTEND}/`,
       'http://localhost:5173',
       'http://localhost:5173/',
       'http://localhost:3000',
