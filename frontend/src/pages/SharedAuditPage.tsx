@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';
 import type { AuditResult, Insight } from '../types';
-import { fetchAudit } from '../services/api';
+import { fetchAudit, triggerReAudit } from '../services/api';
 import { formatCurrencyFull, formatRelativeTime, severityLabel, insightTypeLabel } from '../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 
@@ -129,6 +129,21 @@ export default function SharedAuditPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [reAuditing, setReAuditing] = useState(false);
+
+  async function handleRunReAudit() {
+    if (!audit) return;
+    setReAuditing(true);
+    try {
+      const result = await triggerReAudit(audit.auditId);
+      navigate(`/audit/${result.newAuditId}/diff`);
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Failed to trigger re-audit');
+    } finally {
+      setReAuditing(false);
+    }
+  }
 
   useEffect(() => {
     if (id) {
@@ -245,6 +260,52 @@ export default function SharedAuditPage() {
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-12 space-y-8">
+        {/* ── Batch 4: Re-audit Banner & Newer Version Notice ── */}
+        {audit.pricingChanged && (audit.isLatestVersion ?? true) && (
+          <m.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-300 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-sm"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">⚠️</span>
+              <div>
+                <span className="font-bold">Provider pricing changes detected.</span>{' '}
+                {audit.outdatedReason || 'Some tools in your stack have updated pricing models.'}
+              </div>
+            </div>
+            <button
+              onClick={handleRunReAudit}
+              disabled={reAuditing}
+              className="px-4 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition-colors shrink-0 disabled:opacity-50 text-xs"
+            >
+              {reAuditing ? 'Recalculating...' : 'Update & View Diff'}
+            </button>
+          </m.div>
+        )}
+
+        {audit.isLatestVersion === false && (
+          <m.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-300 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-sm"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">ℹ️</span>
+              <div>
+                <span className="font-bold">This is an older version of the audit (v{audit.auditVersion || 1}).</span>{' '}
+                A newer re-audit version is available with current pricing.
+              </div>
+            </div>
+            <button
+              onClick={() => navigate(`/audit/${audit.reAuditOf || audit.auditId}/diff`)}
+              className="px-4 py-1.5 rounded-lg bg-indigo-500 text-white font-bold hover:bg-indigo-400 transition-colors shrink-0 text-xs"
+            >
+              View Latest Diff
+            </button>
+          </m.div>
+        )}
+
         {/* Shared badge */}
         <div className="text-center">
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium">

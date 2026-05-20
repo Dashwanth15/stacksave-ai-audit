@@ -5,6 +5,7 @@ import LandingPage from './pages/LandingPage';
 import AuditPage from './pages/AuditPage';
 import ResultsPage from './pages/ResultsPage';
 import SharedAuditPage from './pages/SharedAuditPage';
+import ReAuditDiffPage from './pages/ReAuditDiffPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ChatBot from './components/ChatBot';
 
@@ -26,6 +27,8 @@ export default function App() {
           <Route path="/audit" element={<AuditPage />} />
           <Route path="/results/:id" element={<ResultsPage />} />
           <Route path="/audit/:id" element={<SharedAuditPage />} />
+          <Route path="/audit/:id/diff" element={<ReAuditDiffPage />} />
+          <Route path="/reaudit/:id" element={<ReAuditDiffPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <ChatBot />

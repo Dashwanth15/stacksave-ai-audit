@@ -70,6 +70,13 @@ export interface AuditResult {
   companyName?: string;
   teamSize: number;
   tools: ToolEntry[];
+
+  // Batch 4 re-audit additions
+  pricingChanged?: boolean;
+  outdatedReason?: string;
+  reAuditOf?: string;
+  isLatestVersion?: boolean;
+  auditVersion?: number;
 }
 
 export interface LeadCaptureRequest {
@@ -107,3 +114,50 @@ export interface PlanOption {
   features?: string[];    // key plan features for display
   tagline?: string;       // short plan description
 }
+
+// ── Batch 4: Re-Audit Comparison Types ───────────────────────
+
+export interface RecommendationDiff {
+  toolId: ToolId;
+  toolName: string;
+  type: string;
+  status: 'added' | 'removed' | 'changed';
+  oldInsight?: Insight;
+  newInsight?: Insight;
+  savingDelta?: number;
+}
+
+export interface PricingDiff {
+  toolId: ToolId;
+  toolName: string;
+  planId: string;
+  planLabel: string;
+  oldMonthlyPrice: number;
+  newMonthlyPrice: number;
+  monthlyDelta: number;
+  oldAnnualPrice?: number;
+  newAnnualPrice?: number;
+  annualDelta?: number;
+}
+
+export interface AuditDiff {
+  oldAuditId: string;
+  newAuditId: string;
+  oldSavings: number;
+  newSavings: number;
+  savingsDelta: number;
+  recommendationsChanged: boolean;
+  changedTools: ToolId[];
+  recommendationDiffs: RecommendationDiff[];
+  pricingDiffs: PricingDiff[];
+  generatedAt: string;
+}
+
+export interface ReAuditResponse {
+  oldAuditId: string;
+  newAuditId: string;
+  oldAudit: AuditResult;
+  newAudit: AuditResult;
+  diff: AuditDiff;
+}
+

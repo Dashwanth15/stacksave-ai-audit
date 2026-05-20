@@ -4,7 +4,7 @@
 // ============================================================
 
 import axios from 'axios';
-import type { AuditRequest, AuditResult, LeadCaptureRequest } from '../types';
+import type { AuditRequest, AuditResult, LeadCaptureRequest, ReAuditResponse } from '../types';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
@@ -75,3 +75,20 @@ export async function checkHealth(): Promise<{ status: string; db: string }> {
   const response = await api.get('/health');
   return response.data;
 }
+
+export async function fetchAuditDiff(auditId: string): Promise<ReAuditResponse> {
+  const response = await api.get<{ success: boolean; data: ReAuditResponse }>(`/audits/${auditId}/diff`);
+  return response.data.data!;
+}
+
+export async function triggerReAudit(
+  auditId: string
+): Promise<{ newAuditId: string; newAudit: AuditResult; diff: any }> {
+  const response = await api.post<{
+    success: boolean;
+    data: { newAuditId: string; newAudit: AuditResult; diff: any };
+  }>(`/audits/${auditId}/re-audit`);
+  return response.data.data!;
+}
+
+
