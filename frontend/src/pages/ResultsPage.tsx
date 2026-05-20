@@ -559,54 +559,106 @@ export default function ResultsPage() {
           <m.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl space-y-4 shadow-[0_4px_24px_rgba(0,0,0,0.2)]"
+            className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl space-y-6 shadow-[0_4px_24px_rgba(0,0,0,0.2)] relative overflow-hidden"
           >
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
               <div>
                 <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                  <span className="flex h-2 w-2 relative">
+                  <span className="flex h-2.5 w-2.5 relative">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
                   </span>
                   Living Audit Timeline
                 </h3>
-                <p className="text-xs text-[#94a3b8] mt-0.5">
-                  Click below to switch dashboards, or compare changes side-by-side.
+                <p className="text-xs text-[#94a3b8] mt-1">
+                  Trace catalog pricing updates and optimization changes across audit versions.
                 </p>
               </div>
               <button
-                onClick={() => navigate(`/audit/${audit.auditId}/diff`)}
-                className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/25 transition-all text-center sm:text-right cursor-pointer"
+                onClick={() => navigate(`/audit/${audit.auditId}/diff`, { state: { isOwner } })}
+                className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/25 transition-all text-center sm:text-right cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
               >
                 📊 Compare Baseline vs Latest Diff →
               </button>
             </div>
-            <div className="flex items-center gap-3 overflow-x-auto py-1 scrollbar-thin">
-              {audit.allVersions.map((v) => {
-                const isActive = v.auditId === audit.auditId;
-                return (
-                  <button
-                    key={v.auditId}
-                    onClick={() => {
-                      if (!isActive) {
-                        navigate(`/audit/${v.auditId}?view=single`, { state: { isOwner } });
-                      }
-                    }}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
-                      isActive
-                        ? 'bg-indigo-500/15 border-indigo-500/35 text-indigo-300 shadow-[0_0_12px_rgba(99,102,241,0.15)]'
-                        : 'bg-white/3 border-white/5 hover:bg-white/8 text-[#94a3b8] hover:text-white'
-                    }`}
-                  >
-                    <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-indigo-400' : 'bg-slate-500'}`} />
-                    <span>v{v.auditVersion || 1} {isActive ? '(Current View)' : ''}</span>
-                    <span className="text-[10px] text-[#6b7b93] font-normal">
-                      ({formatRelativeTime(v.createdAt)})
-                    </span>
-                  </button>
-                );
-              })}
+
+            <div className="relative flex items-center justify-between py-2">
+              {/* Horizontal Connecting Track Line */}
+              <div className="absolute left-4 right-4 h-0.5 bg-gradient-to-r from-slate-800 via-indigo-950 to-slate-800 top-1/2 -translate-y-1/2" />
+              
+              <div className="relative z-10 w-full flex items-center justify-start gap-8 sm:gap-12 overflow-x-auto py-2 px-1 scrollbar-thin">
+                {audit.allVersions.map((v, idx) => {
+                  const isActive = v.auditId === audit.auditId;
+                  return (
+                    <button
+                      key={v.auditId}
+                      onClick={() => {
+                        if (!isActive) {
+                          navigate(`/audit/${v.auditId}?view=single`, { state: { isOwner } });
+                        }
+                      }}
+                      className="group flex flex-col items-center gap-2.5 shrink-0 transition-all focus:outline-none cursor-pointer"
+                    >
+                      <div className="relative flex items-center justify-center">
+                        {/* Glowing ring for active node */}
+                        {isActive && (
+                          <span className="absolute animate-ping inline-flex h-7 w-7 rounded-full bg-indigo-400 opacity-20" />
+                        )}
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                            isActive
+                              ? 'bg-indigo-600 border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.5)]'
+                              : 'bg-[#0f111a] border-slate-700 group-hover:border-slate-500'
+                          }`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white' : 'bg-slate-500 group-hover:bg-slate-300'}`} />
+                        </div>
+                      </div>
+                      <div className="text-center space-y-0.5">
+                        <div className={`text-xs font-bold transition-all ${isActive ? 'text-indigo-300' : 'text-[#6b7b93] group-hover:text-slate-200'}`}>
+                          Version {v.auditVersion || (idx + 1)} {isActive ? '(Active)' : ''}
+                        </div>
+                        <div className="text-[10px] text-[#475569] group-hover:text-[#64748b] transition-all">
+                          {formatRelativeTime(v.createdAt)}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+          </m.div>
+        )}
+
+        {/* Living Audit Comparison Summary Banner */}
+        {audit.allVersions && audit.allVersions.length > 1 && (
+          <m.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-card-static p-6 border border-indigo-500/20 bg-indigo-950/20 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-6"
+          >
+            <div className="space-y-2 text-left">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  Version {audit.auditVersion ?? 1} of {audit.allVersions.length}
+                </span>
+                <span className="text-xs text-[#94a3b8] font-medium">
+                  This audit is part of an active version history.
+                </span>
+              </div>
+              <h3 className="text-base font-bold text-white tracking-tight">
+                Compare changes side-by-side to see what evolved.
+              </h3>
+              <p className="text-xs text-[#94a3b8] max-w-xl leading-relaxed">
+                Vendor pricing models have shifted and new recommendations have been generated compared to your baseline audit.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate(`/audit/${audit.auditId}/diff`, { state: { isOwner } })}
+              className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs tracking-wide transition-all shadow-[0_4px_20px_rgba(99,102,241,0.25)] flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+            >
+              📊 Open Comparison Dashboard →
+            </button>
           </m.div>
         )}
 

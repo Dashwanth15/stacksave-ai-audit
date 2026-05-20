@@ -132,6 +132,15 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
   const recommendationDiffs = diff?.recommendationDiffs || [];
   const pricingDiffs = diff?.pricingDiffs || [];
   const savingsDelta = diff?.savingsDelta || 0;
+  const spendDelta = (newAudit?.totalMonthlySpend ?? 0) - (oldAudit?.totalMonthlySpend ?? 0);
+
+  const biggestPricingChange = pricingDiffs.length > 0
+    ? [...pricingDiffs].sort((a, b) => Math.abs(b.monthlyDelta) - Math.abs(a.monthlyDelta))[0]
+    : null;
+
+  const biggestRecChange = recommendationDiffs.length > 0
+    ? [...recommendationDiffs].sort((a, b) => Math.abs(b.savingDelta ?? 0) - Math.abs(a.savingDelta ?? 0))[0]
+    : null;
 
   // Split recommendation changes
   const addedRecs = (recommendationDiffs || []).filter((r) => r && r.status === 'added');
@@ -180,7 +189,7 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
               📄 Download PDF
             </button>
             <button
-              onClick={() => navigate(`/audit/${newAudit?.auditId || ''}?view=single`)}
+              onClick={() => navigate(`/audit/${newAudit?.auditId || ''}?view=single`, { state: { isOwner } })}
               className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all"
             >
               View Full Audit →
@@ -192,115 +201,253 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-12 space-y-8">
         {/* Version Timeline Selector */}
         {allVersions && allVersions.length > 1 && (
-          <div className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl space-y-4">
-            <h3 className="text-xs font-bold text-[#6b7b93] uppercase tracking-wider">
-              Audit Version Timeline
-            </h3>
-            <div className="flex items-center gap-4 overflow-x-auto py-2">
-              {allVersions.map((v) => {
-                const isActive = v.auditId === newAudit?.auditId;
-                return (
-                  <button
-                    key={v.auditId}
-                    onClick={() => {
-                      if (!isActive) {
-                        navigate(`/audit/${v.auditId}`);
-                      }
-                    }}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap ${
-                      isActive
-                        ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10 text-[#94a3b8]'
-                    }`}
-                  >
-                    <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-indigo-400' : 'bg-slate-500'}`} />
-                    v{v.auditVersion || 1} ({formatRelativeTime(v.createdAt)})
-                  </button>
-                );
-              })}
+          <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl space-y-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+              <span className="text-8xl">📊</span>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+              <div>
+                <h3 className="text-xs font-bold text-[#818cf8] uppercase tracking-widest">
+                  Living Audit History
+                </h3>
+                <p className="text-xs text-[#94a3b8] mt-1">
+                  Trace catalog pricing updates and optimization changes across audit versions.
+                </p>
+              </div>
+              <span className="text-[10px] px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold uppercase tracking-wider self-start sm:self-auto">
+                Comparison Mode Active
+              </span>
+            </div>
+            <div className="relative flex items-center justify-between py-4">
+              {/* Horizontal Connecting Track Line */}
+              <div className="absolute left-4 right-4 h-0.5 bg-gradient-to-r from-slate-800 via-indigo-950 to-slate-800 top-1/2 -translate-y-1/2" />
+              
+              <div className="relative z-10 w-full flex items-center justify-start gap-8 sm:gap-12 overflow-x-auto py-2 px-1 scrollbar-thin">
+                {allVersions.map((v, idx) => {
+                  const isActive = v.auditId === newAudit?.auditId;
+                  return (
+                    <button
+                      key={v.auditId}
+                      onClick={() => {
+                        if (!isActive) {
+                          navigate(`/audit/${v.auditId}`, { state: { isOwner } });
+                        }
+                      }}
+                      className="group flex flex-col items-center gap-2.5 shrink-0 transition-all focus:outline-none cursor-pointer"
+                    >
+                      <div className="relative flex items-center justify-center">
+                        {/* Glowing ring for active node */}
+                        {isActive && (
+                          <span className="absolute animate-ping inline-flex h-7 w-7 rounded-full bg-indigo-400 opacity-20" />
+                        )}
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                            isActive
+                              ? 'bg-indigo-600 border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.5)]'
+                              : 'bg-[#0f111a] border-slate-700 group-hover:border-slate-500'
+                          }`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white' : 'bg-slate-500 group-hover:bg-slate-300'}`} />
+                        </div>
+                      </div>
+                      <div className="text-center space-y-0.5">
+                        <div className={`text-xs font-bold transition-all ${isActive ? 'text-indigo-300' : 'text-[#6b7b93] group-hover:text-slate-200'}`}>
+                          Version {v.auditVersion || (idx + 1)} {isActive ? '(Active)' : ''}
+                        </div>
+                        <div className="text-[10px] text-[#475569] group-hover:text-[#64748b] transition-all">
+                          {formatRelativeTime(v.createdAt)}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Version & Context Header */}
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white/[0.02] border border-white/5 p-4 rounded-xl">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 text-xs font-semibold rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                v{newAudit?.auditVersion || 2} Update
-              </span>
-              {newAudit?.isLatestVersion && (
-                <span className="px-2 py-0.5 text-xs font-semibold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  Latest Version
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-[#94a3b8]">
-              Comparing original audit (v1) with current re-audit results.
-            </p>
-          </div>
-          <div className="text-left sm:text-right text-[11px] text-[#6b7b93] space-y-0.5">
-            <div>Original: {oldAudit?.createdAt ? new Date(oldAudit.createdAt).toLocaleString() : ''}</div>
-            <div>Re-audited: {newAudit?.createdAt ? new Date(newAudit.createdAt).toLocaleString() : ''}</div>
-          </div>
-        </div>
-
-        {/* ── 1. Savings Delta Hero Section ─────────────────────────── */}
+        {/* ── 1. Living Audit Comparison Centerpiece ─────────────────────────── */}
         <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card-static p-8 sm:p-10 text-center relative overflow-hidden glow-savings"
-          style={{ borderColor: 'rgba(99, 102, 241, 0.15)' }}
+          className="relative overflow-hidden rounded-3xl border border-indigo-500/20 bg-[#0c0d1b] shadow-[0_15px_50px_rgba(0,0,0,0.3)]"
         >
+          {/* Decorative neon top gradient bar */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500" />
-          <p className="text-[#94a3b8] text-xs font-bold uppercase tracking-wider mb-2">
-            Pricing Impact Summary
-          </p>
+          
+          <div className="p-8 sm:p-10 space-y-8">
+            <div className="text-center sm:text-left space-y-1.5">
+              <span className="text-[10px] px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold uppercase tracking-wider">
+                Living Audit Comparison
+              </span>
+              <h2 className="text-2xl font-black text-white tracking-tight pt-1">
+                Your AI stack changed over time
+              </h2>
+              <p className="text-xs text-[#94a3b8]">
+                Catalog updates and usage changes generated optimization adjustments between v{oldAudit?.auditVersion || 1} ({oldAudit?.createdAt ? new Date(oldAudit.createdAt).toLocaleDateString() : ''}) and v{newAudit?.auditVersion || 2} ({newAudit?.createdAt ? new Date(newAudit.createdAt).toLocaleDateString() : ''}).
+              </p>
+            </div>
 
-          <div className="my-6">
-            {savingsDelta > 0 ? (
-              <>
-                <div className="text-5xl sm:text-6xl font-black text-emerald-400 mb-2 tabular-nums">
-                  +{formatCurrencyFull(savingsDelta)}/mo
+            {/* Core Comparative Metrics Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Stack Spend Dynamics Card */}
+              <div className="glass-card-static p-6 border-white/5 bg-white/[0.01] hover:border-white/10 transition-all rounded-2xl flex flex-col justify-between space-y-4">
+                <div className="space-y-1">
+                  <span className="text-xs font-bold text-[#6b7b93] uppercase tracking-wider block">
+                    Stack Monthly Spend
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-extrabold text-slate-400 line-through tabular-nums">
+                      {formatCurrencyFull(oldAudit?.totalMonthlySpend ?? 0)}
+                    </span>
+                    <span className="text-xs text-[#6b7b93]">➔</span>
+                    <span className="text-3xl font-black text-white tabular-nums">
+                      {formatCurrencyFull(newAudit?.totalMonthlySpend ?? 0)}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-sm text-[#94a3b8] max-w-md mx-auto">
-                  Catalog pricing adjustments have **increased** your potential optimizations by{' '}
-                  <span className="text-emerald-300 font-semibold">{formatCurrencyFull(savingsDelta)}/mo</span>.
-                </p>
-              </>
-            ) : savingsDelta < 0 ? (
-              <>
-                <div className="text-5xl sm:text-6xl font-black text-amber-400 mb-2 tabular-nums">
-                  {formatCurrencyFull(savingsDelta)}/mo
-                </div>
-                <p className="text-sm text-[#94a3b8] max-w-md mx-auto">
-                  Catalog pricing changes have **reduced** your potential optimized savings delta by{' '}
-                  <span className="text-amber-300 font-semibold">{formatCurrencyFull(Math.abs(savingsDelta))}/mo</span>.
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="text-5xl sm:text-6xl font-black text-slate-300 mb-2 tabular-nums">
-                  No Savings Delta
-                </div>
-                <p className="text-sm text-[#94a3b8] max-w-md mx-auto">
-                  Overall potential optimizations remain identical to the previous analysis.
-                </p>
-              </>
-            )}
-          </div>
 
-          <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto pt-6 border-t border-white/5">
-            <div>
-              <div className="text-xs text-[#6b7b93] uppercase tracking-wider mb-0.5">Previous Savings</div>
-              <div className="text-xl font-bold text-slate-300 tabular-nums">
-                {oldAudit?.estimatedMonthlySavings ? `${formatCurrencyFull(oldAudit.estimatedMonthlySavings)}/mo` : '$0.00/mo'}
+                <div className="flex items-center gap-2">
+                  {spendDelta < 0 ? (
+                    <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                      <span>↓</span> {formatCurrencyFull(Math.abs(spendDelta))}/mo savings
+                    </span>
+                  ) : spendDelta > 0 ? (
+                    <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                      <span>↑</span> {formatCurrencyFull(spendDelta)}/mo increase
+                    </span>
+                  ) : (
+                    <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                      No spend change
+                    </span>
+                  )}
+                  <span className="text-[10px] text-[#6b7b93]">
+                    in raw stack cost
+                  </span>
+                </div>
+              </div>
+
+              {/* Identified Savings Evolution Card */}
+              <div className="glass-card-static p-6 border-white/5 bg-white/[0.01] hover:border-white/10 transition-all rounded-2xl flex flex-col justify-between space-y-4">
+                <div className="space-y-1">
+                  <span className="text-xs font-bold text-[#6b7b93] uppercase tracking-wider block">
+                    Potential Savings Opportunities
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-extrabold text-slate-400 line-through tabular-nums">
+                      {formatCurrencyFull(oldAudit?.estimatedMonthlySavings ?? 0)}
+                    </span>
+                    <span className="text-xs text-[#6b7b93]">➔</span>
+                    <span className="text-3xl font-black text-emerald-400 tabular-nums">
+                      {formatCurrencyFull(newAudit?.estimatedMonthlySavings ?? 0)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {savingsDelta > 0 ? (
+                    <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                      <span>+</span> {formatCurrencyFull(savingsDelta)}/mo more recovery
+                    </span>
+                  ) : savingsDelta < 0 ? (
+                    <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                      <span>-</span> {formatCurrencyFull(Math.abs(savingsDelta))}/mo recovery delta
+                    </span>
+                  ) : (
+                    <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                      Savings level steady
+                    </span>
+                  )}
+                  <span className="text-[10px] text-[#6b7b93]">
+                    vs original baseline
+                  </span>
+                </div>
               </div>
             </div>
-            <div>
-              <div className="text-xs text-[#6b7b93] uppercase tracking-wider mb-0.5">Current Savings</div>
-              <div className="text-xl font-bold text-white tabular-nums">
-                {newAudit?.estimatedMonthlySavings ? `${formatCurrencyFull(newAudit.estimatedMonthlySavings)}/mo` : '$0.00/mo'}
+
+            {/* Drivers of Change Subgrid */}
+            <div className="pt-6 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+              {/* Biggest Pricing Driver */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-extrabold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
+                  🏷️ Key Pricing Driver
+                </h4>
+                {biggestPricingChange ? (
+                  <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl">
+                    <div className="flex justify-between items-start">
+                      <span className="text-xs font-bold text-white block">
+                        {biggestPricingChange.toolName}
+                      </span>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                        biggestPricingChange.monthlyDelta > 0 ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'
+                      }`}>
+                        {biggestPricingChange.monthlyDelta > 0 ? 'Price Inc' : 'Price Drop'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#94a3b8] mt-1 leading-relaxed">
+                      {biggestPricingChange.planLabel} Plan updated from{' '}
+                      <span className="line-through text-[#6b7b93]">{formatCurrencyFull(biggestPricingChange.oldMonthlyPrice)}</span> to{' '}
+                      <span className="text-white font-semibold">{formatCurrencyFull(biggestPricingChange.newMonthlyPrice)}</span>/mo{' '}
+                      <span className={`font-semibold ${biggestPricingChange.monthlyDelta > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                        ({biggestPricingChange.monthlyDelta > 0 ? '+' : ''}{formatCurrencyFull(biggestPricingChange.monthlyDelta)})
+                      </span>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-white/[0.01] border border-dashed border-white/5 p-4 rounded-xl text-center">
+                    <p className="text-xs text-[#6b7b93]">No pricing changes detected in catalog pricing rates.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Biggest Recommendation Driver */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-extrabold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
+                  💡 Key Recommendation Driver
+                </h4>
+                {biggestRecChange ? (
+                  <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl">
+                    <div className="flex justify-between items-start">
+                      <span className="text-xs font-bold text-white block">
+                        {biggestRecChange.toolName}
+                      </span>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                        biggestRecChange.status === 'added'
+                          ? 'bg-emerald-500/10 text-emerald-400'
+                          : biggestRecChange.status === 'removed'
+                          ? 'bg-rose-500/10 text-rose-400'
+                          : 'bg-amber-500/10 text-amber-400'
+                      }`}>
+                        {biggestRecChange.status}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#94a3b8] mt-1 leading-relaxed">
+                      {biggestRecChange.status === 'added' ? (
+                        <>
+                          New optimization opportunity identified, yielding potential savings of{' '}
+                          <span className="text-emerald-400 font-bold">+{formatCurrencyFull(biggestRecChange.savingDelta ?? 0)}/mo</span>.
+                        </>
+                      ) : biggestRecChange.status === 'removed' ? (
+                        <>
+                          Prior recommendation resolved or no longer applicable, reducing savings potential by{' '}
+                          <span className="text-rose-400 font-bold">-{formatCurrencyFull(Math.abs(biggestRecChange.savingDelta ?? 0))}/mo</span>.
+                        </>
+                      ) : (
+                        <>
+                          Optimization recommendation revised, modifying savings potential by{' '}
+                          <span className={`${(biggestRecChange.savingDelta ?? 0) >= 0 ? 'text-emerald-400' : 'text-amber-400'} font-bold`}>
+                            {biggestRecChange.savingDelta && biggestRecChange.savingDelta > 0 ? '+' : ''}
+                            {formatCurrencyFull(biggestRecChange.savingDelta ?? 0)}/mo
+                          </span>.
+                        </>
+                      )}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-white/[0.01] border border-dashed border-white/5 p-4 rounded-xl text-center">
+                    <p className="text-xs text-[#6b7b93]">Recommendations list remained stable.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -473,39 +620,60 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                           Savings Modified
                         </span>
                       </div>
-                      <p className="text-sm text-[#c0cbd6] mb-4 leading-relaxed">
-                        {diff.newInsight?.message}
-                      </p>
-
-                      <div className="recommendation-box p-4 flex items-start gap-3">
-                        <div className="w-6 h-6 rounded bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center shrink-0 mt-0.5">
-                          <span className="text-indigo-400 text-xs">→</span>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-indigo-400 font-semibold uppercase tracking-wider mb-0.5">
-                            Updated Action
-                          </p>
-                          <p className="text-indigo-200 text-sm leading-relaxed font-medium">
-                            {diff.newInsight?.suggestion}
-                          </p>
-                        </div>
-                      </div>
-
-                      {diff.oldInsight && diff.newInsight && (
-                        <div className="mt-4 pt-3 border-t border-white/5 grid grid-cols-2 gap-4 text-xs text-[#94a3b8]">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-left">
+                        <div className="bg-white/[0.01] border border-white/5 p-4 rounded-xl space-y-3">
                           <div>
-                            <span>Original Savings</span>
-                            <div className="font-bold text-[#6b7b93] tabular-nums mt-0.5">
-                              {formatCurrencyFull(diff.oldInsight.potentialMonthlySaving)}/mo
+                            <span className="text-[10px] text-[#6b7b93] font-bold uppercase tracking-wider block mb-1">
+                              Original Recommendation (v1)
+                            </span>
+                            <p className="text-xs text-[#94a3b8] leading-relaxed">
+                              {diff.oldInsight?.message}
+                            </p>
+                          </div>
+                          {diff.oldInsight?.suggestion && (
+                            <div className="p-3 bg-white/[0.02] rounded border border-white/5">
+                              <span className="text-[9px] text-[#6b7b93] font-bold block uppercase tracking-wider mb-0.5">
+                                Proposed Action
+                              </span>
+                              <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                                {diff.oldInsight.suggestion}
+                              </p>
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-[10px] text-[#6b7b93] block">Potential Recovery</span>
+                            <div className="font-bold text-[#6b7b93] text-sm tabular-nums mt-0.5">
+                              {formatCurrencyFull(diff.oldInsight?.potentialMonthlySaving ?? 0)}/mo
                             </div>
                           </div>
+                        </div>
+
+                        <div className="bg-indigo-500/[0.02] border border-indigo-500/10 p-4 rounded-xl space-y-3">
                           <div>
-                            <span>Recalculated Savings</span>
-                            <div className="font-bold text-white tabular-nums mt-0.5 flex items-center gap-1.5">
-                              {formatCurrencyFull(diff.newInsight.potentialMonthlySaving)}/mo
+                            <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider block mb-1">
+                              Updated Recommendation (v{newAudit?.auditVersion || 2})
+                            </span>
+                            <p className="text-xs text-[#c0cbd6] leading-relaxed">
+                              {diff.newInsight?.message}
+                            </p>
+                          </div>
+                          {diff.newInsight?.suggestion && (
+                            <div className="p-3 bg-indigo-500/10 rounded border border-indigo-500/20">
+                              <span className="text-[9px] text-indigo-400 font-bold block uppercase tracking-wider mb-0.5">
+                                Updated Action
+                              </span>
+                              <p className="text-xs text-indigo-200 font-semibold leading-relaxed">
+                                {diff.newInsight.suggestion}
+                              </p>
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-[10px] text-indigo-400 block">Recalculated Recovery</span>
+                            <div className="font-bold text-white text-sm tabular-nums mt-0.5 flex items-center gap-1.5">
+                              {formatCurrencyFull(diff.newInsight?.potentialMonthlySaving ?? 0)}/mo
                               {diff.savingDelta && diff.savingDelta !== 0 ? (
                                 <span
-                                  className={`text-[10px] font-medium px-1.5 py-0.25 rounded ${
+                                  className={`text-[10px] font-bold px-1.5 py-0.25 rounded ${
                                     diff.savingDelta > 0
                                       ? 'bg-emerald-500/10 text-emerald-400'
                                       : 'bg-amber-500/10 text-amber-400'
@@ -518,7 +686,7 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                             </div>
                           </div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>
