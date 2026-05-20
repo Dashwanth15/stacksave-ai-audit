@@ -425,8 +425,8 @@ export default function ResultsPage() {
     );
   }
 
-  // If this is a versioned re-audit, mount ReAuditDiffPage directly
-  if (!viewSingle && ((audit.auditVersion ?? 1) > 1 || audit.reAuditOf)) {
+  // If this is a versioned re-audit, has a diff comparison history, or re-audit metadata exists, mount ReAuditDiffPage directly
+  if (!viewSingle && ((audit.auditVersion ?? 1) > 1 || audit.reAuditOf || (audit.allVersions && audit.allVersions.length > 1))) {
     return <ReAuditDiffPage auditId={audit.auditId} isOwner={isOwner} />;
   }
 
@@ -578,7 +578,7 @@ export default function ResultsPage() {
                     key={v.auditId}
                     onClick={() => {
                       if (!isActive) {
-                        navigate(`/audit/${v.auditId}`, { state: { isOwner } });
+                        navigate(`/audit/${v.auditId}?view=single`, { state: { isOwner } });
                       }
                     }}
                     className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
