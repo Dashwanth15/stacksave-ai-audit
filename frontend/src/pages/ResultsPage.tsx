@@ -302,6 +302,14 @@ export default function ResultsPage() {
   const [copied, setCopied] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [reAuditing, setReAuditing] = useState(false);
+  const [prevId, setPrevId] = useState<string | undefined>(id);
+
+  if (id !== prevId) {
+    setPrevId(id);
+    setAudit(null);
+    setLoading(true);
+    setError(null);
+  }
 
   async function handleRunReAudit() {
     if (!audit) return;
@@ -510,6 +518,62 @@ export default function ResultsPage() {
             >
               View Latest Diff
             </button>
+          </m.div>
+        )}
+
+        {/* ── Audit Version Timeline & Living History ── */}
+        {audit.allVersions && audit.allVersions.length > 1 && (
+          <m.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl space-y-4 shadow-[0_4px_24px_rgba(0,0,0,0.2)]"
+          >
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                  <span className="flex h-2 w-2 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                  </span>
+                  Living Audit Timeline
+                </h3>
+                <p className="text-xs text-[#94a3b8] mt-0.5">
+                  Click below to switch dashboards, or compare changes side-by-side.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate(`/audit/${audit.auditId}/diff`)}
+                className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/25 transition-all text-center sm:text-right cursor-pointer"
+              >
+                📊 Compare Baseline vs Latest Diff →
+              </button>
+            </div>
+            <div className="flex items-center gap-3 overflow-x-auto py-1 scrollbar-thin">
+              {audit.allVersions.map((v) => {
+                const isActive = v.auditId === audit.auditId;
+                return (
+                  <button
+                    key={v.auditId}
+                    onClick={() => {
+                      if (!isActive) {
+                        navigate(`/results/${v.auditId}`);
+                      }
+                    }}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+                      isActive
+                        ? 'bg-indigo-500/15 border-indigo-500/35 text-indigo-300 shadow-[0_0_12px_rgba(99,102,241,0.15)]'
+                        : 'bg-white/3 border-white/5 hover:bg-white/8 text-[#94a3b8] hover:text-white'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-indigo-400' : 'bg-slate-500'}`} />
+                    <span>v{v.auditVersion || 1} {isActive ? '(Current View)' : ''}</span>
+                    <span className="text-[10px] text-[#6b7b93] font-normal">
+                      ({formatRelativeTime(v.createdAt)})
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </m.div>
         )}
 

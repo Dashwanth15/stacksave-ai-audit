@@ -85,6 +85,23 @@ router.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: 'Audit not found' });
     }
 
+    // Fetch version timeline for the audit chain
+    const rootAuditId = audit.reAuditOf || audit.auditId;
+    const allVersionsDocs = await AuditModel.find({
+      $or: [{ auditId: rootAuditId }, { reAuditOf: rootAuditId }],
+    })
+      .select('auditId auditVersion createdAt estimatedMonthlySavings isLatestVersion')
+      .sort({ auditVersion: 1 })
+      .exec();
+
+    const allVersions = allVersionsDocs.map(v => ({
+      auditId: v.auditId,
+      auditVersion: v.auditVersion || 1,
+      createdAt: v.createdAt,
+      estimatedMonthlySavings: v.estimatedMonthlySavings,
+      isLatestVersion: !!v.isLatestVersion
+    }));
+
     // Strip private fields from public response
     const publicAudit = {
       auditId: audit.auditId,
@@ -102,6 +119,14 @@ router.get('/:id', async (req: Request, res: Response) => {
       teamSize: audit.teamSize,
       tools: audit.tools,
       // companyName and email intentionally omitted
+      
+      // Batch 4 living-audit and version-aware fields
+      pricingChanged: audit.pricingChanged,
+      isLatestVersion: audit.isLatestVersion,
+      auditVersion: audit.auditVersion,
+      reAuditOf: audit.reAuditOf,
+      outdatedReason: audit.outdatedReason,
+      allVersions,
     };
 
     return res.json({ success: true, data: publicAudit });
@@ -123,6 +148,23 @@ router.get('/:id/full', async (req: Request, res: Response) => {
     if (!audit) {
       return res.status(404).json({ success: false, error: 'Audit not found' });
     }
+
+    // Fetch version timeline for the audit chain
+    const rootAuditId = audit.reAuditOf || audit.auditId;
+    const allVersionsDocs = await AuditModel.find({
+      $or: [{ auditId: rootAuditId }, { reAuditOf: rootAuditId }],
+    })
+      .select('auditId auditVersion createdAt estimatedMonthlySavings isLatestVersion')
+      .sort({ auditVersion: 1 })
+      .exec();
+
+    const allVersions = allVersionsDocs.map(v => ({
+      auditId: v.auditId,
+      auditVersion: v.auditVersion || 1,
+      createdAt: v.createdAt,
+      estimatedMonthlySavings: v.estimatedMonthlySavings,
+      isLatestVersion: !!v.isLatestVersion
+    }));
 
     // Return full audit including pricing snapshot and input stack
     // This data is used by re-audit flow (Batch 2)
@@ -150,6 +192,9 @@ router.get('/:id/full', async (req: Request, res: Response) => {
         isLatestVersion: audit.isLatestVersion,
         auditVersion: audit.auditVersion,
         reAuditOf: audit.reAuditOf,
+        pricingChanged: audit.pricingChanged,
+        outdatedReason: audit.outdatedReason,
+        allVersions,
       },
     });
   } catch (err) {

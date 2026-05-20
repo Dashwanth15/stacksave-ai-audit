@@ -77,6 +77,7 @@ export interface AuditResult {
   reAuditOf?: string;
   isLatestVersion?: boolean;
   auditVersion?: number;
+  allVersions?: AuditVersionInfo[];
 }
 
 export interface LeadCaptureRequest {
