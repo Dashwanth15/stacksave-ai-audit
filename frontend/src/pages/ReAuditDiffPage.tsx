@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { fetchAuditDiff } from '../services/api';
-import { ReAuditResponse, RecommendationDiff, PricingDiff, Insight } from '../types';
+import type { ReAuditResponse } from '../types';
 import {
   formatCurrencyFull,
   formatRelativeTime,
