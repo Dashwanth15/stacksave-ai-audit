@@ -325,7 +325,8 @@ export default function ResultsPage() {
     setReAuditing(true);
     try {
       const result = await triggerReAudit(audit.auditId);
-      navigate(`/audit/${result.newAuditId}/diff`);
+      localStorage.setItem(`owned_${result.newAuditId}`, 'true');
+      navigate(`/audit/${result.newAuditId}/diff`, { state: { isOwner: true } });
     } catch (err) {
       console.error(err);
       alert(err instanceof Error ? err.message : 'Failed to trigger re-audit');
@@ -477,13 +478,23 @@ export default function ResultsPage() {
               {generatingPDF ? 'Generating...' : '📄 Download PDF'}
             </button>
             {isOwner && (
-              <button
-                onClick={() => setShowEmailModal(true)}
-                className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all"
-                aria-label="Save audit report"
-              >
-                Save Report
-              </button>
+              <>
+                <button
+                  onClick={handleRunReAudit}
+                  disabled={reAuditing}
+                  className="px-4 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-sm font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Re-Audit / Refresh stack"
+                >
+                  {reAuditing ? 'Recalculating...' : '🔄 Refresh Audit'}
+                </button>
+                <button
+                  onClick={() => setShowEmailModal(true)}
+                  className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all"
+                  aria-label="Save audit report"
+                >
+                  Save Report
+                </button>
+              </>
             )}
             <button
               onClick={copyShareUrl}
@@ -596,6 +607,40 @@ export default function ResultsPage() {
                 );
               })}
             </div>
+          </m.div>
+        )}
+
+        {isOwner && (
+          <m.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-card-static p-6 border border-indigo-500/15 bg-indigo-500/[0.02] rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4"
+          >
+            <div className="space-y-1 text-center sm:text-left">
+              <h3 className="text-sm font-bold text-white tracking-tight flex items-center justify-center sm:justify-start gap-2">
+                <span>🔄</span> Stack Refresh Control
+              </h3>
+              <p className="text-xs text-[#94a3b8]">
+                Providers update their catalog pricing frequently. Refresh this audit to run calculations against the latest rates.
+              </p>
+            </div>
+            <button
+              onClick={handleRunReAudit}
+              disabled={reAuditing}
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-[0_4px_20px_rgba(99,102,241,0.25)] flex items-center gap-2 shrink-0 disabled:opacity-50"
+            >
+              {reAuditing ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Recalculating...
+                </>
+              ) : (
+                'Re-Audit Stack Now →'
+              )}
+            </button>
           </m.div>
         )}
 
@@ -916,13 +961,23 @@ export default function ResultsPage() {
           </a>
         </m.div>
 
-        <div className="text-center pb-4">
+        <div className="text-center pb-4 flex flex-col sm:flex-row items-center justify-center gap-6">
+          {isOwner && (
+            <button
+              onClick={handleRunReAudit}
+              disabled={reAuditing}
+              className="text-amber-400 hover:text-amber-300 text-sm font-semibold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              aria-label="Re-Audit / Refresh this stack"
+            >
+              🔄 Refresh & Re-Audit Stack
+            </button>
+          )}
           <button
             onClick={() => navigate('/audit')}
-            className="text-indigo-400 hover:text-indigo-300 text-sm"
-            aria-label="Run a new audit"
+            className="text-[#94a3b8] hover:text-white text-sm transition-colors cursor-pointer"
+            aria-label="Create a brand new separate audit"
           >
-            ← Run a new audit
+            ← Start a new separate audit
           </button>
         </div>
 

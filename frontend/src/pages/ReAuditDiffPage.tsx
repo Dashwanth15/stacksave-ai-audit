@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
-import { fetchAuditDiff } from '../services/api';
+import { fetchAuditDiff, triggerReAudit } from '../services/api';
 import { generateReAuditDiffPDF } from '../services/pdfService';
 import type { ReAuditResponse } from '../types';
 import {
@@ -32,6 +32,27 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
   const [error, setError] = useState<string | null>(null);
   const [showUnchanged, setShowUnchanged] = useState(false);
   const [prevId, setPrevId] = useState<string | undefined>(id);
+
+  const isOwner = !!(
+    _isOwner ||
+    (id && localStorage.getItem(`owned_${id}`) === 'true')
+  );
+  const [reAuditing, setReAuditing] = useState(false);
+
+  async function handleRunReAudit() {
+    if (!id) return;
+    setReAuditing(true);
+    try {
+      const result = await triggerReAudit(id);
+      localStorage.setItem(`owned_${result.newAuditId}`, 'true');
+      navigate(`/audit/${result.newAuditId}/diff`, { state: { isOwner: true } });
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Failed to trigger re-audit');
+    } finally {
+      setReAuditing(false);
+    }
+  }
 
   if (id !== prevId) {
     setPrevId(id);
@@ -142,6 +163,16 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
             </span>
           </div>
           <div className="flex items-center gap-3">
+            {isOwner && (
+              <button
+                onClick={handleRunReAudit}
+                disabled={reAuditing}
+                className="px-4 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-sm font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Re-Audit / Refresh stack"
+              >
+                {reAuditing ? 'Recalculating...' : '🔄 Refresh Audit'}
+              </button>
+            )}
             <button
               onClick={() => generateReAuditDiffPDF(oldAudit, newAudit, diff)}
               className="px-4 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 text-sm font-medium transition-all flex items-center gap-1.5"
