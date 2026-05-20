@@ -3,7 +3,7 @@
 
 services:
   - type: web
-    name: stacksave-backend
+    name: stacksave-round2-backend
     runtime: node
     plan: free
     region: oregon
@@ -17,8 +17,7 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: FRONTEND_URL
-        value: https://stacksave-ai-audit.onrender.com
-        # IMPORTANT: Update this value after deploying the frontend
+        value: https://stacksave-round2-frontend.onrender.com
       - key: PORT
         value: 10000
       - key: NODE_ENV
@@ -26,6 +25,6 @@ services:
     # Health check
     healthcheckPath: /api/health
     # Auto-deploy from main branch
-    branch: main
+    branch: round-2-reaudit
     # Build from the backend directory
     rootDirectory: backend

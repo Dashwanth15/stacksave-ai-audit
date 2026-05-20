@@ -3,7 +3,7 @@
 
 services:
   - type: web
-    name: stacksave-ai-audit
+    name: stacksave-round2-frontend
     runtime: node
     plan: free
     region: oregon
@@ -17,6 +17,6 @@ services:
     # Health check
     healthcheckPath: /
     # Auto-deploy from main branch
-    branch: main
+    branch: round-2-reaudit
     # Build from the frontend directory
     rootDirectory: frontend
