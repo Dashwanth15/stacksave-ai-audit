@@ -70,13 +70,19 @@ export default function ReAuditDiffPage() {
     );
   }
 
-  if (error || !data) {
+  const oldAudit = data?.oldAudit;
+  const newAudit = data?.newAudit;
+  const diff = data?.diff;
+
+  if (error || !data || !oldAudit || !newAudit || !diff) {
     return (
       <div className="min-h-screen grid-bg flex items-center justify-center">
         <div className="glass-card p-8 text-center max-w-md">
           <div className="text-4xl mb-4">🔍</div>
           <h2 className="text-xl font-semibold mb-2">Re-Audit Not Found</h2>
-          <p className="text-[#94a3b8] mb-6">{error || 'This comparison link may be invalid.'}</p>
+          <p className="text-[#94a3b8] mb-6">
+            {error || 'This comparison link may be invalid or incomplete. Make sure the audit has been re-audited.'}
+          </p>
           <button
             onClick={() => navigate('/')}
             className="px-6 py-3 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all font-medium"
@@ -88,21 +94,22 @@ export default function ReAuditDiffPage() {
     );
   }
 
-  const { oldAudit, newAudit, diff } = data;
-  const { recommendationDiffs, pricingDiffs, savingsDelta } = diff;
+  const recommendationDiffs = diff?.recommendationDiffs || [];
+  const pricingDiffs = diff?.pricingDiffs || [];
+  const savingsDelta = diff?.savingsDelta || 0;
 
   // Split recommendation changes
-  const addedRecs = recommendationDiffs.filter((r) => r.status === 'added');
-  const removedRecs = recommendationDiffs.filter((r) => r.status === 'removed');
-  const changedRecs = recommendationDiffs.filter((r) => r.status === 'changed');
+  const addedRecs = (recommendationDiffs || []).filter((r) => r && r.status === 'added');
+  const removedRecs = (recommendationDiffs || []).filter((r) => r && r.status === 'removed');
+  const changedRecs = (recommendationDiffs || []).filter((r) => r && r.status === 'changed');
 
   // Unchanged recommendations
-  const newInsightKeys = new Set(recommendationDiffs.map((r) => `${r.toolId}:${r.type}`));
-  const unchangedInsights = (newAudit.insights || []).filter(
-    (ins) => !newInsightKeys.has(`${ins.toolId}:${ins.type}`)
+  const newInsightKeys = new Set((recommendationDiffs || []).map((r) => r ? `${r.toolId}:${r.type}` : ''));
+  const unchangedInsights = (newAudit?.insights || []).filter(
+    (ins) => ins && !newInsightKeys.has(`${ins.toolId}:${ins.type}`)
   );
 
-  const hasChanges = recommendationDiffs.length > 0 || pricingDiffs.length > 0 || savingsDelta !== 0;
+  const hasChanges = (recommendationDiffs || []).length > 0 || (pricingDiffs || []).length > 0 || savingsDelta !== 0;
 
   return (
     <div className="min-h-screen grid-bg pb-20">
@@ -117,12 +124,12 @@ export default function ReAuditDiffPage() {
               StackSave
             </button>
             <span className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[#94a3b8] font-medium">
-              Re-Audited {formatRelativeTime(newAudit.createdAt)}
+              Re-Audited {newAudit?.createdAt ? formatRelativeTime(newAudit.createdAt) : ''}
             </span>
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate(`/results/${newAudit.auditId}`)}
+              onClick={() => navigate(`/results/${newAudit?.auditId || ''}`)}
               className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all"
             >
               View Full Audit →
@@ -137,9 +144,9 @@ export default function ReAuditDiffPage() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 text-xs font-semibold rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                v{newAudit.auditVersion || 2} Update
+                v{newAudit?.auditVersion || 2} Update
               </span>
-              {newAudit.isLatestVersion && (
+              {newAudit?.isLatestVersion && (
                 <span className="px-2 py-0.5 text-xs font-semibold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   Latest Version
                 </span>
@@ -150,8 +157,8 @@ export default function ReAuditDiffPage() {
             </p>
           </div>
           <div className="text-left sm:text-right text-[11px] text-[#6b7b93] space-y-0.5">
-            <div>Original: {new Date(oldAudit.createdAt).toLocaleString()}</div>
-            <div>Re-audited: {new Date(newAudit.createdAt).toLocaleString()}</div>
+            <div>Original: {oldAudit?.createdAt ? new Date(oldAudit.createdAt).toLocaleString() : ''}</div>
+            <div>Re-audited: {newAudit?.createdAt ? new Date(newAudit.createdAt).toLocaleString() : ''}</div>
           </div>
         </div>
 
@@ -204,13 +211,13 @@ export default function ReAuditDiffPage() {
             <div>
               <div className="text-xs text-[#6b7b93] uppercase tracking-wider mb-0.5">Previous Savings</div>
               <div className="text-xl font-bold text-slate-300 tabular-nums">
-                {formatCurrencyFull(oldAudit.estimatedMonthlySavings)}/mo
+                {oldAudit?.estimatedMonthlySavings ? `${formatCurrencyFull(oldAudit.estimatedMonthlySavings)}/mo` : '$0.00/mo'}
               </div>
             </div>
             <div>
               <div className="text-xs text-[#6b7b93] uppercase tracking-wider mb-0.5">Current Savings</div>
               <div className="text-xl font-bold text-white tabular-nums">
-                {formatCurrencyFull(newAudit.estimatedMonthlySavings)}/mo
+                {newAudit?.estimatedMonthlySavings ? `${formatCurrencyFull(newAudit.estimatedMonthlySavings)}/mo` : '$0.00/mo'}
               </div>
             </div>
           </div>
@@ -538,7 +545,7 @@ export default function ReAuditDiffPage() {
 
         <div className="text-center pt-8 border-t border-white/5">
           <button
-            onClick={() => navigate(`/results/${newAudit.auditId}`)}
+            onClick={() => navigate(`/results/${newAudit?.auditId || ''}`)}
             className="text-indigo-400 hover:text-indigo-300 text-sm font-semibold"
           >
             Go to Results Dashboard →
