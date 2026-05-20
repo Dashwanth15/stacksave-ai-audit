@@ -58,13 +58,31 @@ api.interceptors.response.use(
 // ── API Functions ─────────────────────────────────────────────
 
 export async function submitAudit(request: AuditRequest): Promise<AuditResult> {
-  const response = await api.post<{ success: boolean; data: AuditResult }>('/audits', request);
-  return response.data.data!;
+  const response = await api.post<{ success: boolean; data: AuditResult; error?: string }>('/audits', request);
+  if (!response || !response.data) {
+    throw new Error('No response received from the server.');
+  }
+  if (response.data.success === false) {
+    throw new Error(response.data.error || 'Server failed to process audit.');
+  }
+  if (!response.data.data) {
+    throw new Error('Server returned success, but the audit data payload is missing.');
+  }
+  return response.data.data;
 }
 
 export async function fetchAudit(auditId: string): Promise<AuditResult> {
-  const response = await api.get<{ success: boolean; data: AuditResult }>(`/audits/${auditId}`);
-  return response.data.data!;
+  const response = await api.get<{ success: boolean; data: AuditResult; error?: string }>(`/audits/${auditId}`);
+  if (!response || !response.data) {
+    throw new Error('No response received from the server.');
+  }
+  if (response.data.success === false) {
+    throw new Error(response.data.error || 'Server failed to fetch audit details.');
+  }
+  if (!response.data.data) {
+    throw new Error('Server returned success, but the audit details payload is missing.');
+  }
+  return response.data.data;
 }
 
 export async function captureLead(request: LeadCaptureRequest): Promise<void> {
@@ -77,8 +95,17 @@ export async function checkHealth(): Promise<{ status: string; db: string }> {
 }
 
 export async function fetchAuditDiff(auditId: string): Promise<ReAuditResponse> {
-  const response = await api.get<{ success: boolean; data: ReAuditResponse }>(`/audits/${auditId}/diff`);
-  return response.data.data!;
+  const response = await api.get<{ success: boolean; data: ReAuditResponse; error?: string }>(`/audits/${auditId}/diff`);
+  if (!response || !response.data) {
+    throw new Error('No response received from the server.');
+  }
+  if (response.data.success === false) {
+    throw new Error(response.data.error || 'Server failed to retrieve comparison diff.');
+  }
+  if (!response.data.data) {
+    throw new Error('Server returned success, but comparison diff payload is missing.');
+  }
+  return response.data.data;
 }
 
 export async function triggerReAudit(
@@ -87,8 +114,18 @@ export async function triggerReAudit(
   const response = await api.post<{
     success: boolean;
     data: { newAuditId: string; newAudit: AuditResult; diff: any };
+    error?: string;
   }>(`/audits/${auditId}/re-audit`);
-  return response.data.data!;
+  if (!response || !response.data) {
+    throw new Error('No response received from the server.');
+  }
+  if (response.data.success === false) {
+    throw new Error(response.data.error || 'Server failed to run re-audit.');
+  }
+  if (!response.data.data) {
+    throw new Error('Server returned success, but re-audit data payload is missing.');
+  }
+  return response.data.data;
 }
 
 

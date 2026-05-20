@@ -132,6 +132,9 @@ export default function AuditPage() {
         companyName: form.companyName || undefined,
         useCase: form.useCase,
       });
+      if (!result || !result.auditId) {
+        throw new Error('Audit completed but no valid audit identifier was returned.');
+      }
       clearForm();
       navigate(`/results/${result.auditId}`, { state: { audit: result } });
     } catch (err) {
