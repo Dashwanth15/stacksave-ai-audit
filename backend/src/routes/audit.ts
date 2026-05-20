@@ -10,6 +10,7 @@ import { AuditModel } from '../services/dbService';
 import { validateAuditRequest } from '../middleware/validation';
 import { capturePricingSnapshot } from '../services/pricingService';
 import { scanAuditsForPricingChanges } from '../services/pricingChangeDetectionService';
+import { runReAudit, generateAuditDiff } from '../services/reAuditService';
 
 const router = Router();
 
@@ -154,6 +155,92 @@ router.get('/:id/full', async (req: Request, res: Response) => {
   } catch (err) {
     console.error('GET /api/audits/:id/full error:', err);
     return res.status(500).json({ success: false, error: 'Failed to fetch audit' });
+  }
+});
+
+// ── POST /api/audits/:id/re-audit ───────────────────────────
+// Batch 3: Re-audit generation endpoint
+router.post('/:id/re-audit', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Verify original audit exists
+    const originalAudit = await AuditModel.findOne({ auditId: id });
+    if (!originalAudit) {
+      return res.status(404).json({ success: false, error: 'Audit not found' });
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const publicUrlBase = frontendUrl;
+
+    const { newAudit, diff } = await runReAudit(id, publicUrlBase);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        newAuditId: newAudit.auditId,
+        newAudit,
+        diff,
+      },
+    });
+  } catch (err) {
+    console.error(`POST /api/audits/${req.params.id}/re-audit error:`, err);
+    return res.status(500).json({
+      success: false,
+      error: err instanceof Error ? err.message : 'Failed to re-audit',
+    });
+  }
+});
+
+// ── GET /api/audits/:id/diff ─────────────────────────────────
+// Batch 3: Diff retrieval endpoint
+router.get('/:id/diff', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const audit = await AuditModel.findOne({ auditId: id });
+
+    if (!audit) {
+      return res.status(404).json({ success: false, error: 'Audit not found' });
+    }
+
+    let oldAudit = null;
+    let newAudit = null;
+
+    if (audit.reAuditOf) {
+      // Case 1: The requested ID is a re-audit. Compare against the root original audit.
+      newAudit = audit;
+      oldAudit = await AuditModel.findOne({ auditId: audit.reAuditOf });
+    } else {
+      // Case 2: The requested ID is the root original audit. Compare against the latest version.
+      oldAudit = audit;
+      newAudit = await AuditModel.findOne({
+        reAuditOf: audit.auditId,
+        isLatestVersion: true,
+      });
+    }
+
+    if (!oldAudit || !newAudit) {
+      return res.status(404).json({
+        success: false,
+        error: 'Comparison versions not found. Ensure this audit has been re-audited.',
+      });
+    }
+
+    const diff = generateAuditDiff(oldAudit, newAudit);
+
+    return res.json({
+      success: true,
+      data: {
+        oldAuditId: oldAudit.auditId,
+        newAuditId: newAudit.auditId,
+        oldAudit,
+        newAudit,
+        diff,
+      },
+    });
+  } catch (err) {
+    console.error(`GET /api/audits/${req.params.id}/diff error:`, err);
+    return res.status(500).json({ success: false, error: 'Failed to retrieve diff' });
   }
 });
 
