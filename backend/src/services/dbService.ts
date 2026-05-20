@@ -3,11 +3,14 @@
 // ============================================================
 
 import mongoose, { Schema, Document } from 'mongoose';
+import { PricingSnapshot } from '../types';
 
 // ── Audit Schema ─────────────────────────────────────────────
+// Batch 1: Extended for persistent audit storage + pricing snapshots
 export interface AuditDocument extends Document {
   auditId: string;
   createdAt: Date;
+  updatedAt: Date;
   totalMonthlySpend: number;
   optimizedMonthlySpend: number;
   estimatedMonthlySavings: number;
@@ -21,14 +24,28 @@ export interface AuditDocument extends Document {
   companyName?: string;
   teamSize: number;
   tools: object[];
-  // Private fields — NOT exposed on public share URL
+  
+  // ── Batch 1: Persistence Fields ──────────────────────────
+  // Input: tools array as submitted by user (for re-audit comparisons)
+  inputStack: object[];
+  
+  // Pricing snapshot at time of audit (immutable, for later change detection)
+  pricingSnapshot: PricingSnapshot;
+  
+  // User identification and contact
   email?: string;
+  
+  // Re-audit metadata (set in future Batch 2, but schema prepared now)
+  reAuditOf?: string;           // If this is re-audit, points to original audit ID
+  isLatestVersion?: boolean;    // Marks which version is "current" (default true)
+  auditVersion?: number;        // Increments on each re-audit (default 1)
 }
 
 const AuditSchema = new Schema<AuditDocument>(
   {
     auditId: { type: String, required: true, unique: true, index: true },
-    createdAt: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: Date.now, index: true },
+    updatedAt: { type: Date, default: Date.now },
     totalMonthlySpend: { type: Number, required: true },
     optimizedMonthlySpend: { type: Number, required: true },
     estimatedMonthlySavings: { type: Number, required: true },
@@ -43,6 +60,22 @@ const AuditSchema = new Schema<AuditDocument>(
     teamSize: { type: Number, required: true },
     tools: { type: [Schema.Types.Mixed], default: [] },
     email: { type: String }, // captured at lead gate — private
+    
+    // ── Batch 1: Persistence Fields ──────────────────────────
+    // User's submitted tools (immutable record of input)
+    inputStack: { type: [Schema.Types.Mixed], default: [] },
+    
+    // Pricing snapshot (captured at audit time, used for change detection)
+    pricingSnapshot: {
+      capturedAt: { type: String },
+      catalogVersion: { type: String },
+      tools: { type: Schema.Types.Mixed, default: {} },
+    },
+    
+    // Re-audit metadata
+    reAuditOf: { type: String },     // Points to original audit if this is re-audit
+    isLatestVersion: { type: Boolean, default: true }, // Mark "current" version
+    auditVersion: { type: Number, default: 1 }, // Increments on re-audit
   },
   { timestamps: false }
 );

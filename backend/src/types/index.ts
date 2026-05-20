@@ -121,3 +121,28 @@ export interface AlternativeSuggestion {
   reason: string;   // use-case-specific reasoning
   estimatedSaving: string; // e.g. "~$10/user/mo"
 }
+
+// --- Pricing Snapshot (Batch 1: Persistence) ---
+// Captures pricing catalog at time of audit for later comparison in re-audits
+
+export interface PricingSnapshot {
+  capturedAt: string;        // ISO timestamp
+  catalogVersion: string;    // For future versioning
+  tools: {
+    [toolId: string]: {
+      name: string;
+      plans: {
+        [planId: string]: {
+          monthlyPricePerSeat: number;
+          annualPricePerSeat?: number;
+        }
+      }
+    }
+  }
+}
+
+// --- Audit Request (Extended for Batch 1) ---
+
+export interface AuditRequestWithEmail extends AuditRequest {
+  email?: string;  // user email for notifications and identification
+}
