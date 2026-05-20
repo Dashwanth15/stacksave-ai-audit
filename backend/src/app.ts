@@ -7,7 +7,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 
-import { connectDB } from './services/dbService';
+import { connectDB, getFrontendUrl } from './services/dbService';
 import auditRouter from './routes/audit';
 import leadsRouter from './routes/leads';
 import healthRouter from './routes/health';
@@ -17,7 +17,7 @@ import { requestLogger } from './middleware/logger';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const FRONTEND_URL = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://stacksave-round2-frontend.onrender.com' : 'http://localhost:5173');
+const FRONTEND_URL = getFrontendUrl();
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // ── Security Headers ─────────────────────────────────────────

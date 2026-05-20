@@ -6,7 +6,7 @@
 
 import { PricingSnapshot, PricingComparison, ToolPriceChange, PlanPriceChange, AuditPricingChange, PricingChangeDetectionResult } from '../types';
 import { TOOL_CATALOG } from '../audit-engine/catalog';
-import { AuditModel } from './dbService';
+import { AuditModel, getFrontendUrl } from './dbService';
 import { capturePricingSnapshot } from './pricingService';
 import { sendReAuditNotification } from './emailService';
 import { runReAudit } from './reAuditService';
@@ -267,7 +267,7 @@ export async function scanAuditsForPricingChanges(): Promise<PricingChangeDetect
         if (audit.email && !alreadyNotified) {
           try {
             console.log(`✉️ Sending re-audit notification to ${audit.email} for audit ${audit.auditId}...`);
-            const frontendUrl = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://stacksave-round2-frontend.onrender.com' : 'http://localhost:5173');
+            const frontendUrl = getFrontendUrl();
             
             // Run re-audit immediately so comparison page is fully ready
             const { diff } = await runReAudit(audit.auditId, frontendUrl);

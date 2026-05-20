@@ -5,6 +5,17 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { PricingSnapshot } from '../types';
 
+export function getFrontendUrl(): string {
+  if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+    const envUrl = process.env.FRONTEND_URL;
+    if (envUrl && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+      return envUrl;
+    }
+    return 'http://localhost:5173';
+  }
+  return process.env.FRONTEND_URL || 'https://stacksave-round2-frontend.onrender.com';
+}
+
 // ── Audit Schema ─────────────────────────────────────────────
 // Batch 1: Extended for persistent audit storage + pricing snapshots
 // Batch 2: Added pricing change detection fields
@@ -71,7 +82,15 @@ const AuditSchema = new Schema<AuditDocument>(
     isHighSavings: { type: Boolean, default: false },
     insights: { type: [Schema.Types.Mixed], default: [] },
     aiSummary: { type: String, default: '' },
-    publicUrl: { type: String, required: true },
+    publicUrl: { 
+      type: String, 
+      required: true,
+      get: function(v: string) {
+        const frontendUrl = getFrontendUrl();
+        const auditId = this.auditId || (v ? v.split('/').pop() : '');
+        return `${frontendUrl}/audit/${auditId}`;
+      }
+    },
     companyName: { type: String },
     teamSize: { type: Number, required: true },
     tools: { type: [Schema.Types.Mixed], default: [] },
@@ -108,7 +127,11 @@ const AuditSchema = new Schema<AuditDocument>(
     notificationVersion: { type: Number },
     hasPendingNotification: { type: Boolean, default: false },
   },
-  { timestamps: false }
+  { 
+    timestamps: false,
+    toJSON: { getters: true },
+    toObject: { getters: true }
+  }
 );
 
 export const AuditModel = mongoose.model<AuditDocument>('Audit', AuditSchema);

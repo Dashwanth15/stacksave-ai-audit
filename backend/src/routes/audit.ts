@@ -6,7 +6,7 @@ import { Router, Request, Response } from 'express';
 import { AuditRequest } from '../types';
 import { runAudit } from '../audit-engine/engine';
 import { generateAuditSummary } from '../services/aiService';
-import { AuditModel } from '../services/dbService';
+import { AuditModel, getFrontendUrl } from '../services/dbService';
 import { validateAuditRequest } from '../middleware/validation';
 import { capturePricingSnapshot } from '../services/pricingService';
 import { scanAuditsForPricingChanges } from '../services/pricingChangeDetectionService';
@@ -28,7 +28,7 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: validation.error });
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://stacksave-round2-frontend.onrender.com' : 'http://localhost:5173');
+    const frontendUrl = getFrontendUrl();
     const publicUrlBase = frontendUrl;
 
     // Run deterministic audit engine
@@ -170,7 +170,7 @@ router.post('/:id/re-audit', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: 'Audit not found' });
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://stacksave-round2-frontend.onrender.com' : 'http://localhost:5173');
+    const frontendUrl = getFrontendUrl();
     const publicUrlBase = frontendUrl;
 
     const { newAudit, diff } = await runReAudit(id, publicUrlBase);
