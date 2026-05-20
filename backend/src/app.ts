@@ -20,6 +20,11 @@ const PORT = process.env.PORT || 5000;
 const FRONTEND_URL = getFrontendUrl();
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+// ── Trust Proxy (Render / cloud reverse proxy) ───────────────
+// Required so express-rate-limit uses the real client IP
+// instead of the proxy's IP (which would rate-limit ALL users together).
+app.set('trust proxy', 1);
+
 // ── Security Headers ─────────────────────────────────────────
 app.use(helmet());
 

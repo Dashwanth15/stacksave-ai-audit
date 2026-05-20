@@ -13,25 +13,26 @@
 import rateLimit from 'express-rate-limit';
 
 /**
- * Global rate limiter — 100 requests per 15 minutes per IP.
- * Generous for real users, blocks automated abuse.
+ * Global rate limiter — 300 requests per 15 minutes per IP.
+ * An SPA makes multiple API calls per page view (audit data,
+ * diff data, version timeline, etc.), so this needs headroom.
  */
 export const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+  max: 300,
   message: { success: false, error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
 /**
- * Audit creation limiter — 20 audits per hour per IP.
+ * Audit creation limiter — 50 audits per hour per IP.
  * Prevents mass audit generation while allowing
  * legitimate testing and usage.
  */
 export const auditLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20,
+  max: 50,
   message: { success: false, error: 'Too many audits created. Please wait before trying again.' },
   standardHeaders: true,
   legacyHeaders: false,
