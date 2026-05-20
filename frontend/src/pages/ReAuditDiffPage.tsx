@@ -25,11 +25,17 @@ export default function ReAuditDiffPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showUnchanged, setShowUnchanged] = useState(false);
+  const [prevId, setPrevId] = useState<string | undefined>(id);
+
+  if (id !== prevId) {
+    setPrevId(id);
+    setData(null);
+    setLoading(true);
+    setError(null);
+  }
 
   useEffect(() => {
     if (id) {
-      setLoading(true);
-      setError(null);
       fetchAuditDiff(id)
         .then(setData)
         .catch((err) => {

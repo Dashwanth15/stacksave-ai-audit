@@ -17,3 +17,9 @@ services:
     branch: round-2-reaudit
     # Build from the frontend directory
     rootDirectory: frontend
+    # SPA routing: serve index.html for all routes so React Router handles navigation
+    # Without this, direct access to /audit/:id/diff or /results/:id returns 404
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

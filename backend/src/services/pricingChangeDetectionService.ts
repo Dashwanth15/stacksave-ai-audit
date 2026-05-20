@@ -5,7 +5,6 @@
 // Uses stored pricing snapshots for deterministic comparison
 
 import { PricingSnapshot, PricingComparison, ToolPriceChange, PlanPriceChange, AuditPricingChange, PricingChangeDetectionResult } from '../types';
-import { TOOL_CATALOG } from '../audit-engine/catalog';
 import { AuditModel, getFrontendUrl } from './dbService';
 import { capturePricingSnapshot } from './pricingService';
 import { sendReAuditNotification } from './emailService';

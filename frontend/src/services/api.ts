@@ -4,7 +4,7 @@
 // ============================================================
 
 import axios from 'axios';
-import type { AuditRequest, AuditResult, LeadCaptureRequest, ReAuditResponse } from '../types';
+import type { AuditRequest, AuditResult, LeadCaptureRequest, ReAuditResponse, AuditDiff } from '../types';
 
 const getBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
@@ -128,10 +128,10 @@ export async function fetchAuditDiff(auditId: string): Promise<ReAuditResponse> 
 
 export async function triggerReAudit(
   auditId: string
-): Promise<{ newAuditId: string; newAudit: AuditResult; diff: any }> {
+): Promise<{ newAuditId: string; newAudit: AuditResult; diff: AuditDiff }> {
   const response = await api.post<{
     success: boolean;
-    data: { newAuditId: string; newAudit: AuditResult; diff: any };
+    data: { newAuditId: string; newAudit: AuditResult; diff: AuditDiff };
     error?: string;
   }>(`/audits/${auditId}/re-audit`);
   if (!response || !response.data) {

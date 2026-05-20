@@ -85,9 +85,15 @@ const AuditSchema = new Schema<AuditDocument>(
     publicUrl: { 
       type: String, 
       required: true,
-      get: function(v: string) {
+      get: function(this: AuditDocument, v: string): string {
         const frontendUrl = getFrontendUrl();
-        const auditId = this.auditId || (v ? v.split('/').pop() : '');
+        // Prefer the document's own auditId field (available on full Mongoose docs)
+        const auditId =
+          (this && this.auditId) ||
+          // Fallback: extract ID from stored URL value (handles legacy localhost URLs)
+          (v && typeof v === 'string' ? v.split('/').filter(Boolean).pop() : '') ||
+          '';
+        if (!auditId) return v || ''; // If we can't determine the ID, return stored value as-is
         return `${frontendUrl}/audit/${auditId}`;
       }
     },
@@ -176,12 +182,29 @@ export async function connectDB(): Promise<void> {
     throw new Error('MONGODB_URI environment variable is not set');
   }
 
-  try {
-    await mongoose.connect(uri);
-    isConnected = true;
-    console.log('✅ MongoDB connected');
-  } catch (err) {
-    console.error('❌ MongoDB connection failed:', err);
-    process.exit(1);
+  // Retry up to 3 times with exponential back-off — critical for Render cold-start
+  // where MongoDB Atlas may not be reachable immediately
+  const MAX_RETRIES = 3;
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      await mongoose.connect(uri, {
+        serverSelectionTimeoutMS: 8000, // 8s per attempt
+        connectTimeoutMS: 10000,
+      });
+      isConnected = true;
+      console.log(`✅ MongoDB connected (attempt ${attempt})`);
+      return;
+    } catch (err) {
+      lastErr = err;
+      console.error(`❌ MongoDB connection attempt ${attempt}/${MAX_RETRIES} failed:`, err);
+      if (attempt < MAX_RETRIES) {
+        const waitMs = attempt * 2000; // 2s, 4s
+        console.log(`   Retrying in ${waitMs / 1000}s...`);
+        await new Promise((r) => setTimeout(r, waitMs));
+      }
+    }
   }
+  console.error('❌ MongoDB connection failed after all retries. Exiting.', lastErr);
+  process.exit(1);
 }

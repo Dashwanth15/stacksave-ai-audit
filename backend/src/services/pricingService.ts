@@ -4,6 +4,7 @@
 // Batch 1: Utilities for capturing pricing snapshots at audit time
 // Used for change detection in future batches
 
+import crypto from 'crypto';
 import { PricingSnapshot } from '../types';
 import { TOOL_CATALOG } from '../audit-engine/catalog';
 
@@ -49,7 +50,6 @@ export function capturePricingSnapshot(): PricingSnapshot {
 export function hashPricingSnapshot(snapshot: PricingSnapshot): string {
   // For Batch 1: simple JSON serialization
   // Future: implement with crypto.createHash('sha256')
-  const crypto = require('crypto');
   const data = JSON.stringify(snapshot, Object.keys(snapshot).sort());
   return crypto.createHash('sha256').update(data).digest('hex');
 }
