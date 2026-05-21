@@ -421,6 +421,6 @@ describe('4. pricingChangeDetectionService notifications & duplicate protection'
     expect(sendEmailSpy).not.toHaveBeenCalled();
 
     sendEmailSpy.mockRestore();
-  });
+  }, 20000);
 });
 

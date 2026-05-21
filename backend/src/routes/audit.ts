@@ -29,6 +29,38 @@ router.post('/', auditLimiter, async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: validation.error });
     }
 
+    // Resolve version chaining if reAuditOf is provided
+    let reAuditOf: string | undefined;
+    let auditVersion = 1;
+
+    if (body.reAuditOf) {
+      const parentAudit = await AuditModel.findOne({ auditId: body.reAuditOf });
+      if (!parentAudit) {
+        return res.status(404).json({ success: false, error: `Parent audit not found: ${body.reAuditOf}` });
+      }
+
+      reAuditOf = parentAudit.reAuditOf || parentAudit.auditId;
+
+      // Query database to find the maximum version in this audit chain
+      const latestAuditInChain = await AuditModel.findOne({
+        $or: [{ auditId: reAuditOf }, { reAuditOf }],
+      })
+        .sort({ auditVersion: -1 })
+        .exec();
+
+      auditVersion = (latestAuditInChain?.auditVersion || parentAudit.auditVersion || 1) + 1;
+
+      // Invalidate all previous versions in the chain
+      await AuditModel.updateMany(
+        { $or: [{ auditId: reAuditOf }, { reAuditOf }] },
+        { isLatestVersion: false }
+      );
+
+      // Carry over parent metadata if not provided in the new request
+      if (!body.email && parentAudit.email) body.email = parentAudit.email;
+      if (!body.companyName && parentAudit.companyName) body.companyName = parentAudit.companyName;
+    }
+
     const frontendUrl = getFrontendUrl();
     const publicUrlBase = frontendUrl;
 
@@ -56,7 +88,7 @@ router.post('/', auditLimiter, async (req: Request, res: Response) => {
       insights: auditResult.insights,
       aiSummary: auditResult.aiSummary,
       publicUrl: auditResult.publicUrl,
-      companyName: auditResult.companyName,
+      companyName: body.companyName || auditResult.companyName,
       teamSize: auditResult.teamSize,
       tools: auditResult.tools,
       
@@ -65,7 +97,8 @@ router.post('/', auditLimiter, async (req: Request, res: Response) => {
       inputStack: body.tools,               // Original tools submitted by user
       pricingSnapshot,                      // Pricing at time of audit
       isLatestVersion: true,                // This is the latest version
-      auditVersion: 1,                      // First version
+      auditVersion,                         // Version in the chain
+      reAuditOf,                            // Parent audit link
     });
 
     return res.status(201).json({ success: true, data: auditResult });

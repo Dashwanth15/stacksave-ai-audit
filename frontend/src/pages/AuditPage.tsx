@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { TOOLS, USE_CASES } from '../data/tools';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { submitAudit } from '../services/api';
-import type { ToolEntry, UseCase } from '../types';
+import { submitAudit, fetchAudit } from '../services/api';
+import type { ToolEntry, UseCase, AuditRequest } from '../types';
 
 type BillingPeriod = 'monthly' | 'annual';
 
@@ -55,6 +55,11 @@ const DEFAULT_FORM: FormState = {
 
 export default function AuditPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const reAuditOf = searchParams.get('reAuditOf');
+  const [parentVersion, setParentVersion] = useState<number | null>(null);
+  const [isPrefilling, setIsPrefilling] = useState(false);
+
   const [form, setForm, clearForm] = useLocalStorage<FormState>('stacksave-audit-form', DEFAULT_FORM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +67,32 @@ export default function AuditPage() {
   const loadingText = useLoadingStage(loading);
 
   const isAnnual = form.billingPeriod === 'annual';
+
+  // Prefill form from parent version if reAuditOf parameter is present
+  useEffect(() => {
+    if (reAuditOf) {
+      setIsPrefilling(true);
+      setError(null);
+      fetchAudit(reAuditOf)
+        .then((audit) => {
+          setForm({
+            tools: audit.tools,
+            teamSize: audit.teamSize,
+            companyName: audit.companyName || '',
+            useCase: audit.useCase || 'mixed',
+            billingPeriod: form.billingPeriod,
+          });
+          setParentVersion(audit.auditVersion || 1);
+        })
+        .catch((err) => {
+          console.error('Failed to prefill audit form:', err);
+          setError('Failed to load parent audit for editing.');
+        })
+        .finally(() => {
+          setIsPrefilling(false);
+        });
+    }
+  }, [reAuditOf]);
 
   // Which tools are toggled on
   const selectedToolIds = form.tools.map((t) => t.toolId);
@@ -110,7 +141,7 @@ export default function AuditPage() {
     setForm((prev) => ({
       ...prev,
       tools: prev.tools.map((t) =>
-        t.toolId === toolId ? { ...t, ...updates } : t
+          t.toolId === toolId ? { ...t, ...updates } : t
       ),
     }));
   }
@@ -126,18 +157,29 @@ export default function AuditPage() {
 
     setLoading(true);
     try {
-      const result = await submitAudit({
+      const payload: AuditRequest = {
         tools: form.tools,
         teamSize: form.teamSize,
         companyName: form.companyName || undefined,
         useCase: form.useCase,
-      });
+      };
+
+      if (reAuditOf) {
+        payload.reAuditOf = reAuditOf;
+      }
+
+      const result = await submitAudit(payload);
       if (!result || !result.auditId) {
         throw new Error('Audit completed but no valid audit identifier was returned.');
       }
       localStorage.setItem(`owned_${result.auditId}`, 'true');
       clearForm();
-      navigate(`/audit/${result.auditId}`, { state: { audit: result, isOwner: true } });
+
+      if (reAuditOf) {
+        navigate(`/audit/${result.auditId}/diff`, { state: { isOwner: true } });
+      } else {
+        navigate(`/audit/${result.auditId}`, { state: { audit: result, isOwner: true } });
+      }
     } catch (err) {
       setError((err as Error).message || 'Failed to run audit. Please try again.');
     } finally {

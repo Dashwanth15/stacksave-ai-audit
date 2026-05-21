@@ -10,7 +10,7 @@ import { generateAuditSummary } from './aiService';
 import { capturePricingSnapshot } from './pricingService';
 import { comparePricingSnapshots } from './pricingChangeDetectionService';
 import { getToolById } from '../audit-engine/catalog';
-import { ToolEntry, PricingSnapshot, Insight, ToolId, UseCase } from '../types';
+import { ToolEntry, PricingSnapshot, Insight, ToolId, UseCase, StackToolEntry, StackDiff } from '../types';
 
 export interface RecommendationDiff {
   toolId: ToolId;
@@ -46,6 +46,7 @@ export interface AuditDiff {
   recommendationDiffs: RecommendationDiff[];
   pricingDiffs: PricingDiff[];
   generatedAt: string;
+  stackDiff?: StackDiff;
 }
 
 /**
@@ -183,6 +184,192 @@ export function generateAuditDiff(oldAudit: AuditDocument, newAudit: AuditDocume
   const newSavings = newAudit.estimatedMonthlySavings;
   const savingsDelta = newSavings - oldSavings;
 
+  // --- Stack Difference Detection ---
+  const added: StackToolEntry[] = [];
+  const removed: StackToolEntry[] = [];
+  const changed: StackDiff['changed'] = [];
+  const replacedList: StackDiff['replaced'] = [];
+
+  const oldTools = (oldAudit.tools || []) as ToolEntry[];
+  const newTools = (newAudit.tools || []) as ToolEntry[];
+
+  const oldToolsMap = new Map<string, ToolEntry>();
+  for (const t of oldTools) {
+    oldToolsMap.set(t.toolId, t);
+  }
+
+  const newToolsMap = new Map<string, ToolEntry>();
+  for (const t of newTools) {
+    newToolsMap.set(t.toolId, t);
+  }
+
+  // 1. Detect added and changed/modified tools
+  for (const newEntry of newTools) {
+    const oldEntry = oldToolsMap.get(newEntry.toolId);
+    const catalogTool = getToolById(newEntry.toolId);
+    const toolName = catalogTool?.name || newEntry.toolId;
+    const newPlanOpt = catalogTool?.plans.find((p) => p.id === newEntry.plan);
+    const newPlanLabel = newPlanOpt?.label || newEntry.plan;
+
+    if (!oldEntry) {
+      added.push({
+        toolId: newEntry.toolId,
+        toolName,
+        seats: newEntry.seats,
+        planId: newEntry.plan,
+        planLabel: newPlanLabel,
+        monthlySpend: newEntry.monthlySpend,
+      });
+    } else {
+      const hasSeatsChanged = newEntry.seats !== oldEntry.seats;
+      const hasPlanChanged = newEntry.plan !== oldEntry.plan;
+      const hasSpendChanged = Math.abs(newEntry.monthlySpend - oldEntry.monthlySpend) > 0.01;
+
+      if (hasSeatsChanged || hasPlanChanged || hasSpendChanged) {
+        const oldPlanOpt = catalogTool?.plans.find((p) => p.id === oldEntry.plan);
+        const oldPlanLabel = oldPlanOpt?.label || oldEntry.plan;
+
+        changed.push({
+          toolId: newEntry.toolId,
+          toolName,
+          oldSeats: oldEntry.seats,
+          newSeats: newEntry.seats,
+          oldPlanId: oldEntry.plan,
+          newPlanId: newEntry.plan,
+          oldPlanLabel,
+          newPlanLabel,
+          oldSpend: oldEntry.monthlySpend,
+          newSpend: newEntry.monthlySpend,
+          seatsDelta: newEntry.seats - oldEntry.seats,
+          spendDelta: newEntry.monthlySpend - oldEntry.monthlySpend,
+        });
+      }
+    }
+  }
+
+  // 2. Detect removed tools
+  for (const oldEntry of oldTools) {
+    if (!newToolsMap.has(oldEntry.toolId)) {
+      const catalogTool = getToolById(oldEntry.toolId);
+      const toolName = catalogTool?.name || oldEntry.toolId;
+      const oldPlanOpt = catalogTool?.plans.find((p) => p.id === oldEntry.plan);
+      const oldPlanLabel = oldPlanOpt?.label || oldEntry.plan;
+
+      removed.push({
+        toolId: oldEntry.toolId,
+        toolName,
+        seats: oldEntry.seats,
+        planId: oldEntry.plan,
+        planLabel: oldPlanLabel,
+        monthlySpend: oldEntry.monthlySpend,
+      });
+    }
+  }
+
+  // 3. Replacement Heuristic
+  const matchedAdded = new Set<string>();
+  const matchedRemoved = new Set<string>();
+
+  for (const rem of removed) {
+    const remCatalog = getToolById(rem.toolId);
+    const remCategory = remCatalog?.category;
+
+    let matchIdx = -1;
+    for (let i = 0; i < added.length; i++) {
+      const add = added[i];
+      if (matchedAdded.has(add.toolId)) continue;
+
+      const addCatalog = getToolById(add.toolId);
+      const addCategory = addCatalog?.category;
+
+      const sameCategory = remCategory && remCategory === addCategory;
+      const isAlternative = remCatalog?.alternatives?.some(alt => alt.toolId === add.toolId) ||
+                            addCatalog?.alternatives?.some(alt => alt.toolId === rem.toolId);
+
+      if (sameCategory || isAlternative) {
+        matchIdx = i;
+        break;
+      }
+    }
+
+    if (matchIdx !== -1) {
+      const add = added[matchIdx];
+      matchedAdded.add(add.toolId);
+      matchedRemoved.add(rem.toolId);
+      replacedList.push({
+        removedToolId: rem.toolId,
+        removedToolName: rem.toolName,
+        addedToolId: add.toolId,
+        addedToolName: add.toolName,
+        removedPlanLabel: rem.planLabel,
+        addedPlanLabel: add.planLabel,
+        removedSpend: rem.monthlySpend,
+        addedSpend: add.monthlySpend,
+      });
+    }
+  }
+
+  const remainingAdded = added.filter(a => !matchedAdded.has(a.toolId));
+  const remainingRemoved = removed.filter(r => !matchedRemoved.has(r.toolId));
+
+  // 4. Overlap & Opportunity counts
+  const oldOverlapCount = oldInsights.filter(ins => ins.type === 'overlapping_tools').length;
+  const newOverlapCount = newInsights.filter(ins => ins.type === 'overlapping_tools').length;
+  const overlapCountDelta = newOverlapCount - oldOverlapCount;
+
+  const oldOptCount = oldInsights.length;
+  const newOptCount = newInsights.length;
+  const optCountDelta = newOptCount - oldOptCount;
+
+  // 5. Generate evolution storytelling summaries
+  const summaries: string[] = [];
+  const nextVer = newAudit.auditVersion || 2;
+
+  for (const add of remainingAdded) {
+    summaries.push(`${add.toolName} was added to the stack in v${nextVer}.`);
+  }
+  for (const rem of remainingRemoved) {
+    summaries.push(`${rem.toolName} was removed from the stack in v${nextVer}.`);
+  }
+  for (const rep of replacedList) {
+    summaries.push(`${rep.addedToolName} replaced ${rep.removedToolName} in v${nextVer}.`);
+  }
+  for (const chg of changed) {
+    if (chg.oldPlanId !== chg.newPlanId) {
+      summaries.push(`${chg.toolName} plan was changed from ${chg.oldPlanLabel} to ${chg.newPlanLabel}.`);
+    }
+    if (chg.oldSeats !== chg.newSeats) {
+      summaries.push(`${chg.toolName} seat count changed from ${chg.oldSeats} to ${chg.newSeats} (${chg.seatsDelta > 0 ? '+' : ''}${chg.seatsDelta} seats).`);
+    }
+  }
+  if (overlapCountDelta < 0) {
+    summaries.push(`Overlapping tool redundancies reduced from ${oldOverlapCount} to ${newOverlapCount}.`);
+  } else if (overlapCountDelta > 0) {
+    summaries.push(`New overlaps detected (increased from ${oldOverlapCount} to ${newOverlapCount}).`);
+  }
+  if (optCountDelta > 0) {
+    summaries.push(`Optimization opportunities increased from ${oldOptCount} to ${newOptCount}.`);
+  } else if (optCountDelta < 0) {
+    summaries.push(`Optimization opportunities decreased from ${oldOptCount} to ${newOptCount}.`);
+  }
+
+  const stackDiff: StackDiff = {
+    added: remainingAdded,
+    removed: remainingRemoved,
+    changed,
+    replaced: replacedList,
+    oldToolCount: oldTools.length,
+    newToolCount: newTools.length,
+    toolCountDelta: newTools.length - oldTools.length,
+    oldOverlapCount,
+    newOverlapCount,
+    overlapCountDelta,
+    oldOptCount,
+    newOptCount,
+    optCountDelta,
+    summaries,
+  };
+
   return {
     oldAuditId: oldAudit.auditId,
     newAuditId: newAudit.auditId,
@@ -194,6 +381,7 @@ export function generateAuditDiff(oldAudit: AuditDocument, newAudit: AuditDocume
     recommendationDiffs,
     pricingDiffs,
     generatedAt: new Date().toISOString(),
+    stackDiff,
   };
 }
 

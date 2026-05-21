@@ -39,6 +39,7 @@ export interface AuditRequest {
   teamSize: number;
   companyName?: string;
   useCase: UseCase;
+  reAuditOf?: string; // parent audit ID if chaining a new version
 }
 
 export interface Insight {
@@ -141,6 +142,54 @@ export interface PricingDiff {
   annualDelta?: number;
 }
 
+export interface StackToolEntry {
+  toolId: ToolId;
+  toolName: string;
+  seats: number;
+  planId: string;
+  planLabel: string;
+  monthlySpend: number;
+}
+
+export interface StackDiff {
+  added: StackToolEntry[];
+  removed: StackToolEntry[];
+  changed: {
+    toolId: ToolId;
+    toolName: string;
+    oldSeats: number;
+    newSeats: number;
+    oldPlanId: string;
+    newPlanId: string;
+    oldPlanLabel: string;
+    newPlanLabel: string;
+    oldSpend: number;
+    newSpend: number;
+    seatsDelta: number;
+    spendDelta: number;
+  }[];
+  replaced: {
+    removedToolId: ToolId;
+    removedToolName: string;
+    addedToolId: ToolId;
+    addedToolName: string;
+    removedPlanLabel: string;
+    addedPlanLabel: string;
+    removedSpend: number;
+    addedSpend: number;
+  }[];
+  oldToolCount: number;
+  newToolCount: number;
+  toolCountDelta: number;
+  oldOverlapCount: number;
+  newOverlapCount: number;
+  overlapCountDelta: number;
+  oldOptCount: number;
+  newOptCount: number;
+  optCountDelta: number;
+  summaries: string[];
+}
+
 export interface AuditDiff {
   oldAuditId: string;
   newAuditId: string;
@@ -152,6 +201,7 @@ export interface AuditDiff {
   recommendationDiffs: RecommendationDiff[];
   pricingDiffs: PricingDiff[];
   generatedAt: string;
+  stackDiff?: StackDiff;
 }
 
 export interface AuditVersionInfo {
