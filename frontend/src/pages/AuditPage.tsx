@@ -200,12 +200,35 @@ export default function AuditPage() {
             ← Back to home
           </button>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4 leading-tight">
-            Audit Your <span className="gradient-text">AI Stack</span>
+            {reAuditOf ? (
+              <>Evolve Your <span className="gradient-text">AI Stack</span></>
+            ) : (
+              <>Audit Your <span className="gradient-text">AI Stack</span></>
+            )}
           </h1>
           <p className="text-[#94a3b8] text-lg max-w-xl mx-auto leading-relaxed">
-            Select your tools, enter what you're paying, and we'll find where you're overspending.
+            {reAuditOf
+              ? 'Update your stack below to create the next version in your living audit timeline.'
+              : "Select your tools, enter what you're paying, and we'll find where you're overspending."}
           </p>
         </div>
+
+        {/* 🛠️ Evolution Banner — shown when editing an existing audit chain */}
+        {reAuditOf && (
+          <div className="mb-8 p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 flex items-start gap-3">
+            <span className="text-amber-400 text-xl mt-0.5">🛠️</span>
+            <div>
+              <p className="text-amber-300 font-bold text-sm">
+                {isPrefilling
+                  ? 'Loading your stack…'
+                  : `Evolving Stack — Creating v${(parentVersion ?? 1) + 1} of this timeline`}
+              </p>
+              <p className="text-amber-200/60 text-xs mt-0.5 leading-relaxed">
+                Your previous tools and settings have been pre-loaded. Add, remove, or change tools below, then submit to chain a new version.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Progress indicator */}
         <div className="flex items-center justify-center gap-2 mb-10">

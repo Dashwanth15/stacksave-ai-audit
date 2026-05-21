@@ -175,16 +175,25 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
               Re-Audited {newAudit?.createdAt ? formatRelativeTime(newAudit.createdAt) : ''}
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap justify-end">
             {isOwner && (
-              <button
-                onClick={handleRunReAudit}
-                disabled={reAuditing}
-                className="px-4 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-sm font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                aria-label="Re-Audit Existing Stack"
-              >
-                {reAuditing ? 'Recalculating...' : '🔄 Re-Audit Existing Stack'}
-              </button>
+              <>
+                <button
+                  onClick={handleRunReAudit}
+                  disabled={reAuditing}
+                  className="px-4 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-sm font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  aria-label="Refresh Pricing for Existing Stack"
+                >
+                  {reAuditing ? 'Recalculating...' : '🔄 Pricing Refresh'}
+                </button>
+                <button
+                  onClick={() => navigate(`/audit?reAuditOf=${newAudit?.auditId}`)}
+                  className="px-4 py-2 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer"
+                  aria-label="Edit Stack and Re-Audit"
+                >
+                  🛠️ Edit Stack &amp; Re-Audit
+                </button>
+              </>
             )}
             <button
               onClick={() => generateReAuditDiffPDF(oldAudit, newAudit, diff)}
@@ -592,7 +601,294 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
           )
         )}
 
-        {/* ── 2. Pricing Change Visualization ─────────────────────── */}
+        {/* ── 2. AI Stack Evolution Panel ──────────────────────────── */}
+        {(() => {
+          const sd = diff?.stackDiff;
+          if (!sd) return null;
+          const hasStackChanges =
+            sd.added.length > 0 ||
+            sd.removed.length > 0 ||
+            sd.replaced.length > 0 ||
+            sd.changed.length > 0 ||
+            sd.summaries.length > 0;
+          if (!hasStackChanges) return null;
+
+          return (
+            <m.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="space-y-5"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <span className="text-xl">🔬</span> AI Stack Evolution
+                  </h3>
+                  <p className="text-xs text-[#94a3b8] mt-0.5">
+                    How your actual AI toolset changed between v{oldAudit?.auditVersion || 1} → v{newAudit?.auditVersion || 2}
+                  </p>
+                </div>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-bold uppercase tracking-wider">
+                  Stack Diff Active
+                </span>
+              </div>
+
+              {/* Storytelling Summaries */}
+              {sd.summaries.length > 0 && (
+                <div className="bg-gradient-to-br from-[#0f1023] to-[#0c0e1a] border border-indigo-500/20 rounded-2xl p-6 space-y-3 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 via-indigo-500 to-cyan-500" />
+                  <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                    Stack Story
+                  </h4>
+                  <ul className="space-y-2">
+                    {sd.summaries.map((s, i) => (
+                      <li key={i} className="flex items-start gap-3 text-sm text-[#c0cbd6] leading-relaxed">
+                        <span className="shrink-0 mt-1 w-4 h-4 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-[9px] font-bold text-indigo-400">{i + 1}</span>
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Metric Evolution Grid */}
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  {
+                    label: 'Total Tools',
+                    old: sd.oldToolCount,
+                    new: sd.newToolCount,
+                    delta: sd.toolCountDelta,
+                    positiveIsGood: true,
+                    icon: '🧰',
+                  },
+                  {
+                    label: 'Redundancies',
+                    old: sd.oldOverlapCount,
+                    new: sd.newOverlapCount,
+                    delta: sd.overlapCountDelta,
+                    positiveIsGood: false,
+                    icon: '⚠️',
+                  },
+                  {
+                    label: 'Opt. Opportunities',
+                    old: sd.oldOptCount,
+                    new: sd.newOptCount,
+                    delta: sd.optCountDelta,
+                    positiveIsGood: true,
+                    icon: '💡',
+                  },
+                ].map((metric) => {
+                  const improved = metric.positiveIsGood ? metric.delta > 0 : metric.delta < 0;
+                  const worsened = metric.positiveIsGood ? metric.delta < 0 : metric.delta > 0;
+                  return (
+                    <div key={metric.label} className="bg-white/[0.02] border border-white/5 rounded-xl p-4 text-center space-y-1.5 hover:border-white/10 transition-all">
+                      <span className="text-xl">{metric.icon}</span>
+                      <div className="flex items-center justify-center gap-1.5 text-sm font-extrabold tabular-nums">
+                        <span className="text-[#6b7b93]">{metric.old}</span>
+                        <span className="text-[#475569] text-xs">➔</span>
+                        <span className="text-white">{metric.new}</span>
+                      </div>
+                      <span className="text-[10px] text-[#6b7b93] font-semibold uppercase tracking-wide block">
+                        {metric.label}
+                      </span>
+                      {metric.delta !== 0 && (
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                          improved
+                            ? 'bg-emerald-500/10 text-emerald-400'
+                            : worsened
+                            ? 'bg-rose-500/10 text-rose-400'
+                            : 'bg-slate-500/10 text-slate-400'
+                        }`}>
+                          {metric.delta > 0 ? '+' : ''}{metric.delta}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Replaced Tools — Before → After Cards */}
+              {sd.replaced.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
+                    Tool Replacements ({sd.replaced.length})
+                  </h4>
+                  <div className="grid grid-cols-1 gap-4">
+                    {sd.replaced.map((rep) => (
+                      <div
+                        key={`${rep.removedToolId}->${rep.addedToolId}`}
+                        className="bg-white/[0.02] border border-purple-500/15 rounded-2xl p-5 relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-rose-500 via-purple-500 to-emerald-500" />
+                        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                          {/* Removed side */}
+                          <div className="bg-rose-950/30 border border-rose-500/15 rounded-xl p-4 space-y-1.5 opacity-80">
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-rose-400 block">Before</span>
+                            <p className="font-bold text-sm text-rose-200 line-through">{rep.removedToolName}</p>
+                            <p className="text-[11px] text-[#6b7b93]">{rep.removedPlanLabel} Plan</p>
+                            <p className="text-xs font-bold text-rose-400/70 tabular-nums">${rep.removedSpend.toFixed(0)}/mo</p>
+                          </div>
+                          {/* Arrow */}
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-purple-400 text-lg">⇒</span>
+                            <span className="text-[9px] text-[#6b7b93] font-bold uppercase tracking-wider">Replaced</span>
+                          </div>
+                          {/* Added side */}
+                          <div className="bg-emerald-950/30 border border-emerald-500/15 rounded-xl p-4 space-y-1.5">
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 block">After</span>
+                            <p className="font-bold text-sm text-emerald-200">{rep.addedToolName}</p>
+                            <p className="text-[11px] text-[#94a3b8]">{rep.addedPlanLabel} Plan</p>
+                            <p className="text-xs font-bold text-emerald-400 tabular-nums">${rep.addedSpend.toFixed(0)}/mo</p>
+                          </div>
+                        </div>
+                        {/* Spend delta */}
+                        {rep.addedSpend !== rep.removedSpend && (
+                          <div className="mt-3 pt-3 border-t border-white/5 flex justify-end">
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                              rep.addedSpend < rep.removedSpend
+                                ? 'bg-emerald-500/10 text-emerald-400'
+                                : 'bg-amber-500/10 text-amber-400'
+                            }`}>
+                              {rep.addedSpend < rep.removedSpend ? '↓' : '↑'} ${Math.abs(rep.addedSpend - rep.removedSpend).toFixed(0)}/mo spend {rep.addedSpend < rep.removedSpend ? 'saved' : 'increase'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Added Tools */}
+              {sd.added.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    Added to Stack ({sd.added.length})
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {sd.added.map((tool) => (
+                      <div
+                        key={tool.toolId}
+                        className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-5 space-y-2 hover:border-emerald-500/35 transition-all"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-bold text-sm text-emerald-200">{tool.toolName}</p>
+                            <p className="text-[11px] text-[#94a3b8]">{tool.planLabel} Plan · {tool.seats} seat{tool.seats !== 1 ? 's' : ''}</p>
+                          </div>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shrink-0">+ Added</span>
+                        </div>
+                        <div className="pt-2 border-t border-emerald-500/10 flex justify-between items-center">
+                          <span className="text-[10px] text-[#6b7b93]">Monthly spend</span>
+                          <span className="text-xs font-bold text-emerald-400 tabular-nums">${tool.monthlySpend.toFixed(0)}/mo</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Removed Tools */}
+              {sd.removed.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
+                    Removed from Stack ({sd.removed.length})
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 opacity-70">
+                    {sd.removed.map((tool) => (
+                      <div
+                        key={tool.toolId}
+                        className="bg-rose-950/20 border border-rose-500/15 rounded-xl p-5 space-y-2 relative overflow-hidden"
+                      >
+                        {/* Diagonal strikethrough feel */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-rose-900/5 to-transparent pointer-events-none" />
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-bold text-sm text-rose-300 line-through">{tool.toolName}</p>
+                            <p className="text-[11px] text-[#6b7b93]">{tool.planLabel} Plan · {tool.seats} seat{tool.seats !== 1 ? 's' : ''}</p>
+                          </div>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-rose-500/15 text-rose-400 border border-rose-500/25 shrink-0">− Removed</span>
+                        </div>
+                        <div className="pt-2 border-t border-rose-500/10 flex justify-between items-center">
+                          <span className="text-[10px] text-[#6b7b93]">Was costing</span>
+                          <span className="text-xs font-bold text-rose-400/70 tabular-nums line-through">${tool.monthlySpend.toFixed(0)}/mo</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Modified Tools (seat or plan changes) */}
+              {sd.changed.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                    Modified Tools ({sd.changed.length})
+                  </h4>
+                  <div className="space-y-3">
+                    {sd.changed.map((tool) => (
+                      <div
+                        key={tool.toolId}
+                        className="bg-amber-950/10 border border-amber-500/15 rounded-xl p-5 space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="font-bold text-sm text-white">{tool.toolName}</p>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/25">~ Modified</span>
+                        </div>
+                        <div className="grid grid-cols-3 text-xs gap-3 text-center">
+                          {/* Plan change */}
+                          {tool.oldPlanId !== tool.newPlanId && (
+                            <div className="bg-white/[0.02] rounded-lg p-3 space-y-1">
+                              <span className="text-[9px] text-[#6b7b93] font-bold uppercase block">Plan</span>
+                              <span className="text-[#6b7b93] line-through block text-[11px]">{tool.oldPlanLabel}</span>
+                              <span className="text-amber-300 font-semibold block text-[11px]">{tool.newPlanLabel}</span>
+                            </div>
+                          )}
+                          {/* Seat change */}
+                          {tool.oldSeats !== tool.newSeats && (
+                            <div className="bg-white/[0.02] rounded-lg p-3 space-y-1">
+                              <span className="text-[9px] text-[#6b7b93] font-bold uppercase block">Seats</span>
+                              <span className="text-[#6b7b93] line-through block text-[11px]">{tool.oldSeats}</span>
+                              <span className="text-amber-300 font-semibold block text-[11px]">{tool.newSeats}</span>
+                            </div>
+                          )}
+                          {/* Spend change */}
+                          {Math.abs(tool.spendDelta) > 0.01 && (
+                            <div className="bg-white/[0.02] rounded-lg p-3 space-y-1">
+                              <span className="text-[9px] text-[#6b7b93] font-bold uppercase block">Spend</span>
+                              <span className="text-[#6b7b93] line-through block text-[11px]">${tool.oldSpend.toFixed(0)}/mo</span>
+                              <div className="flex items-center justify-center gap-0.5">
+                                <span className="text-amber-300 font-semibold text-[11px]">${tool.newSpend.toFixed(0)}/mo</span>
+                                <span className={`text-[8px] font-bold ${
+                                  tool.spendDelta > 0 ? 'text-rose-400' : 'text-emerald-400'
+                                }`}>
+                                  ({tool.spendDelta > 0 ? '+' : ''}{tool.spendDelta.toFixed(0)})
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Divider to next section */}
+              <div className="border-t border-white/5" />
+            </m.div>
+          );
+        })()}
+
+        {/* ── 3. Pricing Change Visualization ─────────────────────── */}
         {pricingDiffs.length > 0 && (
           <m.div
             initial={{ opacity: 0, y: 20 }}

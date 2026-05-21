@@ -71,6 +71,7 @@ export interface AuditResult {
   companyName?: string;
   teamSize: number;
   tools: ToolEntry[];
+  useCase?: UseCase;
 
   // Batch 4 re-audit additions
   pricingChanged?: boolean;
