@@ -163,7 +163,7 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
     <div className="min-h-screen grid-bg pb-20">
       {/* Navigation */}
       <nav className="border-b border-white/[0.07] backdrop-blur-xl sticky top-0 z-40 bg-[#0a0a14]/88 shadow-[0_10px_40px_rgba(0,0,0,0.18)]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-0 sm:h-[68px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
@@ -175,37 +175,39 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
               Re-Audited {newAudit?.createdAt ? formatRelativeTime(newAudit.createdAt) : ''}
             </span>
           </div>
-          <div className="flex items-center gap-3 flex-wrap justify-end">
+          <div className="action-button-group w-full sm:w-auto">
             {isOwner && (
               <>
                 <button
                   onClick={handleRunReAudit}
                   disabled={reAuditing}
-                  className="px-4 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-sm font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  aria-label="Refresh Pricing for Existing Stack"
+                  className="action-button bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none"
+                  aria-label="Pricing Refresh"
                 >
-                  {reAuditing ? 'Recalculating...' : '🔄 Pricing Refresh'}
+                  {reAuditing ? '⏳ Updating...' : '🔄 Pricing Refresh'}
                 </button>
                 <button
                   onClick={() => navigate(`/audit?reAuditOf=${newAudit?.auditId}`)}
-                  className="px-4 py-2 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="action-button bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border-purple-500/20 flex-1 sm:flex-none"
                   aria-label="Edit Stack and Re-Audit"
                 >
-                  🛠️ Edit Stack &amp; Re-Audit
+                  🛠️ Edit Stack
                 </button>
               </>
             )}
             <button
               onClick={() => generateReAuditDiffPDF(oldAudit, newAudit, diff)}
-              className="px-4 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 text-sm font-medium transition-all flex items-center gap-1.5"
+              className="action-button bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/20 flex-1 sm:flex-none"
+              aria-label="Download PDF"
             >
               📄 Download PDF
             </button>
             <button
               onClick={() => navigate(`/audit/${newAudit?.auditId || ''}?view=single`, { state: { isOwner } })}
-              className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all"
+              className="action-button bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border-indigo-500/20 flex-1 sm:flex-none"
+              aria-label="View Full Audit"
             >
-              View Full Audit →
+              📋 Full Audit
             </button>
           </div>
         </div>
@@ -214,28 +216,29 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-12 space-y-8">
         {/* Version Timeline Selector */}
         {allVersions && allVersions.length > 1 && (
-          <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl space-y-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-              <span className="text-8xl">📊</span>
-            </div>
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-              <div>
-                <h3 className="text-xs font-bold text-[#818cf8] uppercase tracking-widest">
+          <div className="timeline-section space-y-6 relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+              <div className="space-y-2">
+                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2">
+                  <span className="flex h-2.5 w-2.5 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
+                  </span>
                   Living Audit History
                 </h3>
-                <p className="text-xs text-[#94a3b8] mt-1">
+                <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed">
                   Trace catalog pricing updates and optimization changes across audit versions.
                 </p>
               </div>
-              <span className="text-[10px] px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold uppercase tracking-wider self-start sm:self-auto">
-                Comparison Mode Active
+              <span className="text-[10px] px-2.5 py-1.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold uppercase tracking-wider self-start sm:self-auto whitespace-nowrap">
+                ✓ Comparison Mode Active
               </span>
             </div>
-            <div className="relative flex items-center justify-between py-4">
+            <div className="relative flex items-center justify-between py-6">
               {/* Horizontal Connecting Track Line */}
-              <div className="absolute left-4 right-4 h-0.5 bg-gradient-to-r from-slate-800 via-indigo-950 to-slate-800 top-1/2 -translate-y-1/2" />
+              <div className="timeline-connecting-line" />
               
-              <div className="relative z-10 w-full flex items-center justify-start gap-8 sm:gap-12 overflow-x-auto py-2 px-1 scrollbar-thin">
+              <div className="relative z-10 w-full flex items-center justify-start gap-10 sm:gap-14 md:gap-16 overflow-x-auto py-3 px-1">
                 {allVersions.map((v, idx) => {
                   const isNew = v.auditId === newAudit?.auditId;
                   const isOld = v.auditId === oldAudit?.auditId;
@@ -280,7 +283,7 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                           navigate(targetUrl, { state: { isOwner } });
                         }
                       }}
-                      className="group flex flex-col items-center gap-2.5 shrink-0 transition-all focus:outline-none cursor-pointer"
+                      className="timeline-node"
                     >
                       <div className="relative flex items-center justify-center">
                         {/* Glowing ring for active node */}
@@ -288,16 +291,16 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                           <span className={`absolute animate-ping inline-flex h-7 w-7 rounded-full opacity-20 ${isSame ? 'bg-indigo-400' : 'bg-emerald-400'}`} />
                         )}
                         <div
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${ringColorClass}`}
+                          className={`timeline-node-ring ${ringColorClass}`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${dotColorClass}`} />
+                          <span className={`timeline-node-dot ${dotColorClass}`} />
                         </div>
                       </div>
-                      <div className="text-center space-y-0.5">
-                        <div className={`text-xs font-bold transition-all ${textColorClass}`}>
+                      <div className="timeline-node-label">
+                        <div className={`text-xs sm:text-sm font-bold transition-all ${textColorClass}`}>
                           Version {v.auditVersion || (idx + 1)}{labelSuffix}
                         </div>
-                        <div className="text-[10px] text-[#475569] group-hover:text-[#64748b] transition-all">
+                        <div className="text-[10px] sm:text-xs text-[#475569] group-hover:text-[#64748b] transition-all whitespace-nowrap">
                           {formatRelativeTime(v.createdAt)}
                         </div>
                       </div>
@@ -313,52 +316,50 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
         <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl border border-indigo-500/20 bg-[#0c0d1b] shadow-[0_15px_50px_rgba(0,0,0,0.3)]"
+          className="living-audit-hero p-8 sm:p-10 space-y-8"
         >
-          {/* Decorative neon top gradient bar */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500" />
-          
-          <div className="p-8 sm:p-10 space-y-8">
-            <div className="text-center sm:text-left space-y-1.5">
-              <span className="text-[10px] px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold uppercase tracking-wider">
+            <div className="text-center sm:text-left space-y-2 sm:space-y-3">
+              <span className="text-[10px] px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold uppercase tracking-wider inline-block">
                 Living Audit Comparison
               </span>
-              <h2 className="text-2xl font-black text-white tracking-tight pt-1">
+              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight pt-1">
                 Your AI stack changed over time
               </h2>
               {oldAudit?.auditVersion === newAudit?.auditVersion ? (
-                <p className="text-xs text-[#94a3b8]">
+                <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed">
                   Viewing the initial baseline snapshot of your stack. Click subsequent versions in the timeline above to see what changes occurred over time.
                 </p>
               ) : (
-                <p className="text-xs text-[#94a3b8]">
+                <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed">
                   Catalog updates and usage changes generated optimization adjustments between{' '}
                   <span className="text-white font-semibold">v{oldAudit?.auditVersion || 1}</span> ({oldAudit?.createdAt ? new Date(oldAudit.createdAt).toLocaleDateString() : ''}) and{' '}
                   <span className="text-white font-semibold">v{newAudit?.auditVersion || 2}</span> ({newAudit?.createdAt ? new Date(newAudit.createdAt).toLocaleDateString() : ''}).
                 </p>
               )}
               {newAudit && newAudit.auditVersion && newAudit.auditVersion > 2 && (
-                <div className="flex justify-center sm:justify-start pt-3">
-                  <div className="inline-flex p-0.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md">
+                <div className="flex justify-center sm:justify-start pt-2 sm:pt-3">
+                  <div className="inline-flex p-0.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md gap-1">
                     <button
                       onClick={() => setCompareWith('previous')}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+                      className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
                         compareWith === 'previous'
                           ? 'bg-indigo-600 text-white shadow-md'
                           : 'text-[#94a3b8] hover:text-white'
                       }`}
                     >
-                      Compare with Previous (v{newAudit.auditVersion - 1})
+                      <span className="hidden sm:inline">Compare Previous</span>
+                      <span className="sm:hidden">Previous</span>
                     </button>
                     <button
                       onClick={() => setCompareWith('root')}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+                      className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
                         compareWith === 'root'
                           ? 'bg-indigo-600 text-white shadow-md'
                           : 'text-[#94a3b8] hover:text-white'
                       }`}
                     >
-                      Compare with Original Baseline (v1)
+                      <span className="hidden sm:inline">Compare Baseline</span>
+                      <span className="sm:hidden">Baseline</span>
                     </button>
                   </div>
                 </div>
@@ -366,36 +367,38 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
             </div>
 
             {/* Core Comparative Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="metrics-grid">
               {/* Stack Spend Dynamics Card */}
-              <div className="glass-card-static p-6 border-white/5 bg-white/[0.01] hover:border-white/10 transition-all rounded-2xl flex flex-col justify-between space-y-4">
-                <div className="space-y-1">
+              <div className="metric-card">
+                <div className="space-y-2">
                   <span className="text-xs font-bold text-[#6b7b93] uppercase tracking-wider block">
                     Stack Monthly Spend
                   </span>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-extrabold text-slate-400 line-through tabular-nums">
-                      {formatCurrencyFull(oldAudit?.totalMonthlySpend ?? 0)}
-                    </span>
-                    <span className="text-xs text-[#6b7b93]">➔</span>
-                    <span className="text-3xl font-black text-white tabular-nums">
-                      {formatCurrencyFull(newAudit?.totalMonthlySpend ?? 0)}
-                    </span>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="text-2xl sm:text-3xl font-extrabold text-slate-400 line-through tabular-nums">
+                        {formatCurrencyFull(oldAudit?.totalMonthlySpend ?? 0)}
+                      </span>
+                      <span className="text-xs text-[#6b7b93]">→</span>
+                      <span className="text-3xl sm:text-4xl font-black text-white tabular-nums">
+                        {formatCurrencyFull(newAudit?.totalMonthlySpend ?? 0)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 pt-2">
                   {spendDelta < 0 ? (
-                    <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                      <span>↓</span> {formatCurrencyFull(Math.abs(spendDelta))}/mo savings
+                    <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 whitespace-nowrap">
+                      <span>↓</span> {formatCurrencyFull(Math.abs(spendDelta))}/mo
                     </span>
                   ) : spendDelta > 0 ? (
-                    <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
-                      <span>↑</span> {formatCurrencyFull(spendDelta)}/mo increase
+                    <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1 whitespace-nowrap">
+                      <span>↑</span> {formatCurrencyFull(spendDelta)}/mo
                     </span>
                   ) : (
-                    <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
-                      No spend change
+                    <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20 whitespace-nowrap">
+                      No change
                     </span>
                   )}
                   <span className="text-[10px] text-[#6b7b93]">
@@ -405,45 +408,47 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
               </div>
 
               {/* Identified Savings Evolution Card */}
-              <div className="glass-card-static p-6 border-white/5 bg-white/[0.01] hover:border-white/10 transition-all rounded-2xl flex flex-col justify-between space-y-4">
-                <div className="space-y-1">
+              <div className="metric-card">
+                <div className="space-y-2">
                   <span className="text-xs font-bold text-[#6b7b93] uppercase tracking-wider block">
                     Potential Savings Opportunities
                   </span>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-extrabold text-slate-400 line-through tabular-nums">
-                      {formatCurrencyFull(oldAudit?.estimatedMonthlySavings ?? 0)}
-                    </span>
-                    <span className="text-xs text-[#6b7b93]">➔</span>
-                    <span className="text-3xl font-black text-emerald-400 tabular-nums">
-                      {formatCurrencyFull(newAudit?.estimatedMonthlySavings ?? 0)}
-                    </span>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="text-2xl sm:text-3xl font-extrabold text-slate-400 line-through tabular-nums">
+                        {formatCurrencyFull(oldAudit?.estimatedMonthlySavings ?? 0)}
+                      </span>
+                      <span className="text-xs text-[#6b7b93]">→</span>
+                      <span className="text-3xl sm:text-4xl font-black text-emerald-400 tabular-nums">
+                        {formatCurrencyFull(newAudit?.estimatedMonthlySavings ?? 0)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 pt-2">
                   {savingsDelta > 0 ? (
-                    <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                      <span>+</span> {formatCurrencyFull(savingsDelta)}/mo more recovery
+                    <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 whitespace-nowrap">
+                      <span>+</span> {formatCurrencyFull(savingsDelta)}/mo
                     </span>
                   ) : savingsDelta < 0 ? (
-                    <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
-                      <span>-</span> {formatCurrencyFull(Math.abs(savingsDelta))}/mo recovery delta
+                    <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1 whitespace-nowrap">
+                      <span>-</span> {formatCurrencyFull(Math.abs(savingsDelta))}/mo
                     </span>
                   ) : (
-                    <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">
-                      Savings level steady
+                    <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20 whitespace-nowrap">
+                      Steady
                     </span>
                   )}
                   <span className="text-[10px] text-[#6b7b93]">
-                    vs original baseline
+                    recovery delta
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Drivers of Change Subgrid */}
-            <div className="pt-6 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+            <div className="pt-8 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
               {/* Biggest Pricing Driver */}
               <div className="space-y-2">
                 <h4 className="text-xs font-extrabold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
