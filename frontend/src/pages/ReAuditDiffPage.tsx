@@ -532,7 +532,6 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                 )}
               </div>
             </div>
-          </div>
         </m.div>
 
         {oldAudit?.auditVersion === newAudit?.auditVersion ? (
