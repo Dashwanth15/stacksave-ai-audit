@@ -91,6 +91,7 @@ router.post('/', auditLimiter, async (req: Request, res: Response) => {
       companyName: body.companyName || auditResult.companyName,
       teamSize: auditResult.teamSize,
       tools: auditResult.tools,
+      useCase: body.useCase,
       
       // Batch 1: New fields
       email: body.email,                    // User email for notifications

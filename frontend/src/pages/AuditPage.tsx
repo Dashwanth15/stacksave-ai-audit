@@ -71,28 +71,44 @@ export default function AuditPage() {
   // Prefill form from parent version if reAuditOf parameter is present
   useEffect(() => {
     if (reAuditOf) {
-      setIsPrefilling(true);
-      setError(null);
-      fetchAudit(reAuditOf)
-        .then((audit) => {
-          setForm({
-            tools: audit.tools,
-            teamSize: audit.teamSize,
-            companyName: audit.companyName || '',
-            useCase: audit.useCase || 'mixed',
-            billingPeriod: form.billingPeriod,
-          });
-          setParentVersion(audit.auditVersion || 1);
-        })
-        .catch((err) => {
+      let isMounted = true;
+
+      const fetchAndPrefill = async () => {
+        try {
+          if (isMounted) setIsPrefilling(true);
+          if (isMounted) setError(null);
+
+          const audit = await fetchAudit(reAuditOf);
+
+          if (isMounted) {
+            setForm({
+              tools: audit.tools,
+              teamSize: audit.teamSize,
+              companyName: audit.companyName || '',
+              useCase: audit.useCase || 'mixed',
+              billingPeriod: form.billingPeriod,
+            });
+            setParentVersion(audit.auditVersion || 1);
+          }
+        } catch (err) {
           console.error('Failed to prefill audit form:', err);
-          setError('Failed to load parent audit for editing.');
-        })
-        .finally(() => {
-          setIsPrefilling(false);
-        });
+          if (isMounted) {
+            setError('Failed to load parent audit for editing.');
+          }
+        } finally {
+          if (isMounted) {
+            setIsPrefilling(false);
+          }
+        }
+      };
+
+      fetchAndPrefill();
+
+      return () => {
+        isMounted = false;
+      };
     }
-  }, [reAuditOf]);
+  }, [reAuditOf, form.billingPeriod, setForm]);
 
   // Which tools are toggled on
   const selectedToolIds = form.tools.map((t) => t.toolId);

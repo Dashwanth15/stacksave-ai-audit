@@ -66,14 +66,21 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
 
   useEffect(() => {
     if (id) {
-      setLoading(true);
-      fetchAuditDiff(id, compareWith)
-        .then(setData)
-        .catch((err) => {
+      const loadDiff = async () => {
+        setLoading(true);
+        try {
+          const result = await fetchAuditDiff(id, compareWith);
+          setData(result);
+          setError(null);
+        } catch (err) {
           console.error('Error fetching audit diff:', err);
-          setError(err.message || 'Failed to load re-audit details.');
-        })
-        .finally(() => setLoading(false));
+          setError(err instanceof Error ? err.message : 'Failed to load re-audit details.');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadDiff();
     }
   }, [id, compareWith]);
 

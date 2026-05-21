@@ -40,6 +40,7 @@ export interface AuditDocument extends Document {
   companyName?: string;
   teamSize: number;
   tools: object[];
+  useCase?: string;
   
   // ── Batch 1: Persistence Fields ──────────────────────────
   // Input: tools array as submitted by user (for re-audit comparisons)
@@ -104,6 +105,7 @@ const AuditSchema = new Schema<AuditDocument>(
     companyName: { type: String },
     teamSize: { type: Number, required: true },
     tools: { type: [Schema.Types.Mixed], default: [] },
+    useCase: { type: String, default: 'mixed' },
     email: { type: String }, // captured at lead gate — private
     
     // ── Batch 1: Persistence Fields ──────────────────────────

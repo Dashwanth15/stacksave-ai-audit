@@ -4,7 +4,7 @@
 // Detects when pricing data changes and identifies affected audits
 // Uses stored pricing snapshots for deterministic comparison
 
-import { PricingSnapshot, PricingComparison, ToolPriceChange, PlanPriceChange, AuditPricingChange, PricingChangeDetectionResult } from '../types';
+import { PricingSnapshot, PricingComparison, ToolPriceChange, PlanPriceChange, AuditPricingChange, PricingChangeDetectionResult, ToolId } from '../types';
 import { AuditModel, getFrontendUrl } from './dbService';
 import { capturePricingSnapshot } from './pricingService';
 import { sendReAuditNotification } from './emailService';
@@ -33,7 +33,7 @@ export function comparePricingSnapshots(
     if (!oldTool) {
       // New tool added to catalog
       changedTools.push({
-        toolId: toolId as any,
+        toolId: toolId as ToolId,
         toolName: newTool.name,
         hasAnyChange: true,
         planChanges: [],
@@ -124,7 +124,7 @@ export function comparePricingSnapshots(
     // Only include tool if it has plan changes
     if (planChanges.length > 0) {
       changedTools.push({
-        toolId: toolId as any,
+        toolId: toolId as ToolId,
         toolName: newTool.name,
         hasAnyChange: true,
         planChanges,
@@ -138,7 +138,7 @@ export function comparePricingSnapshots(
   for (const toolId of Object.keys(oldSnapshot.tools)) {
     if (!newSnapshot.tools[toolId]) {
       changedTools.push({
-        toolId: toolId as any,
+        toolId: toolId as ToolId,
         toolName: oldSnapshot.tools[toolId].name,
         hasAnyChange: true,
         planChanges: [],
@@ -226,7 +226,7 @@ export async function scanAuditsForPricingChanges(): Promise<PricingChangeDetect
 
       // Compare pricing snapshots
       const comparison = comparePricingSnapshots(
-        audit.pricingSnapshot as any,
+        audit.pricingSnapshot as PricingSnapshot,
         currentSnapshot
       );
 

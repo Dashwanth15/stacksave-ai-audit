@@ -436,7 +436,7 @@ export async function runReAudit(
 
   // Infer useCase (fallback to first tool's useCase, or 'mixed')
   const inferredUseCase: UseCase =
-    (rootAudit as any).useCase ||
+    (rootAudit.useCase as UseCase) ||
     (originalTools[0]?.useCase as UseCase) ||
     'mixed';
 
@@ -486,6 +486,7 @@ export async function runReAudit(
     companyName: rootAudit.companyName,
     teamSize: rootAudit.teamSize,
     tools: auditResult.tools,
+    useCase: inferredUseCase,
     email: rootAudit.email,
     inputStack: originalTools, // Store the ROOT's original input, not recalculated
     pricingSnapshot,
