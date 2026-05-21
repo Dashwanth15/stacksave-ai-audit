@@ -208,14 +208,25 @@ export async function runReAudit(
   originalAuditId: string,
   baseUrl: string
 ): Promise<{ newAudit: AuditDocument; diff: AuditDiff }> {
-  // Load original audit
-  const originalAudit = await AuditModel.findOne({ auditId: originalAuditId });
-  if (!originalAudit) {
+  // Load the audit that was passed in (could be v1, v2, v3, etc.)
+  const requestedAudit = await AuditModel.findOne({ auditId: originalAuditId });
+  if (!requestedAudit) {
     throw new Error(`Original audit not found: ${originalAuditId}`);
   }
 
   // Resolve root audit ID of this version chain
-  const rootAuditId = originalAudit.reAuditOf || originalAudit.auditId;
+  const rootAuditId = requestedAudit.reAuditOf || requestedAudit.auditId;
+
+  // Always load the ROOT audit to get the original user-submitted input stack.
+  // This ensures every re-audit recalculates from the same baseline tools,
+  // preventing drift from compounding recalculations across versions.
+  const rootAudit = rootAuditId !== requestedAudit.auditId
+    ? await AuditModel.findOne({ auditId: rootAuditId })
+    : requestedAudit;
+
+  if (!rootAudit) {
+    throw new Error(`Root audit not found: ${rootAuditId}`);
+  }
 
   // Query database to find the maximum version in this audit chain
   const latestAuditInChain = await AuditModel.findOne({
@@ -224,19 +235,20 @@ export async function runReAudit(
     .sort({ auditVersion: -1 })
     .exec();
 
-  const nextVersion = (latestAuditInChain?.auditVersion || originalAudit.auditVersion || 1) + 1;
+  const nextVersion = (latestAuditInChain?.auditVersion || requestedAudit.auditVersion || 1) + 1;
 
-  // Load and recalculate original tools input stack using current catalog pricing
+  // CRITICAL: Always use the ROOT audit's original inputStack.
+  // This is the user's original tool selection, before any recalculation.
   const originalTools =
-    originalAudit.inputStack && originalAudit.inputStack.length > 0
-      ? (originalAudit.inputStack as ToolEntry[])
-      : (originalAudit.tools as ToolEntry[]);
+    rootAudit.inputStack && rootAudit.inputStack.length > 0
+      ? (rootAudit.inputStack as ToolEntry[])
+      : (rootAudit.tools as ToolEntry[]);
 
   const updatedTools = recalculateInputStack(originalTools);
 
   // Infer useCase (fallback to first tool's useCase, or 'mixed')
   const inferredUseCase: UseCase =
-    (originalAudit as any).useCase ||
+    (rootAudit as any).useCase ||
     (originalTools[0]?.useCase as UseCase) ||
     'mixed';
 
@@ -244,8 +256,8 @@ export async function runReAudit(
   const auditResult = runAudit(
     {
       tools: updatedTools,
-      teamSize: originalAudit.teamSize,
-      companyName: originalAudit.companyName,
+      teamSize: rootAudit.teamSize,
+      companyName: rootAudit.companyName,
       useCase: inferredUseCase,
     },
     '',
@@ -283,11 +295,11 @@ export async function runReAudit(
     insights: auditResult.insights,
     aiSummary: auditResult.aiSummary,
     publicUrl: auditResult.publicUrl,
-    companyName: originalAudit.companyName,
-    teamSize: originalAudit.teamSize,
+    companyName: rootAudit.companyName,
+    teamSize: rootAudit.teamSize,
     tools: auditResult.tools,
-    email: originalAudit.email,
-    inputStack: updatedTools,
+    email: rootAudit.email,
+    inputStack: originalTools, // Store the ROOT's original input, not recalculated
     pricingSnapshot,
     reAuditOf: rootAuditId,
     isLatestVersion: true,
@@ -296,8 +308,10 @@ export async function runReAudit(
     lastPricingCheck: new Date(),
   });
 
-  // Generate the comparison diff between original/previous audit and this new audit
-  const diff = generateAuditDiff(originalAudit, newAudit);
+  // Generate the comparison diff between the PREVIOUS version and this new version.
+  // Use the latest version in the chain before this one (which we already found above).
+  const previousVersion = latestAuditInChain || rootAudit;
+  const diff = generateAuditDiff(previousVersion, newAudit);
 
   return { newAudit, diff };
 }

@@ -240,9 +240,12 @@ router.post('/:id/re-audit', auditLimiter, async (req: Request, res: Response) =
 
 // ── GET /api/audits/:id/diff ─────────────────────────────────
 // Batch 3: Diff retrieval endpoint
+// Compares the requested audit against the previous version in its chain.
+// Supports ?compareWith=root to force comparison against the v1 baseline.
 router.get('/:id/diff', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const compareWith = (req.query.compareWith as string) || 'previous';
     const audit = await AuditModel.findOne({ auditId: id });
 
     if (!audit) {
@@ -252,12 +255,30 @@ router.get('/:id/diff', async (req: Request, res: Response) => {
     let oldAudit = null;
     let newAudit = null;
 
+    // Resolve the root audit ID for this chain
+    const rootAuditId = audit.reAuditOf || audit.auditId;
+
     if (audit.reAuditOf) {
-      // Case 1: The requested ID is a re-audit. Compare against the root original audit.
+      // The requested ID is a re-audit (v2+). It's the "new" side of the comparison.
       newAudit = audit;
-      oldAudit = await AuditModel.findOne({ auditId: audit.reAuditOf });
+
+      if (compareWith === 'root') {
+        // Force comparison against the v1 baseline
+        oldAudit = await AuditModel.findOne({ auditId: audit.reAuditOf });
+      } else {
+        // Default: compare against the PREVIOUS version (v(n-1))
+        const currentVersion = audit.auditVersion || 2;
+        oldAudit = await AuditModel.findOne({
+          $or: [{ auditId: rootAuditId }, { reAuditOf: rootAuditId }],
+          auditVersion: currentVersion - 1,
+        });
+        // Fallback: if previous version not found, compare against root
+        if (!oldAudit) {
+          oldAudit = await AuditModel.findOne({ auditId: audit.reAuditOf });
+        }
+      }
     } else {
-      // Case 2: The requested ID is the root original audit. Compare against the latest version.
+      // The requested ID is the root original audit. Compare against the latest version.
       oldAudit = audit;
       newAudit = await AuditModel.findOne({
         reAuditOf: audit.auditId,
@@ -274,7 +295,7 @@ router.get('/:id/diff', async (req: Request, res: Response) => {
 
     const diff = generateAuditDiff(oldAudit, newAudit);
 
-    const rootAuditId = newAudit.reAuditOf || oldAudit.auditId;
+    // Fetch the FULL version chain for the timeline
     const allVersionsDocs = await AuditModel.find({
       $or: [{ auditId: rootAuditId }, { reAuditOf: rootAuditId }],
     })
