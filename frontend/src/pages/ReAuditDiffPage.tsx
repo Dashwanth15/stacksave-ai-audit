@@ -180,10 +180,10 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
               <button
                 onClick={handleRunReAudit}
                 disabled={reAuditing}
-                className="px-4 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-sm font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Re-Audit / Refresh stack"
+                className="px-4 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-sm font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                aria-label="Re-Audit Existing Stack"
               >
-                {reAuditing ? 'Recalculating...' : '🔄 Refresh Audit'}
+                {reAuditing ? 'Recalculating...' : '🔄 Re-Audit Existing Stack'}
               </button>
             )}
             <button
@@ -265,7 +265,7 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                       onClick={() => {
                         if (!isActive) {
                           const isDiffRoute = window.location.pathname.endsWith('/diff');
-                          const targetUrl = v.auditVersion === 1 || !v.reAuditOf
+                          const targetUrl = v.auditVersion === 1
                             ? `/audit/${v.auditId}?view=single`
                             : (isDiffRoute ? `/audit/${v.auditId}/diff` : `/audit/${v.auditId}`);
                           navigate(targetUrl, { state: { isOwner } });
@@ -918,12 +918,92 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
           </div>
         )}
 
+        {/* ── Audit Workspace Actions Dual-Flow Control ── */}
+        <m.div
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card-static p-8 border border-white/5 rounded-3xl bg-gradient-to-br from-[#0c0e18]/80 to-[#121020]/90 shadow-[0_20px_60px_rgba(0,0,0,0.4)] relative overflow-hidden"
+        >
+          {/* Subtle decorative glow */}
+          <div className="absolute -right-20 -bottom-20 w-48 h-48 rounded-full bg-indigo-500/10 blur-3xl" />
+          <div className="absolute -left-20 -top-20 w-48 h-48 rounded-full bg-amber-500/5 blur-3xl" />
+
+          <h3 className="text-lg font-bold text-white mb-6 text-center sm:text-left tracking-tight">
+            Audit Workspace Actions
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+            {/* Flow 1: Re-Audit Existing Stack */}
+            {isOwner && (
+              <div className="flex flex-col justify-between p-6 rounded-2xl bg-white/[0.015] border border-white/5 hover:border-indigo-500/20 transition-all group text-left">
+                <div className="space-y-2 mb-6">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400 text-lg">🔄</span>
+                    <h4 className="font-extrabold text-sm text-amber-300 uppercase tracking-widest">
+                      Flow 1: Evolution
+                    </h4>
+                  </div>
+                  <h5 className="text-base font-bold text-white tracking-tight">
+                    Re-Audit Existing Stack
+                  </h5>
+                  <p className="text-xs text-[#94a3b8] leading-relaxed">
+                    Preserves this timeline's root identity and appends a new version (<span className="text-indigo-400 font-semibold">v{(newAudit?.auditVersion ?? 1) + 1}</span>) to the timeline. Recommended if provider pricing rates have updated or you adjusted team configurations.
+                  </p>
+                </div>
+                <button
+                  onClick={handleRunReAudit}
+                  disabled={reAuditing}
+                  className="w-full py-3 px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  aria-label="Re-Audit Existing Stack"
+                >
+                  {reAuditing ? (
+                    <>
+                      <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Recalculating...
+                    </>
+                  ) : (
+                    'Re-Audit Existing Stack →'
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Flow 2: Start New Independent Audit */}
+            <div className={`flex flex-col justify-between p-6 rounded-2xl bg-white/[0.015] border border-white/5 hover:border-indigo-500/20 transition-all group text-left ${!isOwner ? 'md:col-span-2 max-w-md mx-auto w-full' : ''}`}>
+              <div className="space-y-2 mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-indigo-400 text-lg">✨</span>
+                  <h4 className="font-extrabold text-sm text-indigo-400 uppercase tracking-widest">
+                    Flow 2: Standalone
+                  </h4>
+                </div>
+                <h5 className="text-base font-bold text-white tracking-tight">
+                  Start New Independent Audit
+                </h5>
+                <p className="text-xs text-[#94a3b8] leading-relaxed">
+                  Start a completely fresh standalone audit from scratch (<span className="text-indigo-400 font-semibold">v1</span>). Creates a separate stack history and does not affect the timeline or version lineage of this audit.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/audit')}
+                className="w-full py-3 px-4 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-xs font-bold transition-all text-center cursor-pointer"
+                aria-label="Start New Independent Audit"
+              >
+                Start New Independent Audit →
+              </button>
+            </div>
+          </div>
+        </m.div>
+
         <div className="text-center pt-8 border-t border-white/5">
           <button
             onClick={() => navigate(`/audit/${newAudit?.auditId || ''}?view=single`)}
-            className="text-indigo-400 hover:text-indigo-300 text-sm font-semibold"
+            className="text-[#94a3b8] hover:text-white text-sm font-semibold cursor-pointer"
           >
-            Go to Results Dashboard →
+            ← Back to Results Dashboard
           </button>
         </div>
       </div>

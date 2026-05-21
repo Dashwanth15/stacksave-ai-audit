@@ -482,10 +482,10 @@ export default function ResultsPage() {
                 <button
                   onClick={handleRunReAudit}
                   disabled={reAuditing}
-                  className="px-4 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-sm font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Re-Audit / Refresh stack"
+                  className="px-4 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-sm font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  aria-label="Re-Audit Existing Stack"
                 >
-                  {reAuditing ? 'Recalculating...' : '🔄 Refresh Audit'}
+                  {reAuditing ? 'Recalculating...' : '🔄 Re-Audit Existing Stack'}
                 </button>
                 <button
                   onClick={() => setShowEmailModal(true)}
@@ -546,8 +546,12 @@ export default function ResultsPage() {
               </div>
             </div>
             <button
-              onClick={() => navigate(`/audit/${audit.reAuditOf || audit.auditId}/diff`)}
-              className="px-4 py-1.5 rounded-lg bg-indigo-500 text-white font-bold hover:bg-indigo-400 transition-colors shrink-0 text-xs"
+              onClick={() => {
+                const latestVersionNode = audit.allVersions?.find(v => v.isLatestVersion) || audit.allVersions?.[audit.allVersions.length - 1];
+                const latestId = latestVersionNode ? latestVersionNode.auditId : (audit.reAuditOf || audit.auditId);
+                navigate(`/audit/${latestId}/diff`);
+              }}
+              className="px-4 py-1.5 rounded-lg bg-indigo-500 text-white font-bold hover:bg-indigo-400 transition-colors shrink-0 text-xs cursor-pointer"
             >
               View Latest Diff
             </button>
@@ -607,7 +611,7 @@ export default function ResultsPage() {
                       key={v.auditId}
                       onClick={() => {
                         if (!isActive) {
-                          const targetUrl = v.auditVersion === 1 || !v.reAuditOf
+                          const targetUrl = v.auditVersion === 1
                             ? `/audit/${v.auditId}?view=single`
                             : `/audit/${v.auditId}`;
                           navigate(targetUrl, { state: { isOwner } });
@@ -678,31 +682,31 @@ export default function ResultsPage() {
           <m.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass-card-static p-6 border border-indigo-500/15 bg-indigo-500/[0.02] rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4"
+            className="glass-card-static p-6 border border-amber-500/15 bg-amber-500/[0.02] rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4"
           >
             <div className="space-y-1 text-center sm:text-left">
               <h3 className="text-sm font-bold text-white tracking-tight flex items-center justify-center sm:justify-start gap-2">
-                <span>🔄</span> Stack Refresh Control
+                <span>🔄</span> Evolving Timeline Re-Audit
               </h3>
               <p className="text-xs text-[#94a3b8]">
-                Providers update their catalog pricing frequently. Refresh this audit to run calculations against the latest rates.
+                Providers update their catalog pricing frequently. Append a new version to this timeline to run calculations against the latest rates.
               </p>
             </div>
             <button
               onClick={handleRunReAudit}
               disabled={reAuditing}
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-[0_4px_20px_rgba(99,102,241,0.25)] flex items-center gap-2 shrink-0 disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition-all shadow-[0_4px_20px_rgba(245,158,11,0.25)] flex items-center gap-2 shrink-0 disabled:opacity-50 cursor-pointer"
             >
               {reAuditing ? (
                 <>
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-4 w-4 stroke-slate-950" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
                   Recalculating...
                 </>
               ) : (
-                'Re-Audit Stack Now →'
+                'Re-Audit Existing Stack →'
               )}
             </button>
           </m.div>
@@ -1025,25 +1029,86 @@ export default function ResultsPage() {
           </a>
         </m.div>
 
-        <div className="text-center pb-4 flex flex-col sm:flex-row items-center justify-center gap-6">
-          {isOwner && (
-            <button
-              onClick={handleRunReAudit}
-              disabled={reAuditing}
-              className="text-amber-400 hover:text-amber-300 text-sm font-semibold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              aria-label="Re-Audit / Refresh this stack"
-            >
-              🔄 Refresh & Re-Audit Stack
-            </button>
-          )}
-          <button
-            onClick={() => navigate('/audit')}
-            className="text-[#94a3b8] hover:text-white text-sm transition-colors cursor-pointer"
-            aria-label="Create a brand new separate audit"
-          >
-            ← Start a new separate audit
-          </button>
-        </div>
+        {/* ── Audit Workspace Actions Dual-Flow Control ── */}
+        <m.div
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="glass-card-static p-8 border border-white/5 rounded-3xl bg-gradient-to-br from-[#0c0e18]/80 to-[#121020]/90 shadow-[0_20px_60px_rgba(0,0,0,0.4)] relative overflow-hidden"
+        >
+          {/* Subtle decorative glow */}
+          <div className="absolute -right-20 -bottom-20 w-48 h-48 rounded-full bg-indigo-500/10 blur-3xl" />
+          <div className="absolute -left-20 -top-20 w-48 h-48 rounded-full bg-amber-500/5 blur-3xl" />
+
+          <h3 className="text-lg font-bold text-white mb-6 text-center sm:text-left tracking-tight">
+            Audit Workspace Actions
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+            {/* Flow 1: Re-Audit Existing Stack */}
+            {isOwner && (
+              <div className="flex flex-col justify-between p-6 rounded-2xl bg-white/[0.015] border border-white/5 hover:border-indigo-500/20 transition-all group text-left">
+                <div className="space-y-2 mb-6">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400 text-lg">🔄</span>
+                    <h4 className="font-extrabold text-sm text-amber-300 uppercase tracking-widest">
+                      Flow 1: Evolution
+                    </h4>
+                  </div>
+                  <h5 className="text-base font-bold text-white tracking-tight">
+                    Re-Audit Existing Stack
+                  </h5>
+                  <p className="text-xs text-[#94a3b8] leading-relaxed">
+                    Preserves this timeline's root identity and appends a new version (<span className="text-indigo-400 font-semibold">v{(audit.auditVersion ?? 1) + 1}</span>) to the timeline. Recommended if provider pricing rates have updated or you adjusted team configurations.
+                  </p>
+                </div>
+                <button
+                  onClick={handleRunReAudit}
+                  disabled={reAuditing}
+                  className="w-full py-3 px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  aria-label="Re-Audit Existing Stack"
+                >
+                  {reAuditing ? (
+                    <>
+                      <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Recalculating...
+                    </>
+                  ) : (
+                    'Re-Audit Existing Stack →'
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Flow 2: Start New Independent Audit */}
+            <div className={`flex flex-col justify-between p-6 rounded-2xl bg-white/[0.015] border border-white/5 hover:border-indigo-500/20 transition-all group text-left ${!isOwner ? 'md:col-span-2 max-w-md mx-auto w-full' : ''}`}>
+              <div className="space-y-2 mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-indigo-400 text-lg">✨</span>
+                  <h4 className="font-extrabold text-sm text-indigo-400 uppercase tracking-widest">
+                    Flow 2: Standalone
+                  </h4>
+                </div>
+                <h5 className="text-base font-bold text-white tracking-tight">
+                  Start New Independent Audit
+                </h5>
+                <p className="text-xs text-[#94a3b8] leading-relaxed">
+                  Start a completely fresh standalone audit from scratch (<span className="text-indigo-400 font-semibold">v1</span>). Creates a separate stack history and does not affect the timeline or version lineage of this audit.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/audit')}
+                className="w-full py-3 px-4 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-xs font-bold transition-all text-center cursor-pointer"
+                aria-label="Start New Independent Audit"
+              >
+                Start New Independent Audit →
+              </button>
+            </div>
+          </div>
+        </m.div>
 
         {/* Footer */}
         <div className="text-center py-6 border-t border-white/5">

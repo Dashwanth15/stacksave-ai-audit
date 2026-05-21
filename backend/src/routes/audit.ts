@@ -280,14 +280,14 @@ router.get('/:id/diff', async (req: Request, res: Response) => {
     } else {
       // The requested ID is the root original audit.
       oldAudit = audit;
-      if (compareWith === 'latest') {
-        newAudit = await AuditModel.findOne({
-          reAuditOf: audit.auditId,
-          isLatestVersion: true,
-        });
-        if (!newAudit) {
-          newAudit = audit;
-        }
+      
+      // Automatically find the latest version in the chain (v_latest) to compare with
+      const latestVersion = await AuditModel.findOne({
+        reAuditOf: audit.auditId,
+        isLatestVersion: true,
+      });
+      if (latestVersion) {
+        newAudit = latestVersion;
       } else {
         newAudit = audit;
       }
