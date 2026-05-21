@@ -278,12 +278,19 @@ router.get('/:id/diff', async (req: Request, res: Response) => {
         }
       }
     } else {
-      // The requested ID is the root original audit. Compare against the latest version.
+      // The requested ID is the root original audit.
       oldAudit = audit;
-      newAudit = await AuditModel.findOne({
-        reAuditOf: audit.auditId,
-        isLatestVersion: true,
-      });
+      if (compareWith === 'latest') {
+        newAudit = await AuditModel.findOne({
+          reAuditOf: audit.auditId,
+          isLatestVersion: true,
+        });
+        if (!newAudit) {
+          newAudit = audit;
+        }
+      } else {
+        newAudit = audit;
+      }
     }
 
     if (!oldAudit || !newAudit) {

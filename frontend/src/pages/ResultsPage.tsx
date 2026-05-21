@@ -426,8 +426,8 @@ export default function ResultsPage() {
     );
   }
 
-  // If this is a versioned re-audit, has a diff comparison history, or re-audit metadata exists, mount ReAuditDiffPage directly
-  if (!viewSingle && ((audit.auditVersion ?? 1) > 1 || audit.reAuditOf || (audit.allVersions && audit.allVersions.length > 1))) {
+  // If this is a versioned re-audit (v2+), mount ReAuditDiffPage directly as the primary experience.
+  if (!viewSingle && ((audit.auditVersion ?? 1) > 1 || audit.reAuditOf)) {
     return <ReAuditDiffPage auditId={audit.auditId} isOwner={isOwner} />;
   }
 
@@ -587,14 +587,30 @@ export default function ResultsPage() {
               <div className="absolute left-4 right-4 h-0.5 bg-gradient-to-r from-slate-800 via-indigo-950 to-slate-800 top-1/2 -translate-y-1/2" />
               
               <div className="relative z-10 w-full flex items-center justify-start gap-8 sm:gap-12 overflow-x-auto py-2 px-1 scrollbar-thin">
-                {audit.allVersions.map((v, idx) => {
+                 {audit.allVersions.map((v, idx) => {
                   const isActive = v.auditId === audit.auditId;
+
+                  let dotColorClass = 'bg-slate-500 group-hover:bg-slate-300';
+                  let ringColorClass = 'bg-[#0f111a] border-slate-700 group-hover:border-slate-500';
+                  let textColorClass = 'text-[#6b7b93] group-hover:text-slate-200';
+                  let labelSuffix = '';
+
+                  if (isActive) {
+                    dotColorClass = 'bg-white';
+                    ringColorClass = 'bg-indigo-600 border-[#818cf8] shadow-[0_0_12px_rgba(129,140,248,0.5)]';
+                    textColorClass = 'text-indigo-300';
+                    labelSuffix = ' (Active)';
+                  }
+
                   return (
                     <button
                       key={v.auditId}
                       onClick={() => {
                         if (!isActive) {
-                          navigate(`/audit/${v.auditId}?view=single`, { state: { isOwner } });
+                          const targetUrl = v.auditVersion === 1 || !v.reAuditOf
+                            ? `/audit/${v.auditId}?view=single`
+                            : `/audit/${v.auditId}`;
+                          navigate(targetUrl, { state: { isOwner } });
                         }
                       }}
                       className="group flex flex-col items-center gap-2.5 shrink-0 transition-all focus:outline-none cursor-pointer"
@@ -605,18 +621,14 @@ export default function ResultsPage() {
                           <span className="absolute animate-ping inline-flex h-7 w-7 rounded-full bg-indigo-400 opacity-20" />
                         )}
                         <div
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                            isActive
-                              ? 'bg-indigo-600 border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.5)]'
-                              : 'bg-[#0f111a] border-slate-700 group-hover:border-slate-500'
-                          }`}
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${ringColorClass}`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white' : 'bg-slate-500 group-hover:bg-slate-300'}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${dotColorClass}`} />
                         </div>
                       </div>
                       <div className="text-center space-y-0.5">
-                        <div className={`text-xs font-bold transition-all ${isActive ? 'text-indigo-300' : 'text-[#6b7b93] group-hover:text-slate-200'}`}>
-                          Version {v.auditVersion || (idx + 1)} {isActive ? '(Active)' : ''}
+                        <div className={`text-xs font-bold transition-all ${textColorClass}`}>
+                          Version {v.auditVersion || (idx + 1)}{labelSuffix}
                         </div>
                         <div className="text-[10px] text-[#475569] group-hover:text-[#64748b] transition-all">
                           {formatRelativeTime(v.createdAt)}

@@ -112,8 +112,9 @@ export async function checkHealth(): Promise<{ status: string; db: string }> {
   return response.data;
 }
 
-export async function fetchAuditDiff(auditId: string): Promise<ReAuditResponse> {
-  const response = await api.get<{ success: boolean; data: ReAuditResponse; error?: string }>(`/audits/${auditId}/diff`);
+export async function fetchAuditDiff(auditId: string, compareWith?: 'previous' | 'root'): Promise<ReAuditResponse> {
+  const url = compareWith ? `/audits/${auditId}/diff?compareWith=${compareWith}` : `/audits/${auditId}/diff`;
+  const response = await api.get<{ success: boolean; data: ReAuditResponse; error?: string }>(url);
   if (!response || !response.data) {
     throw new Error('No response received from the server.');
   }

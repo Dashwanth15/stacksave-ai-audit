@@ -54,16 +54,20 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
     }
   }
 
+  const [compareWith, setCompareWith] = useState<'previous' | 'root'>('previous');
+
   if (id !== prevId) {
     setPrevId(id);
     setData(null);
     setLoading(true);
     setError(null);
+    setCompareWith('previous');
   }
 
   useEffect(() => {
     if (id) {
-      fetchAuditDiff(id)
+      setLoading(true);
+      fetchAuditDiff(id, compareWith)
         .then(setData)
         .catch((err) => {
           console.error('Error fetching audit diff:', err);
@@ -71,7 +75,7 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
         })
         .finally(() => setLoading(false));
     }
-  }, [id]);
+  }, [id, compareWith]);
 
   if (loading) {
     return (
@@ -224,13 +228,47 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
               
               <div className="relative z-10 w-full flex items-center justify-start gap-8 sm:gap-12 overflow-x-auto py-2 px-1 scrollbar-thin">
                 {allVersions.map((v, idx) => {
-                  const isActive = v.auditId === newAudit?.auditId;
+                  const isNew = v.auditId === newAudit?.auditId;
+                  const isOld = v.auditId === oldAudit?.auditId;
+                  const isSame = oldAudit?.auditId === newAudit?.auditId;
+                  const isActive = isNew;
+
+                  let dotColorClass = 'bg-slate-500 group-hover:bg-slate-300';
+                  let ringColorClass = 'bg-[#0f111a] border-slate-700 group-hover:border-slate-500';
+                  let textColorClass = 'text-[#6b7b93] group-hover:text-slate-200';
+                  let labelSuffix = '';
+
+                  if (isSame) {
+                    if (isNew) {
+                      dotColorClass = 'bg-white';
+                      ringColorClass = 'bg-indigo-600 border-[#818cf8] shadow-[0_0_12px_rgba(129,140,248,0.5)]';
+                      textColorClass = 'text-indigo-300';
+                      labelSuffix = ' (Baseline)';
+                    }
+                  } else {
+                    if (isNew) {
+                      dotColorClass = 'bg-white';
+                      ringColorClass = 'bg-emerald-600 border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.5)]';
+                      textColorClass = 'text-emerald-300';
+                      labelSuffix = ' (After)';
+                    } else if (isOld) {
+                      dotColorClass = 'bg-amber-400';
+                      ringColorClass = 'bg-[#0f111a] border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)]';
+                      textColorClass = 'text-amber-300';
+                      labelSuffix = ' (Before)';
+                    }
+                  }
+
                   return (
                     <button
                       key={v.auditId}
                       onClick={() => {
                         if (!isActive) {
-                          navigate(`/audit/${v.auditId}`, { state: { isOwner } });
+                          const isDiffRoute = window.location.pathname.endsWith('/diff');
+                          const targetUrl = v.auditVersion === 1 || !v.reAuditOf
+                            ? `/audit/${v.auditId}?view=single`
+                            : (isDiffRoute ? `/audit/${v.auditId}/diff` : `/audit/${v.auditId}`);
+                          navigate(targetUrl, { state: { isOwner } });
                         }
                       }}
                       className="group flex flex-col items-center gap-2.5 shrink-0 transition-all focus:outline-none cursor-pointer"
@@ -238,21 +276,17 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                       <div className="relative flex items-center justify-center">
                         {/* Glowing ring for active node */}
                         {isActive && (
-                          <span className="absolute animate-ping inline-flex h-7 w-7 rounded-full bg-indigo-400 opacity-20" />
+                          <span className={`absolute animate-ping inline-flex h-7 w-7 rounded-full opacity-20 ${isSame ? 'bg-indigo-400' : 'bg-emerald-400'}`} />
                         )}
                         <div
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                            isActive
-                              ? 'bg-indigo-600 border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.5)]'
-                              : 'bg-[#0f111a] border-slate-700 group-hover:border-slate-500'
-                          }`}
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${ringColorClass}`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white' : 'bg-slate-500 group-hover:bg-slate-300'}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${dotColorClass}`} />
                         </div>
                       </div>
                       <div className="text-center space-y-0.5">
-                        <div className={`text-xs font-bold transition-all ${isActive ? 'text-indigo-300' : 'text-[#6b7b93] group-hover:text-slate-200'}`}>
-                          Version {v.auditVersion || (idx + 1)} {isActive ? '(Active)' : ''}
+                        <div className={`text-xs font-bold transition-all ${textColorClass}`}>
+                          Version {v.auditVersion || (idx + 1)}{labelSuffix}
                         </div>
                         <div className="text-[10px] text-[#475569] group-hover:text-[#64748b] transition-all">
                           {formatRelativeTime(v.createdAt)}
@@ -283,9 +317,43 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
               <h2 className="text-2xl font-black text-white tracking-tight pt-1">
                 Your AI stack changed over time
               </h2>
-              <p className="text-xs text-[#94a3b8]">
-                Catalog updates and usage changes generated optimization adjustments between v{oldAudit?.auditVersion || 1} ({oldAudit?.createdAt ? new Date(oldAudit.createdAt).toLocaleDateString() : ''}) and v{newAudit?.auditVersion || 2} ({newAudit?.createdAt ? new Date(newAudit.createdAt).toLocaleDateString() : ''}).
-              </p>
+              {oldAudit?.auditVersion === newAudit?.auditVersion ? (
+                <p className="text-xs text-[#94a3b8]">
+                  Viewing the initial baseline snapshot of your stack. Click subsequent versions in the timeline above to see what changes occurred over time.
+                </p>
+              ) : (
+                <p className="text-xs text-[#94a3b8]">
+                  Catalog updates and usage changes generated optimization adjustments between{' '}
+                  <span className="text-white font-semibold">v{oldAudit?.auditVersion || 1}</span> ({oldAudit?.createdAt ? new Date(oldAudit.createdAt).toLocaleDateString() : ''}) and{' '}
+                  <span className="text-white font-semibold">v{newAudit?.auditVersion || 2}</span> ({newAudit?.createdAt ? new Date(newAudit.createdAt).toLocaleDateString() : ''}).
+                </p>
+              )}
+              {newAudit && newAudit.auditVersion && newAudit.auditVersion > 2 && (
+                <div className="flex justify-center sm:justify-start pt-3">
+                  <div className="inline-flex p-0.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md">
+                    <button
+                      onClick={() => setCompareWith('previous')}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+                        compareWith === 'previous'
+                          ? 'bg-indigo-600 text-white shadow-md'
+                          : 'text-[#94a3b8] hover:text-white'
+                      }`}
+                    >
+                      Compare with Previous (v{newAudit.auditVersion - 1})
+                    </button>
+                    <button
+                      onClick={() => setCompareWith('root')}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+                        compareWith === 'root'
+                          ? 'bg-indigo-600 text-white shadow-md'
+                          : 'text-[#94a3b8] hover:text-white'
+                      }`}
+                    >
+                      Compare with Original Baseline (v1)
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Core Comparative Metrics Grid */}
@@ -453,19 +521,75 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
           </div>
         </m.div>
 
-        {/* Empty State: No pricing or recommendation updates */}
-        {!hasChanges && (
+        {oldAudit?.auditVersion === newAudit?.auditVersion ? (
           <m.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="glass-card-static p-8 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-card-static p-8 text-center border border-white/5 space-y-6"
           >
-            <div className="text-3xl mb-3">✅</div>
-            <h3 className="text-lg font-bold text-white mb-2">No pricing or savings changes</h3>
-            <p className="text-sm text-[#94a3b8] max-w-md mx-auto">
-              Your audit is fully up-to-date. No tool pricing changes or new recommendations were detected in this re-audit.
-            </p>
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 flex items-center justify-center text-2xl">
+              🎯
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-white">Original Audit Baseline</h3>
+              <p className="text-sm text-[#94a3b8] max-w-md mx-auto leading-relaxed">
+                This is the original version of your AI spend audit. You have a total monthly spend of{' '}
+                <span className="text-white font-semibold">{formatCurrencyFull(newAudit.totalMonthlySpend)}</span>, with{' '}
+                <span className="text-emerald-400 font-semibold">{formatCurrencyFull(newAudit.estimatedMonthlySavings)}/mo</span> in potential savings.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-xl mx-auto pt-4 border-t border-white/5">
+              <div className="p-3 bg-white/[0.01] rounded-xl border border-white/5">
+                <span className="text-[10px] text-[#6b7b93] font-semibold uppercase block">Monthly Spend</span>
+                <span className="text-sm font-bold text-white block mt-0.5">{formatCurrencyFull(newAudit.totalMonthlySpend)}</span>
+              </div>
+              <div className="p-3 bg-white/[0.01] rounded-xl border border-white/5">
+                <span className="text-[10px] text-[#6b7b93] font-semibold uppercase block">Est. Savings</span>
+                <span className="text-sm font-bold text-emerald-400 block mt-0.5">{formatCurrencyFull(newAudit.estimatedMonthlySavings)}</span>
+              </div>
+              <div className="p-3 bg-white/[0.01] rounded-xl border border-white/5">
+                <span className="text-[10px] text-[#6b7b93] font-semibold uppercase block">Saving Level</span>
+                <span className="text-sm font-bold text-indigo-400 block mt-0.5">{newAudit.savingsPercentage}%</span>
+              </div>
+              <div className="p-3 bg-white/[0.01] rounded-xl border border-white/5">
+                <span className="text-[10px] text-[#6b7b93] font-semibold uppercase block">Total Tools</span>
+                <span className="text-sm font-bold text-purple-400 block mt-0.5">{(newAudit.tools || []).length}</span>
+              </div>
+            </div>
+
+            {allVersions && allVersions.length > 1 ? (
+              <p className="text-xs text-[#94a3b8] pt-2">
+                Select version 2 or newer in the timeline above to view savings changes and re-audit diffs.
+              </p>
+            ) : (
+              isOwner && (
+                <div className="pt-2">
+                  <button
+                    onClick={handleRunReAudit}
+                    disabled={reAuditing}
+                    className="px-6 py-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-sm font-semibold transition-all flex items-center gap-2 mx-auto disabled:opacity-50 cursor-pointer"
+                  >
+                    {reAuditing ? 'Recalculating...' : '🔄 Run Pricing Re-Audit Now'}
+                  </button>
+                </div>
+              )
+            )}
           </m.div>
+        ) : (
+          !hasChanges && (
+            <m.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="glass-card-static p-8 text-center"
+            >
+              <div className="text-3xl mb-3">✅</div>
+              <h3 className="text-lg font-bold text-white mb-2">No pricing or savings changes</h3>
+              <p className="text-sm text-[#94a3b8] max-w-md mx-auto">
+                Your audit is fully up-to-date. No tool pricing changes or new recommendations were detected in this re-audit.
+              </p>
+            </m.div>
+          )
         )}
 
         {/* ── 2. Pricing Change Visualization ─────────────────────── */}
