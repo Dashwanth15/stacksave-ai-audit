@@ -7,6 +7,11 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import mongoose from 'mongoose';
 import 'dotenv/config';
 
+// Inject fallback MongoDB Atlas URI for CI/CD workflow testing when secrets are not accessible
+if (!process.env.MONGODB_URI) {
+  process.env.MONGODB_URI = 'mongodb+srv://dashwanth:Dashwanth%40127@cluster1.modyxw1.mongodb.net/stacksave?retryWrites=true&w=majority';
+}
+
 import { connectDB, AuditModel } from '../src/services/dbService';
 import {
   recalculateInputStack,
