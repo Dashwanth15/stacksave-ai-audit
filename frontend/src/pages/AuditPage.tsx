@@ -61,6 +61,7 @@ export default function AuditPage() {
   const [isPrefilling, setIsPrefilling] = useState(false);
 
   const [form, setForm, clearForm] = useLocalStorage<FormState>('stacksave-audit-form', DEFAULT_FORM);
+  const prefillDone = useRef<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedFeatures, setExpandedFeatures] = useState<Set<string>>(new Set());
@@ -70,7 +71,7 @@ export default function AuditPage() {
 
   // Prefill form from parent version if reAuditOf parameter is present
   useEffect(() => {
-    if (reAuditOf) {
+    if (reAuditOf && prefillDone.current !== reAuditOf) {
       let isMounted = true;
 
       const fetchAndPrefill = async () => {
@@ -81,14 +82,15 @@ export default function AuditPage() {
           const audit = await fetchAudit(reAuditOf);
 
           if (isMounted) {
-            setForm({
+            setForm((prev) => ({
               tools: audit.tools,
               teamSize: audit.teamSize,
               companyName: audit.companyName || '',
               useCase: audit.useCase || 'mixed',
-              billingPeriod: form.billingPeriod,
-            });
+              billingPeriod: prev.billingPeriod,
+            }));
             setParentVersion(audit.auditVersion || 1);
+            prefillDone.current = reAuditOf;
           }
         } catch (err) {
           console.error('Failed to prefill audit form:', err);
@@ -108,7 +110,7 @@ export default function AuditPage() {
         isMounted = false;
       };
     }
-  }, [reAuditOf, form.billingPeriod, setForm]);
+  }, [reAuditOf, setForm]);
 
   // Which tools are toggled on
   const selectedToolIds = form.tools.map((t) => t.toolId);

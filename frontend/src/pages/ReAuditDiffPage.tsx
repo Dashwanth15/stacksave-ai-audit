@@ -4,7 +4,7 @@
 // UI experience to visual comparison of original vs updated audits.
 // Integrates with backend `/api/audits/:id/diff` endpoint.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { fetchAuditDiff, triggerReAudit } from '../services/api';
@@ -31,7 +31,7 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showUnchanged, setShowUnchanged] = useState(false);
-  const [prevId, setPrevId] = useState<string | undefined>(id);
+  const lastLoadedIdRef = useRef<string | null>(null);
 
   const isOwner = !!(
     _isOwner ||
@@ -56,32 +56,50 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
 
   const [compareWith, setCompareWith] = useState<'previous' | 'root'>('previous');
 
-  if (id !== prevId) {
-    setPrevId(id);
-    setData(null);
-    setLoading(true);
-    setError(null);
-    setCompareWith('previous');
-  }
-
   useEffect(() => {
-    if (id) {
-      const loadDiff = async () => {
-        setLoading(true);
-        try {
-          const result = await fetchAuditDiff(id, compareWith);
+    if (!id) return;
+
+    let isMounted = true;
+
+    // Reset data and compareWith if target audit changed and we are in root comparison mode
+    if (lastLoadedIdRef.current && lastLoadedIdRef.current !== id && compareWith !== 'previous') {
+      setCompareWith('previous');
+      setData(null);
+      setLoading(true);
+      return;
+    }
+
+    const loadDiff = async () => {
+      if (isMounted) setLoading(true);
+      try {
+        const result = await fetchAuditDiff(id, compareWith);
+        if (isMounted) {
           setData(result);
           setError(null);
-        } catch (err) {
-          console.error('Error fetching audit diff:', err);
+          lastLoadedIdRef.current = id;
+        }
+      } catch (err) {
+        console.error('Error fetching audit diff:', err);
+        if (isMounted) {
           setError(err instanceof Error ? err.message : 'Failed to load re-audit details.');
-        } finally {
+        }
+      } finally {
+        if (isMounted) {
           setLoading(false);
         }
-      };
+      }
+    };
 
-      loadDiff();
+    if (lastLoadedIdRef.current !== id) {
+      setData(null);
+      setError(null);
     }
+
+    loadDiff();
+
+    return () => {
+      isMounted = false;
+    };
   }, [id, compareWith]);
 
   if (loading) {
