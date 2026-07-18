@@ -1,42 +1,227 @@
-# StackSave Round 2 — Engineering Reflection
+# Round 2 Reflection — StackSave Living Audit System
 
-## What Went Well
-- **Highly Modular Domain Services**: Decoupling the change detection (`pricingChangeDetectionService.ts`) and recalculation/version execution (`reAuditService.ts`) layers allowed us to write clear, isolated business logic. This separation made both components easier to develop and test.
-- **Robust Integration Testing**: Setting up the comprehensive test suite in `tests/re-audit.test.ts` early in the process paid huge dividends. It immediately caught serialization edge cases (like Mongoose getters on `.lean()` results vs full documents) and let us verify the version chains (v1 -> v2 -> v3) reliably.
-- **Dynamic API Auto-Detection**: Building environment detection into the Axios fetcher meant zero manual configuration was required to switch the base URL dynamically between localhost (for local tests) and Render's backend endpoints.
+## Overview
 
----
+Round 2 fundamentally transformed StackSave from a static AI cost-audit generator into a persistent “Living Audit” platform capable of evolving over time. The primary challenge was no longer generating one-time optimization reports, but designing a system that could continuously track, compare, and explain changes in AI-stack spending across multiple audit versions.
 
-## What Was Difficult
-- **Mongoose vs. Lean Object Differences**: One of the main challenges was dealing with how Mongoose hooks up virtual properties and getters. When querying with `.lean()`, the virtual getter for `publicUrl` would not fire. We solved this by ensuring that endpoints retrieving comparison documents query for full, active Mongoose documents, while our background scanning service manually creates URLs based on raw document attributes, allowing it to continue using fast, lightweight `.lean()` queries.
-- **SPA Deep Linking in Static Hosting**: Deploying a single-page app (Vite + React Router) to static hosting on Render causes a `404 Not Found` error when refreshing nested URLs (like `/audit/:id/diff` or `/results/:id`). Standardizing rewrite policies in `render.yaml` and `public/_redirects` was critical to ensure all traffic resolves gracefully back to `index.html`.
+This required architectural, backend, frontend, database, deployment, and UX redesign decisions under a strict 36-hour implementation window.
 
 ---
 
-## Key Decisions
-- **Manual vs. Scheduled Pricing Scans**: We opted for a manual/triggered pricing scan model rather than a recurring system cron. This was a pragmatic choice given the constraints of Render's free tier (which suspends idle instances) and successfully avoids unnecessary background CPU/DB utilization when no catalog changes have occurred.
-- **Duplicate Notification Protections**: To prevent users from receiving multiple duplicate alerts for a single vendor price shift, we introduced protection fields (`lastNotificationSentAt` and `notificationVersion`). Users are only notified once per version change.
+# Key Architectural Shift
+
+The largest conceptual change during Round 2 was moving from:
+
+```text
+Single static audit reports
+```
+
+to:
+
+```text
+Persistent evolving audit timelines
+```
+
+Instead of replacing audits when re-running calculations, the platform now preserves immutable historical versions and appends new re-audits into a persistent lineage system.
+
+This introduced:
+
+* audit version chains
+* comparison-based workflows
+* timeline navigation
+* pricing refresh systems
+* stack evolution tracking
+* baseline vs latest comparisons
 
 ---
 
-## Architecture Decisions
-- **Embedded Snapshots in Audit Records**: Rather than creating a separate `PricingSnapshots` collection, we chose to embed the snapshot directly inside the `Audit` document at creation time. This guarantees that historical snapshots are immutable, simplifies our read queries (avoiding database joins), and keeps document payloads well under MongoDB's 16MB document size limit.
-- **Version Chain Modeling**: Modeling re-audits as new versioned audit documents referencing the root original ID (`reAuditOf`) instead of mutating existing records preserves the historical integrity of client stacks, making it simple to calculate exactly what changed in recommendation deltas over time.
+# Major Technical Decisions
+
+## 1. Immutable Versioning Instead of Overwrites
+
+One of the earliest decisions was to preserve all previous audit states rather than updating documents in-place.
+
+This enabled:
+
+* historical comparisons
+* audit evolution tracking
+* rollback-safe workflows
+* transparent recommendation changes
+
+The following metadata fields became central to the architecture:
+
+* `version`
+* `reAuditOf`
+* `isLatestVersion`
+
+This transformed audits into persistent historical timelines.
 
 ---
 
-## What I'd Do Differently
-- **Seed Data Helper scripts**: Having a predefined utility script to mock vendor catalog adjustments (e.g., increasing Cursor Pro pricing by $5/mo and updating database hashes) would have accelerated integration testing, reducing reliance on manual MongoDB Atlas edits.
-- **Advanced State Adjustments on Params Shift**: While using `useEffect` for data-fetching is simple, React can throw lint warnings for setting state synchronously in an effect when route parameters change. Adjusting state in the render phase is a much cleaner approach.
+## 2. Manual Pricing Refresh Strategy
+
+Initially, automated cron-based pricing sweeps were considered. However, due to infrastructure complexity, debugging overhead, and the limited implementation timeline, the system was redesigned around manual and trigger-based refresh workflows.
+
+This decision improved:
+
+* debugging reliability
+* deployment simplicity
+* deterministic testing
+* infrastructure stability
+
+while still preserving the “living audit” concept.
 
 ---
 
-## Lessons Learned
-- **Plan for Deployment Constraints Early**: Issues like environment variable propagation, database connection string formats, and SPA routing rewrites are common deployment friction points. Testing on Render previews early in the cycle prevents late-stage pipeline bottlenecks.
-- **Hardened Error Handling on Database Cold-Starts**: Render's free tier can cause database request timeouts if a database connection is requested before Atlas wakes up. Adding exponential retry logic to the initial database connection wrapper provides a seamless recovery mechanism.
+## 3. Building the Re-Audit Engine
+
+A dedicated orchestration layer (`reAuditService.ts`) was implemented to manage:
+
+* catalog price recalculation
+* recommendation regeneration
+* diff comparison generation
+* savings delta tracking
+* audit lineage persistence
+
+This became the backbone of the evolving audit system.
+
+The engine supports:
+
+* immutable history preservation
+* persistent version chains
+* pricing refreshes
+* recommendation evolution
+* timeline-aware comparisons
 
 ---
 
-## Technical Debt & Future Work
-- **Cron/Scheduler Integration**: Once the product scales and moves off a free hosting plan, integrating a real scheduler (like BullMQ or a dedicated chron service) to query `/api/audits/detect-pricing-changes` once a day will make the pricing scans fully automated.
-- **Granular Pricing Deltas**: Currently, price alerts notify users based on catalog changes across the whole system. A more advanced scanner could cross-reference the exact tools in a user's `inputStack` first, so we only alert them if a tool they *actually use* changes price.
+# Frontend Evolution
+
+## Comparison-Centric UX
+
+A major frontend challenge was ensuring the user could visually understand:
+
+* what changed
+* why it changed
+* how savings evolved over time
+
+The interface evolved from a simple dashboard into a comparison-first SaaS experience.
+
+New UI systems included:
+
+* persistent audit timelines
+* savings delta heroes
+* recommendation comparison cards
+* baseline vs latest comparison modes
+* version-aware navigation
+
+---
+
+## Timeline-Based Navigation
+
+The timeline system became one of the most important UX features.
+
+It allows users to:
+
+* navigate between versions
+* compare audits over time
+* distinguish evolving audits from standalone audits
+* preserve audit lineage visually
+
+This significantly improved the “living system” feel of the platform.
+
+---
+
+# Challenges Faced
+
+## 1. Deployment & Render Issues
+
+Several production deployment problems emerged during implementation:
+
+* SPA refresh 404 errors
+* frontend route rewrites
+* environment-variable mismatches
+* localhost leakage into production URLs
+* malformed shared audit URLs
+* Render deep-link failures
+
+These issues required:
+
+* redirect rewrites
+* `_redirects` configuration
+* environment-safe URL generation
+* frontend routing stabilization
+
+---
+
+## 2. UI/UX Complexity
+
+As the timeline system evolved, the interface became significantly more complex than the original Round 1 dashboard.
+
+Challenges included:
+
+* responsive action bars
+* comparison layouts
+* timeline readability
+* evolving audit workflows
+* preserving clean navigation
+* distinguishing standalone vs evolving audits
+
+Several redesign iterations were required before the workflow began feeling intuitive and production-ready.
+
+---
+
+## 3. Version Lineage Persistence
+
+One major issue encountered was accidental loss of historical lineage when re-auditing stacks.
+
+This led to the introduction of:
+
+* dedicated “Re-Audit Existing Stack” flows
+* “Start New Independent Audit” separation
+* persistent version lineage safeguards
+
+This distinction became critical for maintaining historical integrity.
+
+---
+
+# What Was Learned
+
+Round 2 reinforced that building a “living system” is fundamentally different from generating static outputs.
+
+Key learnings included:
+
+* the importance of immutable history
+* designing comparison-first experiences
+* balancing UX clarity with system complexity
+* deployment stability considerations
+* production-safe routing and environment handling
+* evolving-data visualization techniques
+
+The project also highlighted how quickly frontend UX complexity grows once historical state and comparison logic are introduced.
+
+---
+
+# Final Outcome
+
+By the end of Round 2, StackSave evolved into:
+
+* a persistent AI-stack evolution platform
+* a timeline-driven audit system
+* a comparison-aware optimization engine
+* a production-deployed SaaS-style experience
+
+The system now supports:
+
+* evolving audit histories
+* persistent version chains
+* pricing refresh workflows
+* stack comparison intelligence
+* baseline vs latest audit analysis
+* responsive timeline dashboards
+* Render deployment
+* MongoDB persistence
+* PDF exports
+* public sharing workflows
+
+Most importantly, the platform no longer behaves like a one-time static calculator. It now functions as a continuously evolving AI cost optimization workspace.

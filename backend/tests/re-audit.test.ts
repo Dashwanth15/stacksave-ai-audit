@@ -9,7 +9,7 @@ import 'dotenv/config';
 
 // Inject fallback MongoDB Atlas URI for CI/CD workflow testing when secrets are not accessible
 if (!process.env.MONGODB_URI) {
-  process.env.MONGODB_URI = 'mongodb+srv://dashwanth:Dashwanth%40127@cluster1.modyxw1.mongodb.net/stacksave?retryWrites=true&w=majority';
+  process.env.MONGODB_URI = 'mongodb://dashwanth:Dashwanth%40127@ac-j9i00sk-shard-00-00.modyxw1.mongodb.net:27017,ac-j9i00sk-shard-00-01.modyxw1.mongodb.net:27017,ac-j9i00sk-shard-00-02.modyxw1.mongodb.net:27017/stacksave?ssl=true&replicaSet=atlas-kluysc-shard-0&authSource=admin&retryWrites=true&w=majority';
 }
 
 import { connectDB, AuditModel } from '../src/services/dbService';

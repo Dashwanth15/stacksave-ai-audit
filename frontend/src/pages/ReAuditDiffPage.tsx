@@ -104,29 +104,25 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
 
   if (loading) {
     return (
-      <div className="min-h-screen grid-bg">
-        {/* Skeleton Nav */}
-        <div className="border-b border-white/5 h-16" />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-12 space-y-8">
-          {/* Skeleton Hero */}
+      <div className="min-h-screen" style={{ background: 'var(--color-bg-base)' }}>
+        <div style={{ borderBottom: '1px solid var(--color-border)', height: '64px', background: 'var(--color-bg-card)' }} />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-10 space-y-5">
           <div className="glass-card-static p-8 sm:p-12 space-y-4">
-            <div className="skel-block h-4 w-48 mx-auto" />
-            <div className="skel-block h-20 w-56 mx-auto" />
-            <div className="skel-block h-5 w-64 mx-auto" />
+            <div className="skel-block h-3 w-40 mx-auto" />
+            <div className="skel-block h-20 w-52 mx-auto" />
+            <div className="skel-block h-4 w-60 mx-auto" />
           </div>
-          {/* Skeleton Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="glass-card-static p-6 h-36 skel-block" />
-            <div className="glass-card-static p-6 h-36 skel-block" />
+            <div className="glass-card-static p-6 h-32 skel-block" />
+            <div className="glass-card-static p-6 h-32 skel-block" />
           </div>
-          {/* Skeleton Recommendation */}
           <div className="glass-card-static p-6 space-y-3">
             <div className="flex justify-between">
-              <div className="skel-block h-5 w-32" />
-              <div className="skel-block h-5 w-20" />
+              <div className="skel-block h-4 w-28" />
+              <div className="skel-block h-4 w-20" />
             </div>
-            <div className="skel-block h-4 w-full" />
-            <div className="skel-block h-4 w-3/4" />
+            <div className="skel-block h-3 w-full" />
+            <div className="skel-block h-3 w-3/4" />
           </div>
         </div>
       </div>
@@ -140,16 +136,20 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
 
   if (error || !data || !oldAudit || !newAudit || !diff) {
     return (
-      <div className="min-h-screen grid-bg flex items-center justify-center">
-        <div className="glass-card p-8 text-center max-w-md">
-          <div className="text-4xl mb-4">🔍</div>
-          <h2 className="text-xl font-semibold mb-2">Re-Audit Not Found</h2>
-          <p className="text-[#94a3b8] mb-6">
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-bg-base)' }}>
+        <div className="text-center max-w-sm w-full p-8 rounded-xl" style={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-lg)' }}>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border)' }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-text-muted)' }}>
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-text-heading)' }}>Re-Audit Not Found</h2>
+          <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>
             {error || 'This comparison link may be invalid or incomplete. Make sure the audit has been re-audited.'}
           </p>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-3 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all font-medium"
+            className="btn-primary w-full py-3 text-sm"
           >
             Go to home →
           </button>
@@ -185,18 +185,31 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
   const hasChanges = (recommendationDiffs || []).length > 0 || (pricingDiffs || []).length > 0 || savingsDelta !== 0;
 
   return (
-    <div className="min-h-screen grid-bg pb-20">
+    <div className="min-h-screen pb-20" style={{ background: 'var(--color-bg-base)' }}>
       {/* Navigation */}
-      <nav className="border-b border-white/[0.07] backdrop-blur-xl sticky top-0 z-40 bg-[#0a0a14]/88 shadow-[0_10px_40px_rgba(0,0,0,0.18)]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-0 sm:h-[68px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+      <nav
+        className="sticky top-0 z-40"
+        style={{
+          background: 'rgba(255,255,255,0.96)',
+          borderBottom: '1px solid var(--color-border)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          boxShadow: 'var(--shadow-xs)',
+        }}
+      >
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-0 sm:h-16 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className="text-indigo-400 font-bold text-lg tracking-tight hover:text-indigo-300 transition-colors"
+              className="font-bold text-base tracking-tight"
+              style={{ color: 'var(--color-primary)', letterSpacing: '-0.02em' }}
             >
               StackSave
             </button>
-            <span className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[#94a3b8] font-medium">
+            <span
+              className="text-[11px] px-2.5 py-1 rounded font-medium"
+              style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)' }}
+            >
               Re-Audited {newAudit?.createdAt ? formatRelativeTime(newAudit.createdAt) : ''}
             </span>
           </div>
@@ -206,56 +219,60 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                 <button
                   onClick={handleRunReAudit}
                   disabled={reAuditing}
-                  className="action-button bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none"
+                  className="action-button flex-1 sm:flex-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: 'var(--color-warning-bg)', color: 'var(--color-warning-t)', borderColor: 'rgba(217,119,6,0.3)' }}
                   aria-label="Pricing Refresh"
                 >
-                  {reAuditing ? '⏳ Updating...' : '🔄 Pricing Refresh'}
+                  {reAuditing ? 'Updating...' : 'Pricing Refresh'}
                 </button>
                 <button
                   onClick={() => navigate(`/audit?reAuditOf=${newAudit?.auditId}`)}
-                  className="action-button bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border-purple-500/20 flex-1 sm:flex-none"
+                  className="action-button flex-1 sm:flex-none"
+                  style={{ background: 'rgba(30,58,95,0.06)', color: 'var(--color-primary)', borderColor: 'rgba(30,58,95,0.2)' }}
                   aria-label="Edit Stack and Re-Audit"
                 >
-                  🛠️ Edit Stack
+                  Edit Stack
                 </button>
               </>
             )}
             <button
               onClick={() => generateReAuditDiffPDF(oldAudit, newAudit, diff)}
-              className="action-button bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/20 flex-1 sm:flex-none"
+              className="action-button flex-1 sm:flex-none"
+              style={{ background: 'var(--color-success-bg)', color: 'var(--color-success-t)', borderColor: 'rgba(16,185,129,0.3)' }}
               aria-label="Download PDF"
             >
-              📄 Download PDF
+              Download PDF
             </button>
             <button
               onClick={() => navigate(`/audit/${newAudit?.auditId || ''}?view=single`, { state: { isOwner } })}
-              className="action-button bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border-indigo-500/20 flex-1 sm:flex-none"
+              className="action-button flex-1 sm:flex-none"
+              style={{ background: 'rgba(30,58,95,0.06)', color: 'var(--color-primary)', borderColor: 'rgba(30,58,95,0.2)' }}
               aria-label="View Full Audit"
             >
-              📋 Full Audit
+              Full Audit
             </button>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-12 space-y-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-10 space-y-6">
         {/* Version Timeline Selector */}
         {allVersions && allVersions.length > 1 && (
           <div className="timeline-section space-y-6 relative overflow-hidden">
             <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
               <div className="space-y-2">
-                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--color-text-heading)' }}>
                   <span className="flex h-2.5 w-2.5 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: 'var(--color-primary)' }}></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ background: 'var(--color-primary)' }}></span>
                   </span>
                   Living Audit History
                 </h3>
-                <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed">
+                <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
                   Trace catalog pricing updates and optimization changes across audit versions.
                 </p>
               </div>
-              <span className="text-[10px] px-2.5 py-1.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold uppercase tracking-wider self-start sm:self-auto whitespace-nowrap">
+              <span className="text-[10px] px-2.5 py-1.5 rounded font-bold uppercase tracking-wider self-start sm:self-auto whitespace-nowrap" style={{ background: 'var(--color-success-bg)', color: 'var(--color-success-t)', border: '1px solid rgba(16,185,129,0.25)' }}>
                 ✓ Comparison Mode Active
               </span>
             </div>
@@ -270,28 +287,28 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                   const isSame = oldAudit?.auditId === newAudit?.auditId;
                   const isActive = isNew;
 
-                  let dotColorClass = 'bg-slate-500 group-hover:bg-slate-300';
-                  let ringColorClass = 'bg-[#0f111a] border-slate-700 group-hover:border-slate-500';
-                  let textColorClass = 'text-[#6b7b93] group-hover:text-slate-200';
+                  let dotStyle: React.CSSProperties = { background: 'var(--color-text-muted)' };
+                  let ringStyle: React.CSSProperties = { background: 'var(--color-bg-card)', borderColor: 'var(--color-border-strong)' };
+                  let textColor = 'var(--color-text-muted)';
                   let labelSuffix = '';
 
                   if (isSame) {
                     if (isNew) {
-                      dotColorClass = 'bg-white';
-                      ringColorClass = 'bg-indigo-600 border-[#818cf8] shadow-[0_0_12px_rgba(129,140,248,0.5)]';
-                      textColorClass = 'text-indigo-300';
+                      dotStyle = { background: '#fff' };
+                      ringStyle = { background: 'var(--color-primary)', borderColor: 'rgba(30,58,95,0.5)', boxShadow: '0 0 0 3px rgba(30,58,95,0.15)' };
+                      textColor = 'var(--color-primary)';
                       labelSuffix = ' (Baseline)';
                     }
                   } else {
                     if (isNew) {
-                      dotColorClass = 'bg-white';
-                      ringColorClass = 'bg-emerald-600 border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.5)]';
-                      textColorClass = 'text-emerald-300';
+                      dotStyle = { background: '#fff' };
+                      ringStyle = { background: 'var(--color-accent)', borderColor: 'rgba(16,185,129,0.5)', boxShadow: '0 0 0 3px rgba(16,185,129,0.15)' };
+                      textColor = 'var(--color-success)';
                       labelSuffix = ' (After)';
                     } else if (isOld) {
-                      dotColorClass = 'bg-amber-400';
-                      ringColorClass = 'bg-[#0f111a] border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)]';
-                      textColorClass = 'text-amber-300';
+                      dotStyle = { background: 'var(--color-warning)' };
+                      ringStyle = { background: 'var(--color-bg-card)', borderColor: 'rgba(217,119,6,0.5)', boxShadow: '0 0 0 3px rgba(217,119,6,0.1)' };
+                      textColor = 'var(--color-warning)';
                       labelSuffix = ' (Before)';
                     }
                   }
@@ -308,24 +325,24 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                           navigate(targetUrl, { state: { isOwner } });
                         }
                       }}
-                      className="timeline-node"
+                      className="timeline-node group"
                     >
                       <div className="relative flex items-center justify-center">
-                        {/* Glowing ring for active node */}
                         {isActive && (
-                          <span className={`absolute animate-ping inline-flex h-7 w-7 rounded-full opacity-20 ${isSame ? 'bg-indigo-400' : 'bg-emerald-400'}`} />
+                          <span className="absolute animate-ping inline-flex h-7 w-7 rounded-full opacity-20" style={{ background: isSame ? 'var(--color-primary)' : 'var(--color-accent)' }} />
                         )}
                         <div
-                          className={`timeline-node-ring ${ringColorClass}`}
+                          className="timeline-node-ring"
+                          style={ringStyle}
                         >
-                          <span className={`timeline-node-dot ${dotColorClass}`} />
+                          <span className="timeline-node-dot" style={dotStyle} />
                         </div>
                       </div>
                       <div className="timeline-node-label">
-                        <div className={`text-xs sm:text-sm font-bold transition-all ${textColorClass}`}>
+                        <div className="text-xs sm:text-sm font-bold" style={{ color: textColor }}>
                           Version {v.auditVersion || (idx + 1)}{labelSuffix}
                         </div>
-                        <div className="text-[10px] sm:text-xs text-[#475569] group-hover:text-[#64748b] transition-all whitespace-nowrap">
+                        <div className="text-[10px] sm:text-xs whitespace-nowrap" style={{ color: 'var(--color-text-muted)' }}>
                           {formatRelativeTime(v.createdAt)}
                         </div>
                       </div>
@@ -344,21 +361,21 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
           className="living-audit-hero p-8 sm:p-10 space-y-8"
         >
             <div className="text-center sm:text-left space-y-2 sm:space-y-3">
-              <span className="text-[10px] px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold uppercase tracking-wider inline-block">
+              <span className="text-[10px] px-2.5 py-1 rounded font-bold uppercase tracking-wider inline-block" style={{ background: 'rgba(30,58,95,0.08)', color: 'var(--color-primary)', border: '1px solid rgba(30,58,95,0.15)' }}>
                 Living Audit Comparison
               </span>
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight pt-1">
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight pt-1" style={{ color: 'var(--color-text-heading)', letterSpacing: '-0.025em' }}>
                 Your AI stack changed over time
               </h2>
               {oldAudit?.auditVersion === newAudit?.auditVersion ? (
-                <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed">
+                <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
                   Viewing the initial baseline snapshot of your stack. Click subsequent versions in the timeline above to see what changes occurred over time.
                 </p>
               ) : (
-                <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed">
+                <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
                   Catalog updates and usage changes generated optimization adjustments between{' '}
-                  <span className="text-white font-semibold">v{oldAudit?.auditVersion || 1}</span> ({oldAudit?.createdAt ? new Date(oldAudit.createdAt).toLocaleDateString() : ''}) and{' '}
-                  <span className="text-white font-semibold">v{newAudit?.auditVersion || 2}</span> ({newAudit?.createdAt ? new Date(newAudit.createdAt).toLocaleDateString() : ''}).
+                  <span className="font-semibold" style={{ color: 'var(--color-text-heading)' }}>v{oldAudit?.auditVersion || 1}</span> ({oldAudit?.createdAt ? new Date(oldAudit.createdAt).toLocaleDateString() : ''}) and{' '}
+                  <span className="font-semibold" style={{ color: 'var(--color-text-heading)' }}>v{newAudit?.auditVersion || 2}</span> ({newAudit?.createdAt ? new Date(newAudit.createdAt).toLocaleDateString() : ''}).
                 </p>
               )}
               {newAudit && newAudit.auditVersion && newAudit.auditVersion > 2 && (
@@ -392,80 +409,80 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
             </div>
 
             {/* Core Comparative Metrics Grid */}
-            <div className="metrics-grid">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Stack Spend Dynamics Card */}
-              <div className="metric-card">
+              <div className="p-6 border rounded-lg bg-[var(--color-bg-surface)]" style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-xs)' }}>
                 <div className="space-y-2">
-                  <span className="text-xs font-bold text-[#6b7b93] uppercase tracking-wider block">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                     Stack Monthly Spend
                   </span>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1">
                     <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className="text-2xl sm:text-3xl font-extrabold text-slate-400 line-through tabular-nums">
+                      <span className="text-xl font-bold text-slate-400 line-through font-mono-financial">
                         {formatCurrencyFull(oldAudit?.totalMonthlySpend ?? 0)}
                       </span>
-                      <span className="text-xs text-[#6b7b93]">→</span>
-                      <span className="text-3xl sm:text-4xl font-black text-white tabular-nums">
+                      <span className="text-xs text-slate-400">→</span>
+                      <span className="text-2xl font-bold font-mono-financial" style={{ color: 'var(--color-text-heading)' }}>
                         {formatCurrencyFull(newAudit?.totalMonthlySpend ?? 0)}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 pt-2">
+                <div className="flex items-center gap-2 pt-3">
                   {spendDelta < 0 ? (
-                    <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 whitespace-nowrap">
+                    <span className="text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider flex items-center gap-1" style={{ background: 'var(--color-success-bg)', color: 'var(--color-success-t)' }}>
                       <span>↓</span> {formatCurrencyFull(Math.abs(spendDelta))}/mo
                     </span>
                   ) : spendDelta > 0 ? (
-                    <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1 whitespace-nowrap">
+                    <span className="text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider flex items-center gap-1" style={{ background: 'var(--color-danger-bg)', color: 'var(--color-danger-t)' }}>
                       <span>↑</span> {formatCurrencyFull(spendDelta)}/mo
                     </span>
                   ) : (
-                    <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20 whitespace-nowrap">
+                    <span className="text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider" style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }}>
                       No change
                     </span>
                   )}
-                  <span className="text-[10px] text-[#6b7b93]">
+                  <span className="text-[10px] text-slate-400">
                     in raw stack cost
                   </span>
                 </div>
               </div>
 
               {/* Identified Savings Evolution Card */}
-              <div className="metric-card">
+              <div className="p-6 border rounded-lg bg-[var(--color-bg-surface)]" style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-xs)' }}>
                 <div className="space-y-2">
-                  <span className="text-xs font-bold text-[#6b7b93] uppercase tracking-wider block">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                     Potential Savings Opportunities
                   </span>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1">
                     <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className="text-2xl sm:text-3xl font-extrabold text-slate-400 line-through tabular-nums">
+                      <span className="text-xl font-bold text-slate-400 line-through font-mono-financial">
                         {formatCurrencyFull(oldAudit?.estimatedMonthlySavings ?? 0)}
                       </span>
-                      <span className="text-xs text-[#6b7b93]">→</span>
-                      <span className="text-3xl sm:text-4xl font-black text-emerald-400 tabular-nums">
+                      <span className="text-xs text-slate-400">→</span>
+                      <span className="text-2xl font-bold font-mono-financial" style={{ color: 'var(--color-success)' }}>
                         {formatCurrencyFull(newAudit?.estimatedMonthlySavings ?? 0)}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 pt-2">
+                <div className="flex items-center gap-2 pt-3">
                   {savingsDelta > 0 ? (
-                    <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 whitespace-nowrap">
+                    <span className="text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider flex items-center gap-1" style={{ background: 'var(--color-success-bg)', color: 'var(--color-success-t)' }}>
                       <span>+</span> {formatCurrencyFull(savingsDelta)}/mo
                     </span>
                   ) : savingsDelta < 0 ? (
-                    <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1 whitespace-nowrap">
+                    <span className="text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider flex items-center gap-1" style={{ background: 'var(--color-warning-bg)', color: 'var(--color-warning-t)' }}>
                       <span>-</span> {formatCurrencyFull(Math.abs(savingsDelta))}/mo
                     </span>
                   ) : (
-                    <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20 whitespace-nowrap">
+                    <span className="text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider" style={{ background: 'var(--color-bg-base)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }}>
                       Steady
                     </span>
                   )}
-                  <span className="text-[10px] text-[#6b7b93]">
+                  <span className="text-[10px] text-slate-400">
                     recovery delta
                   </span>
                 </div>
@@ -473,76 +490,76 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
             </div>
 
             {/* Drivers of Change Subgrid */}
-            <div className="pt-8 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+            <div className="pt-8 border-t grid grid-cols-1 md:grid-cols-2 gap-6 text-left" style={{ borderColor: 'var(--color-border)' }}>
               {/* Biggest Pricing Driver */}
               <div className="space-y-2">
-                <h4 className="text-xs font-extrabold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
+                <h4 className="text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1.5" style={{ color: 'var(--color-primary)' }}>
                   🏷️ Key Pricing Driver
                 </h4>
                 {biggestPricingChange ? (
-                  <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl">
+                  <div className="p-4 rounded border bg-[var(--color-bg-surface)]" style={{ borderColor: 'var(--color-border)' }}>
                     <div className="flex justify-between items-start">
-                      <span className="text-xs font-bold text-white block">
+                      <span className="text-xs font-bold block" style={{ color: 'var(--color-text-heading)' }}>
                         {biggestPricingChange.toolName}
                       </span>
                       <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                        biggestPricingChange.monthlyDelta > 0 ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'
+                        biggestPricingChange.monthlyDelta > 0 ? 'bg-amber-500/15 text-amber-800' : 'bg-emerald-500/15 text-emerald-800'
                       }`}>
                         {biggestPricingChange.monthlyDelta > 0 ? 'Price Inc' : 'Price Drop'}
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#94a3b8] mt-1 leading-relaxed">
+                    <p className="text-[11px] mt-1 leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
                       {biggestPricingChange.planLabel} Plan updated from{' '}
-                      <span className="line-through text-[#6b7b93]">{formatCurrencyFull(biggestPricingChange.oldMonthlyPrice)}</span> to{' '}
-                      <span className="text-white font-semibold">{formatCurrencyFull(biggestPricingChange.newMonthlyPrice)}</span>/mo{' '}
-                      <span className={`font-semibold ${biggestPricingChange.monthlyDelta > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                      <span className="line-through text-slate-400">{formatCurrencyFull(biggestPricingChange.oldMonthlyPrice)}</span> to{' '}
+                      <span className="font-semibold" style={{ color: 'var(--color-text-heading)' }}>{formatCurrencyFull(biggestPricingChange.newMonthlyPrice)}</span>/mo{' '}
+                      <span className={`font-semibold ${biggestPricingChange.monthlyDelta > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
                         ({biggestPricingChange.monthlyDelta > 0 ? '+' : ''}{formatCurrencyFull(biggestPricingChange.monthlyDelta)})
                       </span>
                     </p>
                   </div>
                 ) : (
-                  <div className="bg-white/[0.01] border border-dashed border-white/5 p-4 rounded-xl text-center">
-                    <p className="text-xs text-[#6b7b93]">No pricing changes detected in catalog pricing rates.</p>
+                  <div className="p-4 rounded border border-dashed text-center" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg-surface)' }}>
+                    <p className="text-xs text-slate-400">No pricing changes detected in catalog pricing rates.</p>
                   </div>
                 )}
               </div>
 
               {/* Biggest Recommendation Driver */}
               <div className="space-y-2">
-                <h4 className="text-xs font-extrabold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
+                <h4 className="text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1.5" style={{ color: 'var(--color-primary)' }}>
                   💡 Key Recommendation Driver
                 </h4>
                 {biggestRecChange ? (
-                  <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl">
+                  <div className="p-4 rounded border bg-[var(--color-bg-surface)]" style={{ borderColor: 'var(--color-border)' }}>
                     <div className="flex justify-between items-start">
-                      <span className="text-xs font-bold text-white block">
+                      <span className="text-xs font-bold block" style={{ color: 'var(--color-text-heading)' }}>
                         {biggestRecChange.toolName}
                       </span>
                       <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
                         biggestRecChange.status === 'added'
-                          ? 'bg-emerald-500/10 text-emerald-400'
+                          ? 'bg-emerald-500/15 text-emerald-800'
                           : biggestRecChange.status === 'removed'
-                          ? 'bg-rose-500/10 text-rose-400'
-                          : 'bg-amber-500/10 text-amber-400'
+                          ? 'bg-rose-500/15 text-rose-800'
+                          : 'bg-amber-500/15 text-amber-800'
                       }`}>
                         {biggestRecChange.status}
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#94a3b8] mt-1 leading-relaxed">
+                    <p className="text-[11px] mt-1 leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
                       {biggestRecChange.status === 'added' ? (
                         <>
                           New optimization opportunity identified, yielding potential savings of{' '}
-                          <span className="text-emerald-400 font-bold">+{formatCurrencyFull(biggestRecChange.savingDelta ?? 0)}/mo</span>.
+                          <span className="font-bold text-emerald-600">+{formatCurrencyFull(biggestRecChange.savingDelta ?? 0)}/mo</span>.
                         </>
                       ) : biggestRecChange.status === 'removed' ? (
                         <>
                           Prior recommendation resolved or no longer applicable, reducing savings potential by{' '}
-                          <span className="text-rose-400 font-bold">-{formatCurrencyFull(Math.abs(biggestRecChange.savingDelta ?? 0))}/mo</span>.
+                          <span className="font-bold text-rose-600">-{formatCurrencyFull(Math.abs(biggestRecChange.savingDelta ?? 0))}/mo</span>.
                         </>
                       ) : (
                         <>
                           Optimization recommendation revised, modifying savings potential by{' '}
-                          <span className={`${(biggestRecChange.savingDelta ?? 0) >= 0 ? 'text-emerald-400' : 'text-amber-400'} font-bold`}>
+                          <span className={`${(biggestRecChange.savingDelta ?? 0) >= 0 ? 'text-emerald-600' : 'text-amber-600'} font-bold`}>
                             {biggestRecChange.savingDelta && biggestRecChange.savingDelta > 0 ? '+' : ''}
                             {formatCurrencyFull(biggestRecChange.savingDelta ?? 0)}/mo
                           </span>.
@@ -551,8 +568,8 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                     </p>
                   </div>
                 ) : (
-                  <div className="bg-white/[0.01] border border-dashed border-white/5 p-4 rounded-xl text-center">
-                    <p className="text-xs text-[#6b7b93]">Recommendations list remained stable.</p>
+                  <div className="p-4 rounded border border-dashed text-center" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg-surface)' }}>
+                    <p className="text-xs text-slate-400">Recommendations list remained stable.</p>
                   </div>
                 )}
               </div>
@@ -563,41 +580,40 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
           <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass-card-static p-8 text-center border border-white/5 space-y-6"
+            className="p-8 text-center border rounded-lg bg-[var(--color-bg-surface)] space-y-6"
+            style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-sm)' }}
           >
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 flex items-center justify-center text-2xl">
-              🎯
-            </div>
             <div className="space-y-2">
-              <h3 className="text-xl font-bold text-white">Original Audit Baseline</h3>
-              <p className="text-sm text-[#94a3b8] max-w-md mx-auto leading-relaxed">
+              <span className="text-overline mb-2 block">v1 Snapshot Details</span>
+              <h3 className="text-lg font-bold" style={{ color: 'var(--color-text-heading)' }}>Original Audit Baseline</h3>
+              <p className="text-xs max-w-md mx-auto leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
                 This is the original version of your AI spend audit. You have a total monthly spend of{' '}
-                <span className="text-white font-semibold">{formatCurrencyFull(newAudit.totalMonthlySpend)}</span>, with{' '}
-                <span className="text-emerald-400 font-semibold">{formatCurrencyFull(newAudit.estimatedMonthlySavings)}/mo</span> in potential savings.
+                <span className="font-semibold" style={{ color: 'var(--color-text-heading)' }}>{formatCurrencyFull(newAudit.totalMonthlySpend)}</span>, with{' '}
+                <span className="font-semibold" style={{ color: 'var(--color-success)' }}>{formatCurrencyFull(newAudit.estimatedMonthlySavings)}/mo</span> in potential savings.
               </p>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-xl mx-auto pt-4 border-t border-white/5">
-              <div className="p-3 bg-white/[0.01] rounded-xl border border-white/5">
-                <span className="text-[10px] text-[#6b7b93] font-semibold uppercase block">Monthly Spend</span>
-                <span className="text-sm font-bold text-white block mt-0.5">{formatCurrencyFull(newAudit.totalMonthlySpend)}</span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-xl mx-auto pt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
+              <div className="p-3 bg-[var(--color-bg-base)] rounded border" style={{ borderColor: 'var(--color-border)' }}>
+                <span className="text-[9px] text-slate-400 font-bold uppercase block">Monthly Spend</span>
+                <span className="text-xs font-bold font-mono-financial block mt-0.5" style={{ color: 'var(--color-text-heading)' }}>{formatCurrencyFull(newAudit.totalMonthlySpend)}</span>
               </div>
-              <div className="p-3 bg-white/[0.01] rounded-xl border border-white/5">
-                <span className="text-[10px] text-[#6b7b93] font-semibold uppercase block">Est. Savings</span>
-                <span className="text-sm font-bold text-emerald-400 block mt-0.5">{formatCurrencyFull(newAudit.estimatedMonthlySavings)}</span>
+              <div className="p-3 bg-[var(--color-bg-base)] rounded border" style={{ borderColor: 'var(--color-border)' }}>
+                <span className="text-[9px] text-slate-400 font-bold uppercase block">Est. Savings</span>
+                <span className="text-xs font-bold font-mono-financial block mt-0.5" style={{ color: 'var(--color-success)' }}>{formatCurrencyFull(newAudit.estimatedMonthlySavings)}</span>
               </div>
-              <div className="p-3 bg-white/[0.01] rounded-xl border border-white/5">
-                <span className="text-[10px] text-[#6b7b93] font-semibold uppercase block">Saving Level</span>
-                <span className="text-sm font-bold text-indigo-400 block mt-0.5">{newAudit.savingsPercentage}%</span>
+              <div className="p-3 bg-[var(--color-bg-base)] rounded border" style={{ borderColor: 'var(--color-border)' }}>
+                <span className="text-[9px] text-slate-400 font-bold uppercase block">Saving Level</span>
+                <span className="text-xs font-bold font-mono-financial block mt-0.5" style={{ color: 'var(--color-primary)' }}>{newAudit.savingsPercentage}%</span>
               </div>
-              <div className="p-3 bg-white/[0.01] rounded-xl border border-white/5">
-                <span className="text-[10px] text-[#6b7b93] font-semibold uppercase block">Total Tools</span>
-                <span className="text-sm font-bold text-purple-400 block mt-0.5">{(newAudit.tools || []).length}</span>
+              <div className="p-3 bg-[var(--color-bg-base)] rounded border" style={{ borderColor: 'var(--color-border)' }}>
+                <span className="text-[9px] text-slate-400 font-bold uppercase block">Total Tools</span>
+                <span className="text-xs font-bold font-mono-financial block mt-0.5" style={{ color: 'var(--color-text-heading)' }}>{(newAudit.tools || []).length}</span>
               </div>
             </div>
 
             {allVersions && allVersions.length > 1 ? (
-              <p className="text-xs text-[#94a3b8] pt-2">
+              <p className="text-[10px] text-slate-400 pt-2 font-medium">
                 Select version 2 or newer in the timeline above to view savings changes and re-audit diffs.
               </p>
             ) : (
@@ -606,9 +622,10 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                   <button
                     onClick={handleRunReAudit}
                     disabled={reAuditing}
-                    className="px-6 py-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-sm font-semibold transition-all flex items-center gap-2 mx-auto disabled:opacity-50 cursor-pointer"
+                    className="px-6 py-3 rounded text-xs font-semibold flex items-center gap-2 mx-auto disabled:opacity-50 cursor-pointer"
+                    style={{ background: 'var(--color-warning-bg)', color: 'var(--color-warning-t)', border: '1px solid rgba(217,119,6,0.25)' }}
                   >
-                    {reAuditing ? 'Recalculating...' : '🔄 Run Pricing Re-Audit Now'}
+                    {reAuditing ? 'Recalculating...' : 'Run Pricing Re-Audit Now'}
                   </button>
                 </div>
               )
@@ -652,30 +669,28 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <span className="text-xl">🔬</span> AI Stack Evolution
+                  <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--color-text-heading)' }}>
+                    🔬 AI Stack Evolution
                   </h3>
-                  <p className="text-xs text-[#94a3b8] mt-0.5">
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
                     How your actual AI toolset changed between v{oldAudit?.auditVersion || 1} → v{newAudit?.auditVersion || 2}
                   </p>
                 </div>
-                <span className="text-[10px] px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-bold uppercase tracking-wider">
+                <span className="text-[10px] px-2.5 py-1 rounded font-semibold uppercase tracking-wider" style={{ background: 'rgba(30,58,95,0.06)', color: 'var(--color-primary)', border: '1px solid rgba(30,58,95,0.15)' }}>
                   Stack Diff Active
                 </span>
               </div>
 
               {/* Storytelling Summaries */}
               {sd.summaries.length > 0 && (
-                <div className="bg-gradient-to-br from-[#0f1023] to-[#0c0e1a] border border-indigo-500/20 rounded-2xl p-6 space-y-3 relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 via-indigo-500 to-cyan-500" />
-                  <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                    Stack Story
+                <div className="border rounded-lg p-6 space-y-3 relative overflow-hidden bg-[var(--color-bg-surface)]" style={{ borderColor: 'var(--color-border)', borderTop: '3px solid var(--color-primary)' }}>
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: 'var(--color-primary)' }}>
+                    Stack Story Summary
                   </h4>
                   <ul className="space-y-2">
                     {sd.summaries.map((s, i) => (
-                      <li key={i} className="flex items-start gap-3 text-sm text-[#c0cbd6] leading-relaxed">
-                        <span className="shrink-0 mt-1 w-4 h-4 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-[9px] font-bold text-indigo-400">{i + 1}</span>
+                      <li key={i} className="flex items-start gap-3 text-xs leading-relaxed" style={{ color: 'var(--color-text-body)' }}>
+                        <span className="shrink-0 mt-0.5 w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold" style={{ background: 'rgba(30,58,95,0.06)', color: 'var(--color-primary)', border: '1px solid rgba(30,58,95,0.1)' }}>{i + 1}</span>
                         {s}
                       </li>
                     ))}
@@ -692,7 +707,6 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                     new: sd.newToolCount,
                     delta: sd.toolCountDelta,
                     positiveIsGood: true,
-                    icon: '🧰',
                   },
                   {
                     label: 'Redundancies',
@@ -700,7 +714,6 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                     new: sd.newOverlapCount,
                     delta: sd.overlapCountDelta,
                     positiveIsGood: false,
-                    icon: '⚠️',
                   },
                   {
                     label: 'Opt. Opportunities',
@@ -708,29 +721,27 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                     new: sd.newOptCount,
                     delta: sd.optCountDelta,
                     positiveIsGood: true,
-                    icon: '💡',
                   },
                 ].map((metric) => {
                   const improved = metric.positiveIsGood ? metric.delta > 0 : metric.delta < 0;
                   const worsened = metric.positiveIsGood ? metric.delta < 0 : metric.delta > 0;
                   return (
-                    <div key={metric.label} className="bg-white/[0.02] border border-white/5 rounded-xl p-4 text-center space-y-1.5 hover:border-white/10 transition-all">
-                      <span className="text-xl">{metric.icon}</span>
-                      <div className="flex items-center justify-center gap-1.5 text-sm font-extrabold tabular-nums">
-                        <span className="text-[#6b7b93]">{metric.old}</span>
-                        <span className="text-[#475569] text-xs">➔</span>
-                        <span className="text-white">{metric.new}</span>
+                    <div key={metric.label} className="border rounded-lg p-4 text-center space-y-1.5 bg-[var(--color-bg-surface)]" style={{ borderColor: 'var(--color-border)' }}>
+                      <div className="flex items-center justify-center gap-1.5 text-xs font-bold font-mono-financial">
+                        <span className="text-slate-400">{metric.old}</span>
+                        <span className="text-slate-400 text-[10px]">➔</span>
+                        <span style={{ color: 'var(--color-text-heading)' }}>{metric.new}</span>
                       </div>
-                      <span className="text-[10px] text-[#6b7b93] font-semibold uppercase tracking-wide block">
+                      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wide block">
                         {metric.label}
                       </span>
                       {metric.delta !== 0 && (
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                        <span className={`text-[9px] font-bold px-1.5 py-0.25 rounded ${
                           improved
-                            ? 'bg-emerald-500/10 text-emerald-400'
+                            ? 'bg-emerald-100 text-emerald-800'
                             : worsened
-                            ? 'bg-rose-500/10 text-rose-400'
-                            : 'bg-slate-500/10 text-slate-400'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-slate-100 text-slate-800'
                         }`}>
                           {metric.delta > 0 ? '+' : ''}{metric.delta}
                         </span>
