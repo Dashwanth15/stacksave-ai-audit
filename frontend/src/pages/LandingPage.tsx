@@ -728,7 +728,7 @@ export default function LandingPage() {
             </div>
 
             <div className="mt-8 space-y-4">
-              {auditChecks.map((check, index) => (
+              {auditChecks.map((check) => (
                 <m.div
                   key={check.feature}
                   whileHover={{ y: -2 }}
