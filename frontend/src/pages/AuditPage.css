@@ -1,0 +1,178 @@
+/* Premium Integration Cards inside Audit Setup Wizard */
+.tool-card-premium {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition:
+    transform 0.25s var(--ease-spring),
+    box-shadow 0.25s var(--ease-spring),
+    border-color 0.25s var(--ease-spring),
+    background-color 0.25s var(--ease-spring);
+  text-align: left;
+  outline: none;
+  width: 100%;
+}
+
+.tool-card-premium:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-border-strong);
+}
+
+.tool-card-premium--selected {
+  border-color: var(--color-primary) !important;
+  background: rgba(30, 58, 95, 0.02) !important;
+}
+
+/* Logo Container */
+.tool-card-premium__logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition:
+    background-color 0.25s var(--ease-spring),
+    border-color 0.25s var(--ease-spring);
+}
+
+.tool-card-premium:hover .tool-card-premium__logo-container {
+  background: #ffffff;
+  border-color: var(--color-border-strong);
+}
+
+.tool-card-premium__logo-container--selected {
+  background: rgba(30, 58, 95, 0.08) !important;
+  border-color: rgba(30, 58, 95, 0.15) !important;
+}
+
+/* Image styles & Optical height normalizations */
+.tool-card-premium__logo-img {
+  object-fit: contain;
+  pointer-events: none;
+  height: 18px; /* Default height */
+  width: auto;
+  display: block;
+}
+
+.tool-card-premium__logo-img.logo-cursor {
+  height: 16px;
+}
+
+.tool-card-premium__logo-img.logo-github-copilot {
+  height: 17px;
+}
+
+.tool-card-premium__logo-img.logo-claude {
+  height: 19px;
+}
+
+.tool-card-premium__logo-img.logo-chatgpt {
+  height: 18px;
+}
+
+.tool-card-premium__logo-img.logo-anthropic-api {
+  height: 15px;
+}
+
+.tool-card-premium__logo-img.logo-openai-api {
+  height: 18px;
+}
+
+.tool-card-premium__logo-img.logo-gemini {
+  height: 20px;
+}
+
+.tool-card-premium__logo-img.logo-windsurf {
+  height: 16px;
+}
+
+/* Selected indicator check dot */
+.tool-card-premium__check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: #ffffff;
+  color: #ffffff;
+  transition:
+    background-color 0.25s var(--ease-spring),
+    border-color 0.25s var(--ease-spring);
+}
+
+.tool-card-premium__check--selected {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* Category Badges */
+.category-pill {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  line-height: 1.4;
+}
+
+.category-pill--ai-ide {
+  background: rgba(99, 102, 241, 0.08);
+  color: rgb(99, 102, 241);
+}
+
+.category-pill--ai-chat {
+  background: rgba(16, 185, 129, 0.08);
+  color: rgb(16, 185, 129);
+}
+
+.category-pill--api {
+  background: rgba(168, 85, 247, 0.08);
+  color: rgb(168, 85, 247);
+}
+
+/* Platform grid: balanced desktop rows without orphan cards */
+.platform-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .platform-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .platform-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Sticky layout rules for Live Summary panel */
+.sticky-panel {
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .sticky-panel {
+    position: sticky;
+    top: 6rem;
+    z-index: 10;
+  }
+}
