@@ -3,7 +3,10 @@
 // ============================================================
 
 import mongoose, { Schema, Document } from 'mongoose';
+import dns from 'dns';
 import { PricingSnapshot } from '../types';
+
+dns.setDefaultResultOrder('ipv4first');
 
 export function getFrontendUrl(): string {
   let url = 'https://stacksave-round2-frontend.onrender.com';
@@ -197,6 +200,7 @@ export async function connectDB(): Promise<void> {
       await mongoose.connect(uri, {
         serverSelectionTimeoutMS: 8000, // 8s per attempt
         connectTimeoutMS: 10000,
+        family: 4,
       });
       isConnected = true;
       console.log(`✅ MongoDB connected (attempt ${attempt})`);

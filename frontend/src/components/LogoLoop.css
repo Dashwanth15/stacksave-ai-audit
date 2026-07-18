@@ -1,0 +1,196 @@
+.logoloop {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  display: flex;
+  align-items: center;
+
+  --logoloop-gap: 32px;
+  --logoloop-logoHeight: 48px;
+  --logoloop-fadeColorAuto: #F7F8FA; /* Matches --color-bg-base of StackSave Base Theme */
+}
+
+.logoloop--vertical {
+  height: 100%;
+  display: inline-block;
+}
+
+.logoloop--scale-hover {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.logoloop__track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  user-select: none;
+  position: relative;
+  z-index: 1;
+}
+
+.logoloop--vertical .logoloop__track {
+  flex-direction: column;
+  height: max-content;
+  width: 100%;
+}
+
+.logoloop__list {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex-shrink: 0;
+  flex-grow: 0;
+}
+
+.logoloop--vertical .logoloop__list {
+  flex-direction: column;
+}
+
+.logoloop__item {
+  flex-shrink: 0;
+  flex-grow: 0;
+  margin-right: var(--logoloop-gap);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoloop--vertical .logoloop__item {
+  margin-right: 0;
+  margin-bottom: var(--logoloop-gap);
+}
+
+.logoloop__node {
+  display: inline-flex;
+  align-items: center;
+}
+
+.logoloop__item img {
+  height: var(--logoloop-logoHeight);
+  width: auto;
+  display: block;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* Premium Card visual styling details */
+.logoloop__card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-xs);
+  transition:
+    transform 0.3s var(--ease-spring),
+    box-shadow 0.3s var(--ease-spring),
+    border-color 0.3s var(--ease-spring);
+  cursor: pointer;
+  text-decoration: none;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Grayscale to full color transition details - Colored by default, no grayscale */
+.logoloop__card .logoloop__logo-img {
+  display: block;
+  object-fit: contain;
+  filter: none;
+  opacity: 1;
+  transition: transform 0.3s var(--ease-spring);
+  /* Apply default height */
+  height: 18px;
+  width: auto;
+  pointer-events: none;
+}
+
+.logoloop__card:hover {
+  transform: translateY(-4px); /* Lift card by 4px */
+  box-shadow: var(--shadow-lg); /* Soft premium shadow */
+  border-color: var(--color-border-strong); /* Strengthen card border */
+}
+
+.logoloop__card:hover .logoloop__logo-img {
+  transform: scale(1.08); /* Scale logo by 1.08x */
+}
+
+/* Platform-specific optical height and weight normalization */
+.logoloop__logo-img.logo-cursor {
+  height: 16px;
+}
+
+.logoloop__logo-img.logo-copilot {
+  height: 17px;
+}
+
+.logoloop__logo-img.logo-claude {
+  height: 19px;
+}
+
+.logoloop__logo-img.logo-chatgpt {
+  height: 18px;
+}
+
+.logoloop__logo-img.logo-anthropic {
+  height: 15px; /* Heavy geometric ink weight */
+}
+
+.logoloop__logo-img.logo-openai {
+  height: 18px;
+}
+
+.logoloop__logo-img.logo-gemini {
+  height: 20px; /* Slim star shape needs more height to balance visually */
+}
+
+.logoloop__logo-img.logo-windsurf {
+  height: 16px;
+}
+
+/* Fade Masks for soft edge transitions */
+.logoloop--fade::before,
+.logoloop--fade::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 120px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.logoloop--fade::before {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    var(--logoloop-fadeColor, var(--logoloop-fadeColorAuto)) 0%,
+    rgba(247, 248, 250, 0) 100%
+  );
+}
+
+.logoloop--fade::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    var(--logoloop-fadeColor, var(--logoloop-fadeColorAuto)) 0%,
+    rgba(247, 248, 250, 0) 100%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logoloop__track {
+    transform: translate3d(0, 0, 0) !important;
+  }
+
+  .logoloop__card {
+    transition: none !important;
+    transform: none !important;
+  }
+}
