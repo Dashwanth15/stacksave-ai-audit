@@ -64,6 +64,32 @@ const DEFAULT_FORM: FormState = {
   billingPeriod: 'monthly',
 };
 
+type StepBadgeProps = {
+  n: number;
+  done: boolean;
+};
+
+function StepBadge({ n, done }: StepBadgeProps) {
+  return (
+    <span
+      className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono-financial font-bold shrink-0 transition-all"
+      style={
+        done
+          ? { background: 'var(--color-success-bg)', color: 'var(--color-success-t)', border: '1px solid rgba(16,185,129,0.2)' }
+          : { background: 'rgba(30,58,95,0.06)', color: 'var(--color-primary)', border: '1px solid rgba(30,58,95,0.1)' }
+      }
+    >
+      {done ? (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      ) : (
+        n
+      )}
+    </span>
+  );
+}
+
 export default function AuditPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -231,27 +257,6 @@ export default function AuditPage() {
       e.currentTarget.style.boxShadow = 'none';
     },
   };
-
-  function StepBadge({ n, done }: { n: number; done: boolean }) {
-    return (
-      <span
-        className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono-financial font-bold shrink-0 transition-all"
-        style={
-          done
-            ? { background: 'var(--color-success-bg)', color: 'var(--color-success-t)', border: '1px solid rgba(16,185,129,0.2)' }
-            : { background: 'rgba(30,58,95,0.06)', color: 'var(--color-primary)', border: '1px solid rgba(30,58,95,0.1)' }
-        }
-      >
-        {done ? (
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-        ) : (
-          n
-        )}
-      </span>
-    );
-  }
 
   const estimatedSpend = form.tools.reduce((total, t) => total + t.monthlySpend, 0);
 
