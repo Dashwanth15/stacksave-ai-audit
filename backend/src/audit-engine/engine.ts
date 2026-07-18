@@ -10,6 +10,7 @@ import { AuditRequest, AuditResult, Insight } from '../types';
 import { ALL_RULES } from './rules';
 
 export function runAudit(req: AuditRequest, aiSummary: string, baseUrl: string): AuditResult {
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, '');
   const auditId = uuidv4();
   const insights: Insight[] = [];
 
@@ -66,7 +67,7 @@ export function runAudit(req: AuditRequest, aiSummary: string, baseUrl: string):
     isHighSavings,
     insights: sorted,
     aiSummary,
-    publicUrl: `${baseUrl}/audit/${auditId}`,
+    publicUrl: `${normalizedBaseUrl}/audit/${auditId}`,
     companyName: req.companyName,
     teamSize: req.teamSize,
     tools: req.tools,

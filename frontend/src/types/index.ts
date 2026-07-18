@@ -39,6 +39,7 @@ export interface AuditRequest {
   teamSize: number;
   companyName?: string;
   useCase: UseCase;
+  reAuditOf?: string; // parent audit ID if chaining a new version
 }
 
 export interface Insight {
@@ -70,6 +71,15 @@ export interface AuditResult {
   companyName?: string;
   teamSize: number;
   tools: ToolEntry[];
+  useCase?: UseCase;
+
+  // Batch 4 re-audit additions
+  pricingChanged?: boolean;
+  outdatedReason?: string;
+  reAuditOf?: string;
+  isLatestVersion?: boolean;
+  auditVersion?: number;
+  allVersions?: AuditVersionInfo[];
 }
 
 export interface LeadCaptureRequest {
@@ -107,3 +117,108 @@ export interface PlanOption {
   features?: string[];    // key plan features for display
   tagline?: string;       // short plan description
 }
+
+// ── Batch 4: Re-Audit Comparison Types ───────────────────────
+
+export interface RecommendationDiff {
+  toolId: ToolId;
+  toolName: string;
+  type: string;
+  status: 'added' | 'removed' | 'changed';
+  oldInsight?: Insight;
+  newInsight?: Insight;
+  savingDelta?: number;
+}
+
+export interface PricingDiff {
+  toolId: ToolId;
+  toolName: string;
+  planId: string;
+  planLabel: string;
+  oldMonthlyPrice: number;
+  newMonthlyPrice: number;
+  monthlyDelta: number;
+  oldAnnualPrice?: number;
+  newAnnualPrice?: number;
+  annualDelta?: number;
+}
+
+export interface StackToolEntry {
+  toolId: ToolId;
+  toolName: string;
+  seats: number;
+  planId: string;
+  planLabel: string;
+  monthlySpend: number;
+}
+
+export interface StackDiff {
+  added: StackToolEntry[];
+  removed: StackToolEntry[];
+  changed: {
+    toolId: ToolId;
+    toolName: string;
+    oldSeats: number;
+    newSeats: number;
+    oldPlanId: string;
+    newPlanId: string;
+    oldPlanLabel: string;
+    newPlanLabel: string;
+    oldSpend: number;
+    newSpend: number;
+    seatsDelta: number;
+    spendDelta: number;
+  }[];
+  replaced: {
+    removedToolId: ToolId;
+    removedToolName: string;
+    addedToolId: ToolId;
+    addedToolName: string;
+    removedPlanLabel: string;
+    addedPlanLabel: string;
+    removedSpend: number;
+    addedSpend: number;
+  }[];
+  oldToolCount: number;
+  newToolCount: number;
+  toolCountDelta: number;
+  oldOverlapCount: number;
+  newOverlapCount: number;
+  overlapCountDelta: number;
+  oldOptCount: number;
+  newOptCount: number;
+  optCountDelta: number;
+  summaries: string[];
+}
+
+export interface AuditDiff {
+  oldAuditId: string;
+  newAuditId: string;
+  oldSavings: number;
+  newSavings: number;
+  savingsDelta: number;
+  recommendationsChanged: boolean;
+  changedTools: ToolId[];
+  recommendationDiffs: RecommendationDiff[];
+  pricingDiffs: PricingDiff[];
+  generatedAt: string;
+  stackDiff?: StackDiff;
+}
+
+export interface AuditVersionInfo {
+  auditId: string;
+  auditVersion: number;
+  createdAt: string;
+  estimatedMonthlySavings: number;
+  isLatestVersion: boolean;
+}
+
+export interface ReAuditResponse {
+  oldAuditId: string;
+  newAuditId: string;
+  oldAudit: AuditResult;
+  newAudit: AuditResult;
+  diff: AuditDiff;
+  allVersions?: AuditVersionInfo[];
+}
+

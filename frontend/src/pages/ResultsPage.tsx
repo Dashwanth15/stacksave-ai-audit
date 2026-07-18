@@ -2,10 +2,11 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import type { AuditResult, Insight } from '../types';
-import { fetchAudit, captureLead } from '../services/api';
+import { fetchAudit, captureLead, triggerReAudit } from '../services/api';
 import { formatCurrencyFull, formatRelativeTime, severityLabel, insightTypeLabel } from '../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 import { generateAuditPDF } from '../services/pdfService';
+import ReAuditDiffPage from './ReAuditDiffPage';
 
 // Cohesive chart palette — unified blue/purple/cyan family
 const CHART_COLORS = ['#6366f1', '#7c3aed', '#4f46e5', '#06b6d4', '#3b82f6', '#22d3ee'];
@@ -292,6 +293,14 @@ export default function ResultsPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const isOwner = !!(
+    (location.state as { isOwner?: boolean })?.isOwner ||
+    (id && localStorage.getItem(`owned_${id}`) === 'true')
+  );
+
+  const queryParams = new URLSearchParams(location.search);
+  const viewSingle = queryParams.get('view') === 'single';
+
   const [audit, setAudit] = useState<AuditResult | null>(
     (location.state as { audit?: AuditResult })?.audit || null
   );
@@ -301,6 +310,30 @@ export default function ResultsPage() {
   const [emailCaptured, setEmailCaptured] = useState(false);
   const [copied, setCopied] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
+  const [reAuditing, setReAuditing] = useState(false);
+  const [prevId, setPrevId] = useState<string | undefined>(id);
+
+  if (id !== prevId) {
+    setPrevId(id);
+    setAudit(null);
+    setLoading(true);
+    setError(null);
+  }
+
+  async function handleRunReAudit() {
+    if (!audit) return;
+    setReAuditing(true);
+    try {
+      const result = await triggerReAudit(audit.auditId);
+      localStorage.setItem(`owned_${result.newAuditId}`, 'true');
+      navigate(`/audit/${result.newAuditId}/diff`, { state: { isOwner: true } });
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Failed to trigger re-audit');
+    } finally {
+      setReAuditing(false);
+    }
+  }
 
   useEffect(() => {
     if (!audit && id) {
@@ -311,13 +344,13 @@ export default function ResultsPage() {
     }
   }, [id, audit]);
 
-  // Show email modal after 3s if not already captured
+  // Show email modal after 3s if not already captured and is owner
   useEffect(() => {
-    if (audit && !emailCaptured) {
+    if (isOwner && audit && !emailCaptured) {
       const timer = setTimeout(() => setShowEmailModal(true), 3000);
       return () => clearTimeout(timer);
     }
-  }, [audit, emailCaptured]);
+  }, [audit, emailCaptured, isOwner]);
 
   function copyShareUrl() {
     if (!audit) return;
@@ -393,6 +426,11 @@ export default function ResultsPage() {
     );
   }
 
+  // If this is a versioned re-audit (v2+), mount ReAuditDiffPage directly as the primary experience.
+  if (!viewSingle && ((audit.auditVersion ?? 1) > 1 || audit.reAuditOf)) {
+    return <ReAuditDiffPage auditId={audit.auditId} isOwner={isOwner} />;
+  }
+
   // Chart data
   const chartData = audit.insights
     .filter((i) => i.potentialMonthlySaving > 0)
@@ -417,32 +455,50 @@ export default function ResultsPage() {
     <div className="min-h-screen grid-bg pb-20">
       {/* Nav */}
       <nav className="border-b border-white/[0.07] backdrop-blur-xl sticky top-0 z-40 bg-[#0a0a14]/88 shadow-[0_10px_40px_rgba(0,0,0,0.18)]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-0 sm:h-[68px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate('/')} className="text-indigo-400 font-bold text-lg tracking-tight">StackSave</button>
-            <span className="hidden sm:inline-flex text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[#94a3b8] font-medium">
-              Audited {formatRelativeTime(audit.createdAt)}
-            </span>
+            {isOwner ? (
+              <span className="hidden sm:inline-flex text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[#94a3b8] font-medium">
+                Audited {formatRelativeTime(audit.createdAt)}
+              </span>
+            ) : (
+              <span className="hidden sm:inline-flex text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-medium">
+                Shared Audit Report
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="action-button-group w-full sm:w-auto">
             <button
               onClick={handleDownloadPDF}
               disabled={generatingPDF}
-              className="px-4 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="action-button bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none"
               aria-label="Download PDF report"
             >
               {generatingPDF ? 'Generating...' : '📄 Download PDF'}
             </button>
-            <button
-              onClick={() => setShowEmailModal(true)}
-              className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all"
-              aria-label="Save audit report"
-            >
-              Save Report
-            </button>
+            {isOwner && (
+              <>
+                <button
+                  onClick={handleRunReAudit}
+                  disabled={reAuditing}
+                  className="action-button bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none"
+                  aria-label="Re-Audit Existing Stack"
+                >
+                  {reAuditing ? '⏳ Recalculating...' : '🔄 Re-Audit'}
+                </button>
+                <button
+                  onClick={() => setShowEmailModal(true)}
+                  className="action-button bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border-indigo-500/20 flex-1 sm:flex-none"
+                  aria-label="Save audit report"
+                >
+                  💾 Save Report
+                </button>
+              </>
+            )}
             <button
               onClick={copyShareUrl}
-              className="px-4 py-2 rounded-lg bg-white/[0.045] hover:bg-white/10 text-slate-100 border border-white/10 text-sm font-medium transition-all"
+              className="action-button bg-white/[0.045] hover:bg-white/10 text-slate-100 border-white/10 flex-1 sm:flex-none"
               aria-label="Copy share link"
             >
               {copied ? '✓ Copied!' : '🔗 Share'}
@@ -452,6 +508,231 @@ export default function ResultsPage() {
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-12 space-y-8">
+        {/* ── Batch 4: Re-audit Banner & Newer Version Notice ── */}
+        {audit.pricingChanged && (audit.isLatestVersion ?? true) && (
+          <m.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-300 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-sm"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">⚠️</span>
+              <div>
+                <span className="font-bold">Provider pricing changes detected.</span>{' '}
+                {audit.outdatedReason || 'Some tools in your stack have updated pricing models.'}
+              </div>
+            </div>
+            <button
+              onClick={handleRunReAudit}
+              disabled={reAuditing}
+              className="px-4 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition-colors shrink-0 disabled:opacity-50 text-xs"
+            >
+              {reAuditing ? 'Recalculating...' : 'Update & View Diff'}
+            </button>
+          </m.div>
+        )}
+
+        {audit.isLatestVersion === false && (
+          <m.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-300 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-sm"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">ℹ️</span>
+              <div>
+                <span className="font-bold">This is an older version of the audit (v{audit.auditVersion || 1}).</span>{' '}
+                A newer re-audit version is available with current pricing.
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                const latestVersionNode = audit.allVersions?.find(v => v.isLatestVersion) || audit.allVersions?.[audit.allVersions.length - 1];
+                const latestId = latestVersionNode ? latestVersionNode.auditId : (audit.reAuditOf || audit.auditId);
+                navigate(`/audit/${latestId}/diff`);
+              }}
+              className="px-4 py-1.5 rounded-lg bg-indigo-500 text-white font-bold hover:bg-indigo-400 transition-colors shrink-0 text-xs cursor-pointer"
+            >
+              View Latest Diff
+            </button>
+          </m.div>
+        )}
+
+        {/* ── Audit Version Timeline & Living History ── */}
+        {audit.allVersions && audit.allVersions.length > 1 && (
+          <m.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="timeline-section space-y-6 shadow-[0_4px_24px_rgba(0,0,0,0.2)] relative overflow-hidden"
+          >
+            <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+              <div className="space-y-2">
+                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2">
+                  <span className="flex h-2.5 w-2.5 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
+                  </span>
+                  Living Audit Timeline
+                </h3>
+                <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed">
+                  Trace catalog pricing updates and optimization changes across audit versions.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate(`/audit/${audit.auditId}/diff`, { state: { isOwner } })}
+                className="action-button evolution-button-secondary w-full sm:w-auto justify-center sm:justify-start"
+                aria-label="Compare Baseline vs Latest Diff"
+              >
+                <span>📊</span>
+                <span>Compare Versions</span>
+              </button>
+            </div>
+
+            <div className="relative flex items-center justify-between py-6">
+              {/* Horizontal Connecting Track Line */}
+              <div className="timeline-connecting-line" />
+              
+              <div className="relative z-10 w-full flex items-center justify-start gap-10 sm:gap-14 md:gap-16 overflow-x-auto py-3 px-1">
+                 {audit.allVersions.map((v, idx) => {
+                  const isActive = v.auditId === audit.auditId;
+
+                  let dotColorClass = 'bg-slate-500 group-hover:bg-slate-300';
+                  let ringColorClass = 'bg-[#0f111a] border-slate-700 group-hover:border-slate-500';
+                  let textColorClass = 'text-[#6b7b93] group-hover:text-slate-200';
+                  let labelSuffix = '';
+
+                  if (isActive) {
+                    dotColorClass = 'bg-white';
+                    ringColorClass = 'bg-indigo-600 border-[#818cf8] shadow-[0_0_12px_rgba(129,140,248,0.5)]';
+                    textColorClass = 'text-indigo-300';
+                    labelSuffix = ' (Active)';
+                  }
+
+                  return (
+                    <button
+                      key={v.auditId}
+                      onClick={() => {
+                        if (!isActive) {
+                          const targetUrl = v.auditVersion === 1
+                            ? `/audit/${v.auditId}?view=single`
+                            : `/audit/${v.auditId}`;
+                          navigate(targetUrl, { state: { isOwner } });
+                        }
+                      }}
+                      className="timeline-node"
+                    >
+                      <div className="relative flex items-center justify-center">
+                        {/* Glowing ring for active node */}
+                        {isActive && (
+                          <span className="absolute animate-ping inline-flex h-7 w-7 rounded-full bg-indigo-400 opacity-20" />
+                        )}
+                        <div
+                          className={`timeline-node-ring ${ringColorClass}`}
+                        >
+                          <span className={`timeline-node-dot ${dotColorClass}`} />
+                        </div>
+                      </div>
+                      <div className="timeline-node-label">
+                        <div className={`text-xs sm:text-sm font-bold transition-all ${textColorClass}`}>
+                          Version {v.auditVersion || (idx + 1)}{labelSuffix}
+                        </div>
+                        <div className="text-[10px] sm:text-xs text-[#475569] group-hover:text-[#64748b] transition-all whitespace-nowrap">
+                          {formatRelativeTime(v.createdAt)}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </m.div>
+        )}
+
+        {/* Living Audit Comparison Summary Banner */}
+        {audit.allVersions && audit.allVersions.length > 1 && (
+          <m.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-card-static p-6 border border-indigo-500/20 bg-indigo-950/20 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-6"
+          >
+            <div className="space-y-2 text-left">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  Version {audit.auditVersion ?? 1} of {audit.allVersions.length}
+                </span>
+                <span className="text-xs text-[#94a3b8] font-medium">
+                  This audit is part of an active version history.
+                </span>
+              </div>
+              <h3 className="text-base font-bold text-white tracking-tight">
+                Compare changes side-by-side to see what evolved.
+              </h3>
+              <p className="text-xs text-[#94a3b8] max-w-xl leading-relaxed">
+                Vendor pricing models have shifted and new recommendations have been generated compared to your baseline audit.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate(`/audit/${audit.auditId}/diff`, { state: { isOwner } })}
+              className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs tracking-wide transition-all shadow-[0_4px_20px_rgba(99,102,241,0.25)] flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+            >
+              📊 Open Comparison Dashboard →
+            </button>
+          </m.div>
+        )}
+
+        {isOwner && (
+          <m.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="living-audit-controls p-6 sm:p-8 space-y-4"
+          >
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 sm:gap-6">
+              <div className="space-y-2">
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                  <span className="text-xl">⏱️</span>
+                  Living Audit Evolution
+                </h3>
+                <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed">
+                  Your AI stack is continuously optimized as vendor pricing changes. Control your audit timeline and detect new opportunities.
+                </p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              <button
+                onClick={() => navigate(`/audit?reAuditOf=${audit.auditId}`)}
+                className="evolution-button-primary action-button w-full justify-center sm:justify-start group"
+                aria-label="Edit Stack and Re-Audit"
+              >
+                <span className="text-lg group-hover:scale-110 transition-transform">🛠️</span>
+                <span className="hidden sm:inline">Edit Stack & Re-Audit</span>
+                <span className="sm:hidden">Edit & Re-Audit</span>
+              </button>
+              
+              <button
+                onClick={handleRunReAudit}
+                disabled={reAuditing}
+                className="evolution-button-secondary action-button w-full justify-center sm:justify-start group disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Refresh Pricing"
+              >
+                <span className={`text-lg ${reAuditing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-300'}`}>🔄</span>
+                <span className="hidden sm:inline">{reAuditing ? 'Recalculating...' : 'Pricing Refresh'}</span>
+                <span className="sm:hidden">{reAuditing ? 'Updating...' : 'Refresh'}</span>
+              </button>
+
+              <button
+                onClick={() => navigate('/audit')}
+                className="evolution-button-secondary action-button w-full justify-center sm:justify-start group"
+                aria-label="Start New Independent Audit"
+              >
+                <span className="text-lg group-hover:scale-110 transition-transform">✨</span>
+                <span className="hidden sm:inline">New Independent Audit</span>
+                <span className="sm:hidden">New Audit</span>
+              </button>
+            </div>
+          </m.div>
+        )}
+
         {/* ── Savings Hero ──────────────────────────────────── */}
         <m.div
           initial={{ opacity: 0, y: 30 }}
@@ -653,64 +934,85 @@ export default function ResultsPage() {
           </m.div>
         )}
 
-        {/* ── Share CTA ─────────────────────────────────────── */}
-        <m.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="glass-card-static p-8 text-center border border-white/10 shadow-[0_14px_50px_rgba(0,0,0,0.2)]"
-        >
-          <h3 className="text-xl font-semibold mb-2">Share this audit</h3>
-          <p className="text-[#94a3b8] text-sm mb-5">
-            Your public audit URL — company name and email are not included in the shared version.
-          </p>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-md mx-auto">
-            <input
-              type="text"
-              value={audit.publicUrl}
-              readOnly
-              className="share-url-input flex-1 px-4 py-3 text-sm"
-              aria-label="Shareable audit URL"
-            />
+        {/* ── Share CTA (Owner only) / Start Audit CTA (Visitor only) ── */}
+        {isOwner ? (
+          <m.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="glass-card-static p-8 text-center border border-white/10 shadow-[0_14px_50px_rgba(0,0,0,0.2)]"
+          >
+            <h3 className="text-xl font-semibold mb-2">Share this audit</h3>
+            <p className="text-[#94a3b8] text-sm mb-5">
+              Your public audit URL — company name and email are not included in the shared version.
+            </p>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-md mx-auto">
+              <input
+                type="text"
+                value={audit.publicUrl}
+                readOnly
+                className="share-url-input flex-1 px-4 py-3 text-sm"
+                aria-label="Shareable audit URL"
+              />
+              <button
+                onClick={copyShareUrl}
+                className="copy-button px-5 py-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium whitespace-nowrap transition-all"
+                aria-label="Copy share URL to clipboard"
+              >
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+            <div className="mt-3 text-xs text-[#76879e]">
+              {copied ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="text-emerald-300">✓</span>
+                  Link copied to clipboard
+                </span>
+              ) : (
+                <span>Copy the link to share with your team or CFO.</span>
+              )}
+            </div>
+            <div className="flex gap-3 justify-center mt-4">
+              <a
+                href={`https://twitter.com/intent/tweet?text=I%20just%20found%20out%20my%20team%20could%20save%20%24${audit.estimatedMonthlySavings}%2Fmonth%20on%20AI%20tools%20with%20%40StackSaveAI%20%F0%9F%A4%AF&url=${encodeURIComponent(audit.publicUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 text-sm font-medium transition-all"
+                aria-label="Share on Twitter/X"
+              >
+                Share on X
+              </a>
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(audit.publicUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/20 text-sm font-medium transition-all"
+                aria-label="Share on LinkedIn"
+              >
+                Share on LinkedIn
+              </a>
+            </div>
+          </m.div>
+        ) : (
+          <m.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="glass-card p-8 text-center"
+            style={{ borderColor: 'rgba(129, 140, 248, 0.2)' }}
+          >
+            <h3 className="text-2xl font-bold mb-2">Want to audit your own AI stack?</h3>
+            <p className="text-[#94a3b8] text-sm mb-6">Free · No login · Results in 60 seconds</p>
             <button
-              onClick={copyShareUrl}
-              className="copy-button px-5 py-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-sm font-medium whitespace-nowrap transition-all"
-              aria-label="Copy share URL to clipboard"
+              onClick={() => navigate('/audit')}
+              className="px-10 py-4 rounded-xl font-bold text-lg text-white glow-primary transition-all hover:scale-105"
+              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+              aria-label="Start your own AI spend audit"
             >
-              {copied ? 'Copied' : 'Copy'}
+              Start My Free Audit →
             </button>
-          </div>
-          <div className="mt-3 text-xs text-[#76879e]">
-            {copied ? (
-              <span className="inline-flex items-center gap-2">
-                <span className="text-emerald-300">✓</span>
-                Link copied to clipboard
-              </span>
-            ) : (
-              <span>Copy the link to share with your team or CFO.</span>
-            )}
-          </div>
-          <div className="flex gap-3 justify-center mt-4">
-            <a
-              href={`https://twitter.com/intent/tweet?text=I%20just%20found%20out%20my%20team%20could%20save%20%24${audit.estimatedMonthlySavings}%2Fmonth%20on%20AI%20tools%20with%20%40StackSaveAI%20%F0%9F%A4%AF&url=${encodeURIComponent(audit.publicUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 text-sm font-medium transition-all"
-              aria-label="Share on Twitter/X"
-            >
-              Share on X
-            </a>
-            <a
-              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(audit.publicUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/20 text-sm font-medium transition-all"
-              aria-label="Share on LinkedIn"
-            >
-              Share on LinkedIn
-            </a>
-          </div>
-        </m.div>
+          </m.div>
+        )}
 
         {/* ── Credex CTA ─────────────────────────────────────── */}
         <m.div
@@ -748,15 +1050,86 @@ export default function ResultsPage() {
           </a>
         </m.div>
 
-        <div className="text-center pb-4">
-          <button
-            onClick={() => navigate('/audit')}
-            className="text-indigo-400 hover:text-indigo-300 text-sm"
-            aria-label="Run a new audit"
-          >
-            ← Run a new audit
-          </button>
-        </div>
+        {/* ── Audit Workspace Actions Dual-Flow Control ── */}
+        <m.div
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="glass-card-static p-8 border border-white/5 rounded-3xl bg-gradient-to-br from-[#0c0e18]/80 to-[#121020]/90 shadow-[0_20px_60px_rgba(0,0,0,0.4)] relative overflow-hidden"
+        >
+          {/* Subtle decorative glow */}
+          <div className="absolute -right-20 -bottom-20 w-48 h-48 rounded-full bg-indigo-500/10 blur-3xl" />
+          <div className="absolute -left-20 -top-20 w-48 h-48 rounded-full bg-amber-500/5 blur-3xl" />
+
+          <h3 className="text-lg font-bold text-white mb-6 text-center sm:text-left tracking-tight">
+            Audit Workspace Actions
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+            {/* Flow 1: Re-Audit Existing Stack */}
+            {isOwner && (
+              <div className="flex flex-col justify-between p-6 rounded-2xl bg-white/[0.015] border border-white/5 hover:border-indigo-500/20 transition-all group text-left">
+                <div className="space-y-2 mb-6">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400 text-lg">🔄</span>
+                    <h4 className="font-extrabold text-sm text-amber-300 uppercase tracking-widest">
+                      Flow 1: Evolution
+                    </h4>
+                  </div>
+                  <h5 className="text-base font-bold text-white tracking-tight">
+                    Re-Audit Existing Stack
+                  </h5>
+                  <p className="text-xs text-[#94a3b8] leading-relaxed">
+                    Preserves this timeline's root identity and appends a new version (<span className="text-indigo-400 font-semibold">v{(audit.auditVersion ?? 1) + 1}</span>) to the timeline. Recommended if provider pricing rates have updated or you adjusted team configurations.
+                  </p>
+                </div>
+                <button
+                  onClick={handleRunReAudit}
+                  disabled={reAuditing}
+                  className="w-full py-3 px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  aria-label="Re-Audit Existing Stack"
+                >
+                  {reAuditing ? (
+                    <>
+                      <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Recalculating...
+                    </>
+                  ) : (
+                    'Re-Audit Existing Stack →'
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Flow 2: Start New Independent Audit */}
+            <div className={`flex flex-col justify-between p-6 rounded-2xl bg-white/[0.015] border border-white/5 hover:border-indigo-500/20 transition-all group text-left ${!isOwner ? 'md:col-span-2 max-w-md mx-auto w-full' : ''}`}>
+              <div className="space-y-2 mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-indigo-400 text-lg">✨</span>
+                  <h4 className="font-extrabold text-sm text-indigo-400 uppercase tracking-widest">
+                    Flow 2: Standalone
+                  </h4>
+                </div>
+                <h5 className="text-base font-bold text-white tracking-tight">
+                  Start New Independent Audit
+                </h5>
+                <p className="text-xs text-[#94a3b8] leading-relaxed">
+                  Start a completely fresh standalone audit from scratch (<span className="text-indigo-400 font-semibold">v1</span>). Creates a separate stack history and does not affect the timeline or version lineage of this audit.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/audit')}
+                className="w-full py-3 px-4 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-xs font-bold transition-all text-center cursor-pointer"
+                aria-label="Start New Independent Audit"
+              >
+                Start New Independent Audit →
+              </button>
+            </div>
+          </div>
+        </m.div>
 
         {/* Footer */}
         <div className="text-center py-6 border-t border-white/5">

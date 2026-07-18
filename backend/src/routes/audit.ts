@@ -6,17 +6,22 @@ import { Router, Request, Response } from 'express';
 import { AuditRequest } from '../types';
 import { runAudit } from '../audit-engine/engine';
 import { generateAuditSummary } from '../services/aiService';
-import { AuditModel } from '../services/dbService';
+import { AuditModel, getFrontendUrl } from '../services/dbService';
 import { validateAuditRequest } from '../middleware/validation';
+import { capturePricingSnapshot } from '../services/pricingService';
+import { scanAuditsForPricingChanges } from '../services/pricingChangeDetectionService';
+import { runReAudit, generateAuditDiff } from '../services/reAuditService';
+import { auditLimiter } from '../middleware/rateLimit';
 
 const router = Router();
 
 // ── POST /api/audits ─────────────────────────────────────────
 // Main audit endpoint. Runs the engine, generates AI summary,
-// saves to DB, returns full result.
-router.post('/', async (req: Request, res: Response) => {
+// saves to DB with pricing snapshot, returns full result.
+// Batch 1: Persistent audit storage with pricing snapshot
+router.post('/', auditLimiter, async (req: Request, res: Response) => {
   try {
-    const body = req.body as AuditRequest;
+    const body = req.body as AuditRequest & { email?: string };
 
     // Centralized validation (bounds checking, duplicate detection, use case validation)
     const validation = validateAuditRequest(body);
@@ -24,7 +29,39 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: validation.error });
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    // Resolve version chaining if reAuditOf is provided
+    let reAuditOf: string | undefined;
+    let auditVersion = 1;
+
+    if (body.reAuditOf) {
+      const parentAudit = await AuditModel.findOne({ auditId: body.reAuditOf });
+      if (!parentAudit) {
+        return res.status(404).json({ success: false, error: `Parent audit not found: ${body.reAuditOf}` });
+      }
+
+      reAuditOf = parentAudit.reAuditOf || parentAudit.auditId;
+
+      // Query database to find the maximum version in this audit chain
+      const latestAuditInChain = await AuditModel.findOne({
+        $or: [{ auditId: reAuditOf }, { reAuditOf }],
+      })
+        .sort({ auditVersion: -1 })
+        .exec();
+
+      auditVersion = (latestAuditInChain?.auditVersion || parentAudit.auditVersion || 1) + 1;
+
+      // Invalidate all previous versions in the chain
+      await AuditModel.updateMany(
+        { $or: [{ auditId: reAuditOf }, { reAuditOf }] },
+        { isLatestVersion: false }
+      );
+
+      // Carry over parent metadata if not provided in the new request
+      if (!body.email && parentAudit.email) body.email = parentAudit.email;
+      if (!body.companyName && parentAudit.companyName) body.companyName = parentAudit.companyName;
+    }
+
+    const frontendUrl = getFrontendUrl();
     const publicUrlBase = frontendUrl;
 
     // Run deterministic audit engine
@@ -35,7 +72,10 @@ router.post('/', async (req: Request, res: Response) => {
     const aiSummary = await generateAuditSummary(auditResult);
     auditResult.aiSummary = aiSummary;
 
-    // Persist to MongoDB
+    // ── Batch 1: Capture Pricing Snapshot ────────────────────
+    const pricingSnapshot = capturePricingSnapshot();
+
+    // Persist to MongoDB with Batch 1 fields
     await AuditModel.create({
       auditId: auditResult.auditId,
       totalMonthlySpend: auditResult.totalMonthlySpend,
@@ -48,9 +88,18 @@ router.post('/', async (req: Request, res: Response) => {
       insights: auditResult.insights,
       aiSummary: auditResult.aiSummary,
       publicUrl: auditResult.publicUrl,
-      companyName: auditResult.companyName,
+      companyName: body.companyName || auditResult.companyName,
       teamSize: auditResult.teamSize,
       tools: auditResult.tools,
+      useCase: body.useCase,
+      
+      // Batch 1: New fields
+      email: body.email,                    // User email for notifications
+      inputStack: body.tools,               // Original tools submitted by user
+      pricingSnapshot,                      // Pricing at time of audit
+      isLatestVersion: true,                // This is the latest version
+      auditVersion,                         // Version in the chain
+      reAuditOf,                            // Parent audit link
     });
 
     return res.status(201).json({ success: true, data: auditResult });
@@ -71,6 +120,23 @@ router.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: 'Audit not found' });
     }
 
+    // Fetch version timeline for the audit chain
+    const rootAuditId = audit.reAuditOf || audit.auditId;
+    const allVersionsDocs = await AuditModel.find({
+      $or: [{ auditId: rootAuditId }, { reAuditOf: rootAuditId }],
+    })
+      .select('auditId auditVersion createdAt estimatedMonthlySavings isLatestVersion')
+      .sort({ auditVersion: 1 })
+      .exec();
+
+    const allVersions = allVersionsDocs.map(v => ({
+      auditId: v.auditId,
+      auditVersion: v.auditVersion || 1,
+      createdAt: v.createdAt,
+      estimatedMonthlySavings: v.estimatedMonthlySavings,
+      isLatestVersion: !!v.isLatestVersion
+    }));
+
     // Strip private fields from public response
     const publicAudit = {
       auditId: audit.auditId,
@@ -88,12 +154,268 @@ router.get('/:id', async (req: Request, res: Response) => {
       teamSize: audit.teamSize,
       tools: audit.tools,
       // companyName and email intentionally omitted
+      
+      // Batch 4 living-audit and version-aware fields
+      pricingChanged: audit.pricingChanged,
+      isLatestVersion: audit.isLatestVersion,
+      auditVersion: audit.auditVersion,
+      reAuditOf: audit.reAuditOf,
+      outdatedReason: audit.outdatedReason,
+      allVersions,
     };
 
     return res.json({ success: true, data: publicAudit });
   } catch (err) {
     console.error('GET /api/audits/:id error:', err);
     return res.status(500).json({ success: false, error: 'Failed to fetch audit' });
+  }
+});
+
+// ── GET /api/audits/:id/full ────────────────────────────────
+// Batch 1: Internal endpoint for retrieving full audit details
+// including pricing snapshot (used for re-audits in Batch 2)
+// Note: Should add auth/permission checks in production
+router.get('/:id/full', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const audit = await AuditModel.findOne({ auditId: id });
+
+    if (!audit) {
+      return res.status(404).json({ success: false, error: 'Audit not found' });
+    }
+
+    // Fetch version timeline for the audit chain
+    const rootAuditId = audit.reAuditOf || audit.auditId;
+    const allVersionsDocs = await AuditModel.find({
+      $or: [{ auditId: rootAuditId }, { reAuditOf: rootAuditId }],
+    })
+      .select('auditId auditVersion createdAt estimatedMonthlySavings isLatestVersion')
+      .sort({ auditVersion: 1 })
+      .exec();
+
+    const allVersions = allVersionsDocs.map(v => ({
+      auditId: v.auditId,
+      auditVersion: v.auditVersion || 1,
+      createdAt: v.createdAt,
+      estimatedMonthlySavings: v.estimatedMonthlySavings,
+      isLatestVersion: !!v.isLatestVersion
+    }));
+
+    // Return full audit including pricing snapshot and input stack
+    // This data is used by re-audit flow (Batch 2)
+    return res.json({
+      success: true,
+      data: {
+        auditId: audit.auditId,
+        createdAt: audit.createdAt,
+        email: audit.email,
+        companyName: audit.companyName,
+        teamSize: audit.teamSize,
+        totalMonthlySpend: audit.totalMonthlySpend,
+        optimizedMonthlySpend: audit.optimizedMonthlySpend,
+        estimatedMonthlySavings: audit.estimatedMonthlySavings,
+        estimatedAnnualSavings: audit.estimatedAnnualSavings,
+        savingsPercentage: audit.savingsPercentage,
+        insights: audit.insights,
+        aiSummary: audit.aiSummary,
+        publicUrl: audit.publicUrl,
+        tools: audit.tools,
+        
+        // Batch 1 fields
+        inputStack: audit.inputStack,
+        pricingSnapshot: audit.pricingSnapshot,
+        isLatestVersion: audit.isLatestVersion,
+        auditVersion: audit.auditVersion,
+        reAuditOf: audit.reAuditOf,
+        pricingChanged: audit.pricingChanged,
+        outdatedReason: audit.outdatedReason,
+        allVersions,
+      },
+    });
+  } catch (err) {
+    console.error('GET /api/audits/:id/full error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to fetch audit' });
+  }
+});
+
+// ── POST /api/audits/:id/re-audit ───────────────────────────
+// Batch 3: Re-audit generation endpoint
+router.post('/:id/re-audit', auditLimiter, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Verify original audit exists
+    const originalAudit = await AuditModel.findOne({ auditId: id });
+    if (!originalAudit) {
+      return res.status(404).json({ success: false, error: 'Audit not found' });
+    }
+
+    const frontendUrl = getFrontendUrl();
+    const publicUrlBase = frontendUrl;
+
+    const { newAudit, diff } = await runReAudit(id, publicUrlBase);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        newAuditId: newAudit.auditId,
+        newAudit,
+        diff,
+      },
+    });
+  } catch (err) {
+    console.error(`POST /api/audits/${req.params.id}/re-audit error:`, err);
+    return res.status(500).json({
+      success: false,
+      error: err instanceof Error ? err.message : 'Failed to re-audit',
+    });
+  }
+});
+
+// ── GET /api/audits/:id/diff ─────────────────────────────────
+// Batch 3: Diff retrieval endpoint
+// Compares the requested audit against the previous version in its chain.
+// Supports ?compareWith=root to force comparison against the v1 baseline.
+router.get('/:id/diff', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const compareWith = (req.query.compareWith as string) || 'previous';
+    const audit = await AuditModel.findOne({ auditId: id });
+
+    if (!audit) {
+      return res.status(404).json({ success: false, error: 'Audit not found' });
+    }
+
+    let oldAudit = null;
+    let newAudit = null;
+
+    // Resolve the root audit ID for this chain
+    const rootAuditId = audit.reAuditOf || audit.auditId;
+
+    if (audit.reAuditOf) {
+      // The requested ID is a re-audit (v2+). It's the "new" side of the comparison.
+      newAudit = audit;
+
+      if (compareWith === 'root') {
+        // Force comparison against the v1 baseline
+        oldAudit = await AuditModel.findOne({ auditId: audit.reAuditOf });
+      } else {
+        // Default: compare against the PREVIOUS version (v(n-1))
+        const currentVersion = audit.auditVersion || 2;
+        oldAudit = await AuditModel.findOne({
+          $or: [{ auditId: rootAuditId }, { reAuditOf: rootAuditId }],
+          auditVersion: currentVersion - 1,
+        });
+        // Fallback: if previous version not found, compare against root
+        if (!oldAudit) {
+          oldAudit = await AuditModel.findOne({ auditId: audit.reAuditOf });
+        }
+      }
+    } else {
+      // The requested ID is the root original audit.
+      oldAudit = audit;
+      
+      // Automatically find the latest version in the chain (v_latest) to compare with
+      const latestVersion = await AuditModel.findOne({
+        reAuditOf: audit.auditId,
+        isLatestVersion: true,
+      });
+      if (latestVersion) {
+        newAudit = latestVersion;
+      } else {
+        newAudit = audit;
+      }
+    }
+
+    if (!oldAudit || !newAudit) {
+      return res.status(404).json({
+        success: false,
+        error: 'Comparison versions not found. Ensure this audit has been re-audited.',
+      });
+    }
+
+    const diff = generateAuditDiff(oldAudit, newAudit);
+
+    // Fetch the FULL version chain for the timeline
+    const allVersionsDocs = await AuditModel.find({
+      $or: [{ auditId: rootAuditId }, { reAuditOf: rootAuditId }],
+    })
+      .select('auditId auditVersion createdAt estimatedMonthlySavings isLatestVersion')
+      .sort({ auditVersion: 1 })
+      .exec();
+
+    return res.json({
+      success: true,
+      data: {
+        oldAuditId: oldAudit.auditId,
+        newAuditId: newAudit.auditId,
+        oldAudit,
+        newAudit,
+        diff,
+        allVersions: allVersionsDocs.map(v => ({
+          auditId: v.auditId,
+          auditVersion: v.auditVersion || 1,
+          createdAt: v.createdAt,
+          estimatedMonthlySavings: v.estimatedMonthlySavings,
+          isLatestVersion: !!v.isLatestVersion
+        }))
+      },
+    });
+  } catch (err) {
+    console.error(`GET /api/audits/${req.params.id}/diff error:`, err);
+    return res.status(500).json({ success: false, error: 'Failed to retrieve diff' });
+  }
+});
+
+// ── POST /api/audits/detect-pricing-changes ──────────────────
+// Batch 2: Manual detection endpoint
+// Scans all audits and detects which ones are affected by pricing changes
+// Compares each audit's pricing snapshot against current catalog pricing
+// Note: Called manually (no cron job) for simplicity and easier debugging
+router.post('/detect-pricing-changes', async (req: Request, res: Response) => {
+  try {
+    console.log('🔍 Starting pricing change detection...');
+    const result = await scanAuditsForPricingChanges();
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        error: result.error || 'Detection failed',
+      });
+    }
+    return res.json({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    console.error('POST /api/audits/detect-pricing-changes error:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to detect pricing changes',
+    });
+  }
+});
+
+// GET alias for manual browser triggering/easier curls
+router.get('/detect-pricing-changes', async (req: Request, res: Response) => {
+  try {
+    console.log('🔍 Starting pricing change detection via GET...');
+    const result = await scanAuditsForPricingChanges();
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        error: result.error || 'Detection failed',
+      });
+    }
+    return res.json({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    console.error('GET /api/audits/detect-pricing-changes error:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to detect pricing changes',
+    });
   }
 });
 

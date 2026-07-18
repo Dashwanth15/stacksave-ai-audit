@@ -1,21 +1,23 @@
 # Render Deployment Configuration — StackSave AI Audit Frontend
-# This file configures automatic deployment from GitHub to Render
+# Deployed as a web service (not static) so server.js handles:
+#   - Correct MIME types for CSS/JS assets
+#   - SPA fallback routing (React Router)
+#   - /api proxy to backend
 
 services:
   - type: web
-    name: stacksave-ai-audit
+    name: stacksave-round2-frontend
     runtime: node
-    plan: free
-    region: oregon
     buildCommand: npm install && npm run build
-    startCommand: npm run start
+    startCommand: node server.js
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://stacksave-backend.onrender.com/api
-        # IMPORTANT: Update this value after deploying the backend
-    # Health check
-    healthcheckPath: /
-    # Auto-deploy from main branch
-    branch: main
+        value: https://stacksave-round2-backend.onrender.com/api
+      - key: VITE_API_URL
+        value: https://stacksave-round2-backend.onrender.com/api
+      - key: BACKEND_URL
+        value: https://stacksave-round2-backend.onrender.com
+    # Auto-deploy from round-2-reaudit branch
+    branch: round-2-reaudit
     # Build from the frontend directory
     rootDirectory: frontend

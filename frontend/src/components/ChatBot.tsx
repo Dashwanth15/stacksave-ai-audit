@@ -5,7 +5,25 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:5000';
+const getApiBase = (): string => {
+  const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
+  if (envUrl) {
+    return envUrl.replace('/api', '');
+  }
+  // Auto-detect production environment to avoid build-time env configuration issues
+  if (typeof window !== 'undefined' && window.location) {
+    const hostname = window.location.hostname;
+    if (hostname.includes('stacksave-round2-frontend.onrender.com')) {
+      return 'https://stacksave-round2-backend.onrender.com';
+    }
+    if (hostname.includes('onrender.com')) {
+      return window.location.origin.replace('-frontend', '-backend');
+    }
+  }
+  return 'http://localhost:5000';
+};
+
+const API_BASE = getApiBase();
 
 interface Message {
   role: 'user' | 'assistant';
