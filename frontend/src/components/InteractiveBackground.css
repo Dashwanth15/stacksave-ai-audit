@@ -1,0 +1,155 @@
+﻿/* ══════════════════════════════════════════════════════════════
+   InteractiveBackground.css — StackSave Premium Background
+   ══════════════════════════════════════════════════════════════ */
+
+.interactive-bg-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* ── Keyframes ─────────────────────────────────────────────── */
+
+@keyframes aurora-drift-a {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  35%  { transform: translate3d(2.5%, -1.5%, 0) scale(1.035); }
+  70%  { transform: translate3d(-1.5%, 2%, 0) scale(1.02); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes aurora-drift-b {
+  0%   { transform: translate3d(0, 0, 0) scale(1.03); }
+  40%  { transform: translate3d(-2%, 1.5%, 0) scale(1.015); }
+  80%  { transform: translate3d(1.5%, -1.5%, 0) scale(1.03); }
+  100% { transform: translate3d(0, 0, 0) scale(1.03); }
+}
+
+/* ── Layer 1: Aurora Mesh Gradients ─────────────────────────── */
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.aurora-blob--a {
+  width: 65vw;
+  height: 65vw;
+  max-width: 950px;
+  max-height: 950px;
+  top: -30%;
+  left: -18%;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(16, 185, 129, 0.08) 0%,
+    rgba(16, 185, 129, 0.02) 55%,
+    transparent 80%
+  );
+  filter: blur(90px);
+  animation: aurora-drift-a 38s ease-in-out infinite;
+}
+
+.aurora-blob--b {
+  width: 60vw;
+  height: 60vw;
+  max-width: 850px;
+  max-height: 850px;
+  top: -8%;
+  right: -12%;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(30, 58, 95, 0.07) 0%,
+    rgba(59, 130, 246, 0.02) 50%,
+    transparent 78%
+  );
+  filter: blur(100px);
+  animation: aurora-drift-b 45s ease-in-out infinite;
+}
+
+/* ── Layer 2: Static Two-Level Grid (32px minor / 128px major) ─ */
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  /* Grid is completely static — no transform or animation */
+  background-image:
+    linear-gradient(rgba(30, 58, 95, 0.11) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 58, 95, 0.11) 1px, transparent 1px),
+    linear-gradient(rgba(30, 58, 95, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 58, 95, 0.055) 1px, transparent 1px);
+  background-size:
+    128px 128px, 128px 128px,
+    32px 32px, 32px 32px;
+  /* Soft vignette fade only at very outer edges */
+  mask-image: radial-gradient(
+    ellipse 100% 100% at 50% 50%,
+    black 82%,
+    transparent 100%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 100% 100% at 50% 50%,
+    black 82%,
+    transparent 100%
+  );
+}
+
+/* ── Layer 3: Cursor Spotlight ───────────────────────────────── */
+
+.hero-spotlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--spotlight-opacity, 0);
+  will-change: opacity;
+  background: radial-gradient(
+    circle 220px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(16, 185, 129, 0.10) 0%,
+    rgba(30, 58, 95, 0.03) 50%,
+    transparent 100%
+  );
+  mix-blend-mode: color-dodge;
+}
+
+/* ── Layer 4: Card Focal Spotlight ───────────────────────────── */
+
+.hero-card-spotlight {
+  position: absolute;
+  top: 50%;
+  right: 5%;
+  transform: translate(0, -50%);
+  width: 50vw;
+  max-width: 750px;
+  height: 85%;
+  background: radial-gradient(
+    ellipse 60% 70% at 50% 50%,
+    rgba(16, 185, 129, 0.06) 0%,
+    rgba(30, 58, 95, 0.035) 40%,
+    transparent 85%
+  );
+  filter: blur(50px);
+  pointer-events: none;
+}
+
+/* ── Layer 5: Noise Grain ─────────────────────────────────────── */
+
+.hero-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+/* ── Accessibility ──────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob {
+    animation: none !important;
+  }
+  .hero-spotlight {
+    display: none !important;
+  }
+}

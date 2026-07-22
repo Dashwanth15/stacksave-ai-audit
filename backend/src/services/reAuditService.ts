@@ -452,13 +452,16 @@ export async function runReAudit(
     baseUrl
   );
 
-  // Generate updated AI summary asynchronously
+  // Generate updated AI summaries asynchronously
   try {
-    const aiSummary = await generateAuditSummary(auditResult);
+    const aiSummary = await generateAuditSummary(auditResult, 'performance');
+    const aiSummarySavings = await generateAuditSummary(auditResult, 'savings');
     auditResult.aiSummary = aiSummary;
+    auditResult.aiSummarySavings = aiSummarySavings;
   } catch (err) {
     console.error('Error generating AI summary during re-audit:', err);
     auditResult.aiSummary = 'Updated audit pricing summary';
+    auditResult.aiSummarySavings = 'Updated audit pricing summary';
   }
 
   // Capture current pricing snapshot
@@ -482,6 +485,7 @@ export async function runReAudit(
     isHighSavings: auditResult.isHighSavings,
     insights: auditResult.insights,
     aiSummary: auditResult.aiSummary,
+    aiSummarySavings: auditResult.aiSummarySavings,
     publicUrl: auditResult.publicUrl,
     companyName: rootAudit.companyName,
     teamSize: rootAudit.teamSize,

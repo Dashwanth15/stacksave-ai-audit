@@ -40,19 +40,41 @@ export interface AuditRequest {
   companyName?: string;
   useCase: UseCase;
   reAuditOf?: string; // parent audit ID if chaining a new version
+  optimizationGoal?: 'savings' | 'balanced' | 'productivity' | 'governance';
 }
+
+// --- Audit Engine Internals ---
 
 export interface Insight {
   toolId: ToolId;
   toolName: string;
   type: InsightType;
   severity: InsightSeverity;
-  message: string;
-  suggestion: string;
-  reason: string;
+  message: string;        // what's wrong
+  suggestion: string;     // what to do (the clear recommendation)
+  reason: string;         // short explanation
   potentialMonthlySaving: number;
   currentMonthlySpend: number;
   recommendedMonthlySpend: number;
+  
+  // New fields for the revamped recommendation engine
+  strategy?: 'performance' | 'savings' | 'both';
+  recommendationType?: string;
+  confidence?: 'High' | 'Medium' | 'Low';
+  productivityImpact?: 'No Impact' | 'Minimal Impact' | 'Moderate Impact' | 'Major Impact';
+  
+  // Scoring metadata fields
+  confidenceScore?: number;
+  confidenceExplanation?: string[];
+  priorityScore?: number;
+
+  // View Details fields
+  currentSetup?: string;
+  recommendedSetup?: string;
+  detailedReason?: string;
+  tradeoffs?: string;
+  estimatedSavings?: string;
+  decisionLog?: DecisionLog;
 }
 
 export interface AuditResult {
@@ -67,11 +89,13 @@ export interface AuditResult {
   isHighSavings: boolean;
   insights: Insight[];
   aiSummary: string;
+  aiSummarySavings?: string;
   publicUrl: string;
   companyName?: string;
   teamSize: number;
   tools: ToolEntry[];
   useCase?: UseCase;
+  optimizationGoal?: 'savings' | 'balanced' | 'productivity' | 'governance';
 
   // Batch 4 re-audit additions
   pricingChanged?: boolean;
@@ -220,5 +244,32 @@ export interface ReAuditResponse {
   newAudit: AuditResult;
   diff: AuditDiff;
   allVersions?: AuditVersionInfo[];
+}
+
+export interface ProposalEvaluation {
+  id: string;
+  name: string;
+  keptTools: string[];
+  decommissionedTools: string[];
+  monthlyCost: number;
+  monthlySavings: number;
+  workflowCapability: number;
+  capabilityRetention: number;
+  productivityImpact: number;
+  migrationRisk: number;
+  businessValueScore: number;
+  isValid: boolean;
+  acceptedConstraints: string[];
+  failedConstraints: string[];
+}
+
+export interface DecisionLog {
+  strategy: 'performance' | 'savings';
+  useCase: string;
+  baselineScore: number;
+  proposalsEvaluated: ProposalEvaluation[];
+  selectedProposals: string[];
+  finalScore: number;
+  confidence: 'High' | 'Medium' | 'Low';
 }
 

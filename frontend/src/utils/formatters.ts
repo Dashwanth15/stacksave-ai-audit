@@ -38,7 +38,7 @@ export function severityLabel(severity: string): string {
     high: 'High Impact',
     medium: 'Medium Impact',
     low: 'Low Impact',
-    info: 'Info',
+    info: 'Plan Verified',
   };
   return map[severity] || severity;
 }

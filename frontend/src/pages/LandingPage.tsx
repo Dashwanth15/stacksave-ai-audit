@@ -1,7 +1,10 @@
-import { type ReactNode, useEffect, useState } from 'react';
-import { m } from 'framer-motion';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { m, animate } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import LogoLoop from '../components/LogoLoop';
+import Logo from '../components/Logo';
+import InteractiveBackground from '../components/InteractiveBackground';
+import './LandingBackground.css';
 
 const navItems = [
   { label: 'Features', id: 'features' },
@@ -99,7 +102,7 @@ function Section({
       className={`py-20 md:py-24 overflow-hidden ${className}`}
       style={{ scrollMarginTop: '94px', ...style }}
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-16 xl:px-20">{children}</div>
     </section>
   );
 }
@@ -146,8 +149,185 @@ function SectionHeading({
     </div>
   );
 }
+/* ─────────────────────────────────────────────────────────────
+   AuditDemoCard — Premium product reveal with 3D entrance
+───────────────────────────────────────────────────────────── */
+
+/** Animated counting number — counts from 0 to target */
+function CountUp({ to, prefix = '', suffix = '', decimals = 0, duration = 1.2, delay = 0 }: {
+  to: number; prefix?: string; suffix?: string; decimals?: number; duration?: number; delay?: number;
+}) {
+  const nodeRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const node = nodeRef.current;
+    if (!node) return;
+    const t = setTimeout(() => {
+      const controls = animate(0, to, {
+        duration,
+        ease: [0.25, 0.46, 0.45, 0.94],
+        onUpdate(value) {
+          node.textContent = prefix + value.toFixed(decimals) + suffix;
+        },
+      });
+      return () => controls.stop();
+    }, delay * 1000);
+    return () => clearTimeout(t);
+  }, [to, prefix, suffix, decimals, duration, delay]);
+  return <span ref={nodeRef}>{prefix}0{suffix}</span>;
+}
+
+function AuditDemoCard() {
+  const [showRows, setShowRows] = useState(false);
+  const [showGlow, setShowGlow] = useState(false);
+
+  /* Trigger rows + glow after card has fully landed */
+  useEffect(() => {
+    const glowT = setTimeout(() => setShowGlow(true), 1700);
+    const rowsT = setTimeout(() => setShowRows(true), 1900);
+    return () => { clearTimeout(glowT); clearTimeout(rowsT); };
+  }, []);
+
+  const recommendations = [
+    'Duplicate ChatGPT subscription',
+    'Unused Cursor seat',
+  ];
+
+  return (
+    /* perspective wrapper required for rotateY to look 3D */
+    <div style={{ perspective: '1200px', width: '100%', maxWidth: '440px', margin: '0 auto' }}>
+
+      {/* Glow that fades in behind the card after it lands */}
+      <m.div
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={showGlow ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.85 }}
+        transition={{ duration: 1.0, ease: 'easeOut' }}
+        style={{
+          position: 'absolute',
+          inset: '-32px',
+          borderRadius: '56px',
+          background: 'radial-gradient(ellipse at 50% 60%, rgba(16,185,129,0.18) 0%, rgba(30,58,95,0.08) 50%, transparent 80%)',
+          filter: 'blur(32px)',
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* The card itself — 3D spin entrance */}
+      <m.div
+        initial={{
+          opacity: 0,
+          scale: 0.75,
+          rotateY: 360,
+          rotateX: 15,
+          filter: 'blur(10px)',
+        }}
+        animate={{
+          opacity: 1,
+          scale: 1,
+          rotateY: [-5, 0],   /* overshoot then settle */
+          rotateX: 0,
+          filter: 'blur(0px)',
+        }}
+        transition={{
+          opacity:  { duration: 0.6, ease: 'easeOut' },
+          scale:    { duration: 1.6, ease: [0.16, 1, 0.3, 1] },
+          rotateY:  { duration: 1.6, ease: [0.16, 1, 0.3, 1], times: [0, 1] },
+          rotateX:  { duration: 1.6, ease: [0.16, 1, 0.3, 1] },
+          filter:   { duration: 0.8, ease: 'easeOut' },
+        }}
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          transformStyle: 'preserve-3d',
+          borderRadius: '28px',
+          border: '1px solid var(--color-border)',
+          background: 'var(--color-bg-card)',
+          boxShadow: '0 32px 80px -12px rgba(30,58,95,0.18), 0 4px 16px -4px rgba(30,58,95,0.10)',
+          overflow: 'hidden',
+          width: '100%',
+        }}
+      >
+        {/* Browser chrome bar */}
+        <div className="px-4 py-3 flex items-center justify-between border-b" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+          </div>
+          <span className="text-[10px] font-mono text-slate-400">stacksave.ai/summary</span>
+          <div className="w-8" />
+        </div>
+
+        <div className="p-5 space-y-4">
+          <span className="text-[10px] uppercase tracking-[0.32em] font-semibold text-slate-400">Example AI Audit</span>
+
+          {/* Spend rows with counting numbers */}
+          <div className="space-y-3">
+            <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
+              <div className="text-[9px] uppercase tracking-[0.28em] text-slate-400">Current AI Spend</div>
+              <div className="mt-2 text-3xl font-semibold text-[var(--color-text-heading)]">
+                $<CountUp to={120} suffix="/mo" delay={1.0} duration={0.8} />
+              </div>
+            </div>
+            <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
+              <div className="text-[9px] uppercase tracking-[0.28em] text-slate-400">Optimized AI Spend</div>
+              <div className="mt-2 text-3xl font-semibold text-[var(--color-success)]">
+                $<CountUp to={80} suffix="/mo" delay={1.1} duration={0.8} />
+              </div>
+            </div>
+          </div>
+
+          {/* Savings highlight */}
+          <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-4" style={{ borderColor: 'var(--color-border)' }}>
+            <div className="text-[10px] uppercase tracking-[0.28em] text-slate-400">You Save</div>
+            <div className="mt-2 text-4xl font-extrabold tracking-tight text-[var(--color-primary)]">
+              $<CountUp to={40} delay={1.3} duration={0.7} />
+              <span className="text-base font-semibold text-slate-500">/month</span>
+            </div>
+          </div>
+
+          {/* Waste reduction label */}
+          <div className="flex items-center justify-between text-sm font-semibold text-[var(--color-text-heading)]">
+            <span>Waste reduction</span>
+            <m.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.6, duration: 0.4 }}
+              className="text-[var(--color-success)]"
+            >
+              33%
+            </m.span>
+          </div>
+
+          {/* Recommendation rows — staggered reveal */}
+          <div className="space-y-2">
+            {recommendations.map((item, index) => (
+              <m.div
+                key={item}
+                initial={{ opacity: 0, x: 16 }}
+                animate={showRows ? { opacity: 1, x: 0 } : { opacity: 0, x: 16 }}
+                transition={{
+                  delay: index * 0.18,
+                  duration: 0.45,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3"
+              >
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-success-bg)] text-[var(--color-success)] font-semibold text-sm">
+                  ✓
+                </span>
+                <p className="text-sm leading-snug text-[var(--color-text-heading)]">{item}</p>
+              </m.div>
+            ))}
+          </div>
+        </div>
+      </m.div>
+    </div>
+  );
+}
 
 export default function LandingPage() {
+
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('features');
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -198,26 +378,21 @@ export default function LandingPage() {
         className={`sticky top-0 z-50 border-b transition duration-300 ${hasScrolled ? 'border-slate-200 bg-white/95 shadow-sm backdrop-blur-xl' : 'border-transparent bg-white/90 shadow-none'}`}
         style={{ WebkitBackdropFilter: 'blur(18px)' }}
       >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-[76px] flex items-center gap-6">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-16 xl:px-20 h-[84px] flex items-center">
           <button
             onClick={() => navigate('/')}
-            className="flex items-center gap-3 group"
+            className="focus:outline-none"
             aria-label="StackSave home"
           >
-            <span className="text-xl font-bold tracking-tight text-slate-950 transition-colors duration-200 group-hover:text-slate-900">
-              StackSave
-            </span>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-slate-500">
-              AI Cost Optimization
-            </span>
+            <Logo size="lg" asDiv />
           </button>
 
-          <nav className="hidden md:flex items-center gap-8 ml-6" aria-label="Main navigation">
+          <nav className="hidden md:flex items-center gap-[36px] lg:gap-[40px] ml-[40px] lg:ml-[80px]" aria-label="Main navigation">
             {navItems.map((item) => (
               <a
                 key={item.id}
                 href={`#${item.id}`}
-                className={`text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-300 ${activeSection === item.id ? 'text-slate-950' : 'text-slate-600 hover:text-slate-900'}`}
+                className={`text-[15px] font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-300 hover:-translate-y-0.5 ${activeSection === item.id ? 'text-slate-950' : 'text-slate-500 hover:text-slate-900'}`}
                 aria-current={activeSection === item.id ? 'page' : undefined}
               >
                 {item.label}
@@ -225,24 +400,28 @@ export default function LandingPage() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-4">
+          <div className="ml-auto flex items-center ml-[32px]">
             <button
               onClick={() => navigate('/audit')}
-              className="btn-primary text-sm py-2 px-5"
+              className="h-[48px] px-6 flex items-center justify-center rounded-xl font-medium text-[15px] transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5"
+              style={{ background: 'var(--color-primary)', color: '#ffffff' }}
               aria-label="Start free audit"
             >
-              Start Free Audit →
+              Start Free Audit <span className="ml-2 font-normal opacity-70">→</span>
             </button>
           </div>
         </div>
       </header>
 
       {/* ── 1. Hero with compact preview teaser ─────────── */}
-      <section className="pt-12 pb-16 md:pt-16 md:pb-20" style={{ borderBottom: '1px solid var(--color-border)' }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 items-center">
+      <section className="hero-section pt-12 pb-16 md:pt-16 md:pb-20" style={{ borderBottom: '1px solid var(--color-border)' }}>
+        {/* Layered continuous background canvas with mouse interaction */}
+        <InteractiveBackground />
 
-            {/* Left: Headline & CTA */}
+        <div className="hero-content max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-16 xl:px-20">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 xl:gap-24 items-center">
+
+             {/* Left: Headline & CTA */}
             <div className="lg:col-span-6 space-y-6 text-left">
               <div className="space-y-4">
                 <span
@@ -287,98 +466,34 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Right: Compact AI Spend Preview Card */}
-            <div className="lg:col-span-6">
-              <m.div
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="rounded-[28px] border max-w-md mx-auto"
-                style={{
-                  background: 'var(--color-bg-card)',
-                  borderColor: 'var(--color-border)',
-                  boxShadow: 'var(--shadow-lg)',
-                  overflow: 'hidden',
-                }}
-              >
-                <div className="px-4 py-3 flex items-center justify-between border-b" style={{ borderColor: 'var(--color-border)' }}>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                  </div>
-                  <span className="text-[10px] font-mono-financial text-slate-400">stacksave.ai/summary</span>
-                  <div className="w-8" />
+             {/* Right: Premium AI Audit Demo Card with entrance animation */}
+            <div className="lg:col-span-6 lg:flex lg:justify-end">
+              <div className="hero-card-stage w-full">
+                <div className="hero-card-wrapper mx-auto lg:mx-0">
+                  <AuditDemoCard />
                 </div>
-
-                <div className="p-5 space-y-4">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.32em] font-semibold text-slate-400">Example AI Audit</span>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
-                      <div className="text-[9px] uppercase tracking-[0.28em] text-slate-400">Current AI Spend</div>
-                      <div className="mt-2 text-3xl font-semibold text-[var(--color-text-heading)]">$120/mo</div>
-                    </div>
-                    <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
-                      <div className="text-[9px] uppercase tracking-[0.28em] text-slate-400">Optimized AI Spend</div>
-                      <div className="mt-2 text-3xl font-semibold text-[var(--color-success)]">$80/mo</div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-4" style={{ borderColor: 'var(--color-border)' }}>
-                    <div className="text-[10px] uppercase tracking-[0.28em] text-slate-400">You Save</div>
-                    <div className="mt-2 text-4xl font-extrabold tracking-tight text-[var(--color-primary)]">$40<span className="text-base font-semibold text-slate-500">/month</span></div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm font-semibold text-[var(--color-text-heading)]">
-                    <span>Waste reduction</span>
-                    <span className="text-[var(--color-success)]">33%</span>
-                  </div>
-
-                  <div className="space-y-2">
-                    {[
-                      'Duplicate ChatGPT subscription',
-                      'Unused Cursor seat',
-                    ].map((item, index) => (
-                      <m.div
-                        key={item}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.08 * index, duration: 0.32 }}
-                        className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3"
-                      >
-                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-success-bg)] text-[var(--color-success)] font-semibold">
-                          ✓
-                        </span>
-                        <p className="text-sm leading-snug text-[var(--color-text-heading)]">{item}</p>
-                      </m.div>
-                    ))}
-                  </div>
-                </div>
-              </m.div>
+              </div>
             </div>
-
           </div>
         </div>
       </section>
 
       {/* ── Logo Loop Section (Supported AI Platforms) ── */}
       <section
-        className="py-12 border-b"
-        style={{ background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)' }}
+        className="py-12 border-b section-white"
+        style={{ borderColor: 'var(--color-border)' }}
       >
-        <div className="max-w-6xl mx-auto px-4 text-center space-y-6">
+        <div className="max-w-[1800px] w-[95vw] mx-auto text-center space-y-6 overflow-hidden">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
             Supported AI Platforms
           </p>
-          <div className="py-2">
+          <div className="py-2 w-full">
             <LogoLoop
               logos={techLogos}
               speed={30}
-              gap={24}
+              gap={36}
               logoHeight={40}
+              fadeOutColor="#ffffff"
               renderItem={(item) => (
                 <div className="logoloop__card">
                   <img
@@ -397,7 +512,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── 2. Problem Section ──────────────────────────────── */}
-      <Section style={{ borderBottom: '1px solid var(--color-border)' }}>
+      <Section className="section-white" style={{ borderBottom: '1px solid var(--color-border)' }}>
         <SectionHeading
           overline="The Problem"
           title="Why your AI software bill is leaking"
@@ -428,6 +543,7 @@ export default function LandingPage() {
       {/* ── 3. About StackSave ─────────────────────────────── */}
       <Section
         id="about"
+        className="section-offwhite"
         style={{ borderBottom: '1px solid var(--color-border)' }}
       >
         <SectionHeading
@@ -458,7 +574,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ── 4. How it works ──────────────────────────────────── */}
-      <Section id="how-it-works" style={{ borderBottom: '1px solid var(--color-border)' }}>
+      <Section id="how-it-works" className="section-white" style={{ borderBottom: '1px solid var(--color-border)' }}>
         <SectionHeading
           overline="The Flow"
           title="From stack inputs to savings reports"
@@ -503,8 +619,8 @@ export default function LandingPage() {
 
       {/* ── 4. Product Preview (Audit Report Walkthrough) ───── */}
       <Section
+        className="section-offwhite"
         style={{
-          background: 'var(--color-bg-surface)',
           borderBottom: '1px solid var(--color-border)',
         }}
       >
@@ -648,7 +764,8 @@ export default function LandingPage() {
       {/* ── 5. Features / Audit Rules ───────────────────────── */}
       <Section
         id="features"
-        style={{ background: 'var(--color-bg-surface)', borderBottom: '1px solid var(--color-border)' }}
+        className="section-white"
+        style={{ borderBottom: '1px solid var(--color-border)' }}
       >
         <SectionHeading
           overline="Audit Engine"
@@ -759,7 +876,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ── 6. FAQ ─────────────────────────────────────────── */}
-      <Section id="faq" style={{ borderBottom: '1px solid var(--color-border)' }}>
+      <Section id="faq" className="section-offwhite" style={{ borderBottom: '1px solid var(--color-border)' }}>
         <SectionHeading
           overline="FAQ"
           title="Quick answers before your audit starts"
@@ -794,7 +911,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ── 7. Testimonials / Quote ─────────────────────────── */}
-      <Section style={{ borderBottom: '1px solid var(--color-border)' }}>
+      <Section className="section-white" style={{ borderBottom: '1px solid var(--color-border)' }}>
         <m.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -878,12 +995,9 @@ export default function LandingPage() {
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <span
-              className="font-bold text-sm tracking-tight"
-              style={{ color: '#F8FAFC', letterSpacing: '-0.02em' }}
-            >
-              StackSave
-            </span>
+            <div className="brightness-0 invert opacity-90">
+              <Logo asDiv />
+            </div>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
             <span style={{ color: 'rgba(255,255,255,0.4)' }}>
               AI spend audit & optimization dashboard

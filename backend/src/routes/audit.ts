@@ -68,9 +68,11 @@ router.post('/', auditLimiter, async (req: Request, res: Response) => {
     // Pass empty AI summary first, then get it asynchronously
     const auditResult = runAudit(body, '', publicUrlBase);
 
-    // Generate AI summary (Grok) — runs after audit, so we have real numbers
-    const aiSummary = await generateAuditSummary(auditResult);
+    // Generate AI summaries (Grok) — runs after audit, so we have real numbers
+    const aiSummary = await generateAuditSummary(auditResult, 'performance');
+    const aiSummarySavings = await generateAuditSummary(auditResult, 'savings');
     auditResult.aiSummary = aiSummary;
+    auditResult.aiSummarySavings = aiSummarySavings;
 
     // ── Batch 1: Capture Pricing Snapshot ────────────────────
     const pricingSnapshot = capturePricingSnapshot();
@@ -87,11 +89,13 @@ router.post('/', auditLimiter, async (req: Request, res: Response) => {
       isHighSavings: auditResult.isHighSavings,
       insights: auditResult.insights,
       aiSummary: auditResult.aiSummary,
+      aiSummarySavings: auditResult.aiSummarySavings,
       publicUrl: auditResult.publicUrl,
       companyName: body.companyName || auditResult.companyName,
       teamSize: auditResult.teamSize,
       tools: auditResult.tools,
       useCase: body.useCase,
+      optimizationGoal: body.optimizationGoal || 'balanced',
       
       // Batch 1: New fields
       email: body.email,                    // User email for notifications

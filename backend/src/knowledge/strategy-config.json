@@ -1,0 +1,28 @@
+{
+  "performance": {
+    "minimumCapability": 7,
+    "maximumCapabilityLoss": 2,
+    "minimumRetention": 95,
+    "minimumWeightProtected": 6,
+    "weights": {
+      "workflowCapability": 0.45,
+      "monthlyCost": 0.05,
+      "capabilityRetention": 0.20,
+      "productivityImpact": 0.20,
+      "migrationRisk": 0.10
+    }
+  },
+  "savings": {
+    "minimumCapability": 6,
+    "maximumCapabilityLoss": 4,
+    "minimumRetention": 85,
+    "minimumWeightProtected": 9,
+    "weights": {
+      "workflowCapability": 0.20,
+      "monthlyCost": 0.45,
+      "capabilityRetention": 0.20,
+      "productivityImpact": 0.10,
+      "migrationRisk": 0.05
+    }
+  }
+}

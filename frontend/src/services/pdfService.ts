@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import type { AuditResult, ToolEntry, AuditDiff } from '../types';
 
-export function generateAuditPDF(audit: AuditResult): void {
+export function generateAuditPDF(audit: AuditResult, strategy: 'performance' | 'savings' = 'performance'): void {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -111,14 +111,15 @@ export function generateAuditPDF(audit: AuditResult): void {
   yPosition += 12;
 
   // ── AI SUMMARY SECTION ───────────────────────────────────────
-  if (audit.aiSummary) {
+  const selectedSummary = strategy === 'performance' ? audit.aiSummary : (audit.aiSummarySavings || audit.aiSummary);
+  if (selectedSummary) {
     checkPageBreak(50);
     
-    addText('AI Summary', margin, yPosition, 13, brandDark, true);
+    addText(strategy === 'performance' ? 'CTO Executive Briefing' : 'CFO Cost Optimization Summary', margin, yPosition, 13, brandDark, true);
     yPosition += 8;
 
     // Premium card for AI summary
-    const summaryLines = doc.splitTextToSize(audit.aiSummary, contentWidth - 20);
+    const summaryLines = doc.splitTextToSize(selectedSummary, contentWidth - 20);
     const summaryHeight = summaryLines.length * 5 + 24;
     addCard(yPosition, summaryHeight);
     
@@ -127,7 +128,9 @@ export function generateAuditPDF(audit: AuditResult): void {
   }
 
   // ── RECOMMENDATIONS SECTION ─────────────────────────────────
-  const insightsWithSavings = (audit.insights || []).filter(i => i.potentialMonthlySaving > 0);
+  const insightsWithSavings = (audit.insights || []).filter(
+    (i) => i.potentialMonthlySaving > 0 && (!i.strategy || i.strategy === strategy || i.strategy === 'both')
+  );
   
   if (insightsWithSavings.length > 0) {
     checkPageBreak(35);

@@ -19,67 +19,40 @@ function getGroqClient(): OpenAI {
 }
 
 // ── Main Export ───────────────────────────────────────────────
-export async function generateAuditSummary(audit: AuditResult): Promise<string> {
-  try {
-    return await callGroqAPI(audit);
-  } catch (err) {
-    console.warn('⚠️  Groq API failed, using template summary:', (err as Error).message);
-    return generateTemplateSummary(audit);
-  }
-}
+export async function generateAuditSummary(audit: AuditResult, strategy: 'performance' | 'savings'): Promise<string> {
+  const filteredInsights = audit.insights.filter(
+    (i) => !i.strategy || i.strategy === strategy || i.strategy === 'both'
+  );
 
-// ── Groq API Call ─────────────────────────────────────────────
-async function callGroqAPI(audit: AuditResult): Promise<string> {
-  const client = getGroqClient();
+  const optimizationInsights = filteredInsights.filter((i) => i.severity !== 'info');
+  const validatedInsights = filteredInsights.filter((i) => i.severity === 'info');
 
-  const topInsights = audit.insights
-    .slice(0, 3)
-    .map((i) => `- ${i.toolName}: ${i.suggestion} (saves $${i.potentialMonthlySaving}/mo)`)
-    .join('\n');
+  const totalSpend = audit.totalMonthlySpend;
+  const potentialSavings = optimizationInsights.reduce((sum, i) => sum + i.potentialMonthlySaving, 0);
+  const optCount = optimizationInsights.length;
+  const valCount = validatedInsights.length;
 
-  const systemPrompt = `You are a senior financial analyst specializing in SaaS and AI tool cost optimization for startups. You write clear, specific, and actionable 80-120 word summaries of AI spend audits. Your tone is direct, credible, and helpful — like advice from a trusted CFO, not a salesperson. Never use filler phrases like "as you can see" or "it's clear that". Always cite specific dollar amounts from the data provided.`;
+  const overlapInsights = filteredInsights.filter((i) => i.type === 'overlapping_tools');
+  const hasOverlap = overlapInsights.length > 0;
 
-  const userPrompt = `Write an 80-120 word personalized audit summary for a startup with the following profile:
+  // Compute a deterministic overall stack health score
+  let healthScore = 100;
+  if (hasOverlap) healthScore -= 25;
+  if (optCount > 0) healthScore -= 15 * optCount;
+  healthScore = Math.max(healthScore, 10);
 
-Team size: ${audit.teamSize} people
-Total monthly AI spend: $${audit.totalMonthlySpend}
-Estimated monthly savings: $${audit.estimatedMonthlySavings}
-Estimated annual savings: $${audit.estimatedAnnualSavings}
-Savings percentage: ${audit.savingsPercentage}%
-${audit.companyName ? `Company: ${audit.companyName}` : ''}
-${audit.isAlreadyOptimal ? 'Note: This team is spending efficiently — no major savings found.' : ''}
-${audit.isHighSavings ? 'Note: This is a high-savings case — significant optimization opportunity exists.' : ''}
+  let healthLabel = 'Excellent';
+  if (healthScore < 50) healthLabel = 'Critical Attention Required';
+  else if (healthScore < 80) healthLabel = 'Needs Optimization';
 
-Top optimization opportunities:
-${topInsights || 'Stack is already well-optimized.'}
+  let summary = '';
+  const goalText = audit.optimizationGoal ? `under the ${audit.optimizationGoal} goal` : '';
 
-Write the summary in second person ("Your team..."). Be specific about the dollar amounts. If they are already optimal, acknowledge it genuinely — don't manufacture urgency. End with one concrete next step.`;
-
-  const response = await client.chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    max_tokens: 200,
-    temperature: 0.7,
-  });
-
-  const content = response.choices[0]?.message?.content;
-  if (!content) throw new Error('Empty response from Groq API');
-
-  return content.trim();
-}
-
-// ── Template Fallback ─────────────────────────────────────────
-// Used when API is unavailable. Still personalized with real numbers.
-function generateTemplateSummary(audit: AuditResult): string {
-  if (audit.isAlreadyOptimal) {
-    return `Your team of ${audit.teamSize} is spending $${audit.totalMonthlySpend}/month on AI tools — and based on this audit, you're spending it well. Your current stack appears to be appropriately sized for your team and use cases. We didn't find any major inefficiencies. Keep an eye on seat counts as your team grows, and revisit this audit if you add new tools or change your primary use case. Small teams that right-size early avoid the budget bloat that's common at the Series A stage.`;
+  if (strategy === 'performance') {
+    summary = `Our expert architecture audit evaluates a stack of ${audit.tools.length} active platforms for your team of ${audit.teamSize} developers ${goalText}. Currently, your total monthly spend is $${totalSpend}. We identified ${optCount} optimization opportunities yielding a total potential saving of $${potentialSavings}/month, while verifying ${valCount} plan configurations as highly optimal. Overall stack health is graded at ${healthLabel} (${healthScore}% efficiency). ${hasOverlap ? `Redundant capability overlap was detected in the active workspace. We recommend consolidating duplicate services to reduce context-switching latency and focus developer experience.` : 'Your active software subscriptions show zero redundant capability overlap, maintaining high developer experience and velocity.'}`;
+  } else {
+    summary = `Our startup finance spend audit evaluates a stack of ${audit.tools.length} active platforms for your team of ${audit.teamSize} ${goalText}. Currently, your total monthly spend is $${totalSpend}. We identified ${optCount} cost optimization opportunities yielding a potential saving of $${potentialSavings}/month ($${potentialSavings * 12}/year), representing a ${audit.savingsPercentage}% spend reduction. We have validated ${valCount} of your plans as optimal under this goal. Overall stack health is graded at ${healthLabel} (${healthScore}% efficiency). Consolidating redundant workspaces and committing to annual billing cycles represent immediate opportunities to extend operational runway and improve SaaS ROI.`;
   }
 
-  const topInsight = audit.insights[0];
-  const toolCount = audit.tools.length;
-
-  return `Your team of ${audit.teamSize} is spending $${audit.totalMonthlySpend}/month across ${toolCount} AI tool${toolCount > 1 ? 's' : ''}. This audit identified $${audit.estimatedMonthlySavings}/month in potential savings — $${audit.estimatedAnnualSavings}/year — without reducing your team's capabilities. ${topInsight ? `The biggest opportunity: ${topInsight.suggestion}. ${topInsight.reason}` : ''} Implementing these changes would bring your monthly AI spend to approximately $${audit.optimizedMonthlySpend} — a ${audit.savingsPercentage}% reduction. Review each suggestion with your team and prioritize the highest-impact items first.`;
+  return Promise.resolve(summary);
 }

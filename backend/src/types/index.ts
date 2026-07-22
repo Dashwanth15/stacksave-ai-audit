@@ -41,6 +41,7 @@ export interface AuditRequest {
   companyName?: string;
   useCase: UseCase; // primary use case for the team
   reAuditOf?: string; // parent audit ID if chaining a new version
+  optimizationGoal?: 'savings' | 'balanced' | 'productivity' | 'governance';
 }
 
 // --- Audit Engine Internals ---
@@ -51,11 +52,30 @@ export interface Insight {
   type: InsightType;
   severity: InsightSeverity;
   message: string;        // what's wrong
-  suggestion: string;     // what to do
-  reason: string;         // 1-sentence finance-defensible reasoning
+  suggestion: string;     // what to do (the clear recommendation)
+  reason: string;         // short explanation
   potentialMonthlySaving: number;
   currentMonthlySpend: number;
   recommendedMonthlySpend: number;
+  
+  // New fields for the revamped recommendation engine
+  strategy?: 'performance' | 'savings' | 'both';
+  recommendationType?: string;
+  confidence?: 'High' | 'Medium' | 'Low';
+  productivityImpact?: 'No Impact' | 'Minimal Impact' | 'Moderate Impact' | 'Major Impact';
+  
+  // Scoring metadata fields
+  confidenceScore?: number;
+  confidenceExplanation?: string[];
+  priorityScore?: number;
+
+  // View Details fields
+  currentSetup?: string;
+  recommendedSetup?: string;
+  detailedReason?: string;
+  tradeoffs?: string;
+  estimatedSavings?: string;
+  decisionLog?: DecisionLog;
 }
 
 export interface AuditResult {
@@ -70,11 +90,14 @@ export interface AuditResult {
   isHighSavings: boolean;          // savings > $500/mo → show Credex CTA
   insights: Insight[];
   aiSummary: string;
+  aiSummarySavings?: string;
   publicUrl: string;
   // stored but stripped from public URL
   companyName?: string;
   teamSize: number;
   tools: ToolEntry[];
+  useCase?: UseCase;
+  optimizationGoal?: 'savings' | 'balanced' | 'productivity' | 'governance';
 }
 
 // --- API Response Shapes ---
@@ -264,4 +287,31 @@ export interface StackDiff {
   newOptCount: number;
   optCountDelta: number;
   summaries: string[];
+}
+
+export interface ProposalEvaluation {
+  id: string;
+  name: string;
+  keptTools: string[];
+  decommissionedTools: string[];
+  monthlyCost: number;
+  monthlySavings: number;
+  workflowCapability: number;
+  capabilityRetention: number;
+  productivityImpact: number;
+  migrationRisk: number;
+  businessValueScore: number;
+  isValid: boolean;
+  acceptedConstraints: string[];
+  failedConstraints: string[];
+}
+
+export interface DecisionLog {
+  strategy: 'performance' | 'savings';
+  useCase: string;
+  baselineScore: number;
+  proposalsEvaluated: ProposalEvaluation[];
+  selectedProposals: string[];
+  finalScore: number;
+  confidence: 'High' | 'Medium' | 'Low';
 }

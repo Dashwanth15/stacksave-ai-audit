@@ -16,6 +16,7 @@ import {
   insightTypeLabel,
   severityLabel,
 } from '../utils/formatters';
+import Logo from '../components/Logo';
 
 interface ReAuditDiffPageProps {
   auditId?: string;
@@ -201,10 +202,9 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className="font-bold text-base tracking-tight"
-              style={{ color: 'var(--color-primary)', letterSpacing: '-0.02em' }}
+              className="focus:outline-none"
             >
-              StackSave
+              <Logo asDiv />
             </button>
             <span
               className="text-[11px] px-2.5 py-1 rounded font-medium"
@@ -272,9 +272,17 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                   Trace catalog pricing updates and optimization changes across audit versions.
                 </p>
               </div>
-              <span className="text-[10px] px-2.5 py-1.5 rounded font-bold uppercase tracking-wider self-start sm:self-auto whitespace-nowrap" style={{ background: 'var(--color-success-bg)', color: 'var(--color-success-t)', border: '1px solid rgba(16,185,129,0.25)' }}>
-                ✓ Comparison Mode Active
-              </span>
+              <div className="flex flex-col sm:flex-row gap-2 self-start sm:self-auto">
+                <span className="text-[10px] px-2.5 py-1.5 rounded font-bold uppercase tracking-wider whitespace-nowrap" style={{ background: 'var(--color-success-bg)', color: 'var(--color-success-t)', border: '1px solid rgba(16,185,129,0.25)' }}>
+                  ✓ Comparison Mode Active
+                </span>
+                <button
+                  onClick={() => navigate(`/audit/${newAudit?.auditId || ''}?view=single`, { state: { isOwner } })}
+                  className="text-[10px] px-2.5 py-1.5 rounded font-bold uppercase tracking-wider bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 transition-colors whitespace-nowrap"
+                >
+                  View Full Graph
+                </button>
+              </div>
             </div>
             <div className="relative flex items-center justify-between py-6">
               {/* Horizontal Connecting Track Line */}
@@ -317,13 +325,7 @@ export default function ReAuditDiffPage({ auditId, isOwner: _isOwner }: ReAuditD
                     <button
                       key={v.auditId}
                       onClick={() => {
-                        if (!isActive) {
-                          const isDiffRoute = window.location.pathname.endsWith('/diff');
-                          const targetUrl = v.auditVersion === 1
-                            ? `/audit/${v.auditId}?view=single`
-                            : (isDiffRoute ? `/audit/${v.auditId}/diff` : `/audit/${v.auditId}`);
-                          navigate(targetUrl, { state: { isOwner } });
-                        }
+                        navigate(`/audit/${v.auditId}?view=single`, { state: { isOwner } });
                       }}
                       className="timeline-node group"
                     >

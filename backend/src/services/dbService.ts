@@ -39,11 +39,13 @@ export interface AuditDocument extends Document {
   isHighSavings: boolean;
   insights: object[];
   aiSummary: string;
+  aiSummarySavings?: string;
   publicUrl: string;
   companyName?: string;
   teamSize: number;
   tools: object[];
   useCase?: string;
+  optimizationGoal?: string;
   
   // ── Batch 1: Persistence Fields ──────────────────────────
   // Input: tools array as submitted by user (for re-audit comparisons)
@@ -90,6 +92,7 @@ const AuditSchema = new Schema<AuditDocument>(
     isHighSavings: { type: Boolean, default: false },
     insights: { type: [Schema.Types.Mixed], default: [] },
     aiSummary: { type: String, default: '' },
+    aiSummarySavings: { type: String, default: '' },
     publicUrl: { 
       type: String, 
       required: true,
@@ -109,6 +112,7 @@ const AuditSchema = new Schema<AuditDocument>(
     teamSize: { type: Number, required: true },
     tools: { type: [Schema.Types.Mixed], default: [] },
     useCase: { type: String, default: 'mixed' },
+    optimizationGoal: { type: String, default: 'balanced' },
     email: { type: String }, // captured at lead gate — private
     
     // ── Batch 1: Persistence Fields ──────────────────────────

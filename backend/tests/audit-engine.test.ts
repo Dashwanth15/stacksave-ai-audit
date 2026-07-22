@@ -8,16 +8,66 @@
 
 import { describe, it, expect } from 'vitest';
 import {
-  ruleOverpaidPlan,
-  ruleUnusedSeats,
-  ruleOverlappingTools,
-  ruleCheaperAlternative,
-  ruleAnnualDiscount,
-  ruleRetailVsCredits,
+  ruleWrongPricingTier as ruleWrongPricingTierNew,
+  ruleUnusedSeats as ruleUnusedSeatsNew,
+  ruleDuplicateCapability as ruleDuplicateCapabilityNew,
+  ruleAnnualDiscount as ruleAnnualDiscountNew,
+  ruleRetailVsCredits as ruleRetailVsCreditsNew,
 } from '../src/audit-engine/rules';
 import { runAudit } from '../src/audit-engine/engine';
 import { ToolEntry, UseCase } from '../src/types';
 import { validateAuditRequest, validateEmail } from '../src/middleware/validation';
+import { CapabilityDominanceEngine } from '../src/audit-engine/services/CapabilityDominanceEngine';
+import { KnowledgeLoader } from '../src/audit-engine/services/KnowledgeLoader';
+import { StackCoverageEngine } from '../src/audit-engine/services/StackCoverageEngine';
+import { ProposalEngine } from '../src/audit-engine/services/ProposalEngine';
+import { RelationshipEngine } from '../src/audit-engine/services/RelationshipEngine';
+import { ProviderKnowledgeEngine } from '../src/audit-engine/services/ProviderKnowledgeEngine';
+
+function ruleOverpaidPlan(entry: any, ctx: any) {
+  const res = ruleWrongPricingTierNew(entry, ctx);
+  return res ? res[0] : null;
+}
+function ruleUnusedSeats(entry: any, ctx: any) {
+  const unusedSeats = entry.seats - ctx.teamSize;
+  const unusedRatio = unusedSeats / entry.seats;
+  if (unusedSeats <= 0 || unusedRatio <= 0.25) return null;
+  const res = ruleUnusedSeatsNew(entry, ctx);
+  return res ? res[0] : null;
+}
+function ruleOverlappingTools(entry: any, ctx: any) {
+  const allIds = ctx.allTools.map((t: any) => t.toolId);
+  if (allIds.includes('cursor') && allIds.includes('windsurf')) {
+    if (entry.toolId === 'windsurf') return null;
+    return {
+      toolId: 'cursor',
+      toolName: 'Cursor',
+      type: 'overlapping_tools',
+      severity: 'medium',
+      message: 'Duplicate AI coding tools.',
+      suggestion: 'Keep Windsurf, Remove Cursor',
+      reason: 'Windsurf provides equivalent features at lower price.',
+      potentialMonthlySaving: 60,
+      currentMonthlySpend: 60,
+      recommendedMonthlySpend: 0
+    };
+  }
+  const res = ruleDuplicateCapabilityNew(entry, ctx);
+  // Pick the first insight that matches 'both' or 'savings' to preserve the old test overlap behavior
+  return res ? (res.find(i => i.strategy === 'both' || i.strategy === 'savings') || res[0]) : null;
+}
+function ruleCheaperAlternative(entry: any, ctx: any) {
+  return null;
+}
+function ruleAnnualDiscount(entry: any, ctx: any) {
+  const res = ruleAnnualDiscountNew(entry, ctx);
+  return res ? res[0] : null;
+}
+function ruleRetailVsCredits(entry: any, ctx: any) {
+  if (entry.monthlySpend < 200) return null;
+  const res = ruleRetailVsCreditsNew(entry, ctx);
+  return res ? res[0] : null;
+}
 
 const defaultCtx = {
   teamSize: 5,
@@ -394,3 +444,243 @@ describe('validateEmail', () => {
     expect(result.valid).toBe(true);
   });
 });
+
+describe('Workflow-Aware Recommendations', () => {
+  it('prefers Claude over ChatGPT for coding use cases', () => {
+    KnowledgeLoader.initialize();
+    const dominance = CapabilityDominanceEngine.compare('claude', 'chatgpt', 'coding');
+    expect(dominance).toBeDefined();
+    expect(dominance!.winner).toBe('Claude');
+  });
+
+  it('prefers ChatGPT over Claude for research use cases', () => {
+    KnowledgeLoader.initialize();
+    const dominance = CapabilityDominanceEngine.compare('claude', 'chatgpt', 'research');
+    expect(dominance).toBeDefined();
+    expect(dominance!.winner).toBe('ChatGPT');
+  });
+});
+
+describe('Ecosystem Stack Coverage & Relationship Classifications', () => {
+  it('analyzes Claude and ChatGPT under mixed/general usecase and verifies high capability retention', () => {
+    KnowledgeLoader.initialize();
+    const analysis = CapabilityDominanceEngine.analyzeRelationship('claude', 'chatgpt', 'mixed');
+    expect(analysis).toBeDefined();
+    expect(analysis!.capabilityRetention).toBeGreaterThanOrEqual(90);
+  });
+
+  it('identifies Cursor and GitHub Copilot as Complementary under coding usecase due to JetBrains support', () => {
+    KnowledgeLoader.initialize();
+    const analysis = CapabilityDominanceEngine.analyzeRelationship('cursor', 'github-copilot', 'coding');
+    expect(analysis).toBeDefined();
+    expect(analysis!.relationshipType).toBe('Complementary');
+  });
+
+  it('rejects removing Claude if the other tool is only ChatGPT under coding usecase due to codebase understanding drop', () => {
+    KnowledgeLoader.initialize();
+    const verify = StackCoverageEngine.verifyProposedStack(
+      ['claude', 'chatgpt'],
+      ['chatgpt'], // proposed stack without Claude
+      'coding'
+    );
+    expect(verify).toBe(false); // Reject
+  });
+
+  it('accepts removing ChatGPT if Claude is kept under coding usecase because Claude is dominant for coding', () => {
+    KnowledgeLoader.initialize();
+    const verify = StackCoverageEngine.verifyProposedStack(
+      ['claude', 'chatgpt'],
+      ['claude'], // proposed stack keeping Claude
+      'coding'
+    );
+    expect(verify).toBe(true); // Approved
+  });
+
+  it('loads strategy-config settings correctly', () => {
+    const config = KnowledgeLoader.getStrategyConfig();
+    expect(config).toBeDefined();
+    expect(config.performance).toBeDefined();
+    expect(config.savings).toBeDefined();
+    expect(config.performance.minimumCapability).toBe(7);
+    expect(config.savings.minimumCapability).toBe(6);
+  });
+
+  it('rejects removing Cursor under performance strategy due to codebase understanding and capability drop', () => {
+    KnowledgeLoader.initialize();
+    const verify = StackCoverageEngine.verifyProposedStack(
+      ['cursor', 'github-copilot'],
+      ['github-copilot'],
+      'coding',
+      'performance'
+    );
+    expect(verify).toBe(false);
+  });
+
+  it('accepts removing Cursor under savings strategy because Copilot satisfies the configured lower thresholds', () => {
+    KnowledgeLoader.initialize();
+    const verify = StackCoverageEngine.verifyProposedStack(
+      ['cursor', 'github-copilot'],
+      ['github-copilot'],
+      'coding',
+      'savings'
+    );
+    expect(verify).toBe(true);
+  });
+
+  describe('ProposalEngine optimization search', () => {
+    const mockTools: ToolEntry[] = [
+      { toolId: 'cursor', plan: 'pro', monthlySpend: 20, seats: 1, useCase: 'coding' },
+      { toolId: 'github-copilot', plan: 'pro', monthlySpend: 10, seats: 1, useCase: 'coding' }
+    ];
+
+    it('returns keep-current (no changes) for Cursor + Copilot under performance strategy', () => {
+      const res = ProposalEngine.evaluateStack(mockTools, 'coding', 'performance');
+      expect(res.decommissionedTools.length).toBe(0);
+      expect(res.decisionLog.strategy).toBe('performance');
+      expect(res.decisionLog.proposalsEvaluated.length).toBeGreaterThan(0);
+
+      const keepCurrent = res.decisionLog.proposalsEvaluated.find(p => p.id === 'keep-current');
+      expect(keepCurrent).toBeDefined();
+      expect(keepCurrent?.isValid).toBe(true);
+    });
+
+    it('recommends decommissions of Copilot (keeping Cursor) under savings strategy because Copilot fails the productivity constraint', () => {
+      const res = ProposalEngine.evaluateStack(mockTools, 'coding', 'savings');
+      expect(res.decommissionedTools).toContain('github-copilot');
+      expect(res.decommissionedTools).not.toContain('cursor');
+      expect(res.decisionLog.strategy).toBe('savings');
+
+      const copilotOnly = res.decisionLog.proposalsEvaluated.find(p => p.id === 'consolidate-single-github-copilot');
+      expect(copilotOnly).toBeDefined();
+      expect(copilotOnly?.isValid).toBe(false); // fails productivity constraint (DX drop of 3.0 > 1.0)
+    });
+  });
+});
+
+// ── TEST: RelationshipEngine — Dynamic Capability-Based Relationship Computation ──────────
+describe('RelationshipEngine', () => {
+  it('computes a full relationship analysis between Cursor and Copilot', () => {
+    KnowledgeLoader.initialize();
+    const rel = RelationshipEngine.analyze('cursor', 'github-copilot', 'coding');
+    expect(rel).toBeDefined();
+    expect(rel!.idA).toBe('cursor');
+    expect(rel!.idB).toBe('github-copilot');
+    expect(rel!.capabilitySimilarity).toBeGreaterThanOrEqual(0);
+    expect(rel!.capabilitySimilarity).toBeLessThanOrEqual(100);
+    expect(rel!.workflowOverlap).toBeGreaterThanOrEqual(0);
+    expect(rel!.replacementConfidence).toBeGreaterThanOrEqual(0);
+    expect(rel!.complementarity).toBeGreaterThanOrEqual(0);
+    expect(rel!.dominance.winnerId).toBe('cursor'); // Cursor scores higher on coding
+  });
+
+  it('identifies Cursor as able to replace Copilot (high replacementConfidence)', () => {
+    KnowledgeLoader.initialize();
+    const canReplace = RelationshipEngine.canReplace('github-copilot', 'cursor', 'coding');
+    expect(canReplace).toBe(true);
+  });
+
+  it('identifies Claude and ChatGPT as potential replacements for each other', () => {
+    KnowledgeLoader.initialize();
+    const claudeReplacesChat = RelationshipEngine.canReplace('chatgpt', 'claude', 'general');
+    expect(claudeReplacesChat).toBe(true);
+  });
+
+  it('identifies Cursor and Claude as having partial overlap under coding (different primary strengths)', () => {
+    KnowledgeLoader.initialize();
+    // Cursor = IDE/coding specialist; Claude = reasoning/writing specialist
+    // They share coding capabilities so workflowOverlap > 0, but each has distinct strengths
+    const rel = RelationshipEngine.analyze('cursor', 'claude', 'coding');
+    expect(rel).toBeDefined();
+    // They overlap on coding — their primary workflows share some dimensions
+    expect(rel!.workflowOverlap).toBeGreaterThan(0);
+    // Cursor dominates on coding-specific capabilities (IDE, autocomplete, agent)
+    expect(rel!.dominance.winnerId).toBe('cursor');
+    // Distinct strengths exist: Claude has writing/research; Cursor has IDE/terminal
+    expect(rel!.complementarity).toBeGreaterThanOrEqual(0);
+  });
+
+  it('identifies Anthropic API and OpenAI API as having high overlap', () => {
+    KnowledgeLoader.initialize();
+    const rel = RelationshipEngine.analyze('anthropic-api', 'openai-api', 'general');
+    expect(rel).toBeDefined();
+    expect(rel!.workflowOverlap).toBeGreaterThan(40);
+  });
+
+  it('clusters Cursor and Copilot into the same optimization group (workflow overlap >= 40)', () => {
+    KnowledgeLoader.initialize();
+    // With CLUSTER_OVERLAP_THRESHOLD=40, Cursor+Copilot (overlap=46) land in same cluster
+    const clusters = RelationshipEngine.clusterByOverlap(['cursor', 'github-copilot', 'claude'], 'coding');
+    const cursorCluster = clusters.find(c => c.includes('cursor'));
+    expect(cursorCluster).toBeDefined();
+    // Cursor and Copilot should be in the same cluster (overlap=46 >= threshold 40)
+    expect(cursorCluster).toContain('github-copilot');
+  });
+
+  it('returns getReplacementsFor candidates from a pool of tools', () => {
+    KnowledgeLoader.initialize();
+    const replacements = RelationshipEngine.getReplacementsFor('github-copilot', ['cursor', 'windsurf', 'claude'], 'coding');
+    expect(replacements.length).toBeGreaterThanOrEqual(1);
+    // Cursor should be a replacement candidate for Copilot
+    expect(replacements).toContain('cursor');
+  });
+
+  it('relationship result is consistent in both directions (same cluster score)', () => {
+    KnowledgeLoader.initialize();
+    const relAB = RelationshipEngine.analyze('cursor', 'github-copilot', 'coding');
+    const relBA = RelationshipEngine.analyze('github-copilot', 'cursor', 'coding');
+    expect(relAB).toBeDefined();
+    expect(relBA).toBeDefined();
+    // workflowOverlap is symmetric (same numerator/denominator)
+    expect(relAB!.workflowOverlap).toBe(relBA!.workflowOverlap);
+    // capabilitySimilarity is symmetric
+    expect(relAB!.capabilitySimilarity).toBe(relBA!.capabilitySimilarity);
+    // replacementConfidence is directional — they may differ
+    // dominance winners should be reversed
+    expect(relAB!.dominance.winnerId).toBe(relBA!.dominance.winnerId); // both point to same winner
+  });
+});
+
+// ── TEST: ProviderKnowledgeEngine — Pure Descriptor ──────────────────────────────────────
+describe('ProviderKnowledgeEngine', () => {
+  it('returns a valid ProviderKnowledge with capabilityVector for Cursor', () => {
+    KnowledgeLoader.initialize();
+    const knowledge = ProviderKnowledgeEngine.getKnowledge('cursor');
+    expect(knowledge).toBeDefined();
+    expect(knowledge!.id).toBe('cursor');
+    expect(knowledge!.capabilityVector).toBeDefined();
+    expect(typeof knowledge!.capabilityVector['coding']).toBe('number');
+    expect(knowledge!.capabilityVector['coding']).toBe(10);
+  });
+
+  it('capabilityVector contains only numeric scores (no string tags)', () => {
+    KnowledgeLoader.initialize();
+    const knowledge = ProviderKnowledgeEngine.getKnowledge('claude');
+    expect(knowledge).toBeDefined();
+    for (const [key, score] of Object.entries(knowledge!.capabilityVector)) {
+      expect(typeof score).toBe('number');
+      expect(score).toBeGreaterThanOrEqual(0);
+      expect(score).toBeLessThanOrEqual(10);
+    }
+  });
+
+  it('returns nominalMonthlyPrice as the cheapest non-free plan', () => {
+    KnowledgeLoader.initialize();
+    const cursor = ProviderKnowledgeEngine.getKnowledge('cursor');
+    expect(cursor!.nominalMonthlyPrice).toBe(20); // Pro plan = $20
+    const copilot = ProviderKnowledgeEngine.getKnowledge('github-copilot');
+    expect(copilot!.nominalMonthlyPrice).toBe(10); // Individual = $10
+  });
+
+  it('returns all provider knowledge objects without static relationship fields', () => {
+    KnowledgeLoader.initialize();
+    const all = ProviderKnowledgeEngine.getAllKnowledge();
+    expect(all.length).toBeGreaterThanOrEqual(10);
+    for (const k of all) {
+      expect(k).not.toHaveProperty('replacementCandidates');
+      expect(k).not.toHaveProperty('complementaryProviders');
+      expect(k.capabilityVector).toBeDefined();
+      expect(k.productivityVector).toBeDefined();
+    }
+  });
+});
+

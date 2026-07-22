@@ -1,0 +1,59 @@
+{
+  "coding": {
+    "coding": 10,
+    "reasoning": 9,
+    "planning": 8,
+    "largeCodebaseUnderstanding": 9,
+    "autocomplete": 9,
+    "aiAgent": 8,
+    "multiFileEditing": 8,
+    "terminalIntegration": 7,
+    "longContext": 7,
+    "ideIntegration": 7,
+    "jetbrainsSupport": 6,
+    "vscodeSupport": 6,
+    "githubIntegration": 5
+  },
+  "research": {
+    "research": 10,
+    "longContext": 9,
+    "reasoning": 8,
+    "vision": 7,
+    "imageUnderstanding": 7,
+    "googleWorkspaceIntegration": 6,
+    "microsoftIntegration": 6,
+    "memory": 5,
+    "plugins": 5
+  },
+  "writing": {
+    "writing": 10,
+    "reasoning": 8,
+    "longContext": 8,
+    "planning": 6,
+    "memory": 5
+  },
+  "general": {
+    "reasoning": 9,
+    "coding": 8,
+    "writing": 8,
+    "research": 8,
+    "voice": 6,
+    "memory": 6,
+    "customGpts": 6,
+    "plugins": 6,
+    "imageUnderstanding": 6,
+    "vision": 6
+  },
+  "mixed": {
+    "reasoning": 9,
+    "coding": 8,
+    "writing": 8,
+    "research": 8,
+    "voice": 6,
+    "memory": 6,
+    "customGpts": 6,
+    "plugins": 6,
+    "imageUnderstanding": 6,
+    "vision": 6
+  }
+}

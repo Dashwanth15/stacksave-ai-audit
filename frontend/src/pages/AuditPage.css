@@ -1,3 +1,8 @@
+/* =============================================================
+   Platform Selection Cards  — AuditPage
+   Compact, premium SaaS style (Vercel / Linear / Stripe)
+   ============================================================= */
+
 /* Premium Integration Cards inside Audit Setup Wizard */
 .tool-card-premium {
   display: flex;
@@ -164,7 +169,7 @@
   }
 }
 
-/* Sticky layout rules for Live Summary panel */
+/* ── Sticky summary panel ────────────────────────────────────── */
 .sticky-panel {
   position: relative;
 }
@@ -176,3 +181,72 @@
     z-index: 10;
   }
 }
+
+/* ── Onboarding Highlight & Tooltip ────────────────────────── */
+@keyframes onboarding-pulse {
+  0% {
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-xs);
+  }
+  15% {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 4px 16px rgba(59, 130, 246, 0.08);
+  }
+  85% {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 4px 16px rgba(59, 130, 246, 0.08);
+  }
+  100% {
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-xs);
+  }
+}
+
+.onboarding-highlight {
+  animation: onboarding-pulse 2.5s ease-in-out forwards;
+}
+
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-tooltip-entry {
+  animation: tooltip-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Premium Summary Sidebar ───────────────────────────────── */
+.summary-sidebar-container {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  box-shadow: 
+    0 10px 30px -10px rgba(0, 0, 0, 0.04), 
+    0 1px 3px rgba(0, 0, 0, 0.01),
+    0 0 0 1px rgba(0, 0, 0, 0.01);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.summary-sidebar-container:hover {
+  border-color: rgba(203, 213, 225, 0.8);
+  box-shadow: 
+    0 20px 40px -15px rgba(0, 0, 0, 0.06), 
+    0 1px 3px rgba(0, 0, 0, 0.01),
+    0 0 0 1px rgba(0, 0, 0, 0.01);
+}
+
+.summary-savings-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.summary-savings-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.05);
+}
+
+
