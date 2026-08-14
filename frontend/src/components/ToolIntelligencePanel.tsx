@@ -15,7 +15,7 @@ import {
   deriveSubscriptionValue,
   type GlobalModelOption,
 } from '../data/providerKnowledge';
-import { insightTypeLabel } from '../utils/formatters';
+
 
 // ─── Props ───────────────────────────────────────────────────────────────────
 
@@ -1653,7 +1653,7 @@ function PanelHeader({
       {/* ── Top Navigation / Breadcrumb Row ────────────────────── */}
       <div className="px-5 pt-3.5 pb-2.5 flex items-center justify-between gap-3 border-b border-slate-800">
         <div className="flex items-center gap-2 text-xs text-slate-300 font-medium">
-          <span>Audit Report</span>
+          <span>Tool Analysis</span>
           <span className="text-slate-500">/</span>
           {!isAllStack && provider && (
             <>
@@ -1663,6 +1663,7 @@ function PanelHeader({
           )}
           <span className="text-white font-bold">{categoryTitle}</span>
         </div>
+
 
         {/* Crisp close button */}
         <button
