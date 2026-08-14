@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0.0",
+  "description": "Maps user-facing feature labels to provider capability keys in JSON profiles. Edit this file to add new selectable features without touching engine code.",
+  "features": {
+    "code-completion": {
+      "label": "Code Completion",
+      "capabilityKeys": ["autocomplete", "coding"],
+      "minimumScore": 6,
+      "description": "In-editor AI code completion and inline suggestions"
+    },
+    "chat-interface": {
+      "label": "Chat Interface",
+      "capabilityKeys": ["reasoning", "planning"],
+      "minimumScore": 6,
+      "description": "Conversational AI assistant for interactive queries"
+    },
+    "code-review": {
+      "label": "Code Review",
+      "capabilityKeys": ["coding", "multiFileEditing", "largeCodebaseUnderstanding"],
+      "minimumScore": 6,
+      "description": "AI-assisted code review and diff analysis"
+    },
+    "api-access": {
+      "label": "API Access",
+      "capabilityKeys": ["api", "functionCalling"],
+      "minimumScore": 6,
+      "description": "Programmatic API access and function calling support"
+    },
+    "multi-model": {
+      "label": "Multi-Model",
+      "capabilityKeys": [],
+      "minimumScore": 0,
+      "description": "Supports multiple underlying AI models",
+      "derivedFrom": "supportedModels.length >= 3"
+    },
+    "enterprise-sso": {
+      "label": "Enterprise SSO",
+      "capabilityKeys": ["sso", "saml"],
+      "minimumScore": 7,
+      "description": "SAML/SCIM enterprise single sign-on support"
+    },
+    "private-deployment": {
+      "label": "Private Deployment",
+      "capabilityKeys": [],
+      "minimumScore": 1,
+      "description": "On-premise or VPC private deployment option",
+      "derivedFrom": "enterprise.security.privateDeployment === true"
+    },
+    "hipaa-soc2": {
+      "label": "HIPAA / SOC 2",
+      "capabilityKeys": ["enterpriseSecurity"],
+      "minimumScore": 8,
+      "description": "HIPAA and SOC 2 compliance certifications",
+      "derivedFrom": "enterprise.compliance.hipaa || enterprise.compliance.soc2"
+    },
+    "long-context": {
+      "label": "Long Context",
+      "capabilityKeys": ["longContext"],
+      "minimumScore": 7,
+      "description": "Extended context window (100k+ tokens)"
+    },
+    "offline-mode": {
+      "label": "Offline Mode",
+      "capabilityKeys": ["offlineSupport"],
+      "minimumScore": 6,
+      "description": "Operates without internet connection"
+    },
+    "image-understanding": {
+      "label": "Image / Vision",
+      "capabilityKeys": ["imageUnderstanding", "vision"],
+      "minimumScore": 7,
+      "description": "Image analysis, diagram parsing, and visual understanding"
+    },
+    "voice": {
+      "label": "Voice Mode",
+      "capabilityKeys": ["voice"],
+      "minimumScore": 7,
+      "description": "Real-time voice conversation interface"
+    },
+    "agent-mode": {
+      "label": "Agentic Tasks",
+      "capabilityKeys": ["aiAgent", "functionCalling"],
+      "minimumScore": 7,
+      "description": "Autonomous multi-step task execution (agentic workflows)"
+    },
+    "memory": {
+      "label": "Memory / Context Retention",
+      "capabilityKeys": ["memory"],
+      "minimumScore": 6,
+      "description": "Persistent memory across sessions and conversations"
+    },
+    "github-integration": {
+      "label": "GitHub Integration",
+      "capabilityKeys": ["githubIntegration"],
+      "minimumScore": 6,
+      "description": "Native GitHub PR, Actions, and repository integration"
+    }
+  }
+}

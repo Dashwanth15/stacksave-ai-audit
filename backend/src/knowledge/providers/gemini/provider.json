@@ -1,0 +1,57 @@
+{
+  "id": "gemini",
+  "name": "Gemini",
+  "category": "chat",
+  "vendor": "Google",
+  "vendorProfile": {
+    "vendorId": "google",
+    "vendorName": "Google DeepMind",
+    "establishedYear": 1998,
+    "headquarters": "Mountain View, CA",
+    "fundingStage": "Public",
+    "productFamily": [
+      "gemini"
+    ],
+    "stabilityRating": "Very High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "Google Workspace AI",
+  "secondaryRole": "Long-Context Document Synthesis Platform",
+  "billingModels": [
+    "monthly",
+    "annual"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "Native Google Workspace sync",
+    "1M to 2M tokens context window",
+    "Native multimodal video parsing"
+  ],
+  "knownWeaknesses": [
+    "Average logical reasoning score compared to o1/Claude",
+    "Lacks specialized coder extensions",
+    "Factual hallucinations during web search"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Workspace workflows",
+    "Massive document analysis",
+    "Conversational speech Live Mode"
+  ],
+  "typicalTeamSize": "Any",
+  "supportedModels": [
+    "Gemini 1.5 Pro",
+    "Gemini 1.5 Flash"
+  ],
+  "supportedPlatforms": [
+    "None"
+  ],
+  "apiSupport": false,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-05-07",
+  "sources": [
+    "https://workspace.google.com/pricing",
+    "https://ai.google.dev"
+  ]
+}

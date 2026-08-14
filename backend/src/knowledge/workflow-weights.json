@@ -14,10 +14,57 @@
     "vscodeSupport": 6,
     "githubIntegration": 5
   },
+  "frontend": {
+    "coding": 10,
+    "autocomplete": 10,
+    "multiFileEditing": 9,
+    "vision": 8,
+    "imageUnderstanding": 8,
+    "ideIntegration": 8,
+    "vscodeSupport": 8,
+    "reasoning": 7
+  },
+  "backend": {
+    "coding": 10,
+    "architectureDesign": 9,
+    "terminalIntegration": 9,
+    "largeCodebaseUnderstanding": 9,
+    "aiAgent": 8,
+    "reasoning": 9,
+    "functionCalling": 8,
+    "api": 7
+  },
+  "fullstack": {
+    "coding": 10,
+    "multiFileEditing": 10,
+    "architectureDesign": 9,
+    "largeCodebaseUnderstanding": 9,
+    "autocomplete": 9,
+    "aiAgent": 9,
+    "terminalIntegration": 8,
+    "reasoning": 8
+  },
+  "ai-engineering": {
+    "reasoning": 10,
+    "api": 10,
+    "functionCalling": 9,
+    "embeddings": 9,
+    "coding": 9,
+    "aiAgent": 9,
+    "longContext": 8
+  },
+  "data-science": {
+    "reasoning": 10,
+    "research": 9,
+    "functionCalling": 9,
+    "embeddings": 8,
+    "coding": 8,
+    "longContext": 8
+  },
   "research": {
     "research": 10,
     "longContext": 9,
-    "reasoning": 8,
+    "reasoning": 9,
     "vision": 7,
     "imageUnderstanding": 7,
     "googleWorkspaceIntegration": 6,
@@ -31,6 +78,48 @@
     "longContext": 8,
     "planning": 6,
     "memory": 5
+  },
+  "devops": {
+    "terminalIntegration": 10,
+    "aiAgent": 9,
+    "architectureDesign": 8,
+    "functionCalling": 8,
+    "coding": 7,
+    "enterpriseSecurity": 8
+  },
+  "testing": {
+    "coding": 9,
+    "autocomplete": 9,
+    "aiAgent": 9,
+    "multiFileEditing": 8,
+    "terminalIntegration": 8
+  },
+  "debugging": {
+    "reasoning": 10,
+    "terminalIntegration": 9,
+    "largeCodebaseUnderstanding": 9,
+    "coding": 8,
+    "aiAgent": 8
+  },
+  "architecture": {
+    "architectureDesign": 10,
+    "reasoning": 10,
+    "planning": 9,
+    "largeCodebaseUnderstanding": 8,
+    "writing": 7
+  },
+  "security": {
+    "enterpriseSecurity": 10,
+    "adminControls": 9,
+    "sso": 9,
+    "reasoning": 8,
+    "auditLogs": 8
+  },
+  "documentation": {
+    "writing": 10,
+    "longContext": 9,
+    "reasoning": 8,
+    "largeCodebaseUnderstanding": 7
   },
   "general": {
     "reasoning": 9,

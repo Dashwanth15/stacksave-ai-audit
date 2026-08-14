@@ -6,6 +6,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { submitAudit, fetchAudit } from '../services/api';
 import type { ToolEntry, UseCase, AuditRequest } from '../types';
 import Logo from '../components/Logo';
+import ToolBrowser from '../components/ToolBrowser';
 import './AuditPage.css';
 
 const logoMap: Record<string, string> = {
@@ -17,6 +18,7 @@ const logoMap: Record<string, string> = {
   'openai-api': '/logos/openai.svg',
   'gemini': '/logos/gemini.svg',
   'windsurf': '/logos/windsurf.svg',
+  'kimi': '/logos/kimi.svg',
 };
 
 type BillingPeriod = 'monthly' | 'annual';
@@ -103,6 +105,7 @@ export default function AuditPage() {
   const [searchParams] = useSearchParams();
   const reAuditOf = searchParams.get('reAuditOf');
   const [parentVersion, setParentVersion] = useState<number | null>(null);
+  const [parentToolIds, setParentToolIds] = useState<string[] | null>(null);
   const [isPrefilling, setIsPrefilling] = useState(false);
 
   const [form, setForm, clearForm] = useLocalStorage<FormState>('stacksave-audit-form', DEFAULT_FORM);
@@ -112,6 +115,8 @@ export default function AuditPage() {
   useEffect(() => {
     if (!reAuditOf && !freshResetDone.current) {
       freshResetDone.current = true;
+      setParentToolIds(null);
+      setParentVersion(null);
       setForm((prev) => ({ ...prev, tools: [] }));
     }
   }, [reAuditOf, setForm]);
@@ -154,6 +159,7 @@ export default function AuditPage() {
               optimizationGoal: audit.optimizationGoal || 'balanced',
             }));
             setParentVersion(audit.auditVersion || 1);
+            setParentToolIds((audit.tools || []).map((t) => t.toolId));
             prefillDone.current = reAuditOf;
           }
         } catch (err) {
@@ -177,6 +183,7 @@ export default function AuditPage() {
   }, [reAuditOf, setForm]);
 
   const selectedToolIds = form.tools.map((t) => t.toolId);
+  const currentVersion = parentVersion !== null ? parentVersion + 1 : 1;
 
   function getEffectivePrice(plan: { monthlyPricePerSeat: number; annualPrice?: number; isPayPerUse?: boolean; isEnterprise?: boolean }) {
     if (plan.isPayPerUse || plan.isEnterprise) return 0;
@@ -258,6 +265,10 @@ export default function AuditPage() {
     }));
   }
 
+  const toolSeats = form.tools.map((t) => t.seats || 1);
+  const totalLicensedSeats = toolSeats.reduce((sum, s) => sum + s, 0);
+  const effectiveTeamSize = toolSeats.length > 0 ? Math.max(...toolSeats) : 1;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -271,10 +282,11 @@ export default function AuditPage() {
     try {
       const payload: AuditRequest = {
         tools: form.tools,
-        teamSize: form.teamSize,
+        teamSize: effectiveTeamSize,
         companyName: form.companyName || undefined,
         useCase: form.useCase,
         optimizationGoal: form.optimizationGoal,
+        billingCycle: form.billingPeriod,
       };
 
       if (reAuditOf) {
@@ -434,7 +446,7 @@ export default function AuditPage() {
         {/* ── Progress Indicators ──────────────────────────── */}
         <div className="flex items-center gap-6 mb-8 border-b pb-6" style={{ borderColor: 'var(--color-border)' }}>
           {[
-            { label: 'Metadata', done: form.teamSize > 0 },
+            { label: 'Metadata', done: true },
             { label: 'Select Tools', done: form.tools.length > 0 },
             { label: 'Invoice Info', done: form.tools.length > 0 && form.tools.every(t => t.monthlySpend > 0) },
           ].map((step, i) => (
@@ -464,32 +476,11 @@ export default function AuditPage() {
                 className="text-base font-bold mb-6 flex items-center gap-3"
                 style={{ color: 'var(--color-text-heading)' }}
               >
-                <StepBadge n={1} done={form.teamSize > 0} />
+                <StepBadge n={1} done={true} />
                 Team Metadata
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label
-                    className="block text-xs font-semibold uppercase tracking-wider mb-2"
-                    style={{ color: 'var(--color-text-muted)' }}
-                    htmlFor="teamSize"
-                  >
-                    Team count
-                  </label>
-                  <input
-                    id="teamSize"
-                    type="number"
-                    min={1}
-                    max={10000}
-                    value={form.teamSize}
-                    onChange={(e) => setForm((p) => ({ ...p, teamSize: parseInt(e.target.value) || 1 }))}
-                    className={inputClass}
-                    style={inputStyle}
-                    {...inputFocusHandlers}
-                    aria-label="Team size"
-                  />
-                </div>
-                <div>
+                <div className="sm:col-span-2">
                   <label
                     className="block text-xs font-semibold uppercase tracking-wider mb-2"
                     style={{ color: 'var(--color-text-muted)' }}
@@ -567,15 +558,27 @@ export default function AuditPage() {
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h2
-                    className="text-base font-bold flex items-center gap-3"
-                    style={{ color: 'var(--color-text-heading)' }}
-                  >
-                    <StepBadge n={2} done={form.tools.length > 0} />
-                    Choose Active Accounts
-                  </h2>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h2
+                      className="text-base font-bold flex items-center gap-3"
+                      style={{ color: 'var(--color-text-heading)' }}
+                    >
+                      <StepBadge n={2} done={form.tools.length > 0} />
+                      Choose AI Tools
+                    </h2>
+                    <span
+                      className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider"
+                      style={{
+                        background: form.tools.length > 0 ? 'var(--color-success-bg)' : 'rgba(30,58,95,0.05)',
+                        color: form.tools.length > 0 ? 'var(--color-success-t)' : 'var(--color-text-muted)',
+                        border: form.tools.length > 0 ? '1px solid rgba(16,185,129,0.2)' : '1px solid var(--color-border)',
+                      }}
+                    >
+                      {form.tools.length} selected
+                    </span>
+                  </div>
                   <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
-                    Highlight the subscriptions currently appearing on your invoices.
+                    Select the AI tools currently used by your team.
                   </p>
                 </div>
 
@@ -609,64 +612,14 @@ export default function AuditPage() {
                 </div>
               </div>
 
-              <div className="platform-grid">
-                {TOOLS.map((tool) => {
-                  const selected = selectedToolIds.includes(tool.id);
-                  const logoSrc = logoMap[tool.id];
-                  return (
-                    <button
-                      key={tool.id}
-                      type="button"
-                      onClick={() => toggleTool(tool.id)}
-                      id={`tool-toggle-${tool.id}`}
-                      aria-pressed={selected}
-                      aria-label={`Toggle ${tool.name}`}
-                      className={`tool-card-premium ${selected ? 'tool-card-premium--selected' : ''}`}
-                    >
-                      <div className="flex items-start gap-4 w-full">
-                        {/* Logo Container */}
-                        <div className={`tool-card-premium__logo-container ${selected ? 'tool-card-premium__logo-container--selected' : ''}`}>
-                          <img
-                            src={logoSrc}
-                            alt={tool.name}
-                            className={`tool-card-premium__logo-img logo-${tool.id}`}
-                          />
-                        </div>
-                        
-                        {/* Header Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-bold text-sm tracking-tight text-[var(--color-text-heading)]">
-                              {tool.name}
-                            </span>
-                            
-                            {/* Selected Check Indicator */}
-                            <div className={`tool-card-premium__check ${selected ? 'tool-card-premium__check--selected' : ''}`}>
-                              {selected && (
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 6 9 17 4 12"/>
-                                </svg>
-                              )}
-                            </div>
-                          </div>
-                          
-                          {/* Category badge */}
-                          <div className="mt-1">
-                            <span className={`category-pill category-pill--${tool.category.toLowerCase().replace(' ', '-')}`}>
-                              {tool.category}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Description */}
-                      <p className="mt-4 text-xs text-[var(--color-text-body)] leading-relaxed text-left">
-                        {tool.description}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
+              <ToolBrowser
+                tools={TOOLS}
+                selectedToolIds={selectedToolIds}
+                onToggle={toggleTool}
+                logoMap={logoMap}
+                parentToolIds={parentToolIds}
+                currentVersion={currentVersion}
+              />
             </m.div>
 
             {/* ── Step 3: Tool details ──────────────────────── */}
@@ -710,6 +663,7 @@ export default function AuditPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                     {form.tools.map((entry) => {
                       const tool = TOOLS.find((t) => t.id === entry.toolId)!;
+                      const isNewTool = parentToolIds !== null && parentToolIds !== undefined && !parentToolIds.includes(entry.toolId);
                       const currentPlan = tool.plans.find((p) => p.id === entry.plan);
                       const isPayPerUse = currentPlan?.isPayPerUse;
                       const isEnterprise = currentPlan?.isEnterprise;
@@ -738,9 +692,19 @@ export default function AuditPage() {
                               <div className="w-8 h-8 rounded-lg bg-[var(--color-bg-surface)] border flex items-center justify-center shrink-0" style={{ borderColor: 'var(--color-border)' }}>
                                 <img src={logoSrc} alt="" className="w-4 h-4 object-contain" />
                               </div>
-                              <span className="font-bold text-sm tracking-tight text-[var(--color-text-heading)] truncate">
-                                {tool.name}
-                              </span>
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="font-bold text-sm tracking-tight text-[var(--color-text-heading)] truncate">
+                                  {tool.name}
+                                </span>
+                                {isNewTool && (
+                                  <span
+                                    className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.25 rounded bg-emerald-50 text-emerald-700 border border-emerald-300 shrink-0"
+                                    title={`Added in Version ${currentVersion}`}
+                                  >
+                                    NEW
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
                             <span
@@ -925,11 +889,11 @@ export default function AuditPage() {
               <div className="py-2 border-t border-b border-slate-100">
                 <div className="grid grid-cols-3 divide-x divide-slate-100">
                   <div className="text-center px-2 space-y-1">
-                    <span className="text-[20px] font-black text-slate-800 tracking-tight leading-none block">
-                      {form.teamSize}
+                    <span className="text-[20px] font-black text-slate-800 tracking-tight leading-none block font-mono-financial">
+                      {totalLicensedSeats}
                     </span>
                     <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">
-                      Users
+                      Total Seats
                     </span>
                   </div>
                   <div className="text-center px-2 space-y-1">

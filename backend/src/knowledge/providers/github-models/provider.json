@@ -1,0 +1,56 @@
+{
+  "id": "github-models",
+  "name": "GitHub Models",
+  "category": "api",
+  "vendor": "GitHub (Microsoft)",
+  "vendorProfile": {
+    "vendorId": "microsoft",
+    "vendorName": "Microsoft",
+    "establishedYear": 1975,
+    "headquarters": "Redmond, WA",
+    "fundingStage": "Public",
+    "productFamily": [
+      "github-copilot",
+      "github-models"
+    ],
+    "stabilityRating": "Very High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "Developer API",
+  "secondaryRole": "Developer Playground Model Tier",
+  "billingModels": [
+    "free-tier"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "GitHub Enterprise Actions pipeline sync",
+    "Wide model playground trials (Open/Closed source)",
+    "Secure corporate workspace metrics"
+  ],
+  "knownWeaknesses": [
+    "Rate limits constrained for production",
+    "No customer facing general workspace dashboard"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Prototyping repository integrations",
+    "CI/CD Actions tasks",
+    "Trial model evaluations"
+  ],
+  "typicalTeamSize": "Any",
+  "supportedModels": [
+    "GPT-4o",
+    "Claude 3.5 Sonnet",
+    "Llama-3"
+  ],
+  "supportedPlatforms": [
+    "None"
+  ],
+  "apiSupport": true,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-05-07",
+  "sources": [
+    "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service"
+  ]
+}

@@ -1,0 +1,231 @@
+{
+  "modelId": "llama-3",
+  "name": "Llama-3",
+  "providerId": "github-models",
+  "releaseDate": "2026-05-07",
+  "capabilities": {
+    "reasoning": {
+      "score": 8,
+      "evidence": "Exposes o1 and Claude 3.5 Sonnet logic endpoints.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "coding": {
+      "score": 8,
+      "evidence": "Excellent API programmatic code completions.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "architectureDesign": {
+      "score": 7,
+      "evidence": "Allows model integration inside Actions directories.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "largeCodebaseUnderstanding": {
+      "score": 8,
+      "evidence": "Exposes model context boundaries up to 128k.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "autocomplete": {
+      "score": 1,
+      "evidence": "No native autocomplete extensions.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "aiAgent": {
+      "score": 7,
+      "evidence": "Runs pipeline automations inside GitHub repositories.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "multiFileEditing": {
+      "score": 1,
+      "evidence": "Programmatic API, no direct client UI editor interface.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "terminalIntegration": {
+      "score": 1,
+      "evidence": "Lacks terminal panel integrations.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "planning": {
+      "score": 7,
+      "evidence": "Basic model planner outputs.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "research": {
+      "score": 6,
+      "evidence": "Basic search, no deep research search engine loops.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "writing": {
+      "score": 7,
+      "evidence": "General text generation support.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "longContext": {
+      "score": 8,
+      "evidence": "Context window supports 128k input tokens.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "imageUnderstanding": {
+      "score": 8,
+      "evidence": "Allows visual file attachments in chat models.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "vision": {
+      "score": 8,
+      "evidence": "Accepts visual screenshot queries.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "voice": {
+      "score": 5,
+      "evidence": "Audio API support is limited.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "memory": {
+      "score": 5,
+      "evidence": "Maintains pipeline state configurations.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "customGpts": {
+      "score": 0,
+      "evidence": "Does not support custom GPT templates.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "plugins": {
+      "score": 0,
+      "evidence": "No browser extension plugins.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "api": {
+      "score": 10,
+      "evidence": "Exposes cost-efficient api endpoints.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "embeddings": {
+      "score": 8,
+      "evidence": "Internal search indices for workspace document vector storage.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "functionCalling": {
+      "score": 8,
+      "evidence": "Provides structured tool/function calling logic.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "enterpriseSecurity": {
+      "score": 9,
+      "evidence": "Data security and admin controls on GitHub Enterprise.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "adminControls": {
+      "score": 9,
+      "evidence": "Console portal controls access keys and rate limits.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "sso": {
+      "score": 9,
+      "evidence": "Direct corporate SAML/SSO integrations.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "ideIntegration": {
+      "score": 1,
+      "evidence": "Programmatic interface only.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "jetbrainsSupport": {
+      "score": 0,
+      "evidence": "No native JetBrains support.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "vscodeSupport": {
+      "score": 0,
+      "evidence": "No native VS Code support.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "githubIntegration": {
+      "score": 10,
+      "evidence": "Direct integration inside the GitHub developer workflow.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "googleWorkspaceIntegration": {
+      "score": 0,
+      "evidence": "No Google Workspace integrations.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "microsoftIntegration": {
+      "score": 9,
+      "evidence": "Direct Microsoft workspace sync integrations.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "latency": {
+      "score": 8,
+      "evidence": "Fast completions, fast model inference speeds.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "reliability": {
+      "score": 9,
+      "evidence": "Uptime backed by Microsoft Azure clouds.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    },
+    "offlineSupport": {
+      "score": 0,
+      "evidence": "Requires active internet.",
+      "source": "https://docs.github.com/en/site-policy/github-terms/github-models-terms-of-service",
+      "lastVerified": "2026-05-07"
+    }
+  },
+  "benchmarks": {},
+  "productivityScores": {
+    "reasoning": 8,
+    "coding": 8,
+    "planning": 7,
+    "velocity": 9,
+    "developerExperience": 8,
+    "enterpriseReadiness": 9,
+    "maintainability": 8,
+    "learningCurve": "Low",
+    "migrationCost": "Medium",
+    "risk": "Low"
+  },
+  "developerExperience": {
+    "reasoning": 8,
+    "coding": 8,
+    "planning": 7,
+    "velocity": 9,
+    "developerExperience": 8,
+    "enterpriseReadiness": 9,
+    "maintainability": 8,
+    "learningCurve": "Low",
+    "migrationCost": "Medium",
+    "risk": "Low"
+  }
+}

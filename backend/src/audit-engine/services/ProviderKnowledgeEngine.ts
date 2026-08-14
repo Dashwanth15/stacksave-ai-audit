@@ -130,15 +130,17 @@ export class ProviderKnowledgeEngine {
     }
 
     // Build productivity vector from productivityScores
-    const ps = profile.productivityScores;
+    const ps = profile.productivityScores || profile.developerExperience || {
+      reasoning: 5, coding: 5, planning: 5, velocity: 8, developerExperience: 8, enterpriseReadiness: 7, maintainability: 8, learningCurve: 'Low', migrationCost: 'Medium', risk: 'Low'
+    };
     const productivityVector: ProductivityVector = {
-      reasoning: ps.reasoning,
-      coding: ps.coding,
-      planning: ps.planning,
-      velocity: ps.velocity,
-      developerExperience: ps.developerExperience,
-      enterpriseReadiness: ps.enterpriseReadiness,
-      maintainability: ps.maintainability,
+      reasoning: ps.reasoning || 5,
+      coding: ps.coding || 5,
+      planning: ps.planning || 5,
+      velocity: ps.velocity || 8,
+      developerExperience: ps.developerExperience || 8,
+      enterpriseReadiness: ps.enterpriseReadiness || 7,
+      maintainability: ps.maintainability || 8,
     };
 
     return {
@@ -150,13 +152,13 @@ export class ProviderKnowledgeEngine {
       productivityVector,
       nominalMonthlyPrice,
       annualDiscountPercent: raw.annualDiscountPercent ?? 0,
-      migrationCost: ps.migrationCost as ProviderKnowledge['migrationCost'],
-      learningCurve: ps.learningCurve as ProviderKnowledge['learningCurve'],
-      supportedIdes: profile.ideSupport ?? [],
-      supportedModels: profile.supportedModels ?? [],
-      strengths: profile.knownStrengths ?? [],
-      weaknesses: profile.knownWeaknesses ?? [],
-      bestUseCases: raw.bestUseCases ?? [],
+      migrationCost: (ps.migrationCost || 'Medium') as ProviderKnowledge['migrationCost'],
+      learningCurve: (ps.learningCurve || 'Low') as ProviderKnowledge['learningCurve'],
+      supportedIdes: profile.supportedPlatforms || [],
+      supportedModels: profile.supportedModels || [],
+      strengths: profile.strengths || [],
+      weaknesses: profile.weaknesses || [],
+      bestUseCases: profile.bestUseCases || [],
     };
   }
 }

@@ -1,0 +1,58 @@
+{
+  "id": "openai-api",
+  "name": "OpenAI API",
+  "category": "api",
+  "vendor": "OpenAI",
+  "vendorProfile": {
+    "vendorId": "openai",
+    "vendorName": "OpenAI",
+    "establishedYear": 2015,
+    "headquarters": "San Francisco, CA",
+    "fundingStage": "Private",
+    "productFamily": [
+      "chatgpt",
+      "openai-api",
+      "codex"
+    ],
+    "stabilityRating": "Very High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "Developer API",
+  "secondaryRole": "Developer Token Operations Tier",
+  "billingModels": [
+    "pay-as-you-go"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "Assistants thread execution logic",
+    "Structured JSON output formatting",
+    "Advanced Real-time Voice API"
+  ],
+  "knownWeaknesses": [
+    "Consumption costs scale with long context",
+    "Granular permission keys are required"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Enterprise AI app builds",
+    "High-throughput token endpoints",
+    "Multi-modal vision apps"
+  ],
+  "typicalTeamSize": "Any",
+  "supportedModels": [
+    "GPT-4o",
+    "GPT-4o-mini",
+    "o1",
+    "o1-mini"
+  ],
+  "supportedPlatforms": [
+    "None"
+  ],
+  "apiSupport": true,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-05-07",
+  "sources": [
+    "https://platform.openai.com/docs"
+  ]
+}

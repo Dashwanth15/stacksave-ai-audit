@@ -1,0 +1,120 @@
+{
+  "providerId": "github-copilot",
+  "pricing": {
+    "free": 0,
+    "individual": 10,
+    "business": 19,
+    "enterprise": 39
+  },
+  "annualDiscountPercent": 19,
+  "plans": [
+    {
+      "id": "free",
+      "label": "Free",
+      "monthlyPricePerSeat": 0,
+      "tierRank": 0,
+      "features": [
+        "2000 completions/mo",
+        "Limited chat",
+        "VS Code & CLI only"
+      ],
+      "premiumFeatures": []
+    },
+    {
+      "id": "individual",
+      "label": "Individual",
+      "monthlyPricePerSeat": 10,
+      "annualPricePerSeat": 8.33,
+      "tierRank": 1,
+      "features": [
+        "Unlimited completions",
+        "Chat in IDE & mobile",
+        "Multi-model support",
+        "Copilot Extensions"
+      ],
+      "premiumFeatures": [
+        "Unlimited inline completions",
+        "IDE & mobile chat",
+        "Multi-model support"
+      ]
+    },
+    {
+      "id": "business",
+      "label": "Business",
+      "monthlyPricePerSeat": 19,
+      "tierRank": 2,
+      "features": [
+        "Everything in Individual",
+        "Organization-wide policies",
+        "Audit logs",
+        "IP indemnity",
+        "Content exclusion"
+      ],
+      "premiumFeatures": [
+        "Organization policy management",
+        "Audit logs & IP indemnity",
+        "Content exclusion rules"
+      ]
+    },
+    {
+      "id": "enterprise",
+      "label": "Enterprise",
+      "monthlyPricePerSeat": 39,
+      "tierRank": 3,
+      "features": [
+        "Everything in Business",
+        "Fine-tuned models",
+        "Knowledge bases",
+        "SAML SSO",
+        "Bing search grounding"
+      ],
+      "premiumFeatures": [
+        "Custom fine-tuned models",
+        "Repository knowledge bases",
+        "SAML SSO & Bing grounding"
+      ]
+    }
+  ],
+  "enterprise": {
+    "compliance": {
+      "soc2": true,
+      "gdpr": true,
+      "hipaa": false,
+      "iso27001": false
+    },
+    "security": {
+      "encryption": true,
+      "privateDeployment": false,
+      "zeroDataRetention": true
+    },
+    "administration": {
+      "rbac": true,
+      "auditLogs": true,
+      "adminConsole": true
+    },
+    "identity": {
+      "sso": true,
+      "saml": true,
+      "scim": false
+    },
+    "governance": {
+      "policyManagement": true,
+      "workspaceControls": true
+    }
+  },
+  "financialProfile": {
+    "vendorLockInRisk": "Low",
+    "scalingCost": 50,
+    "upgradeFlexibility": "High",
+    "subscriptionFlexibility": "High",
+    "maintenanceCost": "Low",
+    "enterpriseROI": "High",
+    "typicalCustomerSize": "1-500",
+    "industryFit": [
+      "Software",
+      "Technology",
+      "Financial Services",
+      "Healthcare"
+    ]
+  }
+}

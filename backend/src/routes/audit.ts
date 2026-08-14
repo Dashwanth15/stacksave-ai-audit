@@ -104,6 +104,7 @@ router.post('/', auditLimiter, async (req: Request, res: Response) => {
       isLatestVersion: true,                // This is the latest version
       auditVersion,                         // Version in the chain
       reAuditOf,                            // Parent audit link
+      billingCycle: body.billingCycle || 'monthly', // Billing period selected by user
     });
 
     return res.status(201).json({ success: true, data: auditResult });
@@ -115,6 +116,7 @@ router.post('/', auditLimiter, async (req: Request, res: Response) => {
 
 // ── GET /api/audits/:id ──────────────────────────────────────
 // Public share endpoint. Strips private info (email, companyName).
+// Always re-runs the audit engine so fresh optimization logic is applied.
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -141,24 +143,74 @@ router.get('/:id', async (req: Request, res: Response) => {
       isLatestVersion: !!v.isLatestVersion
     }));
 
+    // Re-run the audit engine using the stored input tools so that any
+    // improvements to the optimization logic are always reflected — even
+    // for audits that were saved before a fix was deployed.
+    let freshInsights = audit.insights;
+    let freshTotalMonthlySpend = audit.totalMonthlySpend;
+    let freshOptimizedMonthlySpend = audit.optimizedMonthlySpend;
+    let freshEstimatedMonthlySavings = audit.estimatedMonthlySavings;
+    let freshEstimatedAnnualSavings = audit.estimatedAnnualSavings;
+    let freshSavingsPercentage = audit.savingsPercentage;
+    let freshIsAlreadyOptimal = audit.isAlreadyOptimal;
+
+    const inputTools = (audit as any).inputStack || audit.tools;
+    if (inputTools && inputTools.length > 0) {
+      try {
+        const frontendUrl = getFrontendUrl();
+        const auditUseCase = ((audit.useCase as string) || 'coding') as any;
+        const auditGoal = (((audit as any).optimizationGoal as string) || 'balanced') as any;
+
+        // Normalize stored tools: strip per-tool useCase (the engine takes it at the top level)
+        // and ensure all numeric fields are present with defaults
+        const normalizedTools = (inputTools as any[]).map((t: any) => ({
+          toolId: t.toolId,
+          plan: t.plan || 'free',
+          monthlySpend: typeof t.monthlySpend === 'number' ? t.monthlySpend : 0,
+          seats: typeof t.seats === 'number' && t.seats >= 1 ? t.seats : 1,
+          modelId: t.modelId,
+          versionName: t.versionName,
+        }));
+
+        const freshAuditBody = {
+          tools: normalizedTools,
+          teamSize: audit.teamSize || 1,
+          useCase: auditUseCase,
+          optimizationGoal: auditGoal,
+          billingCycle: ((audit as any).billingCycle as 'monthly' | 'annual') || 'monthly',
+        };
+        const recomputed = runAudit(freshAuditBody as any, audit.aiSummary || '', frontendUrl);
+        freshInsights = recomputed.insights;
+        freshTotalMonthlySpend = recomputed.totalMonthlySpend;
+        freshOptimizedMonthlySpend = recomputed.optimizedMonthlySpend;
+        freshEstimatedMonthlySavings = recomputed.estimatedMonthlySavings;
+        freshEstimatedAnnualSavings = recomputed.estimatedAnnualSavings;
+        freshSavingsPercentage = recomputed.savingsPercentage;
+        freshIsAlreadyOptimal = recomputed.isAlreadyOptimal;
+      } catch (engineErr) {
+        // Fallback to stored insights if engine throws for any reason
+        console.error('Engine re-run failed, using stored insights:', engineErr);
+      }
+    }
+
     // Strip private fields from public response
     const publicAudit = {
       auditId: audit.auditId,
       createdAt: audit.createdAt,
-      totalMonthlySpend: audit.totalMonthlySpend,
-      optimizedMonthlySpend: audit.optimizedMonthlySpend,
-      estimatedMonthlySavings: audit.estimatedMonthlySavings,
-      estimatedAnnualSavings: audit.estimatedAnnualSavings,
-      savingsPercentage: audit.savingsPercentage,
-      isAlreadyOptimal: audit.isAlreadyOptimal,
-      isHighSavings: audit.isHighSavings,
-      insights: audit.insights,
+      totalMonthlySpend: freshTotalMonthlySpend,
+      optimizedMonthlySpend: freshOptimizedMonthlySpend,
+      estimatedMonthlySavings: freshEstimatedMonthlySavings,
+      estimatedAnnualSavings: freshEstimatedAnnualSavings,
+      savingsPercentage: freshSavingsPercentage,
+      isAlreadyOptimal: freshIsAlreadyOptimal,
+      isHighSavings: freshEstimatedMonthlySavings > 500,
+      insights: freshInsights,
       aiSummary: audit.aiSummary,
       publicUrl: audit.publicUrl,
       teamSize: audit.teamSize,
       tools: audit.tools,
       // companyName and email intentionally omitted
-      
+
       // Batch 4 living-audit and version-aware fields
       pricingChanged: audit.pricingChanged,
       isLatestVersion: audit.isLatestVersion,
@@ -166,6 +218,10 @@ router.get('/:id', async (req: Request, res: Response) => {
       reAuditOf: audit.reAuditOf,
       outdatedReason: audit.outdatedReason,
       allVersions,
+      useCase: audit.useCase,
+      optimizationGoal: audit.optimizationGoal,
+      billingCycle: (audit as any).billingCycle || 'monthly',
+      aiSummarySavings: audit.aiSummarySavings,
     };
 
     return res.json({ success: true, data: publicAudit });
@@ -174,6 +230,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, error: 'Failed to fetch audit' });
   }
 });
+
 
 // ── GET /api/audits/:id/full ────────────────────────────────
 // Batch 1: Internal endpoint for retrieving full audit details

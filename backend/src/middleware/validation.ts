@@ -10,6 +10,7 @@ import { AuditRequest, ToolEntry, UseCase, ToolId } from '../types';
 const VALID_TOOL_IDS: ToolId[] = [
   'cursor', 'github-copilot', 'claude', 'chatgpt',
   'anthropic-api', 'openai-api', 'gemini', 'windsurf',
+  'perplexity', 'deepseek', 'codex', 'github-models', 'kimi',
 ];
 
 const VALID_USE_CASES: UseCase[] = ['coding', 'writing', 'data', 'research', 'mixed'];
@@ -90,7 +91,8 @@ function validateToolEntry(tool: ToolEntry): ValidationResult {
     return { valid: false, error: `Seats exceed maximum for ${tool.toolId}` };
   }
 
-  if (!tool.useCase || !VALID_USE_CASES.includes(tool.useCase)) {
+  // per-tool useCase is optional — the audit-level useCase (validated above) is authoritative
+  if (tool.useCase && !VALID_USE_CASES.includes(tool.useCase)) {
     return { valid: false, error: `Invalid use case for ${tool.toolId}` };
   }
 

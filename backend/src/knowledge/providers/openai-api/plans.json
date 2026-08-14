@@ -1,0 +1,56 @@
+{
+  "providerId": "openai-api",
+  "pricing": {
+    "pay-as-you-go": 0
+  },
+  "annualDiscountPercent": 0,
+  "plans": [
+    {
+      "id": "pay-as-you-go",
+      "label": "Pay-as-you-go",
+      "monthlyPricePerSeat": 0
+    }
+  ],
+  "enterprise": {
+    "compliance": {
+      "soc2": true,
+      "gdpr": true,
+      "hipaa": false,
+      "iso27001": false
+    },
+    "security": {
+      "encryption": true,
+      "privateDeployment": false,
+      "zeroDataRetention": true
+    },
+    "administration": {
+      "rbac": true,
+      "auditLogs": true,
+      "adminConsole": true
+    },
+    "identity": {
+      "sso": true,
+      "saml": true,
+      "scim": false
+    },
+    "governance": {
+      "policyManagement": true,
+      "workspaceControls": true
+    }
+  },
+  "financialProfile": {
+    "vendorLockInRisk": "Low",
+    "scalingCost": 50,
+    "upgradeFlexibility": "High",
+    "subscriptionFlexibility": "High",
+    "maintenanceCost": "Low",
+    "enterpriseROI": "High",
+    "typicalCustomerSize": "1-500",
+    "industryFit": [
+      "Software",
+      "Technology",
+      "Financial Services",
+      "Healthcare"
+    ]
+  }
+}

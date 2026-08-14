@@ -10,7 +10,13 @@ export type ToolId =
   | 'anthropic-api'
   | 'openai-api'
   | 'gemini'
-  | 'windsurf';
+  | 'windsurf'
+  | 'perplexity'
+  | 'deepseek'
+  | 'codex'
+  | 'github-models'
+  | 'kimi'
+  | 'all-stack-tools';
 
 export type UseCase = 'coding' | 'writing' | 'data' | 'research' | 'mixed';
 
@@ -33,6 +39,8 @@ export interface ToolEntry {
   monthlySpend: number; // what user is actually paying ($/mo)
   seats: number;
   useCase: UseCase;
+  modelId?: string;
+  versionName?: string;
 }
 
 export interface AuditRequest {
@@ -42,6 +50,7 @@ export interface AuditRequest {
   useCase: UseCase; // primary use case for the team
   reAuditOf?: string; // parent audit ID if chaining a new version
   optimizationGoal?: 'savings' | 'balanced' | 'productivity' | 'governance';
+  billingCycle?: 'monthly' | 'annual'; // user's selected billing period
 }
 
 // --- Audit Engine Internals ---
@@ -76,6 +85,10 @@ export interface Insight {
   tradeoffs?: string;
   estimatedSavings?: string;
   decisionLog?: DecisionLog;
+
+  // Use case context — populated when Engineering Focus is set
+  // Drives workflow-aware messaging in View Analysis
+  useCaseContext?: string;
 }
 
 export interface AuditResult {
@@ -98,6 +111,7 @@ export interface AuditResult {
   tools: ToolEntry[];
   useCase?: UseCase;
   optimizationGoal?: 'savings' | 'balanced' | 'productivity' | 'governance';
+  billingCycle?: 'monthly' | 'annual'; // billing period used in this audit
 }
 
 // --- API Response Shapes ---

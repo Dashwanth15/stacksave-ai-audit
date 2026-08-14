@@ -1,0 +1,231 @@
+{
+  "modelId": "gpt-4o",
+  "name": "GPT-4o",
+  "providerId": "chatgpt",
+  "releaseDate": "2026-05-07",
+  "capabilities": {
+    "reasoning": {
+      "score": 9,
+      "evidence": "o1 reasoning scores extremely high on competitive math/coding benchmarks.",
+      "source": "https://openai.com/index/learning-to-reason-with-llms/",
+      "lastVerified": "2026-05-07"
+    },
+    "coding": {
+      "score": 8,
+      "evidence": "Very strong code generation, slight boilerplate outputs compared to Claude.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "architectureDesign": {
+      "score": 7,
+      "evidence": "Helps structure projects, but lacks multi-file client operations.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "largeCodebaseUnderstanding": {
+      "score": 5,
+      "evidence": "Limited context search vectors inside basic web chat files.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "autocomplete": {
+      "score": 1,
+      "evidence": "No native IDE autocomplete extension client.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "aiAgent": {
+      "score": 7,
+      "evidence": "Executes sandboxed code interpreter blocks autonomously.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "multiFileEditing": {
+      "score": 1,
+      "evidence": "No native codebase editor fork access.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "terminalIntegration": {
+      "score": 1,
+      "evidence": "Lacks direct server/terminal connections.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "planning": {
+      "score": 8,
+      "evidence": "o1 plans intermediate steps before output generation.",
+      "source": "https://openai.com/index/learning-to-reason-with-llms/",
+      "lastVerified": "2026-05-07"
+    },
+    "research": {
+      "score": 10,
+      "evidence": "ChatGPT Search and Deep Research execute recursive search queries.",
+      "source": "https://openai.com/index/introducing-chatgpt-search/",
+      "lastVerified": "2026-05-07"
+    },
+    "writing": {
+      "score": 8,
+      "evidence": "Robust text editor style and formatting options.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "longContext": {
+      "score": 7,
+      "evidence": "Default context recall caps at 128k input tokens.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "imageUnderstanding": {
+      "score": 10,
+      "evidence": "Excellent DALL-E image generation and Vision parsing.",
+      "source": "https://openai.com/index/dall-e-3/",
+      "lastVerified": "2026-05-07"
+    },
+    "vision": {
+      "score": 10,
+      "evidence": "Excellent image and diagram structural parsing.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "voice": {
+      "score": 10,
+      "evidence": "Advanced Voice Mode offers low-latency conversational audio.",
+      "source": "https://openai.com/index/gpt-4o-and-more-modes-in-chatgpt/",
+      "lastVerified": "2026-05-07"
+    },
+    "memory": {
+      "score": 9,
+      "evidence": "Maintains user facts and memory configurations across sessions.",
+      "source": "https://openai.com/index/memory-and-new-controls-for-chatgpt/",
+      "lastVerified": "2026-05-07"
+    },
+    "customGpts": {
+      "score": 10,
+      "evidence": "Official GPT Store ecosystem for custom workflows.",
+      "source": "https://openai.com/index/introducing-the-gpt-store/",
+      "lastVerified": "2026-05-07"
+    },
+    "plugins": {
+      "score": 8,
+      "evidence": "Allows third-party service connections (Zapier, Wolfram).",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "api": {
+      "score": 2,
+      "evidence": "Web console plan, no programmatic developer API keys included.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "embeddings": {
+      "score": 7,
+      "evidence": "Basic indexation for file uploads.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "functionCalling": {
+      "score": 9,
+      "evidence": "Sandboxed Python execution environments.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "enterpriseSecurity": {
+      "score": 8,
+      "evidence": "SOC2 and custom privacy directives on Enterprise.",
+      "source": "https://openai.com/enterprise",
+      "lastVerified": "2026-05-07"
+    },
+    "adminControls": {
+      "score": 8,
+      "evidence": "Workspace Admin console supports seat key configs.",
+      "source": "https://openai.com/enterprise",
+      "lastVerified": "2026-05-07"
+    },
+    "sso": {
+      "score": 8,
+      "evidence": "SSO integrations on Enterprise tiers.",
+      "source": "https://openai.com/enterprise",
+      "lastVerified": "2026-05-07"
+    },
+    "ideIntegration": {
+      "score": 2,
+      "evidence": "No official native IDE app.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "jetbrainsSupport": {
+      "score": 0,
+      "evidence": "No official plugins.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "vscodeSupport": {
+      "score": 0,
+      "evidence": "No official plugins.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "githubIntegration": {
+      "score": 7,
+      "evidence": "GitHub Actions integration via Custom GPTS.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "googleWorkspaceIntegration": {
+      "score": 9,
+      "evidence": "Direct Google Drive integrations for quick parsing.",
+      "source": "https://openai.com/index/memory-and-new-controls-for-chatgpt/",
+      "lastVerified": "2026-05-07"
+    },
+    "microsoftIntegration": {
+      "score": 9,
+      "evidence": "Direct OneDrive integration support.",
+      "source": "https://openai.com/index/memory-and-new-controls-for-chatgpt/",
+      "lastVerified": "2026-05-07"
+    },
+    "latency": {
+      "score": 9,
+      "evidence": "Fast completions, fast model inference speeds.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "reliability": {
+      "score": 9,
+      "evidence": "Uptime backed by Microsoft Azure clouds.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    },
+    "offlineSupport": {
+      "score": 0,
+      "evidence": "Requires internet connection.",
+      "source": "https://openai.com/pricing",
+      "lastVerified": "2026-05-07"
+    }
+  },
+  "benchmarks": {},
+  "productivityScores": {
+    "reasoning": 9,
+    "coding": 8,
+    "planning": 8,
+    "velocity": 9,
+    "developerExperience": 9,
+    "enterpriseReadiness": 8,
+    "maintainability": 8,
+    "learningCurve": "Low",
+    "migrationCost": "Medium",
+    "risk": "Low"
+  },
+  "developerExperience": {
+    "reasoning": 9,
+    "coding": 8,
+    "planning": 8,
+    "velocity": 9,
+    "developerExperience": 9,
+    "enterpriseReadiness": 8,
+    "maintainability": 8,
+    "learningCurve": "Low",
+    "migrationCost": "Medium",
+    "risk": "Low"
+  }
+}

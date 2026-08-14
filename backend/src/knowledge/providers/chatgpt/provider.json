@@ -1,0 +1,61 @@
+{
+  "id": "chatgpt",
+  "name": "ChatGPT",
+  "category": "chat",
+  "vendor": "OpenAI",
+  "vendorProfile": {
+    "vendorId": "openai",
+    "vendorName": "OpenAI",
+    "establishedYear": 2015,
+    "headquarters": "San Francisco, CA",
+    "fundingStage": "Private",
+    "productFamily": [
+      "chatgpt",
+      "openai-api",
+      "codex"
+    ],
+    "stabilityRating": "Very High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "General AI Assistant",
+  "secondaryRole": "Multi-Modal Research and Voice Platform",
+  "billingModels": [
+    "monthly",
+    "annual"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "Deep Research search loops",
+    "Conversational voice Low-latency Mode",
+    "Python sandboxed environment"
+  ],
+  "knownWeaknesses": [
+    "Boilerplate output in coding",
+    "Slightly smaller context than Claude (128k)",
+    "No IDE native file editing support"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Deep research & data aggregation",
+    "Real-time speech conversation",
+    "Custom GPT templates"
+  ],
+  "typicalTeamSize": "Any",
+  "supportedModels": [
+    "GPT-4o",
+    "GPT-4",
+    "o1",
+    "o1-mini"
+  ],
+  "supportedPlatforms": [
+    "None"
+  ],
+  "apiSupport": false,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-05-07",
+  "sources": [
+    "https://openai.com/pricing",
+    "https://openai.com/index/introducing-chatgpt-search/"
+  ]
+}

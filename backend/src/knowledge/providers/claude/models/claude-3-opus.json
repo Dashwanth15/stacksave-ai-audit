@@ -1,0 +1,231 @@
+{
+  "modelId": "claude-3-opus",
+  "name": "Claude 3 Opus",
+  "providerId": "claude",
+  "releaseDate": "2026-05-07",
+  "capabilities": {
+    "reasoning": {
+      "score": 10,
+      "evidence": "Claude 3 Opus excels at complex multi-step reasoning, philosophical analysis, and nuanced logic.",
+      "source": "https://www.anthropic.com/news/claude-3-family",
+      "lastVerified": "2026-05-07"
+    },
+    "coding": {
+      "score": 8,
+      "evidence": "Strong code comprehension, though 3.5 Sonnet outperforms Opus on modern code generation benchmarks.",
+      "source": "https://www.anthropic.com/news/claude-3-family",
+      "lastVerified": "2026-05-07"
+    },
+    "architectureDesign": {
+      "score": 9,
+      "evidence": "Deep architectural reasoning and system design mapping.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "largeCodebaseUnderstanding": {
+      "score": 7,
+      "evidence": "200k context window supported for deep document synthesis.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "autocomplete": {
+      "score": 1,
+      "evidence": "No native IDE autocomplete client extensions.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "aiAgent": {
+      "score": 7,
+      "evidence": "Executes complex multi-step agent plans.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "multiFileEditing": {
+      "score": 2,
+      "evidence": "No native multi-file editing outside chat uploads.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "terminalIntegration": {
+      "score": 1,
+      "evidence": "Lacks direct client command line terminal attachments.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "planning": {
+      "score": 9,
+      "evidence": "Deep strategic planning and multi-stage task decomposition.",
+      "source": "https://www.anthropic.com/news/claude-3-family",
+      "lastVerified": "2026-05-07"
+    },
+    "research": {
+      "score": 9,
+      "evidence": "Exceptional long-form document synthesis and nuanced academic research.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "writing": {
+      "score": 10,
+      "evidence": "Industry-leading prose quality, creative writing, and nuanced tone control.",
+      "source": "https://www.anthropic.com/news/claude-3-family",
+      "lastVerified": "2026-05-07"
+    },
+    "longContext": {
+      "score": 10,
+      "evidence": "Supports 200k tokens context window with high recall rates.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "imageUnderstanding": {
+      "score": 8,
+      "evidence": "High quality visual parsing for documents and charts.",
+      "source": "https://www.anthropic.com/news/claude-3-family",
+      "lastVerified": "2026-05-07"
+    },
+    "vision": {
+      "score": 8,
+      "evidence": "Supports image and diagram analysis.",
+      "source": "https://www.anthropic.com/news/claude-3-family",
+      "lastVerified": "2026-05-07"
+    },
+    "voice": {
+      "score": 2,
+      "evidence": "Supports speech-to-text input, but no low-latency real-time voice mode.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "memory": {
+      "score": 8,
+      "evidence": "Claude Projects features custom instructions and knowledge bases.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "customGpts": {
+      "score": 0,
+      "evidence": "No generic community GPT store integration.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "plugins": {
+      "score": 6,
+      "evidence": "Integration support for Slack, Google Drive, and Notion.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "api": {
+      "score": 2,
+      "evidence": "No client-facing developer token API built into web chat subscription.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "embeddings": {
+      "score": 8,
+      "evidence": "Internal search indices for workspace document vector storage.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "functionCalling": {
+      "score": 9,
+      "evidence": "Executes logic in Claude Artifacts and web components.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "enterpriseSecurity": {
+      "score": 8,
+      "evidence": "SOC2 certified, user data is not trained on.",
+      "source": "https://www.anthropic.com/news/claude-3-5-sonnet",
+      "lastVerified": "2026-05-07"
+    },
+    "adminControls": {
+      "score": 8,
+      "evidence": "Claude Team console offers administration console controls.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "sso": {
+      "score": 8,
+      "evidence": "SSO integrations on Team plan.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "ideIntegration": {
+      "score": 3,
+      "evidence": "Third-party plugins, no official native IDE app.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "jetbrainsSupport": {
+      "score": 0,
+      "evidence": "No native JetBrains support.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "vscodeSupport": {
+      "score": 0,
+      "evidence": "No native VS Code support.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "githubIntegration": {
+      "score": 7,
+      "evidence": "Allows sync with GitHub files inside chat workspace.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "googleWorkspaceIntegration": {
+      "score": 8,
+      "evidence": "Integrates with Google Drive files for easy analysis.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "microsoftIntegration": {
+      "score": 0,
+      "evidence": "No Microsoft workspace sync integrations.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "latency": {
+      "score": 8,
+      "evidence": "Optimized output speeds on Sonnet and Haiku.",
+      "source": "https://www.anthropic.com/news/claude-3-5-sonnet",
+      "lastVerified": "2026-05-07"
+    },
+    "reliability": {
+      "score": 8,
+      "evidence": "Good stability, rate limits are strict during peak hours.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    },
+    "offlineSupport": {
+      "score": 0,
+      "evidence": "Requires internet connection.",
+      "source": "https://docs.anthropic.com",
+      "lastVerified": "2026-05-07"
+    }
+  },
+  "benchmarks": {},
+  "productivityScores": {
+    "reasoning": 10,
+    "coding": 9,
+    "planning": 8,
+    "velocity": 9,
+    "developerExperience": 9,
+    "enterpriseReadiness": 8,
+    "maintainability": 9,
+    "learningCurve": "Low",
+    "migrationCost": "Medium",
+    "risk": "Low"
+  },
+  "developerExperience": {
+    "reasoning": 10,
+    "coding": 9,
+    "planning": 8,
+    "velocity": 9,
+    "developerExperience": 9,
+    "enterpriseReadiness": 8,
+    "maintainability": 9,
+    "learningCurve": "Low",
+    "migrationCost": "Medium",
+    "risk": "Low"
+  }
+}

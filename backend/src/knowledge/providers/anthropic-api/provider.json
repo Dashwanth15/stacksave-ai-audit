@@ -1,0 +1,56 @@
+{
+  "id": "anthropic-api",
+  "name": "Anthropic API",
+  "category": "api",
+  "vendor": "Anthropic",
+  "vendorProfile": {
+    "vendorId": "anthropic",
+    "vendorName": "Anthropic",
+    "establishedYear": 2021,
+    "headquarters": "San Francisco, CA",
+    "fundingStage": "Private",
+    "productFamily": [
+      "claude",
+      "anthropic-api"
+    ],
+    "stabilityRating": "Very High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "Reasoning API",
+  "secondaryRole": "Developer Token Operations Tier",
+  "billingModels": [
+    "pay-as-you-go"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "Prompt caching yields up to 90% cost savings",
+    "Leading coding agent benchmarks (SWE-bench)",
+    "State-of-the-art context window recall (200k)"
+  ],
+  "knownWeaknesses": [
+    "No native audio/voice endpoints",
+    "Slightly slower completions on massive prompts"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Enterprise coding agents",
+    "High-throughput token endpoints",
+    "Logic-heavy applications"
+  ],
+  "typicalTeamSize": "Any",
+  "supportedModels": [
+    "Claude 3.5 Sonnet",
+    "Claude 3 Opus",
+    "Claude 3.5 Haiku"
+  ],
+  "supportedPlatforms": [
+    "None"
+  ],
+  "apiSupport": true,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-05-07",
+  "sources": [
+    "https://docs.anthropic.com"
+  ]
+}

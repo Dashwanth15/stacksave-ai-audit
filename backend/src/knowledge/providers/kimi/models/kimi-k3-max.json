@@ -1,0 +1,386 @@
+{
+  "modelId": "kimi-k3-max",
+  "name": "Kimi K3 (max)",
+  "providerId": "kimi",
+  "releaseDate": "2026-07-01",
+  "capabilities": {
+    "reasoning": {
+      "score": 10,
+      "evidence": "Kimi K3 (max) ranks #1/104 on the Artificial Analysis Intelligence Index with a score of 60. Explicitly listed as a reasoning-capable model. Among the leading models in intelligence globally.",
+      "source": "Artificial Analysis — screenshot provided by user (Kimi K3 max intelligence/performance/price page)",
+      "lastVerified": "2026-07-01"
+    },
+    "coding": {
+      "score": 9,
+      "evidence": "Kimi K3 (max) scores 76 on the Artificial Analysis Coding benchmark. Kimi K2.7 Code (batch) is a dedicated code-focused model variant. Design Arena Code Categories score: 1413 (99th percentile).",
+      "source": "Artificial Analysis benchmark screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "architectureDesign": {
+      "score": 7,
+      "evidence": "Strong reasoning and coding scores suggest solid architectural thinking ability, but no specific IDE or architecture-tool integration is documented in screenshots.",
+      "source": "Derived from Artificial Analysis benchmark data in user-provided screenshots",
+      "lastVerified": "2026-07-01"
+    },
+    "largeCodebaseUnderstanding": {
+      "score": 10,
+      "evidence": "Kimi K3 context window is 1.05M tokens (OpenRouter comparison), making it one of the largest context windows available. Kimi K2.7 Code has 262K context. 1M+ context directly enables large codebase ingestion.",
+      "source": "OpenRouter model comparison screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "autocomplete": {
+      "score": 1,
+      "evidence": "No IDE autocomplete extension is documented in the screenshots. Kimi K3 is an API-accessible chat/reasoning model.",
+      "source": "User-provided screenshots — no autocomplete capability visible",
+      "lastVerified": "2026-07-01"
+    },
+    "aiAgent": {
+      "score": 7,
+      "evidence": "Kimi K3 (max) scores 54 on the Artificial Analysis Agentic benchmark. Tool use is explicitly supported per the features table in the screenshots.",
+      "source": "Artificial Analysis benchmark + OpenRouter features table screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "multiFileEditing": {
+      "score": 1,
+      "evidence": "No native IDE file editing capability is described in the screenshots. Kimi K3 is a chat/API model.",
+      "source": "User-provided screenshots — no multi-file editing feature visible",
+      "lastVerified": "2026-07-01"
+    },
+    "terminalIntegration": {
+      "score": 1,
+      "evidence": "No terminal integration is documented in the screenshots.",
+      "source": "User-provided screenshots — no terminal integration visible",
+      "lastVerified": "2026-07-01"
+    },
+    "planning": {
+      "score": 9,
+      "evidence": "Kimi K3 (max) is a reasoning model (#1/104 Intelligence Index) with tool use support, which enables multi-step planning. 1M context enables planning over very large problem spaces.",
+      "source": "Artificial Analysis intelligence page screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "research": {
+      "score": 9,
+      "evidence": "1.05M token context window (Kimi K3) enables ingestion and synthesis of very large research corpora. Strong reasoning (#1/104) supports analytical synthesis. Reasoning capability confirmed.",
+      "source": "OpenRouter comparison + Artificial Analysis screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "writing": {
+      "score": 7,
+      "evidence": "Verbosity score is #24/104 with 130M output tokens from the Intelligence Index, indicating somewhat verbose outputs. Strong reasoning underpins coherent writing, but no specific writing-focused benchmark is visible.",
+      "source": "Artificial Analysis intelligence page screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "longContext": {
+      "score": 10,
+      "evidence": "Kimi K3 context window: 1.05M tokens (OpenRouter) / 1M (Artificial Analysis). Kimi K2.7 Code: 262K context. The 1.05M context is among the longest available on any model at time of capture.",
+      "source": "OpenRouter comparison screenshot + Artificial Analysis screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "imageUnderstanding": {
+      "score": 7,
+      "evidence": "Artificial Analysis page indicates text and image input support for Kimi K3 (max). Multiple input modality icons visible in OpenRouter comparison screenshot.",
+      "source": "Artificial Analysis comparison summary + OpenRouter screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "vision": {
+      "score": 7,
+      "evidence": "Kimi K3 (max) supports text and image input per the Artificial Analysis comparison summary. Image modality icon visible in OpenRouter input modalities row.",
+      "source": "Artificial Analysis comparison summary screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "voice": {
+      "score": 0,
+      "evidence": "No voice capability is documented in any of the provided screenshots.",
+      "source": "User-provided screenshots — no voice feature visible",
+      "lastVerified": "2026-07-01"
+    },
+    "memory": {
+      "score": 4,
+      "evidence": "No persistent memory or cross-session memory feature is documented in the screenshots. API-based model; state management is caller's responsibility.",
+      "source": "User-provided screenshots — no memory feature visible",
+      "lastVerified": "2026-07-01"
+    },
+    "customGpts": {
+      "score": 0,
+      "evidence": "No custom GPT-style template ecosystem is documented in the screenshots.",
+      "source": "User-provided screenshots — no custom GPT feature visible",
+      "lastVerified": "2026-07-01"
+    },
+    "plugins": {
+      "score": 0,
+      "evidence": "No plugin ecosystem is documented in the screenshots.",
+      "source": "User-provided screenshots — no plugin ecosystem visible",
+      "lastVerified": "2026-07-01"
+    },
+    "api": {
+      "score": 9,
+      "evidence": "Kimi K3 available through 12 API providers (OpenRouter comparison). Kimi K2.7 Code available through 1 provider. Usage-based API pricing confirmed.",
+      "source": "OpenRouter comparison screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "embeddings": {
+      "score": 3,
+      "evidence": "No embeddings API is documented in the provided screenshots.",
+      "source": "User-provided screenshots — no embeddings endpoint visible",
+      "lastVerified": "2026-07-01"
+    },
+    "functionCalling": {
+      "score": 8,
+      "evidence": "Tool use is explicitly confirmed as supported in the OpenRouter features table for both Kimi K3 and Kimi K2.7 Code.",
+      "source": "OpenRouter features table screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "enterpriseSecurity": {
+      "score": 3,
+      "evidence": "'No prompt training' is explicitly confirmed in the OpenRouter features table, meaning data is not used for training. No SOC2, HIPAA, or enterprise compliance information is visible in the screenshots.",
+      "source": "OpenRouter features table screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "adminControls": {
+      "score": 2,
+      "evidence": "No admin console or organizational controls are documented in the provided screenshots.",
+      "source": "User-provided screenshots — no admin controls visible",
+      "lastVerified": "2026-07-01"
+    },
+    "sso": {
+      "score": 0,
+      "evidence": "No SSO or identity management capability is documented in the provided screenshots.",
+      "source": "User-provided screenshots — no SSO feature visible",
+      "lastVerified": "2026-07-01"
+    },
+    "ideIntegration": {
+      "score": 1,
+      "evidence": "No native IDE integration is documented in the provided screenshots. Available through API providers.",
+      "source": "User-provided screenshots — no IDE integration visible",
+      "lastVerified": "2026-07-01"
+    },
+    "jetbrainsSupport": {
+      "score": 0,
+      "evidence": "No JetBrains support documented in screenshots.",
+      "source": "User-provided screenshots",
+      "lastVerified": "2026-07-01"
+    },
+    "vscodeSupport": {
+      "score": 0,
+      "evidence": "No VS Code native support documented in screenshots.",
+      "source": "User-provided screenshots",
+      "lastVerified": "2026-07-01"
+    },
+    "githubIntegration": {
+      "score": 0,
+      "evidence": "No GitHub integration documented in screenshots.",
+      "source": "User-provided screenshots",
+      "lastVerified": "2026-07-01"
+    },
+    "googleWorkspaceIntegration": {
+      "score": 0,
+      "evidence": "No Google Workspace integration documented in screenshots.",
+      "source": "User-provided screenshots",
+      "lastVerified": "2026-07-01"
+    },
+    "microsoftIntegration": {
+      "score": 0,
+      "evidence": "No Microsoft integration documented in screenshots.",
+      "source": "User-provided screenshots",
+      "lastVerified": "2026-07-01"
+    },
+    "latency": {
+      "score": 4,
+      "evidence": "Kimi K3 (max) is ranked #48/104 on Speed and described as 'notably slow' by Artificial Analysis. Latency p50: 4.25s. Throughput p50: 25.0 tok/s. Artificial Analysis output tokens per second: 40.4.",
+      "source": "Artificial Analysis intelligence page + OpenRouter performance screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "reliability": {
+      "score": 6,
+      "evidence": "Available through 12 providers for Kimi K3, which provides redundancy. No uptime SLA data is visible in screenshots.",
+      "source": "OpenRouter comparison screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    },
+    "offlineSupport": {
+      "score": 0,
+      "evidence": "API-based model requiring internet. Open weights available on Hugging Face for self-hosting but no offline consumer product visible.",
+      "source": "Artificial Analysis technical specs screenshot provided by user",
+      "lastVerified": "2026-07-01"
+    }
+  },
+  "benchmarks": {
+    "artificialAnalysisIntelligenceIndex": {
+      "score": 60,
+      "evidence": "Kimi K3 (max) scores 60 on the Artificial Analysis Intelligence Index, ranking #1 out of 104 models.",
+      "source": "Artificial Analysis — Kimi K3 (max) Intelligence, Performance & Price Analysis — user-provided screenshot",
+      "date": "2026-07-01"
+    },
+    "artificialAnalysisCoding": {
+      "score": 76,
+      "evidence": "Kimi K3 (max) scores 76 on the Artificial Analysis Coding benchmark.",
+      "source": "Artificial Analysis benchmark comparison screenshot provided by user — model: Kimi K3 (max)",
+      "date": "2026-07-01"
+    },
+    "artificialAnalysisAgentic": {
+      "score": 54,
+      "evidence": "Kimi K3 (max) scores 54 on the Artificial Analysis Agentic benchmark.",
+      "source": "Artificial Analysis benchmark comparison screenshot provided by user — model: Kimi K3 (max)",
+      "date": "2026-07-01"
+    },
+    "artificialAnalysisSpeedRank": {
+      "score": 48,
+      "evidence": "Kimi K3 (max) ranks #48/104 on Speed. Output tokens per second: 40.4 (Artificial Analysis). Latency p50: 4.25s, Throughput p50: 25.0 tok/s (OpenRouter).",
+      "source": "Artificial Analysis intelligence page + OpenRouter performance table — user-provided screenshots",
+      "date": "2026-07-01"
+    },
+    "designArena3D": {
+      "score": 1452,
+      "evidence": "Kimi K3 Design Arena result: 3D category — score 1452, 99th percentile.",
+      "source": "Design Arena results — user-provided screenshot — model: Kimi K3",
+      "date": "2026-07-01"
+    },
+    "designArenaCodeCategories": {
+      "score": 1413,
+      "evidence": "Kimi K3 Design Arena result: Code Categories — score 1413, 99th percentile.",
+      "source": "Design Arena results — user-provided screenshot — model: Kimi K3",
+      "date": "2026-07-01"
+    },
+    "designArenaDataVisualization": {
+      "score": 1381,
+      "evidence": "Kimi K3 Design Arena result: Data Visualization — score 1381, 98th percentile.",
+      "source": "Design Arena results — user-provided screenshot — model: Kimi K3",
+      "date": "2026-07-01"
+    },
+    "designArenaUIComponent": {
+      "score": 1390,
+      "evidence": "Kimi K3 Design Arena result: UI Component — score 1390, 99th percentile.",
+      "source": "Design Arena results — user-provided screenshot — model: Kimi K3",
+      "date": "2026-07-01"
+    },
+    "designArenaWebsite": {
+      "score": 1379,
+      "evidence": "Kimi K3 Design Arena result: Website — score 1379, 99th percentile.",
+      "source": "Design Arena results — user-provided screenshot — model: Kimi K3",
+      "date": "2026-07-01"
+    }
+  },
+  "productivityScores": {
+    "reasoning": 10,
+    "coding": 9,
+    "planning": 9,
+    "velocity": 4,
+    "developerExperience": 6,
+    "enterpriseReadiness": 2,
+    "maintainability": 6,
+    "learningCurve": "Medium",
+    "migrationCost": "Medium",
+    "risk": "Medium"
+  },
+  "developerExperience": {
+    "reasoning": 10,
+    "coding": 9,
+    "planning": 9,
+    "velocity": 4,
+    "developerExperience": 6,
+    "enterpriseReadiness": 2,
+    "maintainability": 6,
+    "learningCurve": "Medium",
+    "migrationCost": "Medium",
+    "risk": "Medium"
+  },
+  "allModelVariants": {
+    "kimiK3Max": {
+      "modelId": "kimi-k3-max",
+      "label": "Kimi K3 (max)",
+      "description": "Frontier reasoning variant of Kimi K3. Open weights, released July 2026. #1/104 on Artificial Analysis Intelligence Index.",
+      "releaseDate": "2026-07",
+      "openWeights": true,
+      "license": "Kimi K3 License",
+      "modelWeightsLocation": "Hugging Face",
+      "totalParameters": "280B",
+      "activeParameters": "104B",
+      "quantization": "FP4",
+      "contextWindow": 1048576,
+      "maxOutputTokens": 1073741,
+      "inputModalities": [
+        "text",
+        "image"
+      ],
+      "outputModalities": [
+        "text"
+      ],
+      "reasoning": true,
+      "toolUse": true,
+      "streamCancellation": true,
+      "noPromptTraining": true,
+      "caching": true,
+      "cachingDiscountPercent": 90,
+      "apiProviderCount": 12,
+      "pricing": {
+        "inputPerMTokenUSD_artificialAnalysis": 3,
+        "outputPerMTokenUSD_artificialAnalysis": 15,
+        "inputPerMTokenUSD_openrouter": 2.8,
+        "outputPerMTokenUSD_openrouter": 14,
+        "cachedInputPerMTokenUSD_openrouter": 0.29,
+        "weightedAverageInputPerMTokenUSD_openrouter": 0.7883,
+        "pricingNote": "Prices differ by source/provider context. $3.00 input / $15.00 output from Artificial Analysis page; $2.80 input / $14.00 output from OpenRouter comparison. Do not merge as single canonical price."
+      },
+      "performance": {
+        "latencyP50_seconds_openrouter": 4.25,
+        "throughputP50_tokPerSec_openrouter": 25,
+        "outputTokensPerSec_artificialAnalysis": 40.4,
+        "speedRank_artificialAnalysis": "48/104",
+        "performanceNote": "Throughput values differ by source (25.0 tok/s from OpenRouter vs 40.4 tok/s from Artificial Analysis). Preserve distinct source context."
+      },
+      "artificialAnalysisRankings": {
+        "intelligenceRank": "1/104",
+        "intelligenceIndex": 60,
+        "speedRank": "48/104",
+        "costRank": "32/104",
+        "costPerIntelligenceIndex": 0.84,
+        "verbosityRank": "24/104",
+        "outputTokensFromIntelligenceIndex": "130M"
+      },
+      "comparisonSummaryNotes": [
+        "Among the leading models in intelligence",
+        "Particularly expensive compared with other open-weight models of similar size",
+        "Notably slow (speed rank 48/104)",
+        "Somewhat verbose (verbosity rank 24/104)",
+        "Supports text and image input and output",
+        "Has a 1M token context window"
+      ]
+    },
+    "kimiK27Code": {
+      "modelId": "kimi-k2.7-code-batch",
+      "label": "Kimi K2.7 Code (batch)",
+      "description": "Code-specialized batch processing variant from Moonshot AI. Lower cost optimized for high-volume coding tasks.",
+      "openWeights": null,
+      "license": null,
+      "totalParameters": null,
+      "activeParameters": null,
+      "quantization": "unknown",
+      "contextWindow": 262144,
+      "maxOutputTokens": null,
+      "inputModalities": [
+        "text",
+        "image"
+      ],
+      "outputModalities": [
+        "text"
+      ],
+      "reasoning": true,
+      "toolUse": true,
+      "streamCancellation": true,
+      "noPromptTraining": true,
+      "caching": true,
+      "apiProviderCount": 1,
+      "pricing": {
+        "inputPerMTokenUSD_openrouter": 0.475,
+        "outputPerMTokenUSD_openrouter": 2,
+        "cachedInputPerMTokenUSD_openrouter": 0.095,
+        "weightedAverageInputPerMTokenUSD_openrouter": 0,
+        "pricingNote": "Significantly lower cost than Kimi K3. Batch-optimized pricing. Weighted average input shown as $0/M on OpenRouter (may reflect free tier or rounding)."
+      },
+      "performance": {
+        "latencyP50_seconds": null,
+        "throughputP50_tokPerSec": null,
+        "performanceNote": "Latency and throughput data not available in provided screenshots for Kimi K2.7 Code (batch)."
+      }
+    }
+  }
+}

@@ -46,6 +46,7 @@ export interface AuditDocument extends Document {
   tools: object[];
   useCase?: string;
   optimizationGoal?: string;
+  billingCycle?: string;         // 'monthly' | 'annual' — user's selected billing period
   
   // ── Batch 1: Persistence Fields ──────────────────────────
   // Input: tools array as submitted by user (for re-audit comparisons)
@@ -113,6 +114,7 @@ const AuditSchema = new Schema<AuditDocument>(
     tools: { type: [Schema.Types.Mixed], default: [] },
     useCase: { type: String, default: 'mixed' },
     optimizationGoal: { type: String, default: 'balanced' },
+    billingCycle: { type: String, default: 'monthly' }, // 'monthly' | 'annual'
     email: { type: String }, // captured at lead gate — private
     
     // ── Batch 1: Persistence Fields ──────────────────────────

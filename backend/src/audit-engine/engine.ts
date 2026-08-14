@@ -12,20 +12,30 @@ import { OptimizationStrategyEngine } from './services/OptimizationStrategyEngin
 export function runAudit(req: AuditRequest, aiSummary: string, baseUrl: string): AuditResult {
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, '');
   const auditId = uuidv4();
+  const billingCycle = req.billingCycle || 'monthly';
 
   // Run the revamped, modular optimization strategy engine
   const insights = OptimizationStrategyEngine.run(
     req.tools,
     req.teamSize,
     req.useCase,
-    req.optimizationGoal || 'balanced'
+    req.optimizationGoal || 'balanced',
+    billingCycle
   );
 
   // Remove duplicate insights for the same tool + type + strategy (pick highest saving)
   const deduped = deduplicateInsights(insights);
 
-  // Sort: highest priorityScore first, then high severity first
+  // Sort: actionable savings recommendations ALWAYS come first, then highest priorityScore, then severity
   const sorted = deduped.sort((a, b) => {
+    const isAllStackA = a.toolId === 'all-stack-tools' ? -1 : 1;
+    const isAllStackB = b.toolId === 'all-stack-tools' ? -1 : 1;
+    if (isAllStackA !== isAllStackB) return isAllStackB - isAllStackA;
+
+    const hasSavingA = a.potentialMonthlySaving > 0 ? 1 : 0;
+    const hasSavingB = b.potentialMonthlySaving > 0 ? 1 : 0;
+    if (hasSavingB !== hasSavingA) return hasSavingB - hasSavingA;
+
     const priorityA = a.priorityScore || 0;
     const priorityB = b.priorityScore || 0;
     if (priorityB !== priorityA) return priorityB - priorityA;
@@ -67,6 +77,7 @@ export function runAudit(req: AuditRequest, aiSummary: string, baseUrl: string):
     tools: req.tools,
     useCase: req.useCase,
     optimizationGoal: req.optimizationGoal || 'balanced',
+    billingCycle,
   };
 }
 

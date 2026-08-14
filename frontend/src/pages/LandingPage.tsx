@@ -22,6 +22,7 @@ const techLogos = [
   { src: '/logos/openai.svg', title: 'OpenAI API', className: 'logo-openai' },
   { src: '/logos/gemini.svg', title: 'Gemini', className: 'logo-gemini' },
   { src: '/logos/windsurf.svg', title: 'Windsurf', className: 'logo-windsurf' },
+  { src: '/logos/kimi.svg', title: 'Kimi', className: 'logo-kimi' },
 ];
 
 const auditChecks = [
@@ -451,17 +452,61 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                <button
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                {/* Flow 1 Card */}
+                <div
                   onClick={() => navigate('/audit')}
-                  className="btn-cta px-8 py-4 text-sm font-semibold text-center"
-                  id="hero-cta"
+                  className="group relative p-5 rounded-2xl cursor-pointer transition-all duration-300 border flex flex-col justify-between"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.7)',
+                    borderColor: 'rgba(99, 102, 241, 0.25)',
+                    backdropFilter: 'blur(12px)',
+                    boxShadow: '0 4px 20px -2px rgba(99, 102, 241, 0.08)',
+                  }}
                 >
-                  Start Your Audit Free
-                </button>
-                <div className="flex flex-col justify-center text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                  <span>No login required</span>
-                  <span>Results in under 1 minute</span>
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xl">🔍</span>
+                      <span className="font-bold text-sm tracking-tight" style={{ color: 'var(--color-text-heading)' }}>Audit Existing Stack</span>
+                    </div>
+                    <p className="text-xs leading-snug mb-4" style={{ color: 'var(--color-text-body)' }}>
+                      Already paying for subscriptions? Uncover duplicate seats and optimize your current spend.
+                    </p>
+                  </div>
+                  <button
+                    className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-200"
+                    style={{ background: 'var(--color-primary)', color: '#ffffff' }}
+                  >
+                    Start Audit <span>→</span>
+                  </button>
+                </div>
+
+                {/* Flow 2 Card */}
+                <div
+                  onClick={() => navigate('/build-stack')}
+                  className="group relative p-5 rounded-2xl cursor-pointer transition-all duration-300 border flex flex-col justify-between"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.7)',
+                    borderColor: 'rgba(16, 185, 129, 0.3)',
+                    backdropFilter: 'blur(12px)',
+                    boxShadow: '0 4px 20px -2px rgba(16, 185, 129, 0.08)',
+                  }}
+                >
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xl">🏗️</span>
+                      <span className="font-bold text-sm tracking-tight" style={{ color: 'var(--color-text-heading)' }}>Build AI Stack</span>
+                    </div>
+                    <p className="text-xs leading-snug mb-4" style={{ color: 'var(--color-text-body)' }}>
+                      Starting from scratch? Select your budget, workflow & team size to build the perfect suite.
+                    </p>
+                  </div>
+                  <button
+                    className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-200"
+                    style={{ background: '#10b981', color: '#ffffff' }}
+                  >
+                    Build My Stack <span>✨</span>
+                  </button>
                 </div>
               </div>
             </div>

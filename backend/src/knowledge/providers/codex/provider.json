@@ -1,0 +1,52 @@
+{
+  "id": "codex",
+  "name": "Codex",
+  "category": "ide",
+  "vendor": "OpenAI",
+  "vendorProfile": {
+    "vendorId": "openai",
+    "vendorName": "OpenAI",
+    "establishedYear": 2015,
+    "headquarters": "San Francisco, CA",
+    "fundingStage": "Private",
+    "productFamily": [
+      "chatgpt",
+      "openai-api",
+      "codex"
+    ],
+    "stabilityRating": "Very High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "IDE Assistant",
+  "secondaryRole": "Legacy Autocomplete Engine",
+  "billingModels": [
+    "free"
+  ],
+  "enterpriseAvailability": false,
+  "knownStrengths": [
+    "Historically foundational model"
+  ],
+  "knownWeaknesses": [
+    "Officially deprecated by OpenAI",
+    "High error rates",
+    "Lacks modern context window"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "None (deprecated)"
+  ],
+  "typicalTeamSize": "Any",
+  "supportedModels": [
+    "OpenAI Codex"
+  ],
+  "supportedPlatforms": [
+    "VS Code"
+  ],
+  "apiSupport": true,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-05-07",
+  "sources": [
+    "https://platform.openai.com/docs/guides/code"
+  ]
+}

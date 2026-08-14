@@ -1,0 +1,55 @@
+{
+  "id": "deepseek",
+  "name": "DeepSeek",
+  "category": "chat",
+  "vendor": "DeepSeek Inc.",
+  "vendorProfile": {
+    "vendorId": "deepseek",
+    "vendorName": "DeepSeek",
+    "establishedYear": 2023,
+    "headquarters": "Hangzhou, China",
+    "fundingStage": "Private",
+    "productFamily": [
+      "deepseek"
+    ],
+    "stabilityRating": "Medium",
+    "enterprisePresence": false
+  },
+  "primaryRole": "Reasoning Assistant",
+  "secondaryRole": "Cost-Effective LLM Platform",
+  "billingModels": [
+    "monthly",
+    "annual"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "Extremely cost-effective token API",
+    "Highly competitive math/coding model benchmarks",
+    "DeepSeek-Coder-V2 context parameters"
+  ],
+  "knownWeaknesses": [
+    "Server stability fluctuates at peak hours",
+    "Limited admin integration portals"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Highly cost-effective API integration",
+    "Mathematical programming research",
+    "JSON structured outputs"
+  ],
+  "typicalTeamSize": "Any",
+  "supportedModels": [
+    "DeepSeek-Coder-V2",
+    "DeepSeek-V2.5"
+  ],
+  "supportedPlatforms": [
+    "None"
+  ],
+  "apiSupport": true,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-05-07",
+  "sources": [
+    "https://api-docs.deepseek.com"
+  ]
+}

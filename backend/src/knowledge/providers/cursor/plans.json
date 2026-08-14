@@ -1,0 +1,156 @@
+{
+  "providerId": "cursor",
+  "pricing": {
+    "hobby": 0,
+    "pro": 20,
+    "pro-plus": 60,
+    "teams": 40,
+    "ultra": 200,
+    "enterprise": 0
+  },
+  "annualDiscountPercent": 20,
+  "plans": [
+    {
+      "id": "hobby",
+      "label": "Hobby",
+      "monthlyPricePerSeat": 0,
+      "tierRank": 0,
+      "features": [
+        "No credit card required",
+        "Limited Agent requests",
+        "Limited Tab completions"
+      ],
+      "premiumFeatures": []
+    },
+    {
+      "id": "pro",
+      "label": "Pro",
+      "monthlyPricePerSeat": 20,
+      "annualPricePerSeat": 16,
+      "tierRank": 1,
+      "features": [
+        "Extended limits on Agent",
+        "Access to frontier models",
+        "MCPs, skills, and hooks",
+        "Cloud agents"
+      ],
+      "premiumFeatures": [
+        "Extended Agent & Composer requests",
+        "Frontier model access (Sonnet, GPT-4o)",
+        "MCP, skills, and hooks integration"
+      ]
+    },
+    {
+      "id": "teams",
+      "label": "Teams",
+      "monthlyPricePerSeat": 40,
+      "annualPricePerSeat": 32,
+      "tierRank": 2,
+      "features": [
+        "Shared chats, commands, and rules",
+        "Centralized team billing",
+        "Usage analytics & reporting",
+        "Org-wide privacy mode controls",
+        "Role-based access control",
+        "SAML/OIDC SSO"
+      ],
+      "premiumFeatures": [
+        "Centralized team billing & analytics",
+        "Org-wide privacy mode enforcement",
+        "SAML/OIDC SSO"
+      ]
+    },
+    {
+      "id": "pro-plus",
+      "label": "Pro+",
+      "monthlyPricePerSeat": 60,
+      "annualPricePerSeat": 48,
+      "tierRank": 3,
+      "features": [
+        "3x usage on all OpenAI, Claude, Gemini models",
+        "Recommended for heavy users"
+      ],
+      "premiumFeatures": [
+        "3x request allowance on all models",
+        "Priority cloud agent compute"
+      ]
+    },
+    {
+      "id": "ultra",
+      "label": "Ultra",
+      "monthlyPricePerSeat": 200,
+      "annualPricePerSeat": 160,
+      "tierRank": 4,
+      "features": [
+        "20x usage on all OpenAI, Claude, Gemini models",
+        "Priority access to new features"
+      ],
+      "premiumFeatures": [
+        "20x request allowance on all models",
+        "Priority access to new features"
+      ]
+    },
+    {
+      "id": "enterprise",
+      "label": "Enterprise",
+      "monthlyPricePerSeat": 0,
+      "isEnterprise": true,
+      "tierRank": 5,
+      "features": [
+        "Pooled usage",
+        "Invoice/PO billing",
+        "SCIM seat management",
+        "AI code tracking API & audit logs",
+        "Granular admin & model controls",
+        "Priority support & account management"
+      ],
+      "premiumFeatures": [
+        "Pooled enterprise usage",
+        "SCIM provisioning & code tracking API",
+        "Dedicated account management"
+      ]
+    }
+  ],
+  "enterprise": {
+    "compliance": {
+      "soc2": true,
+      "gdpr": true,
+      "hipaa": false,
+      "iso27001": false
+    },
+    "security": {
+      "encryption": true,
+      "privateDeployment": false,
+      "zeroDataRetention": true
+    },
+    "administration": {
+      "rbac": true,
+      "auditLogs": true,
+      "adminConsole": true
+    },
+    "identity": {
+      "sso": true,
+      "saml": true,
+      "scim": false
+    },
+    "governance": {
+      "policyManagement": true,
+      "workspaceControls": true
+    }
+  },
+  "financialProfile": {
+    "vendorLockInRisk": "Low",
+    "scalingCost": 50,
+    "upgradeFlexibility": "High",
+    "subscriptionFlexibility": "High",
+    "maintenanceCost": "Low",
+    "enterpriseROI": "High",
+    "typicalCustomerSize": "1-500",
+    "industryFit": [
+      "Software",
+      "Technology",
+      "Financial Services",
+      "Healthcare"
+    ]
+  }
+}

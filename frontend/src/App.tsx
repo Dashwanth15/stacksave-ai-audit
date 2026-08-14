@@ -6,6 +6,11 @@ import AuditPage from './pages/AuditPage';
 import ResultsPage from './pages/ResultsPage';
 import ReAuditDiffPage from './pages/ReAuditDiffPage';
 import NotFoundPage from './pages/NotFoundPage';
+import BuildStackPage from './pages/BuildStackPage';
+import BuildStackResultsPage from './pages/BuildStackResultsPage';
+import ReplacementsDashboardPage from './pages/ReplacementsDashboardPage';
+import ConsolidationDashboardPage from './pages/ConsolidationDashboardPage';
+import RemovalDashboardPage from './pages/RemovalDashboardPage';
 import ChatBot from './components/ChatBot';
 
 function ScrollToTop() {
@@ -36,6 +41,14 @@ export default function App() {
           <Route path="/audit" element={<AuditPage />} />
           <Route path="/audit/:id" element={<ResultsPage />} />
           <Route path="/audit/:id/diff" element={<ReAuditDiffPage />} />
+          <Route path="/audit/:id/replacements" element={<ReplacementsDashboardPage />} />
+          <Route path="/audit/:id/consolidation" element={<ConsolidationDashboardPage />} />
+          <Route path="/audit/:id/removal" element={<RemovalDashboardPage />} />
+          <Route path="/results/replacements" element={<ReplacementsDashboardPage />} />
+          <Route path="/results/consolidation" element={<ConsolidationDashboardPage />} />
+          <Route path="/results/removal" element={<RemovalDashboardPage />} />
+          <Route path="/build-stack" element={<BuildStackPage />} />
+          <Route path="/build-stack/results" element={<BuildStackResultsPage />} />
           <Route path="/results/:id" element={<LegacyResultsRedirect />} />
           <Route path="/reaudit/:id" element={<LegacyReauditRedirect />} />
           <Route path="*" element={<NotFoundPage />} />

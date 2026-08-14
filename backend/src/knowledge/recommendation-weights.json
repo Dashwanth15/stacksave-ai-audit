@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0.0",
+  "description": "Configurable weights for AIStackRecommendationEngine. Edit values here to tune recommendation behavior without code changes.",
+
+  "compositeScore": {
+    "_comment": "Weights for per-provider composite score. Must sum to 1.0.",
+    "workflowMatch":    0.30,
+    "featureCoverage":  0.25,
+    "capabilityScore":  0.20,
+    "costEfficiency":   0.15,
+    "enterpriseScore":  0.05,
+    "vendorStability":  0.05
+  },
+
+  "preferenceModifiers": {
+    "_comment": "Score adjustments applied based on user preference toggles.",
+    "avoidLockIn": {
+      "penalty": -10,
+      "applyWhen": "vendorLockInRisk_High"
+    },
+    "maximizeSavings": {
+      "costEfficiencyBoost": 0.15,
+      "capabilityReduction": -0.10,
+      "_comment": "When active, rebalances weights: costEfficiency += 0.15, capabilityScore -= 0.10"
+    },
+    "preferOpenSource": {
+      "bonus": 5,
+      "applyWhen": "apiSupport_true"
+    },
+    "preferEstablishedVendors": {
+      "penalty": -10,
+      "applyWhen": "vendorStabilityScore_lt50"
+    }
+  },
+
+  "confidenceWeights": {
+    "_comment": "Weights for 7-factor confidence score per recommendation. Must sum to 1.0.",
+    "workflowMatch":         0.30,
+    "featureCoverage":       0.25,
+    "budgetFit":             0.15,
+    "capabilitySuperiority": 0.10,
+    "securityMatch":         0.10,
+    "vendorStability":       0.05,
+    "futureGrowth":          0.05
+  },
+
+  "stackGeneration": {
+    "_comment": "Parameters controlling the GreedyCoverStrategy stack generation.",
+    "maxToolsPerStack":        4,
+    "minCoverageThreshold":    0.80,
+    "candidateSeedCount":      8,
+    "complementarityMinScore": 60,
+    "replacementMaxOverlap":   75
+  },
+
+  "optimizer": {
+    "_comment": "Thresholds used by StackOptimizer post-processing.",
+    "redundancyOverlapThreshold": 75,
+    "maxVendorConcentrationHHI":  6000,
+    "budgetOverrunTolerance":     0.10,
+    "minCoverageForBudgetStack":  0.70,
+    "minCoverageForPerfStack":    0.85
+  },
+
+  "knowledgeScoring": {
+    "_comment": "Weights used by KnowledgeScoringEngine to compute normalized dimension scores.",
+    "enterpriseComplianceWeight": 0.40,
+    "enterpriseIdentityWeight":   0.30,
+    "enterpriseAdminWeight":      0.30,
+    "costTiers": {
+      "_comment": "costEfficiencyScore based on cheapest monthly plan price per seat.",
+      "free":    100,
+      "lte10":    85,
+      "lte20":    70,
+      "lte40":    55,
+      "lte80":    35,
+      "above80":  20
+    },
+    "vendorStabilityWeights": {
+      "reliabilityScore":       0.50,
+      "enterpriseAvailability": 0.20,
+      "sourcesPresent":         0.30
+    },
+    "benchmarkConfidenceThreshold": 70
+  }
+}

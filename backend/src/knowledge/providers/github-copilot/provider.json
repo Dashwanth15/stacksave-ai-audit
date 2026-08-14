@@ -1,0 +1,61 @@
+{
+  "id": "github-copilot",
+  "name": "GitHub Copilot",
+  "category": "ide",
+  "vendor": "GitHub (Microsoft)",
+  "vendorProfile": {
+    "vendorId": "microsoft",
+    "vendorName": "Microsoft",
+    "establishedYear": 1975,
+    "headquarters": "Redmond, WA",
+    "fundingStage": "Public",
+    "productFamily": [
+      "github-copilot",
+      "github-models"
+    ],
+    "stabilityRating": "Very High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "IDE Assistant",
+  "secondaryRole": "Inline Autocomplete Utility",
+  "billingModels": [
+    "monthly",
+    "annual"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "JetBrains/Visual Studio support",
+    "Enterprise IP protection and SSO",
+    "Fast autocomplete latency"
+  ],
+  "knownWeaknesses": [
+    "No multi-file refactoring agent",
+    "Small context window limitations",
+    "No terminal execution loops"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Enterprise autocomplete standard",
+    "Multi-IDE corporate environments",
+    "Secure code generation"
+  ],
+  "typicalTeamSize": "Any",
+  "supportedModels": [
+    "GPT-4o",
+    "Claude 3.5 Sonnet"
+  ],
+  "supportedPlatforms": [
+    "VS Code",
+    "JetBrains",
+    "Visual Studio",
+    "Neovim"
+  ],
+  "apiSupport": false,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-05-07",
+  "sources": [
+    "https://github.com/features/copilot#pricing",
+    "https://docs.github.com/en/copilot"
+  ]
+}

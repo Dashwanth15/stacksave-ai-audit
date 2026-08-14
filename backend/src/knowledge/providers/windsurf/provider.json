@@ -1,0 +1,56 @@
+{
+  "id": "windsurf",
+  "name": "Windsurf",
+  "category": "ide",
+  "vendor": "Codeium",
+  "vendorProfile": {
+    "vendorId": "codeium",
+    "vendorName": "Codeium",
+    "establishedYear": 2021,
+    "headquarters": "Mountain View, CA",
+    "fundingStage": "Private",
+    "productFamily": [
+      "windsurf"
+    ],
+    "stabilityRating": "High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "AI IDE",
+  "secondaryRole": "Developer Productivity Platform",
+  "billingModels": [
+    "monthly",
+    "annual"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "Cascade agent workflow",
+    "Highly cost-effective Pro tier ($15/mo)",
+    "Strong terminal action loops"
+  ],
+  "knownWeaknesses": [
+    "Smaller user ecosystem than Cursor",
+    "Lacks JetBrains compatibility in windsurf client"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Autonomous refactoring",
+    "Budget-focused engineering",
+    "Terminal action command execution"
+  ],
+  "typicalTeamSize": "Small to Medium",
+  "supportedModels": [
+    "Claude 3.5 Sonnet",
+    "GPT-4o"
+  ],
+  "supportedPlatforms": [
+    "Windsurf Editor"
+  ],
+  "apiSupport": true,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-05-07",
+  "sources": [
+    "https://codeium.com/windsurf",
+    "https://docs.codeium.com/windsurf"
+  ]
+}

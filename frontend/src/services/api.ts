@@ -4,7 +4,7 @@
 // ============================================================
 
 import axios from 'axios';
-import type { AuditRequest, AuditResult, LeadCaptureRequest, ReAuditResponse, AuditDiff } from '../types';
+import type { AuditRequest, AuditResult, LeadCaptureRequest, ReAuditResponse, AuditDiff, StackBuilderRequest, StackRecommendation } from '../types';
 
 const getBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
@@ -147,4 +147,19 @@ export async function triggerReAudit(
   return response.data.data;
 }
 
-
+export async function submitStackBuilder(request: StackBuilderRequest): Promise<StackRecommendation> {
+  const response = await api.post<{ success: boolean; data: StackRecommendation; error?: string }>(
+    '/stack-builder',
+    request
+  );
+  if (!response || !response.data) {
+    throw new Error('No response received from the server.');
+  }
+  if (response.data.success === false) {
+    throw new Error(response.data.error || 'Server failed to process stack recommendation.');
+  }
+  if (!response.data.data) {
+    throw new Error('Server returned success, but the recommendation data payload is missing.');
+  }
+  return response.data.data;
+}

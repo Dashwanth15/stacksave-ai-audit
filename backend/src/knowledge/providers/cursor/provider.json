@@ -1,0 +1,58 @@
+{
+  "id": "cursor",
+  "name": "Cursor",
+  "category": "ide",
+  "vendor": "Anysphere",
+  "vendorProfile": {
+    "vendorId": "anysphere",
+    "vendorName": "Anysphere",
+    "establishedYear": 2022,
+    "headquarters": "San Francisco, CA",
+    "fundingStage": "Private",
+    "productFamily": [
+      "cursor"
+    ],
+    "stabilityRating": "High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "AI IDE",
+  "secondaryRole": "Developer Productivity Platform",
+  "billingModels": [
+    "monthly",
+    "annual"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "Composer multi-file generation",
+    "Semantic codebase vector indexation",
+    "Inline terminal debugger"
+  ],
+  "knownWeaknesses": [
+    "No JetBrains client support",
+    "No custom GPT workflows",
+    "No voice operations"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Autonomous software engineering",
+    "Fullstack codebase search",
+    "Startup velocity"
+  ],
+  "typicalTeamSize": "Small to Medium",
+  "supportedModels": [
+    "Claude 3.5 Sonnet",
+    "GPT-4o",
+    "Gemini 1.5 Pro"
+  ],
+  "supportedPlatforms": [
+    "Cursor Editor"
+  ],
+  "apiSupport": true,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-05-07",
+  "sources": [
+    "https://cursor.com/pricing",
+    "https://cursor.com/features"
+  ]
+}

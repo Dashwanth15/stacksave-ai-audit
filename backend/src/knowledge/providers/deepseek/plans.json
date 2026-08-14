@@ -1,0 +1,92 @@
+{
+  "providerId": "deepseek",
+  "pricing": {
+    "free": 0,
+    "pro": 15,
+    "api": 0
+  },
+  "annualDiscountPercent": 0,
+  "plans": [
+    {
+      "id": "free",
+      "label": "Free",
+      "monthlyPricePerSeat": 0,
+      "tierRank": 0,
+      "features": [
+        "Standard DeepSeek V2.5 access",
+        "Web chat interface",
+        "Code generation"
+      ],
+      "premiumFeatures": []
+    },
+    {
+      "id": "pro",
+      "label": "Pro",
+      "monthlyPricePerSeat": 15,
+      "tierRank": 1,
+      "features": [
+        "Priority DeepSeek-Coder-V2 access",
+        "Higher message limits",
+        "Faster throughput"
+      ],
+      "premiumFeatures": [
+        "Priority DeepSeek-Coder-V2 queue",
+        "Higher message limits"
+      ]
+    },
+    {
+      "id": "api",
+      "label": "API Pay As You Go",
+      "monthlyPricePerSeat": 0,
+      "isPayPerUse": true,
+      "tierRank": 0,
+      "features": [
+        "DeepSeek V2.5: $0.14/M input, $0.28/M output",
+        "DeepSeek Coder: $0.14/M input, $0.28/M output"
+      ],
+      "premiumFeatures": []
+    }
+  ],
+  "enterprise": {
+    "compliance": {
+      "soc2": true,
+      "gdpr": true,
+      "hipaa": false,
+      "iso27001": false
+    },
+    "security": {
+      "encryption": true,
+      "privateDeployment": false,
+      "zeroDataRetention": true
+    },
+    "administration": {
+      "rbac": true,
+      "auditLogs": true,
+      "adminConsole": true
+    },
+    "identity": {
+      "sso": true,
+      "saml": true,
+      "scim": false
+    },
+    "governance": {
+      "policyManagement": true,
+      "workspaceControls": true
+    }
+  },
+  "financialProfile": {
+    "vendorLockInRisk": "Low",
+    "scalingCost": 50,
+    "upgradeFlexibility": "High",
+    "subscriptionFlexibility": "High",
+    "maintenanceCost": "Low",
+    "enterpriseROI": "High",
+    "typicalCustomerSize": "1-500",
+    "industryFit": [
+      "Software",
+      "Technology",
+      "Financial Services",
+      "Healthcare"
+    ]
+  }
+}

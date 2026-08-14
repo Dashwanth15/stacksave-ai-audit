@@ -169,7 +169,6 @@ export const TOOL_CATALOG: ToolCatalog[] = [
         id: 'plus',
         label: 'Plus',
         monthlyPricePerSeat: 20,
-        annualPricePerSeat: 20,
       },
       {
         id: 'pro',
@@ -328,9 +327,9 @@ export const TOOL_CATALOG: ToolCatalog[] = [
     pricingVerifiedDate: '2026-05-07',
     plans: [
       { id: 'free', label: 'Free', monthlyPricePerSeat: 0 },
-      { id: 'pro', label: 'Pro', monthlyPricePerSeat: 20 },
-      { id: 'max', label: 'Max', monthlyPricePerSeat: 200 },
-      { id: 'teams', label: 'Teams', monthlyPricePerSeat: 40 },
+      { id: 'pro', label: 'Pro', monthlyPricePerSeat: 20, annualPricePerSeat: 15 },
+      { id: 'max', label: 'Max', monthlyPricePerSeat: 200, annualPricePerSeat: 160 },
+      { id: 'teams', label: 'Teams', monthlyPricePerSeat: 40, annualPricePerSeat: 32 },
       { id: 'enterprise', label: 'Enterprise', monthlyPricePerSeat: 0 },
     ],
     alternatives: [
@@ -342,6 +341,91 @@ export const TOOL_CATALOG: ToolCatalog[] = [
       },
     ],
   },
+  {
+    id: 'perplexity',
+    name: 'Perplexity',
+    category: 'search',
+    useCases: ['research'],
+    pricingUrl: 'https://perplexity.ai/pro',
+    pricingVerifiedDate: '2026-05-07',
+    plans: [
+      { id: 'free', label: 'Free', monthlyPricePerSeat: 0 },
+      { id: 'pro', label: 'Pro', monthlyPricePerSeat: 20, annualPricePerSeat: 16.67 },
+      { id: 'enterprise', label: 'Enterprise', monthlyPricePerSeat: 40 }
+    ]
+  },
+  {
+    id: 'deepseek',
+    name: 'DeepSeek',
+    category: 'api',
+    useCases: ['coding', 'data'],
+    pricingUrl: 'https://deepseek.com/pricing',
+    pricingVerifiedDate: '2026-05-07',
+    plans: [
+      { id: 'api', label: 'API (Pay As You Go)', monthlyPricePerSeat: 0, isPayPerUse: true }
+    ]
+  },
+  {
+    id: 'codex',
+    name: 'OpenAI Codex',
+    category: 'api',
+    useCases: ['coding'],
+    pricingUrl: 'https://openai.com/pricing',
+    pricingVerifiedDate: '2026-05-07',
+    plans: [
+      { id: 'api', label: 'API Tier', monthlyPricePerSeat: 0, isPayPerUse: true }
+    ]
+  },
+  {
+    id: 'github-models',
+    name: 'GitHub Models',
+    category: 'api',
+    useCases: ['coding', 'research'],
+    pricingUrl: 'https://github.com/features/models',
+    pricingVerifiedDate: '2026-05-07',
+    plans: [
+      { id: 'free', label: 'Free Tier', monthlyPricePerSeat: 0 },
+      { id: 'pro', label: 'Developer Tier', monthlyPricePerSeat: 15 }
+    ]
+  },
+
+  // ──────────────────────────────────────────────
+  // KIMI (Moonshot AI)
+  // Source: Artificial Analysis + OpenRouter screenshots (July 2026)
+  // Kimi K3: API-based, usage-based pricing via providers
+  // Kimi K3 input: $2.80–$3.00/M tokens (source-dependent, see kimi.json)
+  // Kimi K3 output: $14–$15/M tokens (source-dependent)
+  // ──────────────────────────────────────────────
+  {
+    id: 'kimi',
+    name: 'Kimi',
+    category: 'chat',
+    useCases: ['coding', 'research', 'data', 'mixed'],
+    pricingUrl: 'https://kimi.ai',
+    pricingVerifiedDate: '2026-07-01',
+    plans: [
+      {
+        id: 'pay-as-you-go',
+        label: 'API Pay As You Go',
+        monthlyPricePerSeat: 0,
+        isPayPerUse: true,
+      },
+    ],
+    alternatives: [
+      {
+        toolId: 'claude',
+        toolName: 'Claude',
+        reason: 'Both are top-tier reasoning models. Claude offers consumer subscription plans with team billing; Kimi K3 is API-only with open weights and a larger 1M context window.',
+        estimatedSaving: 'Variable — Kimi K3 input from $2.80/M tokens vs Claude API pricing',
+      },
+      {
+        toolId: 'chatgpt',
+        toolName: 'ChatGPT',
+        reason: 'ChatGPT offers consumer subscriptions with voice, memory, and plugin ecosystem. Kimi K3 offers superior intelligence benchmarks and ultra-long 1M context.',
+        estimatedSaving: 'Variable by usage pattern',
+      },
+    ],
+  }
 ];
 
 // Helper: find a tool by ID

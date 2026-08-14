@@ -12,6 +12,8 @@ import auditRouter from './routes/audit';
 import leadsRouter from './routes/leads';
 import healthRouter from './routes/health';
 import chatRouter from './routes/chat';
+import stackBuilderRouter from './routes/stackBuilder';
+import intelligenceRouter from './routes/intelligence';
 import { globalLimiter, leadLimiter } from './middleware/rateLimit';
 import { requestLogger } from './middleware/logger';
 
@@ -77,6 +79,8 @@ app.use('/api/health', healthRouter);
 app.use('/api/audits', auditRouter);
 app.use('/api/leads', leadLimiter, leadsRouter);
 app.use('/api/chat', chatRouter);
+app.use('/api/stack-builder', stackBuilderRouter);
+app.use('/api/intelligence', intelligenceRouter);
 
 // ── 404 Handler ──────────────────────────────────────────────
 app.use((_req, res) => {

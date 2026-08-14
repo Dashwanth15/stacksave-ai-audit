@@ -1,0 +1,103 @@
+{
+  "providerId": "perplexity",
+  "pricing": {
+    "free": 0,
+    "pro": 20,
+    "enterprise": 40
+  },
+  "annualDiscountPercent": 17,
+  "plans": [
+    {
+      "id": "free",
+      "label": "Free",
+      "monthlyPricePerSeat": 0,
+      "tierRank": 0,
+      "features": [
+        "Standard search queries",
+        "Limited Pro search queries",
+        "Basic file uploads"
+      ],
+      "premiumFeatures": []
+    },
+    {
+      "id": "pro",
+      "label": "Pro",
+      "monthlyPricePerSeat": 20,
+      "annualPricePerSeat": 16.67,
+      "tierRank": 1,
+      "features": [
+        "600+ Pro Searches per day",
+        "Select model: Sonnet 3.5, GPT-4o, Opus",
+        "Unlimited file analysis & image generation",
+        "$5/mo API credit included"
+      ],
+      "premiumFeatures": [
+        "600+ Pro Searches per day",
+        "Model selection (Sonnet 3.5, GPT-4o, Opus)",
+        "Unlimited document analysis",
+        "$5/mo API credit"
+      ]
+    },
+    {
+      "id": "enterprise",
+      "label": "Enterprise Pro",
+      "monthlyPricePerSeat": 40,
+      "minSeats": 5,
+      "tierRank": 2,
+      "features": [
+        "Everything in Pro",
+        "Single Sign-On (SSO)",
+        "SOC2 compliance & data privacy",
+        "User management & admin controls",
+        "Pooled API credits"
+      ],
+      "premiumFeatures": [
+        "Single Sign-On (SSO) & SOC2 compliance",
+        "Data privacy guarantee (no AI training)",
+        "Centralized team admin & analytics"
+      ]
+    }
+  ],
+  "enterprise": {
+    "compliance": {
+      "soc2": true,
+      "gdpr": true,
+      "hipaa": false,
+      "iso27001": false
+    },
+    "security": {
+      "encryption": true,
+      "privateDeployment": false,
+      "zeroDataRetention": true
+    },
+    "administration": {
+      "rbac": true,
+      "auditLogs": true,
+      "adminConsole": true
+    },
+    "identity": {
+      "sso": true,
+      "saml": true,
+      "scim": false
+    },
+    "governance": {
+      "policyManagement": true,
+      "workspaceControls": true
+    }
+  },
+  "financialProfile": {
+    "vendorLockInRisk": "Low",
+    "scalingCost": 50,
+    "upgradeFlexibility": "High",
+    "subscriptionFlexibility": "High",
+    "maintenanceCost": "Low",
+    "enterpriseROI": "High",
+    "typicalCustomerSize": "1-500",
+    "industryFit": [
+      "Software",
+      "Technology",
+      "Financial Services",
+      "Healthcare"
+    ]
+  }
+}

@@ -1,12 +1,13 @@
 // ============================================================
 // Explanation Engine — StackSave AI Platform Intelligence
 //
-// Formats comparisons into structured Gartner-style evidence reports.
-// Strict constraint to avoid repeating sentences across fields.
+// Formats comparisons and decisions into structured, multi-dimensional
+// Gartner-style evidence reports with 100% explainability.
 // ============================================================
 
-import { KnowledgeLoader } from './KnowledgeLoader';
+import { KnowledgeLoader, ProviderProfile } from './KnowledgeLoader';
 import { DecisionLog } from '../../types';
+import { RelationshipEngine } from './RelationshipEngine';
 
 export interface GartnerExplanation {
   problem: string;
@@ -20,7 +21,7 @@ export interface GartnerExplanation {
 
 export class ExplanationEngine {
   /**
-   * Generates a Gartner-style explanation block based on proposal logs and metrics.
+   * Generates a structured Gartner-style explanation block based on proposal logs and metrics.
    */
   public static generate(
     idA: string, // tool to remove
@@ -31,52 +32,47 @@ export class ExplanationEngine {
     const profileA = KnowledgeLoader.getProvider(idA)!;
     const profileB = KnowledgeLoader.getProvider(idB)!;
 
+    const categoryLabel = profileA?.category?.toUpperCase() || 'SOFTWARE';
+    const nameA = profileA ? profileA.name : idA;
+    const nameB = profileB ? profileB.name : idB;
+
     const problem = strategy === 'performance'
-      ? `Ecosystem capability overlap in AI ${profileA.category.toUpperCase()} category.`
-      : `Redundant subscription costs in the AI ${profileA.category.toUpperCase()} budget.`;
+      ? `Ecosystem capability overlap in AI ${categoryLabel} category.`
+      : `Redundant subscription costs in the AI ${categoryLabel} budget.`;
 
-    const decision = `Keep ${profileB.name}, Remove ${profileA.name}`;
+    const decision = `Keep ${nameB}, Remove ${nameA}`;
 
-    // Collect capability difference highlights mathematically
+    // Compute dynamic relationship and feature deltas
+    const rel = RelationshipEngine.analyze(idA, idB, decisionLog.useCase);
     const evidenceList: string[] = [];
-    const capsToCheck = [
-      { key: 'aiAgent', label: 'AI agent workflows' },
-      { key: 'largeCodebaseUnderstanding', label: 'codebase indexing and semantic search' },
-      { key: 'multiFileEditing', label: 'multi-file editing / Composer' },
-      { key: 'autocomplete', label: 'inline autocomplete' },
-      { key: 'reasoning', label: 'complex context reasoning' },
-      { key: 'longContext', label: 'context window size' }
-    ];
 
-    for (const item of capsToCheck) {
-      const scoreA = profileA.capabilities[item.key]?.score || 0;
-      const scoreB = profileB.capabilities[item.key]?.score || 0;
-      const diff = scoreB - scoreA;
-
-      if (diff >= 2) {
-        evidenceList.push(`• ${profileB.name} provides superior ${item.label} (score ${scoreB} vs ${scoreA})`);
-      } else if (diff <= -2) {
-        evidenceList.push(`• ${profileA.name} provides stronger standalone ${item.label} (score ${scoreA} vs ${scoreB})`);
+    if (rel) {
+      evidenceList.push(`• Capability overlap index: ${rel.workflowOverlap}% between ${nameA} and ${nameB}`);
+      if (rel.replacementConfidence >= 75) {
+        evidenceList.push(`• Directional replacement confidence: ${rel.replacementConfidence}% (${nameB} covers key capabilities of ${nameA})`);
+      }
+      if (rel.featureGain.length > 0) {
+        evidenceList.push(`• Superior capabilities in ${nameB}: ${rel.featureGain.slice(0, 2).join(', ')}`);
       }
     }
 
     if (evidenceList.length === 0) {
-      evidenceList.push(`• ${profileB.name} is rated higher in overall developer experience and workflow metrics`);
+      evidenceList.push(`• ${nameB} is rated higher in overall developer experience and workflow metrics`);
     }
 
-    // Deduplicated tradeoffs
+    // Dynamic tradeoffs
     let tradeoffs = 'Standard administrative keys configuration.';
     if (strategy === 'performance') {
-      tradeoffs = `Minor standalone configurations are unified. Decommissioning ${profileA.name} simplifies the engineering stack with zero degradation to critical workflows.`;
+      tradeoffs = `Minor standalone configurations are unified. Decommissioning ${nameA} simplifies the engineering stack with zero degradation to critical workflows.`;
     } else {
-      if (profileA.category === 'ide') {
-        tradeoffs = `Developers lose standalone access to the ${profileA.name} plugins. Custom settings mapping is required inside the ${profileB.name} interface.`;
-      } else if (profileA.category === 'chat') {
-        tradeoffs = `Team members lose separate project consoles and history threads hosted on ${profileA.name}.`;
+      if (profileA?.category === 'ide') {
+        tradeoffs = `Developers lose standalone access to ${nameA} plugins. Custom settings mapping is required inside the ${nameB} interface.`;
+      } else if (profileA?.category === 'chat') {
+        tradeoffs = `Team members lose separate project consoles and history threads hosted on ${nameA}.`;
       }
     }
 
-    // Retrieve savings and metrics from the proposal evaluation that decommissioned tool A
+    // Retrieve savings & metrics
     const evalProp = decisionLog.proposalsEvaluated.find(
       (p) => p.decommissionedTools.includes(idA) && p.keptTools.includes(idB)
     ) || decisionLog.proposalsEvaluated.find(p => p.decommissionedTools.includes(idA));

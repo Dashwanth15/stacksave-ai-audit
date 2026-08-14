@@ -1,0 +1,89 @@
+{
+  "id": "kimi",
+  "name": "Kimi",
+  "category": "chat",
+  "vendor": "Moonshot AI",
+  "vendorProfile": {
+    "vendorId": "moonshot-ai",
+    "vendorName": "Moonshot AI",
+    "establishedYear": 2023,
+    "headquarters": "Beijing, China",
+    "fundingStage": "Private",
+    "productFamily": [
+      "kimi"
+    ],
+    "stabilityRating": "Medium",
+    "enterprisePresence": false
+  },
+  "primaryRole": "Ultra-Long-Context Reasoning Model",
+  "secondaryRole": "Open-Weights Frontier Intelligence Platform",
+  "billingModels": [
+    "monthly",
+    "annual",
+    "per-seat",
+    "usage-based"
+  ],
+  "enterpriseAvailability": false,
+  "knownStrengths": [
+    "#1/104 Artificial Analysis Intelligence Index (Kimi K3 max)",
+    "1.05M token context window — among the longest available",
+    "Open weights available on Hugging Face (Kimi K3)",
+    "Exceptional Design Arena scores: 99th percentile in Code, UI, Website",
+    "Coding score 76 and Agentic score 54 on Artificial Analysis",
+    "Tool use and caching explicitly supported",
+    "No prompt training data policy confirmed"
+  ],
+  "knownWeaknesses": [
+    "Notably slow — speed rank #48/104 (Artificial Analysis)",
+    "Particularly expensive for an open-weight model (Cost rank #32/104)",
+    "Somewhat verbose (#24/104 verbosity)",
+    "No enterprise compliance information visible (no SOC2, HIPAA, SSO documented)",
+    "No native IDE integration documented",
+    "No voice capability documented",
+    "Kimi K2.7 Code only available through 1 provider with limited redundancy"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Ultra-long-context reasoning tasks (1M+ token documents)",
+    "Complex code generation and architecture analysis",
+    "UI and website generation (99th percentile Design Arena)",
+    "Data visualization tasks (98th percentile Design Arena)",
+    "Agentic workflows requiring tool use",
+    "Open-weight model deployment via Hugging Face"
+  ],
+  "typicalTeamSize": "Small to Medium",
+  "supportedModels": [
+    "Kimi K3",
+    "Kimi K3 (max)",
+    "Kimi K2.7 Code (batch)"
+  ],
+  "supportedPlatforms": [
+    "None"
+  ],
+  "apiSupport": true,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-07-01",
+  "sources": [
+    "artificialanalysis.ai — Kimi K3 (max) intelligence page (user-provided screenshot, July 2026)",
+    "openrouter.ai — Kimi K3 vs Kimi K2.7 Code model comparison (user-provided screenshot, July 2026)",
+    "https://kimi.ai",
+    "https://www.moonshot.cn"
+  ],
+  "knowledgeProvenance": {
+    "capturedFrom": "User-provided screenshots",
+    "screenshotSources": [
+      "Artificial Analysis — Kimi K3 (max) Intelligence, Performance & Price Analysis page",
+      "OpenRouter model comparison — Kimi K3 vs Kimi K2.7 Code (batch)",
+      "OpenRouter performance and features table — Kimi K3 vs Kimi K2.7 Code (batch)"
+    ],
+    "captureDate": "2026-07-01 (approximate — based on Release July 2026 shown in screenshots)",
+    "confidenceNotes": [
+      "Pricing figures differ between Artificial Analysis ($3.00 in / $15.00 out) and OpenRouter ($2.80 in / $14.00 out) views — both preserved without merging",
+      "Performance figures differ between Artificial Analysis (40.4 tok/s) and OpenRouter (25.0 tok/s) — both preserved",
+      "Design Arena category scores not yet confirmed for Asciiart, Game Development, SVG — not assigned",
+      "Model weight openness confirmed as 'open weights' not 'fully open source' per screenshot wording",
+      "Kimi K2.7 Code quantization listed as 'unknown' per OpenRouter table"
+    ]
+  }
+}

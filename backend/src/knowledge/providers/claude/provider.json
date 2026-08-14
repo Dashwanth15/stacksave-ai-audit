@@ -1,0 +1,59 @@
+{
+  "id": "claude",
+  "name": "Claude",
+  "category": "chat",
+  "vendor": "Anthropic",
+  "vendorProfile": {
+    "vendorId": "anthropic",
+    "vendorName": "Anthropic",
+    "establishedYear": 2021,
+    "headquarters": "San Francisco, CA",
+    "fundingStage": "Private",
+    "productFamily": [
+      "claude",
+      "anthropic-api"
+    ],
+    "stabilityRating": "Very High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "Reasoning Assistant",
+  "secondaryRole": "Analytical Writing and Analysis Engine",
+  "billingModels": [
+    "monthly",
+    "annual"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "Logical reasoning and GPQA leader",
+    "Claude Artifacts dashboard Prototyping",
+    "Long-document context parsing (200k)"
+  ],
+  "knownWeaknesses": [
+    "Strict rate limit constraints",
+    "No web search capabilities",
+    "No voice interaction console"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Code reasoning & logic",
+    "Analytical document writing",
+    "Web app prototyping"
+  ],
+  "typicalTeamSize": "Any",
+  "supportedModels": [
+    "Claude 3.5 Sonnet",
+    "Claude 3.5 Haiku",
+    "Claude 3 Opus"
+  ],
+  "supportedPlatforms": [
+    "None"
+  ],
+  "apiSupport": false,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-05-07",
+  "sources": [
+    "https://www.anthropic.com/pricing",
+    "https://docs.anthropic.com/claude"
+  ]
+}

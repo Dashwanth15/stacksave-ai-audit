@@ -1,0 +1,158 @@
+{
+  "providerId": "chatgpt",
+  "pricing": {
+    "free": 0,
+    "go": 5,
+    "plus": 20,
+    "team": 25,
+    "pro": 200,
+    "enterprise": 0
+  },
+  "annualDiscountPercent": 17,
+  "plans": [
+    {
+      "id": "free",
+      "label": "Free",
+      "monthlyPricePerSeat": 0,
+      "tierRank": 0,
+      "features": [
+        "Limited GPT-5.5 Instant",
+        "Limited messages & uploads",
+        "Limited deep research",
+        "Limited Codex access"
+      ],
+      "premiumFeatures": []
+    },
+    {
+      "id": "go",
+      "label": "Go",
+      "monthlyPricePerSeat": 5,
+      "tierRank": 1,
+      "features": [
+        "More access to GPT-5.5 Instant",
+        "More messages & uploads",
+        "More image creation",
+        "Longer memory"
+      ],
+      "premiumFeatures": [
+        "Expanded message caps vs Free",
+        "Longer memory context"
+      ]
+    },
+    {
+      "id": "plus",
+      "label": "Plus",
+      "monthlyPricePerSeat": 20,
+      "tierRank": 2,
+      "features": [
+        "Advanced reasoning with GPT-5.5 Thinking",
+        "Expanded messages & uploads",
+        "More complex image creation",
+        "Expanded deep research & agent mode"
+      ],
+      "premiumFeatures": [
+        "GPT-5.5 Thinking reasoning model",
+        "Expanded deep research & agent mode",
+        "Priority access during peak traffic"
+      ]
+    },
+    {
+      "id": "team",
+      "label": "Team",
+      "monthlyPricePerSeat": 25,
+      "annualPricePerSeat": 20.83,
+      "minSeats": 2,
+      "tierRank": 3,
+      "features": [
+        "Higher usage than Plus",
+        "Admin console",
+        "Workspace management",
+        "Data excluded from training"
+      ],
+      "premiumFeatures": [
+        "Higher message limits than Plus",
+        "Admin console & workspace controls",
+        "Zero data training opt-out"
+      ]
+    },
+    {
+      "id": "pro",
+      "label": "Pro",
+      "monthlyPricePerSeat": 200,
+      "tierRank": 4,
+      "features": [
+        "5x or 20x more usage",
+        "5x 10x or 20x more Codex usage",
+        "Pro reasoning with GPT-5.5 Pro",
+        "Maximum Codex tasks",
+        "Unlimited GPT-5.3 & file uploads"
+      ],
+      "premiumFeatures": [
+        "20x usage allocation",
+        "GPT-5.5 Pro compute mode",
+        "Unlimited file uploads & Codex tasks"
+      ]
+    },
+    {
+      "id": "enterprise",
+      "label": "Enterprise",
+      "monthlyPricePerSeat": 0,
+      "isEnterprise": true,
+      "tierRank": 5,
+      "features": [
+        "Unlimited high-speed access",
+        "Expanded context window",
+        "SAML SSO",
+        "Admin console & analytics",
+        "Custom data retention"
+      ],
+      "premiumFeatures": [
+        "Unlimited high-speed reasoning",
+        "SAML SSO & custom data retention",
+        "Enterprise analytics dashboard"
+      ]
+    }
+  ],
+  "enterprise": {
+    "compliance": {
+      "soc2": true,
+      "gdpr": true,
+      "hipaa": false,
+      "iso27001": false
+    },
+    "security": {
+      "encryption": true,
+      "privateDeployment": false,
+      "zeroDataRetention": true
+    },
+    "administration": {
+      "rbac": true,
+      "auditLogs": true,
+      "adminConsole": true
+    },
+    "identity": {
+      "sso": true,
+      "saml": true,
+      "scim": false
+    },
+    "governance": {
+      "policyManagement": true,
+      "workspaceControls": true
+    }
+  },
+  "financialProfile": {
+    "vendorLockInRisk": "Low",
+    "scalingCost": 50,
+    "upgradeFlexibility": "High",
+    "subscriptionFlexibility": "High",
+    "maintenanceCost": "Low",
+    "enterpriseROI": "High",
+    "typicalCustomerSize": "1-500",
+    "industryFit": [
+      "Software",
+      "Technology",
+      "Financial Services",
+      "Healthcare"
+    ]
+  }
+}

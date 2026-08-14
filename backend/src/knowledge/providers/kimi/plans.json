@@ -1,0 +1,169 @@
+{
+  "providerId": "kimi",
+  "pricing": {
+    "moderato": 15,
+    "allegretto": 31,
+    "allegro": 79,
+    "vivace": 159,
+    "api-pay-as-you-go": 0
+  },
+  "annualDiscountPercent": 0,
+  "plans": [
+    {
+      "id": "moderato",
+      "label": "Moderato",
+      "monthlyPricePerSeat": 15,
+      "annualPricePerSeat": 15,
+      "annualTotal": 180,
+      "referenceMonthlyPrice": 19,
+      "tierRank": 1,
+      "agentCreditsMultiplier": 1,
+      "contextWindow": "128K",
+      "features": [
+        "More agent credits",
+        "Work with Docs, Sheets and Slides",
+        "Deep Research",
+        "Websites Deploy",
+        "Agent multi-tasking",
+        "Kimi Code available",
+        "Dashboard with task widgets",
+        "Scheduled tasks that run automatically and push results",
+        "Swarm / Multiple agents"
+      ],
+      "premiumFeatures": []
+    },
+    {
+      "id": "allegretto",
+      "label": "Allegretto",
+      "monthlyPricePerSeat": 31,
+      "annualPricePerSeat": 31,
+      "annualTotal": 372,
+      "referenceMonthlyPrice": 39,
+      "tierRank": 2,
+      "agentCreditsMultiplier": 2,
+      "contextWindow": "128K",
+      "features": [
+        "2x agent credits",
+        "Work with Docs, Sheets and Slides",
+        "Deep Research & Websites Deploy",
+        "Agent multi-tasking & Kimi Code",
+        "Dashboard with task widgets",
+        "Scheduled tasks that run automatically and push results",
+        "Goal mode, where agents autonomously work until completion",
+        "Swarm / Multiple agents"
+      ],
+      "premiumFeatures": [
+        "2x agent credits vs Moderato",
+        "Goal mode (autonomous agent completion)"
+      ]
+    },
+    {
+      "id": "allegro",
+      "label": "Allegro",
+      "monthlyPricePerSeat": 79,
+      "annualPricePerSeat": 79,
+      "annualTotal": 948,
+      "referenceMonthlyPrice": 99,
+      "tierRank": 3,
+      "agentCreditsMultiplier": 5,
+      "contextWindow": "1M",
+      "features": [
+        "5x agent credits",
+        "Up to 1M tokens of context for ultra-long conversations",
+        "Work with Docs, Sheets and Slides",
+        "Deep Research & Websites Deploy",
+        "Agent multi-tasking & Kimi Code",
+        "Dashboard with task widgets & scheduled tasks",
+        "Goal mode & Swarm multi-agent execution"
+      ],
+      "premiumFeatures": [
+        "5x agent credits vs Moderato",
+        "1M-token context window (ultra-long reasoning)",
+        "Goal mode (autonomous agent completion)",
+        "Full swarm / multi-agent execution"
+      ]
+    },
+    {
+      "id": "vivace",
+      "label": "Vivace",
+      "monthlyPricePerSeat": 159,
+      "annualPricePerSeat": 159,
+      "annualTotal": 1908,
+      "referenceMonthlyPrice": 199,
+      "tierRank": 4,
+      "agentCreditsMultiplier": 10,
+      "contextWindow": "1M",
+      "features": [
+        "10x agent credits",
+        "Up to 1M tokens of context for ultra-long conversations",
+        "Work with Docs, Sheets and Slides",
+        "Deep Research & Websites Deploy",
+        "Agent multi-tasking & Kimi Code",
+        "Dashboard with task widgets & scheduled tasks",
+        "Goal mode & Swarm multi-agent execution"
+      ],
+      "premiumFeatures": [
+        "10x agent credits vs Moderato (highest tier)",
+        "1M-token context window (ultra-long reasoning)",
+        "Goal mode (autonomous agent completion)",
+        "Full swarm / multi-agent execution"
+      ]
+    },
+    {
+      "id": "api-pay-as-you-go",
+      "label": "API Pay As You Go",
+      "monthlyPricePerSeat": 0,
+      "tierRank": 0,
+      "isPayPerUse": true,
+      "features": [
+        "Kimi K3: Input $2.80–$3.00/M tokens",
+        "Kimi K3: Output $14–$15/M tokens",
+        "Kimi K2.7 Code: Input $0.475/M, Output $2/M (batch)",
+        "1.05M token context window"
+      ],
+      "premiumFeatures": []
+    }
+  ],
+  "enterprise": {
+    "compliance": {
+      "soc2": true,
+      "gdpr": true,
+      "hipaa": false,
+      "iso27001": false
+    },
+    "security": {
+      "encryption": true,
+      "privateDeployment": false,
+      "zeroDataRetention": true
+    },
+    "administration": {
+      "rbac": true,
+      "auditLogs": true,
+      "adminConsole": true
+    },
+    "identity": {
+      "sso": true,
+      "saml": true,
+      "scim": false
+    },
+    "governance": {
+      "policyManagement": true,
+      "workspaceControls": true
+    }
+  },
+  "financialProfile": {
+    "vendorLockInRisk": "Low",
+    "scalingCost": 50,
+    "upgradeFlexibility": "High",
+    "subscriptionFlexibility": "High",
+    "maintenanceCost": "Low",
+    "enterpriseROI": "High",
+    "typicalCustomerSize": "1-500",
+    "industryFit": [
+      "Software",
+      "Technology",
+      "Financial Services",
+      "Healthcare"
+    ]
+  }
+}

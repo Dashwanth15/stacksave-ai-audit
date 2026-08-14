@@ -11,7 +11,13 @@ export type ToolId =
   | 'anthropic-api'
   | 'openai-api'
   | 'gemini'
-  | 'windsurf';
+  | 'windsurf'
+  | 'perplexity'
+  | 'deepseek'
+  | 'codex'
+  | 'github-models'
+  | 'kimi'
+  | 'all-stack-tools';
 
 export type UseCase = 'coding' | 'writing' | 'data' | 'research' | 'mixed';
 
@@ -32,6 +38,8 @@ export interface ToolEntry {
   monthlySpend: number;
   seats: number;
   useCase: UseCase;
+  modelId?: string;
+  versionName?: string;
 }
 
 export interface AuditRequest {
@@ -41,6 +49,7 @@ export interface AuditRequest {
   useCase: UseCase;
   reAuditOf?: string; // parent audit ID if chaining a new version
   optimizationGoal?: 'savings' | 'balanced' | 'productivity' | 'governance';
+  billingCycle?: 'monthly' | 'annual'; // user's selected billing period
 }
 
 // --- Audit Engine Internals ---
@@ -96,6 +105,7 @@ export interface AuditResult {
   tools: ToolEntry[];
   useCase?: UseCase;
   optimizationGoal?: 'savings' | 'balanced' | 'productivity' | 'governance';
+  billingCycle?: 'monthly' | 'annual'; // billing period used in this audit
 
   // Batch 4 re-audit additions
   pricingChanged?: boolean;
@@ -273,3 +283,147 @@ export interface DecisionLog {
   confidence: 'High' | 'Medium' | 'Low';
 }
 
+// ── Flow 2: Build Stack Types ─────────────────────────────────
+
+export interface StackBuilderRequest {
+  monthlyBudget: number | null;
+  teamSize: number;
+  engineeringFocus: string[];
+  primaryWorkflow: string;
+  mustHaveFeatures: string[];
+  preferences: {
+    preferOpenSource: boolean;
+    avoidLockIn: boolean;
+    maximizeSavings: boolean;
+    preferEstablishedVendors: boolean;
+  };
+  constraints?: Record<string, unknown>;
+  debug?: boolean;
+}
+
+export interface ConfidenceBreakdown {
+  overall: number;
+  workflowMatch: number;
+  featureCoverage: number;
+  budgetFit: number;
+  capabilitySuperiority: number;
+  securityMatch: number;
+  vendorStability: number;
+  futureGrowth: number;
+}
+
+export interface ToolInStack {
+  toolId: string;
+  toolName: string;
+  category: string;
+  vendor: string;
+  recommendedPlan: string;
+  estimatedMonthlyCostPerTeam: number;
+  workflowFitScore: number;
+  capabilityHighlights: string[];
+  reasons: string[];
+  featuresCovered: string[];
+}
+
+export interface CoveredFeature {
+  featureKey: string;
+  featureLabel: string;
+  coveredBy: string[];
+  maxScore: number;
+}
+
+export interface StackCoverageResult {
+  covered: CoveredFeature[];
+  partial: CoveredFeature[];
+  missing: string[];
+  coverageScore: number;
+  redundancies: Array<{ feature: string; featureLabel: string; providers: string[] }>;
+}
+
+export interface GrowthProjection {
+  teamSize: number;
+  estimatedMonthlyCost: number;
+  estimatedAnnualCost: number;
+  recommendedUpgrades: Array<{
+    toolId: string;
+    toolName: string;
+    currentPlan: string;
+    recommendedPlan: string;
+    triggerCondition: string;
+    costDeltaPerSeat: number;
+  }>;
+}
+
+export interface GrowthSimulation {
+  currentTeamSize: number;
+  currentMonthlyCost: number;
+  projection2x: GrowthProjection;
+  projection5x: GrowthProjection;
+}
+
+export interface RankedStack {
+  stackId: string;
+  label: 'Best Overall' | 'Best Budget' | 'Best Performance' | 'Best Enterprise';
+  tools: ToolInStack[];
+  estimatedMonthlyCost: number;
+  estimatedAnnualCost: number;
+  coverageResult: StackCoverageResult;
+  workflowFitScore: number;
+  capabilityCoverageScore: number;
+  confidenceScore: number;
+  confidenceBreakdown: ConfidenceBreakdown;
+  tradeoffs: string[];
+  growthSimulation?: GrowthSimulation;
+  budgetStatus: 'within' | 'over' | 'no-limit';
+  budgetOverrunPercent?: number;
+}
+
+export interface OptimizedStackSet {
+  bestOverall: RankedStack;
+  bestBudget: RankedStack;
+  bestPerformance: RankedStack;
+  bestEnterprise?: RankedStack;
+}
+
+export interface RejectedAlternative {
+  toolId: string;
+  toolName: string;
+  category: string;
+  compositeScore: number;
+  whyNotSelected: string;
+  wouldHaveCovered: string[];
+  estimatedMonthlyCostPerSeat: number;
+  tradeoffVsSelected: string;
+}
+
+export interface BudgetTierResult {
+  budgetPerMonth: number | null;
+  budgetLabel: string;
+  estimatedMonthlyCost: number;
+  coverageScore: number;
+  confidenceScore: number;
+  stackSummary: string[];
+}
+
+export interface BudgetSimulation {
+  tiers: BudgetTierResult[];
+}
+
+export interface KnowledgeVersionMetadata {
+  providerCount: number;
+  featureMapVersion: string;
+  workflowWeightsVersion: string;
+  recommendationWeightsVersion: string;
+  generatedAt: string;
+}
+
+export interface StackRecommendation {
+  recommendationId: string;
+  createdAt: string;
+  knowledgeVersion: KnowledgeVersionMetadata;
+  stacks: OptimizedStackSet;
+  alternatives: RejectedAlternative[];
+  budgetSimulation: BudgetSimulation;
+  featureCoverage: StackCoverageResult;
+  trace?: unknown;
+}

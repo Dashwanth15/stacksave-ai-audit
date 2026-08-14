@@ -217,7 +217,6 @@ export const TOOLS: ToolInfo[] = [
         tagline: 'Do more with advanced intelligence',
         monthlyPricePerSeat: 20,
         billingType: 'per-seat',
-        // No annual billing available
         features: ['Advanced reasoning with GPT-5.5 Thinking', 'Expanded messages & uploads', 'More complex image creation', 'Expanded deep research & agent mode'],
       },
       {
@@ -388,8 +387,8 @@ export const TOOLS: ToolInfo[] = [
         label: 'Pro',
         tagline: '2 week free trial — Popular',
         monthlyPricePerSeat: 20,
+        annualPrice: 15,
         billingType: 'per-seat',
-        // No annual billing for Windsurf
         features: ['Increased quotas, frontier models', 'Full model availability', 'Launch Devin Cloud sessions', 'Purchase extra usage at API pricing'],
       },
       {
@@ -397,8 +396,8 @@ export const TOOLS: ToolInfo[] = [
         label: 'Max',
         tagline: 'New — For power users',
         monthlyPricePerSeat: 200,
+        annualPrice: 160,
         billingType: 'per-seat',
-        // No annual billing for Windsurf
         features: ['Everything in Pro, plus', 'Significantly higher quotas', 'Priority model access'],
       },
       {
@@ -406,8 +405,8 @@ export const TOOLS: ToolInfo[] = [
         label: 'Teams',
         tagline: 'Team Plans',
         monthlyPricePerSeat: 40,
+        annualPrice: 32,
         billingType: 'per-seat',
-        // No annual billing for Windsurf
         features: ['Everything in Pro, plus', 'Centralized billing', 'Admin dashboard with analytics'],
       },
       {
@@ -418,6 +417,107 @@ export const TOOLS: ToolInfo[] = [
         billingType: 'custom',
         isEnterprise: true,
         features: ['Highest priority support', 'Dedicated account management', 'Custom contracts', 'SSO & SCIM'],
+      },
+    ],
+  },
+
+  // ──────────────────────────────────────────────
+  // KIMI — https://kimi.ai (Moonshot AI)
+  // Pricing from: Artificial Analysis + OpenRouter screenshots (July 2026)
+  // K3 input: $2.80–$3.00/M, output: $14–$15/M (source-dependent, see kimi.json)
+  // ──────────────────────────────────────────────
+  {
+    id: 'kimi',
+    name: 'Kimi',
+    icon: '🌙',
+    category: 'AI Chat',
+    description: 'Moonshot AI\'s frontier reasoning model — #1/104 intelligence, 1M context & open weights',
+    defaultPlan: 'moderato',
+    plans: [
+      {
+        id: 'moderato',
+        label: 'Moderato',
+        tagline: 'Advanced Flow ($15/mo)',
+        monthlyPricePerSeat: 15,
+        annualPrice: 15,
+        billingType: 'per-seat',
+        features: [
+          'More agent credits',
+          'Work with Docs, Sheets and Slides',
+          'Deep Research',
+          'Websites Deploy',
+          'Agent multi-tasking',
+          'Kimi Code available',
+          'Dashboard with task widgets',
+          'Scheduled tasks that run automatically and push results',
+          'Swarm / Multiple agents',
+        ],
+      },
+      {
+        id: 'allegretto',
+        label: 'Allegretto',
+        tagline: 'Pro Choice ($31/mo)',
+        monthlyPricePerSeat: 31,
+        annualPrice: 31,
+        billingType: 'per-seat',
+        features: [
+          '2x agent credits',
+          'Work with Docs, Sheets and Slides',
+          'Deep Research & Websites Deploy',
+          'Agent multi-tasking & Kimi Code',
+          'Dashboard with task widgets',
+          'Scheduled tasks that run automatically and push results',
+          'Goal mode, where agents autonomously work until completion',
+          'Swarm / Multiple agents',
+        ],
+      },
+      {
+        id: 'allegro',
+        label: 'Allegro',
+        tagline: 'Premium Mode ($79/mo)',
+        monthlyPricePerSeat: 79,
+        annualPrice: 79,
+        billingType: 'per-seat',
+        features: [
+          '5x agent credits',
+          'Up to 1M tokens of context for ultra-long conversations',
+          'Work with Docs, Sheets and Slides',
+          'Deep Research & Websites Deploy',
+          'Agent multi-tasking & Kimi Code',
+          'Dashboard with task widgets & scheduled tasks',
+          'Goal mode & Swarm multi-agent execution',
+        ],
+      },
+      {
+        id: 'vivace',
+        label: 'Vivace',
+        tagline: 'Ultimate Boost ($159/mo)',
+        monthlyPricePerSeat: 159,
+        annualPrice: 159,
+        billingType: 'per-seat',
+        features: [
+          '10x agent credits',
+          'Up to 1M tokens of context for ultra-long conversations',
+          'Work with Docs, Sheets and Slides',
+          'Deep Research & Websites Deploy',
+          'Agent multi-tasking & Kimi Code',
+          'Dashboard with task widgets & scheduled tasks',
+          'Goal mode & Swarm multi-agent execution',
+        ],
+      },
+      {
+        id: 'api-pay-as-you-go',
+        label: 'API Pay As You Go',
+        tagline: 'Token-based pricing via API',
+        monthlyPricePerSeat: 0,
+        billingType: 'usage-based',
+        isPayPerUse: true,
+        features: [
+          'Kimi K3: Input $2.80–$3.00/M tokens',
+          'Kimi K3: Output $14–$15/M tokens',
+          'Kimi K2.7 Code: Input $0.475/M, Output $2/M (batch)',
+          '1.05M token context window',
+        ],
       },
     ],
   },

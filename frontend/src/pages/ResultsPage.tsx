@@ -2,64 +2,71 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import type { AuditResult, Insight } from '../types';
+import type { StackIntelligenceResult } from '../types/intelligence';
 import { fetchAudit, captureLead, triggerReAudit } from '../services/api';
+import { fetchStackIntelligence } from '../services/intelligence';
 import { formatCurrencyFull, insightTypeLabel, formatRelativeTime } from '../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 import { generateAuditPDF } from '../services/pdfService';
 import ReAuditDiffPage from './ReAuditDiffPage';
 import Logo from '../components/Logo';
+import StrategicGuidanceSection from '../components/intelligence/StrategicGuidanceSection';
+import ToolIntelligencePanel from '../components/ToolIntelligencePanel';
 
-const CHART_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#06B6D4', '#8B5CF6'];
 
-function toolAlias(name: string) {
-  const n = name.toLowerCase();
-  if (n.includes('github') && n.includes('copilot')) return 'GitHub';
-  if (n.includes('copilot')) return 'GitHub';
-  if (n.includes('anthropic')) return 'Anthropic';
-  if (n.includes('openai')) return 'OpenAI';
-  if (n.includes('chatgpt')) return 'ChatGPT';
-  if (n.includes('claude')) return 'Claude';
-  if (n.includes('cursor')) return 'Cursor';
-  if (n.includes('gemini')) return 'Gemini';
-  if (n.includes('windsurf')) return 'Windsurf';
-  return name;
-}
 
 function SavingsTooltip({
   active,
   payload,
+  savingsBreakdown,
 }: {
   active?: boolean;
-  payload?: Array<{ value?: number; payload?: { name?: string }; color?: string }>;
+  payload?: Array<{ value?: number; payload?: { name?: string; label?: string; fill?: string }; color?: string }>;
+  savingsBreakdown?: Array<{ toolName: string; saving: number }>;
 }) {
   if (!active || !payload || payload.length === 0) return null;
   const row = payload[0];
-  const name = row?.payload?.name ?? '';
+  const name = row?.payload?.name || row?.payload?.label || '';
   const value = typeof row?.value === 'number' ? row.value : 0;
+  const color = row?.payload?.fill || '#3B82F6';
+  const isSavings = name.toLowerCase().includes('savings');
 
   return (
     <div
-      className="rounded border p-3"
-      style={{
-        background: 'var(--color-bg-card)',
-        borderColor: 'var(--color-border)',
-        boxShadow: 'var(--shadow-md)',
-        minWidth: 160,
-      }}
+      className="rounded-xl border p-3.5 bg-white shadow-xl border-slate-100 min-w-[200px]"
     >
       <div className="flex items-center gap-2 mb-1">
         <span
-          className="h-2 w-2 rounded-full"
-          style={{ background: 'var(--color-primary)' }}
+          className="h-2.5 w-2.5 rounded-full"
+          style={{ background: color }}
         />
-        <div className="text-xs font-bold text-[var(--color-text-heading)]">
+        <div className="text-xs font-bold text-slate-800">
           {name}
         </div>
       </div>
-      <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Potential Savings</div>
-      <div className="text-base font-bold font-mono-financial" style={{ color: 'var(--color-success)' }}>
+      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+        Amount
+      </div>
+      <div
+        className="text-base font-bold font-mono"
+        style={{ color: color }}
+      >
         {`$${value}/mo`}
       </div>
+
+      {isSavings && savingsBreakdown && savingsBreakdown.length > 0 && (
+        <div className="mt-2.5 pt-2 border-t border-slate-100 space-y-1">
+          <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1">
+            Savings Breakdown by Tool:
+          </span>
+          {savingsBreakdown.map((item) => (
+            <div key={item.toolName} className="flex justify-between items-center text-[10.5px]">
+              <span className="font-semibold text-slate-700">{item.toolName}</span>
+              <span className="font-mono font-bold text-emerald-600">+${item.saving}/mo</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -103,53 +110,69 @@ function SavingsCounter({ amount }: { amount: number }) {
   );
 }
 
-function InsightCard({ insight, index }: { insight: Insight; index: number }) {
-  const [expanded, setExpanded] = useState(false);
+function InsightCard({
+  insight,
+  index,
+  isActive,
+  onViewAnalysis,
+}: {
+  insight: Insight;
+  index: number;
+  isActive: boolean;
+  onViewAnalysis: (insight: Insight) => void;
+}) {
+  const isAllStack = insight.toolName === 'All Stack Tools' || insight.toolId === 'all-stack-tools';
 
   // Map severity to premium SaaS priority labels
   const getPriorityBadge = (severity: string) => {
     switch (severity) {
       case 'high':
         return (
-          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-100/50">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-100/50">
             Fix First
           </span>
         );
       case 'medium':
         return (
-          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100/50">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-[#FEF3C7] text-[#92400E] border border-amber-200/50">
             Worth Reviewing
           </span>
         );
       case 'info':
         return (
-          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100/50 animate-fade-in">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100/50 animate-fade-in">
             Plan Verified
           </span>
         );
       default:
         return (
-          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded bg-slate-50 text-slate-600 border border-slate-100/50">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-100/50">
             Optional Optimization
           </span>
         );
     }
   };
 
+  const reasonText = isAllStack
+    ? "Your current AI stack is already well optimized for your team's workflow. Current subscriptions are appropriately configured with zero redundant software licenses."
+    : insight.reason;
+
   return (
     <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
-      className="p-6 sm:p-7 bg-white border border-slate-100 rounded-2xl shadow-xs flex flex-col justify-between hover:shadow-sm transition-all duration-300"
+      className={`p-5 sm:p-6 bg-white border rounded-2xl shadow-2xs flex flex-col justify-between transition-all duration-300 hover:shadow-xs ${
+        isActive ? 'border-indigo-300 ring-2 ring-indigo-100/80' : 'border-slate-100'
+      }`}
     >
-      <div>
-        {/* Top Row: Tool Name + Priority Badge & Potential Savings */}
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div className="space-y-1.5">
+      <div className="space-y-3">
+        {/* Top Row: Tool Name + Priority Badge & Status/Savings */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <h3 className="font-black text-lg tracking-tight text-slate-800">
-                {insight.toolName}
+              <h3 className="font-black text-xl tracking-tight text-slate-900">
+                {isAllStack ? 'AI Stack Intelligence' : insight.toolName}
               </h3>
               {getPriorityBadge(insight.severity)}
             </div>
@@ -157,14 +180,19 @@ function InsightCard({ insight, index }: { insight: Insight; index: number }) {
               {insight.recommendationType || insightTypeLabel(insight.type)}
             </span>
           </div>
-          
+
           <div className="text-right shrink-0">
-            {insight.potentialMonthlySaving > 0 ? (
+            {isAllStack ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100/80">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Stack Optimized
+              </span>
+            ) : insight.potentialMonthlySaving > 0 ? (
               <div className="space-y-0.5">
                 <span className="text-xl font-black font-mono-financial text-emerald-600 block">
-                  Save ${insight.potentialMonthlySaving}/mo
+                  <span className="text-sm font-semibold text-emerald-700">Save </span>${insight.potentialMonthlySaving}/mo
                 </span>
-                <span className="text-[10px] font-bold text-slate-400 block">
+                <span className="text-[10px] font-medium text-slate-400 block">
                   ≈ ${insight.potentialMonthlySaving * 12}/year
                 </span>
               </div>
@@ -174,146 +202,75 @@ function InsightCard({ insight, index }: { insight: Insight; index: number }) {
           </div>
         </div>
 
-        {/* Clear Recommendation Action */}
-        <div className="flex items-center gap-2 mb-3 bg-slate-50/50 border border-slate-100/50 rounded-xl px-3.5 py-2 max-w-fit">
+        {/* Clear Recommendation Action Pill */}
+        <div className="flex items-center gap-2 bg-emerald-50/70 border border-emerald-100/80 rounded-full px-3.5 py-1.5 max-w-fit">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-          <span className="font-extrabold text-xs text-slate-700 tracking-tight">
+          <span className="font-bold text-xs text-slate-900 tracking-tight">
             {insight.suggestion}
           </span>
         </div>
 
-        {/* Short explanation (max 2 lines) */}
-        <p 
-          className="text-xs leading-relaxed text-slate-500 mb-4 line-clamp-2 max-w-2xl text-left"
-          title={insight.reason}
+        {/* Short explanation */}
+        <p
+          className="text-xs leading-relaxed text-slate-500 line-clamp-2 max-w-2xl text-left"
+          title={reasonText}
         >
-          {insight.reason}
+          {reasonText}
         </p>
 
-        {/* Expandable View Analysis Link */}
-        <div className="mb-4 text-left">
+        {/* View / Open Analysis Button — Stripe/Linear style secondary action pill */}
+        <div className="pt-1 text-left">
           <button
             type="button"
-            onClick={() => setExpanded(!expanded)}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1 inline-flex focus:outline-none"
+            onClick={() => onViewAnalysis(insight)}
+            className={`group inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 focus:outline-none border shadow-2xs hover:shadow-xs ${
+              isActive
+                ? 'bg-slate-900 text-white border-slate-900 hover:bg-slate-800'
+                : 'bg-white text-slate-700 border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/80'
+            }`}
           >
-            {expanded ? 'Hide Analysis' : 'View Analysis'}
-            <svg 
-              width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" 
-              className={`transform transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              className={isActive ? 'text-indigo-300' : 'text-indigo-600'}
             >
-              <polyline points="6 9 12 15 18 9"/>
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M7 15v-4M12 15V9M17 15v-2" />
             </svg>
+            <span>
+              {isActive
+                ? 'Close Analysis'
+                : isAllStack
+                  ? 'Open Stack Analysis'
+                  : 'Open Tool Analysis'}
+            </span>
+            <span className="transform transition-transform duration-200 group-hover:translate-x-0.5 font-sans">
+              →
+            </span>
           </button>
-
-          {expanded && (
-            <m.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="mt-3 p-4 rounded-xl bg-slate-50 border border-slate-100/50 space-y-3 text-[11px] text-slate-600 leading-relaxed"
-            >
-              {insight.confidenceScore !== undefined && (
-                <div className="p-3 rounded-xl border border-indigo-100/50 bg-indigo-50/20 mb-3 space-y-2">
-                  <div className="flex items-center justify-between text-xs font-bold text-indigo-900">
-                    <span>Recommendation Confidence</span>
-                    <span className="font-mono-financial text-indigo-600">{insight.confidenceScore}%</span>
-                  </div>
-                  {insight.confidenceExplanation && insight.confidenceExplanation.length > 0 && (
-                    <div className="space-y-1 mt-1 text-[10px] text-indigo-950 font-medium">
-                      {insight.confidenceExplanation.map((exp, idx) => (
-                        <div key={idx} className="flex items-center gap-1.5 text-left leading-normal">
-                          <span className="text-indigo-500">✓</span>
-                          <span>{exp.replace(/^✓\s*/, '')}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <span className="font-extrabold uppercase text-[9px] text-slate-400 tracking-wider block mb-0.5">Current Setup</span>
-                  <span className="text-slate-800 font-semibold block">{insight.currentSetup || 'Paid subscription'}</span>
-                </div>
-                <div>
-                  <span className="font-extrabold uppercase text-[9px] text-slate-400 tracking-wider block mb-0.5">Recommended Setup</span>
-                  <span className="text-slate-800 font-semibold block">{insight.recommendedSetup || insight.suggestion}</span>
-                </div>
-              </div>
-              <div className="border-t border-slate-200/50 my-1" />
-              <div>
-                <span className="font-extrabold uppercase text-[9px] text-slate-400 tracking-wider block mb-0.5">Reason</span>
-                <span className="text-slate-700 block">{insight.detailedReason || insight.reason}</span>
-              </div>
-              {insight.tradeoffs && (
-                <>
-                  <div className="border-t border-slate-200/50 my-1" />
-                  <div>
-                    <span className="font-extrabold uppercase text-[9px] text-slate-400 tracking-wider block mb-0.5">Trade-offs</span>
-                    <span className="text-slate-700 block">{insight.tradeoffs}</span>
-                  </div>
-                </>
-              )}
-              {insight.decisionLog && (
-                <>
-                  <div className="border-t border-slate-200/50 my-1" />
-                  <div className="p-3 rounded-lg border border-slate-200 bg-white/40 shadow-sm space-y-2">
-                    <div className="text-[9px] font-extrabold uppercase text-slate-400 tracking-wider">Strategic Optimization Log</div>
-                    <div className="text-[11px] text-slate-700">
-                      <div className="flex items-center justify-between text-xs font-semibold mb-2">
-                        <span>Baseline Stack Score: <span className="font-mono text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded font-bold">{insight.decisionLog.baselineScore}</span></span>
-                        <span>Optimized Stack Score: <span className="font-mono text-emerald-600 bg-emerald-50 border border-emerald-100/30 px-1.5 py-0.5 rounded font-bold">{insight.decisionLog.finalScore}</span></span>
-                      </div>
-                      <div className="space-y-1">
-                        {insight.decisionLog.proposalsEvaluated.map((prop: any) => {
-                          const isSelected = insight.decisionLog?.selectedProposals?.includes(prop.id) || (prop.id === 'keep-current' && insight.decisionLog?.selectedProposals?.length === 0);
-                          return (
-                            <div key={prop.id} className="flex justify-between items-center text-[10px] border-t border-slate-100/60 pt-1">
-                              <span className={isSelected ? "font-bold text-emerald-600 flex items-center gap-1" : prop.isValid ? "text-slate-600" : "text-slate-400 line-through"}>
-                                {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />}
-                                {prop.name}
-                              </span>
-                              <span className="font-mono font-bold text-slate-700">
-                                {prop.isValid ? `Value Score: ${prop.businessValueScore}` : 'Constraint Fail'}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-            </m.div>
-          )}
         </div>
       </div>
 
-      {/* Small Footer: Confidence and Productivity Impact */}
-      <div className="flex items-center gap-4 text-[10px] text-slate-400 font-bold border-t border-slate-100/60 pt-3">
-        <span className="flex items-center gap-1.5">
-          Confidence:
-          <span className={`px-2 py-0.5 rounded-md font-extrabold uppercase tracking-wide text-[9px] ${
-            insight.confidence === 'High' 
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-100/30' 
-              : 'bg-amber-50 text-amber-700 border border-amber-100/30'
-          }`}>
-            {insight.confidence || 'High'}
+      {/* Footer: KPI Metric Pills */}
+      <div className="flex items-center gap-2.5 flex-wrap text-[10.5px] font-bold border-t border-slate-100/80 pt-3 mt-4">
+        <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 text-slate-600">
+          <span className="text-slate-400 font-semibold uppercase text-[9px]">Confidence:</span>
+          <span className="text-emerald-700 font-extrabold font-mono">
+            {insight.confidenceScore ? `${insight.confidenceScore}%` : (insight.confidence || 'High')}
           </span>
-        </span>
-        <span className="flex items-center gap-1.5">
-          Productivity Impact:
-          <span className={`px-2 py-0.5 rounded-md font-extrabold uppercase tracking-wide text-[9px] ${
-            insight.productivityImpact === 'No Impact' 
-              ? 'bg-slate-100 text-slate-700' 
-              : insight.productivityImpact === 'Minimal Impact'
-              ? 'bg-amber-50 text-amber-700 border border-amber-100/30'
-              : 'bg-rose-50 text-rose-700 border border-rose-100/30'
-          }`}>
-            {insight.productivityImpact || 'No Impact'}
-          </span>
-        </span>
+        </div>
+        <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 text-slate-600">
+          <span className="text-slate-400 font-semibold uppercase text-[9px]">Productivity:</span>
+          <span className="text-slate-800 font-extrabold">{insight.productivityImpact || 'No Impact'}</span>
+        </div>
+        <div className="flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100/80 text-emerald-800">
+          <span className="text-emerald-600 font-semibold uppercase text-[9px]">Optimization:</span>
+          <span className="font-extrabold">Verified ✓</span>
+        </div>
       </div>
     </m.div>
   );
@@ -383,7 +340,7 @@ function EmailCaptureModal({
           aria-label="Close"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
 
@@ -516,11 +473,21 @@ export default function ResultsPage() {
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [reAuditing, setReAuditing] = useState(false);
   const [prevId, setPrevId] = useState<string | undefined>(id);
-  const [strategy, setStrategy] = useState<'performance' | 'savings'>('performance');
+  const [intelligence, setIntelligence] = useState<StackIntelligenceResult | null>(null);
+  const [activeInsight, setActiveInsight] = useState<Insight | null>(null);
+
+  const handleViewAnalysis = (insight: Insight) => {
+    setActiveInsight((prev) =>
+      prev && prev.toolId === insight.toolId && prev.type === insight.type ? null : insight
+    );
+  };
+
+  const handleClosePanel = () => setActiveInsight(null);
 
   if (id !== prevId) {
     setPrevId(id);
     setAudit(null);
+    setIntelligence(null);
     setLoading(true);
     setError(null);
   }
@@ -550,6 +517,14 @@ export default function ResultsPage() {
   }, [id, audit]);
 
   useEffect(() => {
+    if (audit && audit.tools && audit.tools.length > 0) {
+      fetchStackIntelligence(audit.tools, audit.useCase || 'coding')
+        .then(setIntelligence)
+        .catch((err) => console.error('Failed to fetch stack intelligence:', err));
+    }
+  }, [audit]);
+
+  useEffect(() => {
     if (isOwner && audit && !emailCaptured) {
       const timer = setTimeout(() => setShowEmailModal(true), 3000);
       return () => clearTimeout(timer);
@@ -568,7 +543,7 @@ export default function ResultsPage() {
     setGeneratingPDF(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 100));
-      generateAuditPDF(audit, strategy);
+      generateAuditPDF(audit);
     } catch (error) {
       console.error('Failed to generate PDF:', error);
     } finally {
@@ -617,27 +592,30 @@ export default function ResultsPage() {
     return <ReAuditDiffPage auditId={audit.auditId} isOwner={isOwner} />;
   }
 
-  const filteredInsights = audit
-    ? audit.insights.filter((i) => !i.strategy || i.strategy === strategy || i.strategy === 'both')
-    : [];
+  const rawInsights = audit ? audit.insights : [];
+  // Deduplicate All Stack Tools card if duplicate strategy insights exist
+  const filteredInsights = rawInsights.filter((insight, index, self) => {
+    const isAllStack = insight.toolName === 'All Stack Tools' || insight.toolId === 'all-stack-tools';
+    if (!isAllStack) return true;
+    return self.findIndex((i) => i.toolName === 'All Stack Tools' || i.toolId === 'all-stack-tools') === index;
+  });
 
   const estimatedMonthlySavings = filteredInsights.reduce((sum, i) => sum + i.potentialMonthlySaving, 0);
+  const savingsBreakdown = filteredInsights
+    .filter((i) => i.potentialMonthlySaving > 0 && i.toolId !== 'all-stack-tools')
+    .map((i) => ({ toolName: i.toolName, saving: i.potentialMonthlySaving }));
   const optimizedMonthlySpend = audit ? audit.totalMonthlySpend - estimatedMonthlySavings : 0;
   const estimatedAnnualSavings = estimatedMonthlySavings * 12;
   const savingsPercentage = audit && audit.totalMonthlySpend > 0
     ? Math.round((estimatedMonthlySavings / audit.totalMonthlySpend) * 100)
     : 0;
-  const isAlreadyOptimal = estimatedMonthlySavings < 20;
+  const isAlreadyOptimal = estimatedMonthlySavings <= 0;
 
-  const chartData = filteredInsights
-    .filter((i) => i.potentialMonthlySaving > 0)
-    .slice(0, 6)
-    .map((i) => ({
-      name: i.toolName,
-      label: toolAlias(i.toolName),
-      saving: i.potentialMonthlySaving,
-      severity: i.severity,
-    }));
+  const chartData = [
+    { name: 'Current Spend', label: 'Current', value: audit?.totalMonthlySpend || 0, fill: '#94A3B8' },
+    { name: 'Projected Spend', label: 'Projected', value: optimizedMonthlySpend || 0, fill: '#3B82F6' },
+    { name: 'Monthly Savings', label: 'Savings', value: estimatedMonthlySavings || 0, fill: '#10B981' },
+  ];
 
   return (
     <div className="min-h-screen pb-20" style={{ background: 'var(--color-bg-base)' }}>
@@ -657,7 +635,7 @@ export default function ResultsPage() {
           >
             <Logo asDiv />
           </button>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={handleDownloadPDF}
@@ -705,10 +683,10 @@ export default function ResultsPage() {
                 View Changes (Diff)
               </button>
             </div>
-            
+
             <div className="relative flex items-center justify-between pb-6">
               <div className="timeline-connecting-line" style={{ top: '24px' }} />
-              
+
               <div className="relative z-10 w-full flex items-center justify-start gap-10 sm:gap-14 md:gap-16 overflow-x-auto px-1">
                 {audit.allVersions.map((v, idx) => {
                   const isActive = v.auditId === audit.auditId;
@@ -717,7 +695,7 @@ export default function ResultsPage() {
                   let dotStyle: React.CSSProperties = { background: 'var(--color-text-muted)' };
                   let ringStyle: React.CSSProperties = { background: 'var(--color-bg-card)', borderColor: 'var(--color-border-strong)' };
                   let textColor = 'var(--color-text-muted)';
-                  
+
                   if (isActive) {
                     dotStyle = { background: '#fff' };
                     ringStyle = { background: 'var(--color-primary)', borderColor: 'rgba(30,58,95,0.5)', boxShadow: '0 0 0 3px rgba(30,58,95,0.15)' };
@@ -761,64 +739,20 @@ export default function ResultsPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+
           {/* Left Column Area: Savings Chart & Recommendations List */}
           <div className="lg:col-span-8 space-y-6">
-            
-            {/* Strategy Toggle Tab Row */}
-            <div className="flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200/50 max-w-sm">
-              <button
-                type="button"
-                onClick={() => setStrategy('performance')}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-[10px] font-extrabold transition-all text-center uppercase tracking-wider ${
-                  strategy === 'performance'
-                    ? 'bg-white text-slate-800 shadow-sm border border-slate-200/20'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                ⚡ Performance Optimized
-              </button>
-              <button
-                type="button"
-                onClick={() => setStrategy('savings')}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-[10px] font-extrabold transition-all text-center uppercase tracking-wider ${
-                  strategy === 'savings'
-                    ? 'bg-white text-slate-800 shadow-sm border border-slate-200/20'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                💰 Smart Savings
-              </button>
-            </div>
 
-            {/* Strategy-Aware AI Consultant Summary */}
-            {audit && (
-              <m.div
-                key={strategy}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-6 border border-slate-100 rounded-2xl bg-white shadow-xs text-left"
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: strategy === 'performance' ? 'var(--color-primary)' : 'var(--color-success)' }} />
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
-                    {strategy === 'performance' ? 'CTO Executive Briefing' : 'CFO Cost Optimization Summary'}
-                  </span>
-                </div>
-                <p className="text-xs leading-relaxed text-slate-600 font-medium italic">
-                  "{strategy === 'performance' ? audit.aiSummary : (audit.aiSummarySavings || audit.aiSummary)}"
-                </p>
-              </m.div>
-            )}
-
-            {/* ── Savings Chart ──────────────────────────────── */}
+            {/* ── Savings / Spend Chart ──────────────────────── */}
             {chartData.length > 0 && (
               <m.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="p-6 border border-slate-100 rounded-2xl bg-white shadow-xs"
               >
-                <span className="text-overline mb-4 block">Savings Breakdown</span>
+                <span className="text-overline mb-4 block">
+                  Savings Breakdown
+                </span>
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 0 }}>
@@ -835,10 +769,13 @@ export default function ResultsPage() {
                         tickLine={false}
                         tickFormatter={(v) => `$${v}`}
                       />
-                      <Tooltip content={<SavingsTooltip />} cursor={{ fill: 'rgba(30,58,95,0.02)' }} />
-                      <Bar dataKey="saving" radius={[4, 4, 0, 0]} barSize={28}>
-                        {chartData.map((_entry, i) => (
-                          <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                      <Tooltip content={<SavingsTooltip savingsBreakdown={savingsBreakdown} />} cursor={{ fill: 'rgba(30,58,95,0.02)' }} />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={40}>
+                        {chartData.map((entry, i) => (
+                          <Cell
+                            key={i}
+                            fill={entry.fill}
+                          />
                         ))}
                       </Bar>
                     </BarChart>
@@ -846,26 +783,44 @@ export default function ResultsPage() {
                 </div>
               </m.div>
             )}
- 
+
             {/* ── Action Line Items ───────────────────────────── */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-overline">Optimization Line Items</span>
                 <span className="text-xs font-bold text-slate-400 font-mono-financial">{filteredInsights.length} Issues Found</span>
               </div>
- 
+
               <div className="grid grid-cols-1 gap-4">
-                {filteredInsights.map((insight, i) => (
-                  <InsightCard key={i} insight={insight} index={i} />
-                ))}
+                {filteredInsights.map((insight, i) => {
+                  const insightId = `${insight.toolId}-${insight.type}`;
+                  const activeId = activeInsight ? `${activeInsight.toolId}-${activeInsight.type}` : null;
+                  return (
+                    <InsightCard
+                      key={i}
+                      insight={insight}
+                      index={i}
+                      isActive={insightId === activeId}
+                      onViewAnalysis={handleViewAnalysis}
+                    />
+                  );
+                })}
               </div>
             </div>
- 
+
+            {/* ── AI Decision Intelligence Platform — Strategic Decision Guidance ──── */}
+            {intelligence && (
+              <StrategicGuidanceSection
+                intelligence={intelligence}
+                auditId={audit?.auditId}
+              />
+            )}
+
           </div>
- 
+
           {/* Right Column Area: Sticky KPI Card & Timeline Actions */}
           <div className="lg:col-span-4 sticky-panel space-y-6">
-            
+
             {/* ── Savings Summary Panel ───────────────────────── */}
             <m.div
               initial={{ opacity: 0, y: 8 }}
@@ -873,7 +828,7 @@ export default function ResultsPage() {
               className="p-8 border border-slate-100 rounded-2xl bg-white text-center flex flex-col items-center justify-center shadow-xs"
             >
               <span className="text-overline mb-3 block">Simulated Savings Result</span>
-              
+
               {isAlreadyOptimal ? (
                 <div className="space-y-2 text-center py-4">
                   <h2 className="text-xl font-bold text-[var(--color-success)]">Optimized Stack</h2>
@@ -884,11 +839,11 @@ export default function ResultsPage() {
               ) : (
                 <div className="space-y-4 w-full">
                   <SavingsCounter amount={estimatedMonthlySavings} />
-                  
+
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                     Recovers {formatCurrencyFull(estimatedAnnualSavings)}/yr · <span className="text-[var(--color-success)]">{savingsPercentage}% waste reduction</span>
                   </div>
- 
+
                   <div className="flex flex-col gap-3 p-4 rounded-xl border border-slate-100 text-xs font-mono-financial text-left bg-slate-50/50">
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400 text-[9px] uppercase tracking-wider">Original Spend</span>
@@ -900,9 +855,41 @@ export default function ResultsPage() {
                       <span className="font-bold text-[var(--color-success)]">{formatCurrencyFull(optimizedMonthlySpend)}/mo</span>
                     </div>
                   </div>
+
+                  {/* Audited Config Receipt */}
+                  <div className="pt-1 space-y-1.5">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Audited Configuration</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {/* Billing cycle badge */}
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold border ${
+                        audit.billingCycle === 'annual'
+                          ? 'bg-indigo-50 text-indigo-700 border-indigo-200/80'
+                          : 'bg-slate-50 text-slate-600 border-slate-200/80'
+                      }`}>
+                        {audit.billingCycle === 'annual' ? '📅 Annual Billing' : '🗓️ Monthly Billing'}
+                      </span>
+                      {/* Optimization goal badge */}
+                      {audit.optimizationGoal && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold border bg-slate-50 text-slate-600 border-slate-200/80 capitalize">
+                          🎯 {audit.optimizationGoal}
+                        </span>
+                      )}
+                      {/* Use case badge */}
+                      {audit.useCase && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold border bg-slate-50 text-slate-600 border-slate-200/80 capitalize">
+                          🔬 {audit.useCase}
+                        </span>
+                      )}
+                      {/* Tools count */}
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold border bg-slate-50 text-slate-600 border-slate-200/80">
+                        🛠️ {audit.tools?.length ?? 0} tool{(audit.tools?.length ?? 0) !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
             </m.div>
+
 
             {/* ── Version & Workspace Actions ─────────────────── */}
             {isOwner && (
@@ -919,35 +906,20 @@ export default function ResultsPage() {
                 <div className="flex flex-col gap-2.5">
                   <button
                     onClick={() => navigate(`/audit?reAuditOf=${audit.auditId}`)}
-                    className="w-full py-2.5 rounded border text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
-                    style={{
-                      background: 'rgba(30,58,95,0.06)',
-                      color: 'var(--color-primary)',
-                      borderColor: 'rgba(30,58,95,0.2)',
-                    }}
+                    className="w-full py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-1.5"
                   >
                     Edit & Re-Audit
                   </button>
                   <button
                     onClick={handleRunReAudit}
                     disabled={reAuditing}
-                    className="w-full py-2.5 rounded border text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
-                    style={{
-                      background: 'var(--color-warning-bg)',
-                      color: 'var(--color-warning-t)',
-                      borderColor: 'rgba(217,119,6,0.25)',
-                    }}
+                    className="w-full py-2.5 rounded-xl border border-amber-200/80 bg-amber-100/90 text-amber-900 text-xs font-bold hover:bg-amber-200/80 transition-all flex items-center justify-center gap-1.5 shadow-xs"
                   >
                     {reAuditing ? 'Recalculating…' : 'Refresh Pricing'}
                   </button>
                   <button
                     onClick={() => navigate('/audit')}
-                    className="w-full py-2.5 rounded border text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
-                    style={{
-                      background: 'var(--color-bg-surface)',
-                      borderColor: 'var(--color-border)',
-                      color: 'var(--color-text-heading)',
-                    }}
+                    className="w-full py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5"
                   >
                     New Audit
                   </button>
@@ -960,7 +932,15 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      {/* ── Save Modal ──────────────────────────────────── */}
+      {/* ── Intelligence Panel ────────────────────────────── */}
+      <ToolIntelligencePanel
+        insight={activeInsight}
+        auditTools={audit?.tools}
+        useCase={audit?.useCase}
+        onClose={handleClosePanel}
+      />
+
+      {/* ── Save Modal ──────────────────────────────────────── */}
       <AnimatePresence>
         {showEmailModal && !emailCaptured && (
           <EmailCaptureModal

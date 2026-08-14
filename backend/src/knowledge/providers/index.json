@@ -1,0 +1,207 @@
+{
+  "version": "2.0.0",
+  "description": "StackSave Hierarchical Provider Knowledge Base Index",
+  "generatedAt": "2026-08-13T15:13:19.866Z",
+  "providers": [
+    {
+      "id": "anthropic-api",
+      "folder": "anthropic-api",
+      "name": "Anthropic API",
+      "category": "api",
+      "availablePlans": [
+        "pay-as-you-go"
+      ],
+      "availableModels": [
+        "claude-3-5-sonnet",
+        "claude-3-opus",
+        "claude-3-5-haiku"
+      ]
+    },
+    {
+      "id": "chatgpt",
+      "folder": "chatgpt",
+      "name": "ChatGPT",
+      "category": "chat",
+      "availablePlans": [
+        "free",
+        "plus",
+        "team",
+        "pro"
+      ],
+      "availableModels": [
+        "gpt-4o",
+        "gpt-4",
+        "o1",
+        "o1-mini"
+      ]
+    },
+    {
+      "id": "claude",
+      "folder": "claude",
+      "name": "Claude",
+      "category": "chat",
+      "availablePlans": [
+        "free",
+        "pro",
+        "team"
+      ],
+      "availableModels": [
+        "claude-3-5-sonnet",
+        "claude-3-5-haiku",
+        "claude-3-opus"
+      ]
+    },
+    {
+      "id": "codex",
+      "folder": "codex",
+      "name": "Codex",
+      "category": "ide",
+      "availablePlans": [
+        "free"
+      ],
+      "availableModels": [
+        "openai-codex"
+      ]
+    },
+    {
+      "id": "github-copilot",
+      "folder": "github-copilot",
+      "name": "GitHub Copilot",
+      "category": "ide",
+      "availablePlans": [
+        "free",
+        "individual",
+        "business",
+        "enterprise"
+      ],
+      "availableModels": [
+        "gpt-4o",
+        "claude-3-5-sonnet"
+      ]
+    },
+    {
+      "id": "cursor",
+      "folder": "cursor",
+      "name": "Cursor",
+      "category": "ide",
+      "availablePlans": [
+        "hobby",
+        "pro",
+        "pro-plus",
+        "ultra",
+        "teams"
+      ],
+      "availableModels": [
+        "claude-3-5-sonnet",
+        "gpt-4o",
+        "gemini-1-5-pro"
+      ]
+    },
+    {
+      "id": "deepseek",
+      "folder": "deepseek",
+      "name": "DeepSeek",
+      "category": "chat",
+      "availablePlans": [
+        "free",
+        "pro"
+      ],
+      "availableModels": [
+        "deepseek-coder-v2",
+        "deepseek-v2-5"
+      ]
+    },
+    {
+      "id": "gemini",
+      "folder": "gemini",
+      "name": "Gemini",
+      "category": "chat",
+      "availablePlans": [
+        "free",
+        "plus",
+        "pro",
+        "ultra",
+        "workspace"
+      ],
+      "availableModels": [
+        "gemini-1-5-pro",
+        "gemini-1-5-flash"
+      ]
+    },
+    {
+      "id": "github-models",
+      "folder": "github-models",
+      "name": "GitHub Models",
+      "category": "api",
+      "availablePlans": [
+        "free-tier"
+      ],
+      "availableModels": [
+        "gpt-4o",
+        "claude-3-5-sonnet",
+        "llama-3"
+      ]
+    },
+    {
+      "id": "kimi",
+      "folder": "kimi",
+      "name": "Kimi",
+      "category": "chat",
+      "availablePlans": [
+        "pay-as-you-go"
+      ],
+      "availableModels": [
+        "kimi-k3",
+        "kimi-k3-max",
+        "kimi-k2-7-code-batch"
+      ]
+    },
+    {
+      "id": "openai-api",
+      "folder": "openai-api",
+      "name": "OpenAI API",
+      "category": "api",
+      "availablePlans": [
+        "pay-as-you-go"
+      ],
+      "availableModels": [
+        "gpt-4o",
+        "gpt-4o-mini",
+        "o1",
+        "o1-mini"
+      ]
+    },
+    {
+      "id": "perplexity",
+      "folder": "perplexity",
+      "name": "Perplexity",
+      "category": "chat",
+      "availablePlans": [
+        "free",
+        "pro"
+      ],
+      "availableModels": [
+        "sonar-small",
+        "sonar-large",
+        "claude-3-5-sonnet",
+        "gpt-4o"
+      ]
+    },
+    {
+      "id": "windsurf",
+      "folder": "windsurf",
+      "name": "Windsurf",
+      "category": "ide",
+      "availablePlans": [
+        "free",
+        "pro",
+        "max",
+        "teams"
+      ],
+      "availableModels": [
+        "claude-3-5-sonnet",
+        "gpt-4o"
+      ]
+    }
+  ]
+}

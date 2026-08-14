@@ -1,17 +1,13 @@
 // ============================================================
-// Relationship Engine — StackSave AI Platform
+// Relationship Engine — StackSave AI Platform Intelligence
 //
-// Dynamically computes pairwise provider relationships from
-// raw capability score vectors. No hardcoded provider lists.
-//
-// Adding a new provider to the knowledge base automatically
-// integrates it with all existing relationship computations.
-//
-// ProviderKnowledgeEngine describes providers.
-// RelationshipEngine describes how providers relate.
+// Dynamically computes pairwise provider relationships, capability overlap,
+// directional replacement confidence, and feature retention/loss on demand.
+// ZERO hardcoded relationship matrices or static tool pairings.
 // ============================================================
 
-import { KnowledgeLoader } from './KnowledgeLoader';
+import { KnowledgeLoader, ProviderProfile } from './KnowledgeLoader';
+import { WorkflowEngine } from './WorkflowEngine';
 
 export interface ProviderRelationship {
   idA: string;
@@ -37,11 +33,15 @@ export interface ProviderRelationship {
   };
 
   /**
-   * Replacement confidence (0–100).
+   * Directional replacement confidence (0–100).
    * Measures how well provider B covers provider A's key strengths.
-   * 100 = B perfectly covers all of A's top capabilities.
+   * 100 = B perfectly covers all of A's top capabilities (score >= 7).
    */
   replacementConfidence: number;
+
+  /** Dynamically derived feature deltas */
+  featureLoss: string[];
+  featureGain: string[];
 
   relationshipType:
     | 'Complementary'
@@ -54,30 +54,14 @@ export interface ProviderRelationship {
 export class RelationshipEngine {
   private static cache = new Map<string, ProviderRelationship>();
 
-  // ─── Thresholds ──────────────────────────────────────────────────────────────
-
-  /** Minimum replacementConfidence to consider B a valid replacement for A */
   static readonly REPLACEMENT_THRESHOLD = 75;
-
-  /** Minimum complementarity for tools to be considered complementary */
   static readonly COMPLEMENTARITY_THRESHOLD = 60;
-
-  /** Maximum workflowOverlap for tools to still qualify as complementary */
   static readonly OVERLAP_MAX_COMPLEMENTARY = 40;
-
-  /**
-   * Minimum workflow overlap to place two tools in the same optimization group.
-   * Tools below this threshold are left as separate groups (no consolidation proposed).
-   * Set to 40 to capture moderately overlapping tools (e.g. Cursor/Copilot at 46%).
-   */
   static readonly CLUSTER_OVERLAP_THRESHOLD = 40;
-
-  // ─── Core Analysis ───────────────────────────────────────────────────────────
 
   /**
    * Full pairwise relationship analysis between two providers.
-   * Results are cached. Commutative (A→B returns same metrics as B→A,
-   * except replacementConfidence which is directional).
+   * Dynamic calculation from raw JSON capability vectors.
    */
   public static analyze(
     idA: string,
@@ -93,18 +77,12 @@ export class RelationshipEngine {
     if (!profileA || !profileB) return null;
 
     const weights = KnowledgeLoader.getWorkflowWeights();
-    const useCaseWeights =
-      (useCase && weights[useCase]) ? weights[useCase] : (weights['general'] || {});
+    const useCaseWeights = (useCase && weights[useCase]) ? weights[useCase] : (weights['general'] || {});
 
-    // Union of all capability keys from both providers
-    const allCaps = Array.from(
-      new Set([
-        ...Object.keys(profileA.capabilities),
-        ...Object.keys(profileB.capabilities)
-      ])
-    );
+    // Union of capability keys
+    const allCaps = Array.from(new Set([...Object.keys(profileA.capabilities), ...Object.keys(profileB.capabilities)]));
 
-    // Build raw numeric vectors
+    // Numeric vectors
     const vecA = allCaps.map(cap => profileA.capabilities[cap]?.score ?? 0);
     const vecB = allCaps.map(cap => profileB.capabilities[cap]?.score ?? 0);
 
@@ -113,6 +91,10 @@ export class RelationshipEngine {
     const complementarity = this.computeComplementarity(allCaps, profileA.capabilities, profileB.capabilities, useCaseWeights);
     const dominance = this.computeDominance(allCaps, profileA, profileB, useCaseWeights);
     const replacementConfidence = this.computeReplacementConfidence(allCaps, profileA.capabilities, profileB.capabilities, useCaseWeights);
+    
+    // Dynamic feature loss & gain derivation
+    const { featureLoss, featureGain } = this.deriveFeatureDeltas(allCaps, profileA, profileB);
+
     const relationshipType = this.classifyRelationship(workflowOverlap, complementarity, replacementConfidence);
 
     const result: ProviderRelationship = {
@@ -123,6 +105,8 @@ export class RelationshipEngine {
       complementarity,
       dominance,
       replacementConfidence,
+      featureLoss,
+      featureGain,
       relationshipType
     };
 
@@ -130,27 +114,22 @@ export class RelationshipEngine {
     return result;
   }
 
-  // ─── Relationship Queries ─────────────────────────────────────────────────────
-
-  /**
-   * Returns true if provider B can replace provider A.
-   * Based purely on replacementConfidence >= threshold.
-   */
-  public static canReplace(
-    idA: string,
-    idB: string,
-    useCase?: string,
-    threshold = RelationshipEngine.REPLACEMENT_THRESHOLD
-  ): boolean {
+  public static canReplace(idA: string, idB: string, useCase?: string, threshold = RelationshipEngine.REPLACEMENT_THRESHOLD): boolean {
     if (idA === idB) return false;
     const rel = this.analyze(idA, idB, useCase);
     return rel !== null && rel.replacementConfidence >= threshold;
   }
 
-  /**
-   * Returns true if A and B are complementary:
-   * each covers capabilities the other lacks, with low overlap.
-   */
+  public static getReplacementsFor(
+    targetId: string,
+    candidateIds: string[],
+    useCase?: string
+  ): string[] {
+    return candidateIds.filter(
+      id => id !== targetId && this.canReplace(targetId, id, useCase)
+    );
+  }
+
   public static areComplementary(idA: string, idB: string, useCase?: string): boolean {
     if (idA === idB) return false;
     const rel = this.analyze(idA, idB, useCase);
@@ -162,32 +141,13 @@ export class RelationshipEngine {
   }
 
   /**
-   * Returns all candidateIds that can replace targetId.
-   */
-  public static getReplacementsFor(
-    targetId: string,
-    candidateIds: string[],
-    useCase?: string
-  ): string[] {
-    return candidateIds.filter(
-      id => id !== targetId && this.canReplace(targetId, id, useCase)
-    );
-  }
-
-  // ─── Cluster Detection ────────────────────────────────────────────────────────
-
-  /**
-   * Groups tool IDs into overlap clusters using union-find.
-   * Tools with workflowOverlap >= overlapThreshold are placed in the same cluster.
-   * Each cluster becomes an independent optimization group.
-   * Tools with no overlap partners remain as singleton clusters.
+   * Groups tool IDs into overlap clusters using Union-Find.
    */
   public static clusterByOverlap(
     toolIds: string[],
     useCase?: string,
     overlapThreshold = RelationshipEngine.CLUSTER_OVERLAP_THRESHOLD
   ): string[][] {
-    // Initialize union-find
     const parent = new Map<string, string>();
     toolIds.forEach(id => parent.set(id, id));
 
@@ -204,7 +164,6 @@ export class RelationshipEngine {
       if (rootX !== rootY) parent.set(rootX, rootY);
     };
 
-    // Union all pairs that exceed the overlap threshold
     for (let i = 0; i < toolIds.length; i++) {
       for (let j = i + 1; j < toolIds.length; j++) {
         const rel = this.analyze(toolIds[i], toolIds[j], useCase);
@@ -214,7 +173,6 @@ export class RelationshipEngine {
       }
     }
 
-    // Collect clusters by root
     const clusters = new Map<string, string[]>();
     for (const id of toolIds) {
       const root = find(id);
@@ -225,15 +183,12 @@ export class RelationshipEngine {
     return Array.from(clusters.values());
   }
 
-  // ─── Cache Management ─────────────────────────────────────────────────────────
-
   public static clearCache(): void {
     this.cache.clear();
   }
 
   // ─── Private Computation Helpers ─────────────────────────────────────────────
 
-  /** Cosine similarity between two equal-length numeric vectors, scaled 0–100 */
   private static cosineSimilarity(a: number[], b: number[]): number {
     let dot = 0, magA = 0, magB = 0;
     for (let i = 0; i < a.length; i++) {
@@ -245,11 +200,6 @@ export class RelationshipEngine {
     return denom > 0 ? Math.round((dot / denom) * 100) : 0;
   }
 
-  /**
-   * Jaccard overlap over workflow-relevant capabilities.
-   * Only considers capabilities with weight >= 3 in the use-case weight map.
-   * Overlap = both providers score >= 7 / either provider scores >= 7.
-   */
   private static jaccardWorkflowOverlap(
     allCaps: string[],
     capsA: Record<string, { score: number }>,
@@ -275,11 +225,6 @@ export class RelationshipEngine {
     return eitherHigh > 0 ? Math.round((bothHigh / eitherHigh) * 100) : 0;
   }
 
-  /**
-   * Complementarity = each provider has distinct strengths the other lacks.
-   * Distinct strength = capability where provider scores >= 8 AND other scores <= 5.
-   * Score = average of (A's distinct ratio, B's distinct ratio), scaled 0–100.
-   */
   private static computeComplementarity(
     allCaps: string[],
     capsA: Record<string, { score: number }>,
@@ -301,14 +246,10 @@ export class RelationshipEngine {
     return Math.round(((ratioA + ratioB) / 2) * 100);
   }
 
-  /**
-   * Dominance = weighted score sum comparison.
-   * Margin = |scoreA - scoreB| / maxPossibleScore, scaled 0–100.
-   */
   private static computeDominance(
     allCaps: string[],
-    profileA: { id: string; capabilities: Record<string, { score: number }> },
-    profileB: { id: string; capabilities: Record<string, { score: number }> },
+    profileA: ProviderProfile,
+    profileB: ProviderProfile,
     weights: Record<string, number>
   ): ProviderRelationship['dominance'] {
     let scoreA = 0;
@@ -323,14 +264,9 @@ export class RelationshipEngine {
       maxScore += 10 * w;
     }
 
-    const margin = maxScore > 0
-      ? Math.round((Math.abs(scoreA - scoreB) / maxScore) * 100)
-      : 0;
-    const rawConfidence = maxScore > 0
-      ? Math.abs(scoreA - scoreB) / maxScore
-      : 0;
-    const confidence: 'High' | 'Medium' | 'Low' =
-      rawConfidence > 0.15 ? 'High' : rawConfidence > 0.05 ? 'Medium' : 'Low';
+    const margin = maxScore > 0 ? Math.round((Math.abs(scoreA - scoreB) / maxScore) * 100) : 0;
+    const rawConfidence = maxScore > 0 ? Math.abs(scoreA - scoreB) / maxScore : 0;
+    const confidence: 'High' | 'Medium' | 'Low' = rawConfidence > 0.15 ? 'High' : rawConfidence > 0.05 ? 'Medium' : 'Low';
 
     return {
       winnerId: scoreA >= scoreB ? profileA.id : profileB.id,
@@ -339,11 +275,6 @@ export class RelationshipEngine {
     };
   }
 
-  /**
-   * Replacement confidence (directional A→B):
-   * % of A's key capabilities (score >= 7, weight >= 3) that B covers at >= 6.
-   * 100 = B fully satisfies all of A's important capabilities.
-   */
   private static computeReplacementConfidence(
     allCaps: string[],
     capsA: Record<string, { score: number }>,
@@ -352,13 +283,35 @@ export class RelationshipEngine {
   ): number {
     const relevantCaps = allCaps.filter(c => (weights[c] ?? 0) >= 3);
     const keyCapsA = relevantCaps.filter(c => (capsA[c]?.score ?? 0) >= 7);
-    if (keyCapsA.length === 0) return 100; // No key requirements — trivially replaceable
+    if (keyCapsA.length === 0) return 100;
 
     const coveredByB = keyCapsA.filter(c => (capsB[c]?.score ?? 0) >= 6);
     return Math.round((coveredByB.length / keyCapsA.length) * 100);
   }
 
-  /** Classifies the overall relationship into a human-readable type */
+  private static deriveFeatureDeltas(
+    allCaps: string[],
+    profileA: ProviderProfile,
+    profileB: ProviderProfile
+  ): { featureLoss: string[]; featureGain: string[] } {
+    const featureLoss: string[] = [];
+    const featureGain: string[] = [];
+
+    for (const cap of allCaps) {
+      const scoreA = profileA.capabilities[cap]?.score ?? 0;
+      const scoreB = profileB.capabilities[cap]?.score ?? 0;
+
+      if (scoreA >= 8 && scoreA - scoreB >= 3) {
+        featureLoss.push(`${cap} capability (score ${scoreA} vs ${scoreB})`);
+      }
+      if (scoreB >= 8 && scoreB - scoreA >= 3) {
+        featureGain.push(`${cap} capability (score ${scoreB} vs ${scoreA})`);
+      }
+    }
+
+    return { featureLoss, featureGain };
+  }
+
   private static classifyRelationship(
     workflowOverlap: number,
     complementarity: number,

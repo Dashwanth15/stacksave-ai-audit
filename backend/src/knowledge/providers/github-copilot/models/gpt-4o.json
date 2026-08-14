@@ -1,0 +1,231 @@
+{
+  "modelId": "gpt-4o",
+  "name": "GPT-4o",
+  "providerId": "github-copilot",
+  "releaseDate": "2026-05-07",
+  "capabilities": {
+    "reasoning": {
+      "score": 7,
+      "evidence": "Uses custom OpenAI models optimized for autocomplete context.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "coding": {
+      "score": 8,
+      "evidence": "Excellent autocomplete and simple context block generation.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "architectureDesign": {
+      "score": 5,
+      "evidence": "Limited to inline file context, no codebase design capabilities.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "largeCodebaseUnderstanding": {
+      "score": 6,
+      "evidence": "Retrieves local workspace indices, but lacks deep vector search.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "autocomplete": {
+      "score": 10,
+      "evidence": "Extremely fast, robust multi-line inline completions.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "aiAgent": {
+      "score": 4,
+      "evidence": "GitHub Copilot Workspace offers basic agent workflows (in beta).",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "multiFileEditing": {
+      "score": 3,
+      "evidence": "No native multi-file Composer editing in the client extensions.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "terminalIntegration": {
+      "score": 5,
+      "evidence": "Inline command suggestion chat in VS Code terminal panel.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "planning": {
+      "score": 5,
+      "evidence": "Workspace plan specifications require manual step iterations.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "research": {
+      "score": 5,
+      "evidence": "GitHub search integration allows querying public repository codes.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "writing": {
+      "score": 3,
+      "evidence": "Lacks creative/marketing writing structures, optimized for coding.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "longContext": {
+      "score": 5,
+      "evidence": "Limited token parse limits per prompt query (typically ~32k).",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "imageUnderstanding": {
+      "score": 6,
+      "evidence": "Accepts visual inputs in chat panel for VS Code client.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "vision": {
+      "score": 6,
+      "evidence": "Visual input supports basic screenshot analysis.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "voice": {
+      "score": 0,
+      "evidence": "No audio interaction console.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "memory": {
+      "source": "https://github.com/features/copilot",
+      "score": 5,
+      "evidence": "Maintains session chat history but no long-term memory config.",
+      "lastVerified": "2026-05-07"
+    },
+    "customGpts": {
+      "score": 0,
+      "evidence": "Does not support custom GPT templates.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "plugins": {
+      "score": 4,
+      "evidence": "Limited to GitHub Apps extensions marketplace.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "api": {
+      "score": 1,
+      "evidence": "No consumer-facing open developer API.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "embeddings": {
+      "score": 6,
+      "evidence": "Simple vector indexing for repository indexing.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "functionCalling": {
+      "score": 6,
+      "evidence": "Drives internal tooling extensions and workspace command queries.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "enterpriseSecurity": {
+      "score": 10,
+      "evidence": "SOC2, IP exclusion filters, copyright indemnity guarantees.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "adminControls": {
+      "score": 10,
+      "evidence": "Unified Microsoft Admin Console controls access keys and policies.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "sso": {
+      "score": 10,
+      "evidence": "Direct SAML and SSO integrations via GitHub Enterprise.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "ideIntegration": {
+      "score": 9,
+      "evidence": "Universal compatibility across multiple IDE engines.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "jetbrainsSupport": {
+      "score": 10,
+      "evidence": "Official, first-class plugins for all JetBrains products.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "vscodeSupport": {
+      "score": 10,
+      "evidence": "Native VS Code extension with deep panel integration.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "githubIntegration": {
+      "score": 10,
+      "evidence": "Built directly on top of GitHub repositories and permissions.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "googleWorkspaceIntegration": {
+      "score": 0,
+      "evidence": "No Google Workspace access.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "microsoftIntegration": {
+      "score": 10,
+      "evidence": "Deep Azure DevOps and Microsoft 365 cloud connectivity.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "latency": {
+      "score": 9,
+      "evidence": "Minimal latency for inline autocomplete completions.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "reliability": {
+      "score": 10,
+      "evidence": "Extremely high uptime backed by Microsoft infrastructure.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    },
+    "offlineSupport": {
+      "score": 0,
+      "evidence": "Requires internet connection.",
+      "source": "https://github.com/features/copilot",
+      "lastVerified": "2026-05-07"
+    }
+  },
+  "benchmarks": {},
+  "productivityScores": {
+    "reasoning": 7,
+    "coding": 8,
+    "planning": 5,
+    "velocity": 8,
+    "developerExperience": 8,
+    "enterpriseReadiness": 10,
+    "maintainability": 8,
+    "learningCurve": "Very Low",
+    "migrationCost": "Low",
+    "risk": "Low"
+  },
+  "developerExperience": {
+    "reasoning": 7,
+    "coding": 8,
+    "planning": 5,
+    "velocity": 8,
+    "developerExperience": 8,
+    "enterpriseReadiness": 10,
+    "maintainability": 8,
+    "learningCurve": "Very Low",
+    "migrationCost": "Low",
+    "risk": "Low"
+  }
+}

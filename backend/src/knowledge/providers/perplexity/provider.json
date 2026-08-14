@@ -1,0 +1,59 @@
+{
+  "id": "perplexity",
+  "name": "Perplexity",
+  "category": "chat",
+  "vendor": "Perplexity AI",
+  "vendorProfile": {
+    "vendorId": "perplexity",
+    "vendorName": "Perplexity AI",
+    "establishedYear": 2022,
+    "headquarters": "San Francisco, CA",
+    "fundingStage": "Private",
+    "productFamily": [
+      "perplexity"
+    ],
+    "stabilityRating": "High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "AI Search",
+  "secondaryRole": "General AI Assistant",
+  "billingModels": [
+    "monthly",
+    "annual"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "Factual accuracy and cited web search",
+    "Rapid industry/competitor research",
+    "Sonar API web research endpoints"
+  ],
+  "knownWeaknesses": [
+    "No client IDE plugins",
+    "No custom GPT workflows",
+    "Lacks offline support"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Factual web search research",
+    "Competitive competitor analysis",
+    "Sonar API web query integrations"
+  ],
+  "typicalTeamSize": "Any",
+  "supportedModels": [
+    "Sonar Small",
+    "Sonar Large",
+    "Claude 3.5 Sonnet",
+    "GPT-4o"
+  ],
+  "supportedPlatforms": [
+    "None"
+  ],
+  "apiSupport": true,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-05-07",
+  "sources": [
+    "https://www.perplexity.ai/pro",
+    "https://docs.perplexity.ai"
+  ]
+}
