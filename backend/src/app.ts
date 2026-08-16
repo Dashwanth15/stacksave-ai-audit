@@ -16,9 +16,10 @@ import stackBuilderRouter from './routes/stackBuilder';
 import intelligenceRouter from './routes/intelligence';
 import { globalLimiter, leadLimiter } from './middleware/rateLimit';
 import { requestLogger } from './middleware/logger';
+import { findAvailablePort } from './utils/port';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const preferredPort = Number(process.env.PORT) || 5000;
 const FRONTEND_URL = getFrontendUrl();
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
@@ -27,42 +28,45 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 // instead of the proxy's IP (which would rate-limit ALL users together).
 app.set('trust proxy', 1);
 
-// ── Security Headers ─────────────────────────────────────────
-app.use(helmet());
-
-// ── CORS ─────────────────────────────────────────────────────
-// In production, only allow the production frontend URL
-// In development, allow localhost for testing
+// ── CORS (Must be mounted first to handle all preflights & error responses) ──
 const cleanFrontendUrl = FRONTEND_URL.replace(/\/$/, '');
-
-// Always allow known production URLs in addition to env-configured URL
 const ROUND2_FRONTEND = 'https://stacksave-round2-frontend.onrender.com';
-const allowedOrigins = NODE_ENV === 'production'
-  ? [
-      cleanFrontendUrl,
-      `${cleanFrontendUrl}/`,
-      ROUND2_FRONTEND,
-      `${ROUND2_FRONTEND}/`,
-    ]
-  : [
-      cleanFrontendUrl,
-      `${cleanFrontendUrl}/`,
-      ROUND2_FRONTEND,
-      `${ROUND2_FRONTEND}/`,
-      'http://localhost:5173',
-      'http://localhost:5173/',
-      'http://localhost:3000',
-      'http://localhost:3000/'
-    ];
+const allowedOrigins = [
+  cleanFrontendUrl,
+  `${cleanFrontendUrl}/`,
+  ROUND2_FRONTEND,
+  `${ROUND2_FRONTEND}/`,
+];
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, Postman, server-to-server)
+      if (!origin) return callback(null, true);
+
+      // In development or test, allow all localhost and 127.0.0.1 ports (5173, 5174, 3000, etc.)
+      if (NODE_ENV !== 'production') {
+        if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+          return callback(null, true);
+        }
+      }
+
+      // Check explicit allowed origins list
+      if (allowedOrigins.includes(origin) || allowedOrigins.includes(`${origin}/`)) {
+        return callback(null, true);
+      }
+
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    optionsSuccessStatus: 200,
   })
 );
+
+// ── Security Headers ─────────────────────────────────────────
+app.use(helmet());
 
 // ── Body Parsing ─────────────────────────────────────────────
 app.use(express.json({ limit: '10kb' })); // 10kb max — audits are small
@@ -87,15 +91,12 @@ app.use((_req, res) => {
   res.status(404).json({ success: false, error: 'Route not found' });
 });
 
-// ── Global Error Handler ─────────────────────────────────────
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ success: false, error: 'Internal server error' });
-});
+
 
 // ── Start ─────────────────────────────────────────────────────
 async function start() {
   await connectDB();
+  const PORT = await findAvailablePort(preferredPort);
   app.listen(PORT, () => {
     const serverUrl = NODE_ENV === 'production' ? `https://stacksave-round2-backend.onrender.com` : `http://localhost:${PORT}`;
     console.log(`🚀 StackSave API running at ${serverUrl}`);

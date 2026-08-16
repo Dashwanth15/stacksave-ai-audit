@@ -43,6 +43,7 @@ export interface FeatureMatrixRow {
   recommendedScore?: number;
   delta: 'better' | 'worse' | 'same' | 'new' | 'lost';
   note?: string;
+  capabilityEvidence?: string;  // Evidence text from knowledge base (e.g. "Gemini 1.5 Pro supports 1M tokens")
 }
 
 // ─── Before/After Stack Visualization ─────────────────────────────────────────
@@ -121,8 +122,10 @@ export interface RankedRecommendation {
   toolName: string;
   overallScore: number;           // 0–100
   confidence: ConfidenceLevel;
-  monthlySavings: number;
+  monthlySavings: number;         // Signed: negative = savings, positive = cost increase (for legacy compat kept as positive)
   annualSavings: number;
+  netMonthlyCostDelta: number;    // Signed: negative = savings, positive = cost increase
+  replacementMonthlyCost: number; // Actual cost of this replacement option
   capabilityRetention: number;    // 0–100
   riskLevel: RiskLevel;
   summary: string;
@@ -169,8 +172,11 @@ export interface ScenarioOption {
   id: string;
   title: string;
   action: string;
-  monthlySavings: number;
+  monthlySavings: number;         // Unsigned magnitude (for legacy compat)
   annualSavings: number;
+  netMonthlyCostDelta: number;    // Signed: negative = savings, positive = cost increase
+  costDirection: 'savings' | 'increase' | 'neutral'; // Explicit direction for UI color coding
+  replacementMonthlyCost: number; // Actual cost of replacement in this scenario
   coveragePercent: number;
   riskLevel: RiskLevel;
   tradeoffs: string[];
@@ -192,6 +198,8 @@ export interface WhyNotSelectedExplanation {
   scoreDifferences: Array<{ metric: string; targetScore: number; alternativeScore: number }>;
   keyDeficiencies: string[];
   tradeoffSummary: string;
+  monthlyCostDiff: number;        // Signed delta vs recommended option (negative = alternative is cheaper)
+  alternativeMonthlyCost: number; // Actual monthly cost of this alternative
 }
 
 // ─── Recommendation Trace ─────────────────────────────────────────────────────
@@ -232,11 +240,20 @@ export interface DecisionReport {
   // Multiple ranked recommendations
   rankedRecommendations: RankedRecommendation[];
 
-  // Cost Impact
-  currentMonthlyCost: number;
-  projectedMonthlyCost: number;
-  monthlySavings: number;
-  annualSavings: number;
+  // Cost Impact — SIGNED + DIRECTIONAL
+  currentMonthlyCost: number;       // What user pays now
+  projectedMonthlyCost: number;     // Actual replacement tool cost (not capped at 0)
+  monthlySavings: number;           // Unsigned magnitude (0 when cost increases)
+  annualSavings: number;            // Unsigned magnitude (0 when cost increases)
+  netCostDelta: number;             // Signed: negative = savings, positive = cost increase
+  costDirection: 'savings' | 'increase' | 'neutral'; // For UI color coding
+  financialExplanation: string;     // Human-readable explanation of the cost math
+  perSeatBreakdown: {
+    seats: number;
+    currentCostPerSeat: number;
+    replacementCostPerSeat: number;
+    netDeltaPerSeat: number;
+  };
 
   // Capabilities & Coverage
   capabilityRetentionPercent: number;
@@ -291,8 +308,11 @@ export interface ReplaceOpportunity {
   capabilitiesLost: string[];
   capabilitiesGained: string[];
   workflowImpact: 'Positive' | 'Neutral' | 'Minor Impact' | 'Major Impact';
-  monthlySavings: number;
+  monthlySavings: number;           // Unsigned magnitude
   annualSavings: number;
+  netCostDelta: number;             // Signed: negative = savings, positive = cost increase
+  costDirection: 'savings' | 'increase' | 'neutral';
+  replacementMonthlyCost: number;   // Actual target tool cost
   migrationDifficulty: DifficultyLevel;
   learningCurve: LearningCurveLevel;
   vendorLockInImpact: RiskLevel;

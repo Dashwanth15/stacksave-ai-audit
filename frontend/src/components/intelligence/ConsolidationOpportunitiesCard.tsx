@@ -59,28 +59,42 @@ export default function ConsolidationOpportunitiesCard({
                 className="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:border-amber-100 hover:bg-amber-50/10 transition-all space-y-3"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-xs font-extrabold text-slate-900 flex-wrap">
-                    <span className="px-3 py-1 rounded-xl bg-white border border-slate-200 shadow-2xs">
-                      {opp.decommissionedToolNames.join(' + ')}
-                    </span>
-                    <span className="text-amber-600 font-bold">➔ Absorb Into</span>
-                    <span className="px-3 py-1 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 shadow-2xs">
-                      {opp.absorbingToolName}
-                    </span>
+                  <div className="flex items-center gap-4 text-sm flex-wrap">
+                    <div className="min-w-0">
+                      <div className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                        Consolidate
+                      </div>
+                      <div className="font-semibold text-slate-900">
+                        {opp.decommissionedToolNames.join(' + ')}
+                      </div>
+                    </div>
+                    <div className="text-amber-600 font-light text-lg flex-shrink-0">
+                      →
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[8px] font-black uppercase tracking-widest text-amber-600 mb-1">
+                        Absorb Into
+                      </div>
+                      <div className="font-bold text-amber-900">
+                        {opp.absorbingToolName}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="text-center bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
-                      <span className="text-[9px] font-extrabold text-slate-400 block uppercase">Opp. Score</span>
-                      <span className="text-base font-black text-amber-600 font-mono-financial">{opp.opportunityScore?.overall ?? 85}/100</span>
+                    <div className="text-center">
+                      <span className="text-[8px] font-extrabold text-slate-400 block uppercase">Opp. Score</span>
+                      <span className="text-base font-black text-amber-600 font-mono-financial mt-1">{opp.opportunityScore?.overall ?? 85}</span>
+                      <span className="text-[8px] text-slate-400 block">/100</span>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-lg font-black font-mono-financial text-emerald-600 block">
-                        Save ${opp.monthlySavings}/mo
+                      <span className="text-[8px] font-extrabold uppercase tracking-widest text-slate-400 block">Save</span>
+                      <span className="text-lg font-black font-mono-financial text-emerald-600 block mt-1">
+                        ${opp.monthlySavings}
                       </span>
-                      <span className="text-[10px] font-medium text-slate-400 block">
-                        ≈ ${opp.annualSavings}/year
+                      <span className="text-[8px] font-medium text-slate-400 block">
+                        /mo
                       </span>
                     </div>
                   </div>

@@ -110,6 +110,18 @@ function SavingsCounter({ amount }: { amount: number }) {
   );
 }
 
+const toolLogoMap: Record<string, string> = {
+  cursor: '/logos/cursor.svg',
+  'github-copilot': '/logos/copilot.svg',
+  claude: '/logos/claude.svg',
+  chatgpt: '/logos/chatgpt.svg',
+  'anthropic-api': '/logos/anthropic.svg',
+  'openai-api': '/logos/openai.svg',
+  gemini: '/logos/gemini.svg',
+  windsurf: '/logos/windsurf.svg',
+  kimi: '/logos/kimi.svg',
+};
+
 function InsightCard({
   insight,
   index,
@@ -122,32 +134,37 @@ function InsightCard({
   onViewAnalysis: (insight: Insight) => void;
 }) {
   const isAllStack = insight.toolName === 'All Stack Tools' || insight.toolId === 'all-stack-tools';
+  const logoSrc = toolLogoMap[insight.toolId.toLowerCase()];
 
-  // Map severity to premium SaaS priority labels
-  const getPriorityBadge = (severity: string) => {
+  // Clean, non-button status indicator with subtle dot
+  const renderStatusIndicator = (severity: string) => {
     switch (severity) {
       case 'high':
         return (
-          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-100/50">
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 tracking-normal">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
             Fix First
           </span>
         );
       case 'medium':
         return (
-          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-[#FEF3C7] text-[#92400E] border border-amber-200/50">
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 tracking-normal">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
             Worth Reviewing
           </span>
         );
       case 'info':
         return (
-          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100/50 animate-fade-in">
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 tracking-normal">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
             Plan Verified
           </span>
         );
       default:
         return (
-          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-100/50">
-            Optional Optimization
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 tracking-normal">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+            Optional
           </span>
         );
     }
@@ -159,117 +176,143 @@ function InsightCard({
 
   return (
     <m.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.3 }}
-      className={`p-5 sm:p-6 bg-white border rounded-2xl shadow-2xs flex flex-col justify-between transition-all duration-300 hover:shadow-xs ${
-        isActive ? 'border-indigo-300 ring-2 ring-indigo-100/80' : 'border-slate-100'
+      transition={{ delay: index * 0.04, duration: 0.25 }}
+      onClick={() => onViewAnalysis(insight)}
+      className={`p-5 sm:p-6 bg-white border rounded-2xl transition-all duration-200 flex flex-col justify-between cursor-pointer group ${
+        isActive
+          ? 'border-slate-900 ring-2 ring-slate-900/10 shadow-md'
+          : 'border-slate-200/80 shadow-xs hover:shadow-md hover:border-slate-300'
       }`}
     >
-      <div className="space-y-3">
-        {/* Top Row: Tool Name + Priority Badge & Status/Savings */}
+      <div className="space-y-4">
+        {/* Top Header: Logo + Name + Category vs. Financial Impact */}
         <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h3 className="font-black text-xl tracking-tight text-slate-900">
-                {isAllStack ? 'AI Stack Intelligence' : insight.toolName}
-              </h3>
-              {getPriorityBadge(insight.severity)}
+          <div className="flex items-center gap-3.5 min-w-0">
+            {/* Logo Container */}
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/80 p-2 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform duration-150">
+              {logoSrc ? (
+                <img src={logoSrc} alt="" className="w-full h-full object-contain" />
+              ) : (
+                <span className="text-slate-800 font-black text-sm">
+                  {isAllStack ? '★' : insight.toolName.slice(0, 2).toUpperCase()}
+                </span>
+              )}
             </div>
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">
-              {insight.recommendationType || insightTypeLabel(insight.type)}
-            </span>
+
+            {/* Title & Metadata */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h3 className="font-extrabold text-lg tracking-tight text-slate-900 leading-tight">
+                  {isAllStack ? 'Stack Intelligence' : insight.toolName}
+                </h3>
+                <span className="text-slate-300">·</span>
+                {renderStatusIndicator(insight.severity)}
+              </div>
+              <span className="text-[11px] font-semibold text-slate-400 block mt-0.5">
+                {insight.recommendationType || insightTypeLabel(insight.type)}
+              </span>
+            </div>
           </div>
 
+          {/* Savings Metric Hero */}
           <div className="text-right shrink-0">
             {isAllStack ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100/80">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                Stack Optimized
+                Fully Optimized
               </span>
             ) : insight.potentialMonthlySaving > 0 ? (
-              <div className="space-y-0.5">
-                <span className="text-xl font-black font-mono-financial text-emerald-600 block">
-                  <span className="text-sm font-semibold text-emerald-700">Save </span>${insight.potentialMonthlySaving}/mo
-                </span>
-                <span className="text-[10px] font-medium text-slate-400 block">
+              <div>
+                <div className="flex items-baseline justify-end gap-1">
+                  <span className="text-xs font-bold text-emerald-700">Save</span>
+                  <span className="text-2xl font-black font-mono text-emerald-600 tracking-tight leading-none">
+                    ${insight.potentialMonthlySaving}
+                  </span>
+                  <span className="text-xs font-semibold text-emerald-700">/mo</span>
+                </div>
+                <span className="text-[11px] font-medium text-slate-400 block mt-1">
                   ≈ ${insight.potentialMonthlySaving * 12}/year
                 </span>
               </div>
             ) : (
-              <span className="text-xs font-bold text-slate-400 italic">No waste</span>
+              <span className="text-xs font-bold text-slate-400">Validated Plan</span>
             )}
           </div>
         </div>
 
-        {/* Clear Recommendation Action Pill */}
-        <div className="flex items-center gap-2 bg-emerald-50/70 border border-emerald-100/80 rounded-full px-3.5 py-1.5 max-w-fit">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-          <span className="font-bold text-xs text-slate-900 tracking-tight">
-            {insight.suggestion}
-          </span>
-        </div>
-
-        {/* Short explanation */}
-        <p
-          className="text-xs leading-relaxed text-slate-500 line-clamp-2 max-w-2xl text-left"
-          title={reasonText}
-        >
-          {reasonText}
-        </p>
-
-        {/* View / Open Analysis Button — Stripe/Linear style secondary action pill */}
-        <div className="pt-1 text-left">
-          <button
-            type="button"
-            onClick={() => onViewAnalysis(insight)}
-            className={`group inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 focus:outline-none border shadow-2xs hover:shadow-xs ${
-              isActive
-                ? 'bg-slate-900 text-white border-slate-900 hover:bg-slate-800'
-                : 'bg-white text-slate-700 border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/80'
-            }`}
-          >
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              className={isActive ? 'text-indigo-300' : 'text-indigo-600'}
-            >
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <path d="M7 15v-4M12 15V9M17 15v-2" />
-            </svg>
-            <span>
-              {isActive
-                ? 'Close Analysis'
-                : isAllStack
-                  ? 'Open Stack Analysis'
-                  : 'Open Tool Analysis'}
+        {/* Structured Recommendation Box */}
+        <div className="p-3.5 rounded-xl bg-slate-50/90 border border-slate-200/70 space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            <span className="font-bold text-sm text-slate-900 tracking-tight">
+              {insight.suggestion}
             </span>
-            <span className="transform transition-transform duration-200 group-hover:translate-x-0.5 font-sans">
-              →
-            </span>
-          </button>
+          </div>
+          {reasonText && (
+            <p className="text-xs text-slate-600 leading-relaxed font-medium pl-4">
+              {reasonText}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Footer: KPI Metric Pills */}
-      <div className="flex items-center gap-2.5 flex-wrap text-[10.5px] font-bold border-t border-slate-100/80 pt-3 mt-4">
-        <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 text-slate-600">
-          <span className="text-slate-400 font-semibold uppercase text-[9px]">Confidence:</span>
-          <span className="text-emerald-700 font-extrabold font-mono">
-            {insight.confidenceScore ? `${insight.confidenceScore}%` : (insight.confidence || 'High')}
+      {/* Footer: Action CTA on LEFT (prevents drawer overlap) & Metadata on RIGHT */}
+      <div className="border-t border-slate-100 pt-3.5 mt-4 flex items-center justify-between flex-wrap gap-3">
+        {/* Left Side: Action CTA Button (Safe from right drawer overlap!) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewAnalysis(insight);
+          }}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer shadow-xs ${
+            isActive
+              ? 'bg-slate-900 text-white ring-2 ring-slate-800 shadow-sm'
+              : 'bg-slate-900 hover:bg-slate-800 text-white hover:shadow'
+          }`}
+        >
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M7 15v-4M12 15V9M17 15v-2" />
+          </svg>
+          <span>
+            {isActive
+              ? 'Close Analysis'
+              : isAllStack
+                ? 'Open Stack Analysis'
+                : 'Open Tool Analysis'}
           </span>
-        </div>
-        <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 text-slate-600">
-          <span className="text-slate-400 font-semibold uppercase text-[9px]">Productivity:</span>
-          <span className="text-slate-800 font-extrabold">{insight.productivityImpact || 'No Impact'}</span>
-        </div>
-        <div className="flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100/80 text-emerald-800">
-          <span className="text-emerald-600 font-semibold uppercase text-[9px]">Optimization:</span>
-          <span className="font-extrabold">Verified ✓</span>
+          <span className="transition-transform duration-150 group-hover:translate-x-0.5">
+            →
+          </span>
+        </button>
+
+        {/* Right Side: Quality & Confidence Metadata */}
+        <div className="flex items-center gap-2 flex-wrap text-xs text-slate-500 font-medium">
+          <div className="flex items-center gap-1">
+            <span className="text-slate-400">Confidence:</span>
+            <span className="font-bold text-slate-800 font-mono">
+              {insight.confidenceScore ? `${insight.confidenceScore}%` : (insight.confidence || 'High')}
+            </span>
+          </div>
+          <span className="text-slate-300">·</span>
+          <div className="flex items-center gap-1">
+            <span className="text-slate-400">Impact:</span>
+            <span className="font-semibold text-slate-700">{insight.productivityImpact || 'Minimal'}</span>
+          </div>
+          <span className="text-slate-300">·</span>
+          <span className="text-emerald-700 font-semibold flex items-center gap-1">
+            Verified ✓
+          </span>
         </div>
       </div>
     </m.div>
@@ -667,9 +710,9 @@ export default function ResultsPage() {
       {audit?.allVersions && audit.allVersions.length > 1 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
           <div className="timeline-section relative overflow-hidden mb-8" style={{ borderBottom: '1px solid var(--color-border)' }}>
-            <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-3 mb-5">
               <div className="space-y-1">
-                <h3 className="text-sm font-bold tracking-tight text-[var(--color-text-heading)]">
+                <h3 className="text-[15px] sm:text-[17px] font-bold tracking-[-0.03em] text-[var(--color-text-heading)]">
                   Living Audit History
                 </h3>
                 <p className="text-xs text-[var(--color-text-muted)]">
@@ -678,27 +721,35 @@ export default function ResultsPage() {
               </div>
               <button
                 onClick={() => navigate(`/audit/${audit.auditId}/diff`, { state: { isOwner } })}
-                className="text-[10px] px-2.5 py-1.5 rounded font-bold uppercase tracking-wider bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 transition-colors"
+                className="inline-flex items-center justify-center rounded-xl border border-indigo-200/80 bg-white/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-600 shadow-[0_1px_0_rgba(15,23,42,0.04)] transition-all duration-200 hover:border-indigo-300 hover:bg-indigo-50 hover:shadow-[0_6px_14px_rgba(79,70,229,0.08)]"
               >
                 View Changes (Diff)
               </button>
             </div>
 
-            <div className="relative flex items-center justify-between pb-6">
-              <div className="timeline-connecting-line" style={{ top: '24px' }} />
+            <div className="relative pb-4 pt-1">
+              <div className="timeline-connecting-line" style={{ top: '18px', left: '16px', right: '16px' }} />
 
-              <div className="relative z-10 w-full flex items-center justify-start gap-10 sm:gap-14 md:gap-16 overflow-x-auto px-1">
+              <div className="relative z-10 w-full flex items-start justify-between gap-3 px-1 pb-1">
                 {audit.allVersions.map((v, idx) => {
                   const isActive = v.auditId === audit.auditId;
                   const isBaseline = v.auditVersion === 1;
 
                   let dotStyle: React.CSSProperties = { background: 'var(--color-text-muted)' };
-                  let ringStyle: React.CSSProperties = { background: 'var(--color-bg-card)', borderColor: 'var(--color-border-strong)' };
-                  let textColor = 'var(--color-text-muted)';
+                  let ringStyle: React.CSSProperties = {
+                    background: 'rgba(255,255,255,0.85)',
+                    borderColor: 'rgba(148, 163, 184, 0.7)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9)',
+                  };
+                  let textColor = 'var(--color-text-heading)';
 
                   if (isActive) {
                     dotStyle = { background: '#fff' };
-                    ringStyle = { background: 'var(--color-primary)', borderColor: 'rgba(30,58,95,0.5)', boxShadow: '0 0 0 3px rgba(30,58,95,0.15)' };
+                    ringStyle = {
+                      background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9))',
+                      borderColor: 'rgba(15, 23, 42, 0.65)',
+                      boxShadow: '0 0 0 4px rgba(30, 58, 95, 0.10), inset 0 1px 0 rgba(255,255,255,0.15)',
+                    };
                     textColor = 'var(--color-primary)';
                   }
 
@@ -710,21 +761,22 @@ export default function ResultsPage() {
                           navigate(`/audit/${v.auditId}?view=single`, { state: { isOwner } });
                         }
                       }}
-                      className="timeline-node group"
+                      className="timeline-node group flex-1"
+                      style={{ opacity: isActive ? 1 : 0.88 }}
                     >
                       <div className="relative flex items-center justify-center">
                         {isActive && (
-                          <span className="absolute animate-ping inline-flex h-7 w-7 rounded-full opacity-20" style={{ background: 'var(--color-primary)' }} />
+                          <span className="absolute inline-flex h-7 w-7 rounded-full opacity-20" style={{ background: 'var(--color-primary)' }} />
                         )}
                         <div className="timeline-node-ring" style={ringStyle}>
                           <span className="timeline-node-dot" style={dotStyle} />
                         </div>
                       </div>
-                      <div className="timeline-node-label" style={{ top: '32px' }}>
-                        <div className="text-xs sm:text-sm font-bold whitespace-nowrap" style={{ color: textColor }}>
+                      <div className="timeline-node-label" style={{ top: '26px' }}>
+                        <div className="text-[11px] sm:text-[13px] font-bold whitespace-nowrap tracking-[-0.02em]" style={{ color: textColor }}>
                           Version {v.auditVersion || (idx + 1)}{isBaseline ? ' (Baseline)' : ''}
                         </div>
-                        <div className="text-[10px] sm:text-xs whitespace-nowrap" style={{ color: 'var(--color-text-muted)' }}>
+                        <div className="text-[9px] sm:text-[10px] whitespace-nowrap uppercase tracking-[0.12em]" style={{ color: 'var(--color-text-muted)' }}>
                           {formatRelativeTime(v.createdAt)}
                         </div>
                       </div>

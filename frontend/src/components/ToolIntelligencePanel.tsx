@@ -51,21 +51,21 @@ function AccordionSection({
     <div
       id={id}
       className={`transition-all duration-200 ${open
-        ? 'bg-[#F8FAFC] border border-slate-200/90 rounded-2xl mx-3.5 my-2.5 shadow-[0_1px_4px_rgba(0,0,0,0.03)] border-l-[3px] border-l-slate-900'
-        : 'border-b border-slate-100/90 hover:bg-slate-50/60'
+        ? 'bg-[#F8FAFC] border border-slate-200 rounded-xl mx-3.5 my-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border-l-2 border-l-slate-900'
+        : 'border-b border-slate-150 hover:bg-slate-50/80'
         }`}
     >
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`w-full flex items-center justify-between text-left transition-colors group ${open ? 'p-4 pb-3' : 'py-3.5 px-5'
+        className={`w-full flex items-center justify-between text-left transition-all duration-150 group cursor-pointer ${open ? 'p-4 pb-3' : 'py-3.5 px-5 hover:bg-slate-50/60'
           }`}
       >
         <div className="flex items-center gap-3 min-w-0">
           <div
-            className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0 transition-all ${open
-              ? 'bg-white border border-slate-200/80 shadow-2xs text-indigo-600 scale-105'
-              : 'bg-slate-100/80 text-slate-600'
+            className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0 transition-all duration-150 ${open
+              ? 'bg-white border border-slate-200 shadow-sm text-indigo-600'
+              : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200/70 group-hover:text-slate-700'
               }`}
           >
             {icon}
@@ -73,7 +73,7 @@ function AccordionSection({
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span
-                className={`text-[13px] block leading-tight tracking-tight ${open ? 'font-black text-slate-900' : 'font-bold text-slate-800 group-hover:text-slate-900'
+                className={`text-[13px] block leading-tight tracking-tight transition-colors duration-150 ${open ? 'font-black text-slate-900' : 'font-semibold text-slate-700 group-hover:text-slate-900'
                   }`}
               >
                 {title}
@@ -82,7 +82,7 @@ function AccordionSection({
             </div>
             {subtitle && (
               <span
-                className={`text-[11px] font-medium block mt-0.5 leading-tight ${open ? 'text-slate-500' : 'text-slate-400'
+                className={`text-[11px] block mt-0.5 leading-tight transition-colors duration-150 ${open ? 'font-medium text-slate-500' : 'font-medium text-slate-400 group-hover:text-slate-500'
                   }`}
               >
                 {subtitle}
@@ -91,12 +91,14 @@ function AccordionSection({
           </div>
         </div>
         <div
-          className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all duration-200 ${open ? 'bg-white border border-slate-200/80 text-slate-800' : 'text-slate-400 group-hover:text-slate-600'
+          className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all duration-200 ${open
+            ? 'bg-white border border-slate-200 text-slate-700 shadow-sm'
+            : 'text-slate-400 group-hover:text-slate-600 group-hover:bg-slate-100'
             }`}
         >
           <svg
-            width="12"
-            height="12"
+            width="11"
+            height="11"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -114,10 +116,10 @@ function AccordionSection({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.18, ease: 'easeInOut' }}
+            transition={{ duration: 0.16, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 pt-1 space-y-3">{children}</div>
+            <div className="px-4 pb-4 pt-1 space-y-2.5">{children}</div>
           </m.div>
         )}
       </AnimatePresence>
@@ -588,7 +590,7 @@ function ModelComparisonSection({
   return (
     <div className="space-y-3">
       {/* Model Selection Header */}
-      <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs space-y-2">
+      <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
         <div className="flex items-center justify-between text-xs">
           <span className="font-semibold text-slate-500">Current Default Model:</span>
           <span className="font-extrabold text-slate-900">{primaryModel.name}</span>
@@ -608,16 +610,15 @@ function ModelComparisonSection({
         </div>
       </div>
 
-
       {/* Categorized Capability Badges */}
       {(betterCurrent.length > 0 || betterCompared.length > 0) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
           {betterCurrent.length > 0 && (
-            <div className="p-2.5 rounded-xl bg-white border border-emerald-200/80 shadow-2xs space-y-1">
+            <div className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-200 shadow-2xs space-y-1">
               <span className="font-extrabold text-emerald-800 uppercase tracking-wider text-[9px] block">
                 Better with {primaryModel.shortName} (Current)
               </span>
-              <ul className="space-y-0.5 text-emerald-900 font-medium">
+              <ul className="space-y-0.5 text-emerald-950 font-medium">
                 {betterCurrent.map((item, idx) => (
                   <li key={idx} className="flex items-center gap-1.5">
                     <span className="text-emerald-600 font-bold">✓</span> {item}
@@ -628,11 +629,11 @@ function ModelComparisonSection({
           )}
 
           {betterCompared.length > 0 && (
-            <div className="p-2.5 rounded-xl bg-white border border-indigo-200/80 shadow-2xs space-y-1">
+            <div className="p-2.5 rounded-xl bg-indigo-50/60 border border-indigo-200 shadow-2xs space-y-1">
               <span className="font-extrabold text-indigo-800 uppercase tracking-wider text-[9px] block">
                 Better with {comparedModel.shortName}
               </span>
-              <ul className="space-y-0.5 text-indigo-900 font-medium">
+              <ul className="space-y-0.5 text-indigo-950 font-medium">
                 {betterCompared.map((item, idx) => (
                   <li key={idx} className="flex items-center gap-1.5">
                     <span className="text-indigo-600 font-bold">⚡</span> {item}
@@ -645,65 +646,65 @@ function ModelComparisonSection({
       )}
 
       {/* Comparison Grid */}
-      <div className="rounded-xl border border-slate-200/90 overflow-hidden text-xs bg-white shadow-2xs">
-        <div className="grid grid-cols-3 bg-slate-100/80 p-2.5 font-extrabold text-slate-700 border-b border-slate-200/80 text-[10.5px]">
+      <div className="rounded-xl border border-slate-200 overflow-hidden text-xs bg-white shadow-sm">
+        <div className="grid grid-cols-3 bg-slate-50 p-2.5 font-extrabold text-slate-700 border-b border-slate-200 text-[10.5px]">
           <div>Capability</div>
           <div className="text-center">{primaryModel.shortName} (Current)</div>
           <div className="text-center">{comparedModel.shortName}</div>
         </div>
         <div className="divide-y divide-slate-100">
-          <div className="grid grid-cols-3 p-2.5 items-center">
+          <div className="grid grid-cols-3 p-2.5 items-center hover:bg-slate-50/50 transition-colors">
             <span className="font-semibold text-slate-600">Reasoning</span>
-            <span className="text-center font-bold text-slate-800">{primReasoning}/10</span>
+            <span className="text-center font-bold text-slate-900">{primReasoning}/10</span>
             <span
-              className={`text-center font-bold ${compReasoning > primReasoning ? 'text-emerald-600' : compReasoning < primReasoning ? 'text-rose-600' : 'text-slate-800'
+              className={`text-center font-bold ${compReasoning > primReasoning ? 'text-emerald-600' : compReasoning < primReasoning ? 'text-rose-600' : 'text-slate-900'
                 }`}
             >
               {compReasoning}/10 {compReasoning > primReasoning ? '↑' : compReasoning < primReasoning ? '↓' : ''}
             </span>
           </div>
-          <div className="grid grid-cols-3 p-2.5 items-center">
+          <div className="grid grid-cols-3 p-2.5 items-center hover:bg-slate-50/50 transition-colors">
             <span className="font-semibold text-slate-600">Coding</span>
-            <span className="text-center font-bold text-slate-800">{primCoding}/10</span>
+            <span className="text-center font-bold text-slate-900">{primCoding}/10</span>
             <span
-              className={`text-center font-bold ${compCoding > primCoding ? 'text-emerald-600' : compCoding < primCoding ? 'text-rose-600' : 'text-slate-800'
+              className={`text-center font-bold ${compCoding > primCoding ? 'text-emerald-600' : compCoding < primCoding ? 'text-rose-600' : 'text-slate-900'
                 }`}
             >
               {compCoding}/10 {compCoding > primCoding ? '↑' : compCoding < primCoding ? '↓' : ''}
             </span>
           </div>
-          <div className="grid grid-cols-3 p-2.5 items-center">
+          <div className="grid grid-cols-3 p-2.5 items-center hover:bg-slate-50/50 transition-colors">
             <span className="font-semibold text-slate-600">Research & Synthesis</span>
-            <span className="text-center font-bold text-slate-800">{primResearch}/10</span>
+            <span className="text-center font-bold text-slate-900">{primResearch}/10</span>
             <span
-              className={`text-center font-bold ${compResearch > primResearch ? 'text-emerald-600' : compResearch < primResearch ? 'text-rose-600' : 'text-slate-800'
+              className={`text-center font-bold ${compResearch > primResearch ? 'text-emerald-600' : compResearch < primResearch ? 'text-rose-600' : 'text-slate-900'
                 }`}
             >
               {compResearch}/10 {compResearch > primResearch ? '↑' : compResearch < primResearch ? '↓' : ''}
             </span>
           </div>
-          <div className="grid grid-cols-3 p-2.5 items-center">
+          <div className="grid grid-cols-3 p-2.5 items-center hover:bg-slate-50/50 transition-colors">
             <span className="font-semibold text-slate-600">Context Window</span>
-            <span className="text-center font-mono font-semibold text-slate-700">{primContext}</span>
-            <span className={`text-center font-mono font-semibold ${compContext !== primContext ? 'text-indigo-600 font-bold' : 'text-slate-700'}`}>
+            <span className="text-center font-mono font-semibold text-slate-800">{primContext}</span>
+            <span className={`text-center font-mono font-semibold ${compContext !== primContext ? 'text-indigo-600 font-bold' : 'text-slate-800'}`}>
               {compContext}
             </span>
           </div>
-          <div className="grid grid-cols-3 p-2.5 items-center">
+          <div className="grid grid-cols-3 p-2.5 items-center hover:bg-slate-50/50 transition-colors">
             <span className="font-semibold text-slate-600">Vision Support</span>
-            <span className="text-center text-slate-700 font-medium">{primVision}</span>
+            <span className="text-center text-slate-800 font-medium">{primVision}</span>
             <span
-              className={`text-center font-medium ${compVisionScore > primVisionScore ? 'text-emerald-600' : compVisionScore < primVisionScore ? 'text-slate-400' : 'text-slate-700'
+              className={`text-center font-medium ${compVisionScore > primVisionScore ? 'text-emerald-600' : compVisionScore < primVisionScore ? 'text-slate-400' : 'text-slate-800'
                 }`}
             >
               {compVision}
             </span>
           </div>
-          <div className="grid grid-cols-3 p-2.5 items-center">
+          <div className="grid grid-cols-3 p-2.5 items-center hover:bg-slate-50/50 transition-colors">
             <span className="font-semibold text-slate-600">Output Speed</span>
-            <span className="text-center text-slate-700 font-medium">{primLatency}</span>
+            <span className="text-center text-slate-800 font-medium">{primLatency}</span>
             <span
-              className={`text-center font-medium ${compLatencyScore > primLatencyScore ? 'text-emerald-600 font-bold' : compLatencyScore < primLatencyScore ? 'text-amber-700 font-medium' : 'text-slate-700'
+              className={`text-center font-medium ${compLatencyScore > primLatencyScore ? 'text-emerald-600 font-bold' : compLatencyScore < primLatencyScore ? 'text-amber-700 font-medium' : 'text-slate-800'
                 }`}
             >
               {compLatency}
@@ -713,19 +714,19 @@ function ModelComparisonSection({
       </div>
 
       {/* Human Insights & Commercial Clarification */}
-      <div className="p-3.5 rounded-xl bg-white border border-indigo-100 shadow-2xs space-y-2 text-xs">
-        <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-indigo-800 block">
+      <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 shadow-2xs space-y-2 text-xs">
+        <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-slate-500 block">
           Workflow Evaluation ({formattedUseCase.toUpperCase()})
         </span>
         <p className="text-[11.5px] text-slate-700 leading-relaxed font-medium">{diffAnalysis}</p>
 
-        <div className="pt-2 border-t border-slate-100 flex flex-col gap-1 text-[11px]">
+        <div className="pt-2 border-t border-slate-200/80 flex flex-col gap-1.5 text-[11px]">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-slate-500">Subscription Cost Impact:</span>
+            <span className="font-medium text-slate-500">Subscription Cost Impact:</span>
             <span className="font-bold text-emerald-700">{costNote}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-slate-500">Model Recommendation:</span>
+            <span className="font-medium text-slate-500">Model Recommendation:</span>
             <span className="font-bold text-indigo-900">{recommendationVerdict}</span>
           </div>
         </div>
@@ -797,85 +798,99 @@ function SingleToolPanelContent({
           )
         }
       >
-        <div className="space-y-3">
-          {/* Executive Decision Card */}
-          <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 flex-wrap gap-2">
+        <div className="space-y-2.5">
+          {/* Executive Decision Card — interactive, hover-responsive */}
+          <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-3 transition-all duration-150 hover:border-slate-300 hover:shadow-md group/verdict">
+
+            {/* Header: label + confidence */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                <span className="text-[9.5px] font-extrabold uppercase tracking-widest text-slate-400">
-                  Strategic Recommendation
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <span className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-slate-400">
+                  Consultant Verdict
                 </span>
               </div>
-              {insight.confidenceScore !== undefined && (
-                <span
-                  className={`text-[9.5px] font-extrabold px-2 py-0.5 rounded-md border ${insight.confidence === 'High'
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
-                    : 'bg-amber-50 text-amber-700 border-amber-200/60'
-                    }`}
-                >
-                  {insight.confidence || 'High'} Confidence · {insight.confidenceScore}%
-                </span>
-              )}
+              {insight.confidenceScore !== undefined && (() => {
+                const conf = insight.confidence || 'High';
+                const score = insight.confidenceScore;
+                const color = conf === 'High'
+                  ? { bar: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' }
+                  : conf === 'Low'
+                  ? { bar: 'bg-rose-500', text: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200' }
+                  : { bar: 'bg-amber-500', text: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' };
+                return (
+                  <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border ${color.bg} ${color.border}`}>
+                    <div className="flex flex-col gap-0.5">
+                      <span className={`text-[9px] font-extrabold uppercase tracking-widest leading-none ${color.text}`}>
+                        {conf} Confidence
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-16 h-1 bg-slate-200 rounded-full overflow-hidden">
+                          <div className={`h-full ${color.bar} rounded-full`} style={{ width: `${score}%` }} />
+                        </div>
+                        <span className={`text-[9px] font-bold font-mono leading-none ${color.text}`}>{score}%</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
-            {/* Recommendation Title */}
+            {/* Recommendation Title + Body */}
             <div>
-              <span className="text-[14px] font-black text-slate-900 block leading-snug">
+              <span className="text-[15px] font-black text-slate-900 block leading-snug tracking-tight">
                 {insight.suggestion}
               </span>
-              <p className="text-[12px] text-slate-600 leading-relaxed font-medium mt-1">
+              <p className="text-[12px] text-slate-600 leading-relaxed mt-1.5">
                 {formatHighlightedExecutiveText(consultantVerdict)}
               </p>
-
             </div>
 
-            {/* Financial Impact Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 border-t border-slate-100">
+            {/* Financial Impact Row — 3 cells */}
+            <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
               <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                <span className="text-[8.5px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+                <span className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
                   Monthly Impact
                 </span>
-                <span
-                  className={`text-base font-black font-mono leading-none ${savingMo > 0 ? 'text-emerald-600' : 'text-slate-800'
-                    }`}
-                >
-                  {savingMo > 0 ? `+$${savingMo}/mo` : '$0/mo'}
+                <span className={`text-[15px] font-black font-mono leading-none block ${savingMo > 0 ? 'text-emerald-600' : 'text-slate-600'}`}>
+                  {savingMo > 0 ? `+$${savingMo}` : '$0'}
                 </span>
+                <span className="text-[9px] font-medium text-slate-400">/mo</span>
+              </div>
+
+              <div className={`p-2.5 rounded-lg border ${savingYr > 0 ? 'bg-emerald-50/40 border-emerald-200/60' : 'bg-slate-50 border-slate-100'}`}>
+                <span className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
+                  Annualized
+                </span>
+                <span className={`text-[15px] font-black font-mono leading-none block ${savingYr > 0 ? 'text-emerald-600' : 'text-slate-600'}`}>
+                  {savingYr > 0 ? `+$${savingYr}` : '$0'}
+                </span>
+                <span className="text-[9px] font-medium text-slate-400">/yr</span>
               </div>
 
               <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                <span className="text-[8.5px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                  Annualized Recovery
-                </span>
-                <span
-                  className={`text-base font-black font-mono leading-none ${savingYr > 0 ? 'text-emerald-600' : 'text-slate-800'
-                    }`}
-                >
-                  {savingYr > 0 ? `+$${savingYr}/yr` : '$0/yr'}
-                </span>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 col-span-2 sm:col-span-1">
-                <span className="text-[8.5px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+                <span className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
                   Value Rating
                 </span>
-                <span className="text-xs font-black text-slate-800 block mt-0.5">
+                <span className="text-[12px] font-black text-slate-800 block leading-tight mt-0.5">
                   {subscriptionValue}
                 </span>
               </div>
             </div>
 
-            {/* Confidence explanation rationale */}
+            {/* Rationale — why this action */}
             {insight.confidenceExplanation && insight.confidenceExplanation.length > 0 && (
-              <div className="pt-2 border-t border-slate-100 space-y-1">
-                <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                  Why this action was selected
+              <div className="pt-2.5 border-t border-slate-100 space-y-1.5">
+                <span className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-slate-400 block">
+                  Why This Action Was Selected
                 </span>
                 <ul className="space-y-1">
                   {insight.confidenceExplanation.map((e, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-[11px] text-slate-700">
-                      <span className="text-emerald-500 font-bold shrink-0 mt-0.5">✓</span>
+                    <li key={idx} className="flex items-start gap-2 text-[11.5px] text-slate-600 leading-relaxed">
+                      <span className="text-emerald-500 font-extrabold shrink-0 mt-0.5 text-[10px]">✓</span>
                       <span>{e.replace(/^✓\s*/, '')}</span>
                     </li>
                   ))}
@@ -899,7 +914,7 @@ function SingleToolPanelContent({
           </span>
         }
       >
-        <div className="space-y-2">
+        <div className="rounded-xl border border-slate-200 overflow-hidden bg-white divide-y divide-slate-100 shadow-sm">
           {premiumFeatures.map((f) => {
             const isHovered = hoveredFeature === f.name;
             return (
@@ -907,43 +922,41 @@ function SingleToolPanelContent({
                 key={f.name}
                 onMouseEnter={() => setHoveredFeature(f.name)}
                 onMouseLeave={() => setHoveredFeature(null)}
-                className={`p-3 rounded-xl bg-white border transition-all duration-150 flex items-center justify-between gap-3 ${isHovered
-                  ? 'border-indigo-300 shadow-xs ring-1 ring-indigo-100'
-                  : 'border-slate-200/80 hover:border-slate-300 shadow-2xs'
+                className={`flex items-center justify-between gap-3 px-3.5 py-2.5 transition-all duration-150 ${isHovered
+                  ? 'bg-slate-50 translate-x-[1px]'
+                  : ''
                   }`}
               >
                 <div className="flex items-start gap-2.5 min-w-0">
-                  <div
-                    className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5 ${f.available
-                      ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60 font-bold'
-                      : 'bg-slate-100 text-slate-400 font-medium'
+                  <span
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5 ${f.available
+                      ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                      : 'bg-slate-100 text-slate-400'
                       }`}
                   >
                     {f.available ? '✓' : '—'}
-                  </div>
+                  </span>
                   <div className="min-w-0">
                     <span
-                      className={`text-[12px] font-bold block leading-tight truncate ${f.available ? 'text-slate-900' : 'text-slate-400 line-through'
+                      className={`text-[12px] font-semibold block leading-tight ${f.available ? 'text-slate-900' : 'text-slate-400 line-through'
                         }`}
                     >
                       {f.name}
                     </span>
-                    <span className="text-[10.5px] text-slate-500 font-medium block leading-tight mt-0.5">
+                    <span className="text-[11px] text-slate-500 block leading-tight mt-0.5">
                       {f.auditContext}
                     </span>
                   </div>
                 </div>
 
-                <div className="shrink-0 text-right">
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider ${f.available
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                      : 'bg-slate-100 text-slate-500'
-                      }`}
-                  >
-                    {f.available ? 'Included' : 'Unavailable'}
-                  </span>
-                </div>
+                <span
+                  className={`shrink-0 text-[9px] font-extrabold uppercase tracking-wider ${f.available
+                    ? 'text-emerald-600'
+                    : 'text-slate-400'
+                    }`}
+                >
+                  {f.available ? 'Included' : 'N/A'}
+                </span>
               </div>
             );
           })}
@@ -958,22 +971,22 @@ function SingleToolPanelContent({
         subtitle="Team capability adoption vs. subscription tier fit"
         defaultOpen={false}
       >
-        <div className="space-y-4">
+        <div className="space-y-3.5">
           {/* Actively Contributing Workflows */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-baseline justify-between px-0.5">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-900">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
                   Actively Used Capabilities
                 </span>
               </div>
-              <span className="text-[10.5px] font-medium text-emerald-700">
+              <span className="text-[10px] font-semibold text-emerald-700">
                 ✓ Retained in target tier
               </span>
             </div>
 
-            <div className="divide-y divide-slate-100 rounded-xl border border-slate-200/80 bg-white overflow-hidden shadow-2xs">
+            <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
               {activelyUsedFeatures.map((item, idx) => {
                 const usagePcts = [94, 86, 72, 65, 58];
                 const pct = usagePcts[idx % usagePcts.length];
@@ -981,22 +994,22 @@ function SingleToolPanelContent({
                 return (
                   <div
                     key={item.name}
-                    className="p-3.5 hover:bg-slate-50/60 transition-colors"
+                    className="p-3 hover:bg-slate-50/80 transition-colors"
                   >
                     <div className="flex items-center justify-between gap-4">
                       <div className="min-w-0">
-                        <span className="text-[13px] font-bold text-slate-900 block leading-tight">
+                        <span className="text-[12.5px] font-bold text-slate-900 block leading-tight">
                           {item.name}
                         </span>
-                        <span className="text-[11.5px] text-slate-500 font-medium block leading-tight mt-0.5">
+                        <span className="text-[11px] text-slate-500 font-medium block leading-tight mt-0.5">
                           {item.context}
                         </span>
                       </div>
                       <div className="shrink-0 text-right">
-                        <span className="text-[11px] font-mono font-bold text-slate-700">
+                        <span className="text-[11.5px] font-mono font-black text-slate-900">
                           {pct}%
                         </span>
-                        <span className="text-[9.5px] text-slate-400 font-medium block">
+                        <span className="text-[9px] text-slate-400 font-semibold block uppercase tracking-wider">
                           adoption
                         </span>
                       </div>
@@ -1017,20 +1030,20 @@ function SingleToolPanelContent({
 
           {/* Underutilized Premium Value */}
           {underutilizedFeatures.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="flex items-baseline justify-between px-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-amber-400" />
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-900">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <span className="text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
                     Underutilized Tier Capabilities
                   </span>
                 </div>
-                <span className="text-[10.5px] font-medium text-amber-700">
-                  Optimization opportunity
+                <span className="text-[10px] font-semibold text-amber-700">
+                  Optimization target
                 </span>
               </div>
 
-              <div className="divide-y divide-slate-100 rounded-xl border border-slate-200/80 bg-white overflow-hidden shadow-2xs">
+              <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
                 {underutilizedFeatures.map((item, idx) => {
                   const underPcts = [12, 8, 15, 6];
                   const pct = underPcts[idx % underPcts.length];
@@ -1038,22 +1051,22 @@ function SingleToolPanelContent({
                   return (
                     <div
                       key={item.name}
-                      className="p-3.5 hover:bg-slate-50/60 transition-colors"
+                      className="p-3 hover:bg-slate-50/80 transition-colors"
                     >
                       <div className="flex items-center justify-between gap-4">
                         <div className="min-w-0">
-                          <span className="text-[13px] font-bold text-slate-900 block leading-tight">
+                          <span className="text-[12.5px] font-bold text-slate-900 block leading-tight">
                             {item.name}
                           </span>
-                          <span className="text-[11.5px] text-slate-500 font-medium block leading-tight mt-0.5">
+                          <span className="text-[11px] text-slate-500 font-medium block leading-tight mt-0.5">
                             {item.context}
                           </span>
                         </div>
                         <div className="shrink-0 text-right">
-                          <span className="text-[11px] font-mono font-bold text-amber-600">
+                          <span className="text-[11.5px] font-mono font-black text-amber-600">
                             {pct}%
                           </span>
-                          <span className="text-[9.5px] text-slate-400 font-medium block">
+                          <span className="text-[9px] text-slate-400 font-semibold block uppercase tracking-wider">
                             adoption
                           </span>
                         </div>
@@ -1075,8 +1088,6 @@ function SingleToolPanelContent({
         </div>
       </AccordionSection>
 
-
-
       {/* ── 4. Quick Facts (Specification Grid) ─────────────── */}
       <AccordionSection
         id="section-specs"
@@ -1089,13 +1100,13 @@ function SingleToolPanelContent({
           {quickFacts.map((f) => (
             <div
               key={f.label}
-              className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs text-center flex flex-col justify-between"
+              className="p-3 rounded-xl bg-white border border-slate-200 hover:border-slate-300 shadow-sm text-center flex flex-col justify-between transition-colors"
             >
-              <span className="text-[8.5px] font-extrabold uppercase tracking-widest text-slate-400 block mb-1">
+              <span className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
                 {f.label}
               </span>
               <span
-                className={`text-[11.5px] font-black leading-tight block ${f.highlight ? 'text-indigo-600' : 'text-slate-900'
+                className={`text-[12px] font-black leading-tight block ${f.highlight ? 'text-indigo-600' : 'text-slate-900'
                   }`}
               >
                 {f.value}
@@ -1117,12 +1128,12 @@ function SingleToolPanelContent({
           {bestUseCases.map((uc) => (
             <div
               key={uc}
-              className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs hover:border-indigo-200 hover:shadow-xs transition-all flex items-center gap-2.5"
+              className="p-3 rounded-xl bg-white border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all flex items-center gap-2.5 group/uc"
             >
-              <div className="w-5 h-5 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center text-[10px] font-black shrink-0">
+              <div className="w-5 h-5 rounded-md bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-black shrink-0 group-hover/uc:bg-indigo-100 transition-colors">
                 ✦
               </div>
-              <span className="text-[11.5px] font-bold text-slate-800">{uc}</span>
+              <span className="text-[11.5px] font-bold text-slate-800 group-hover/uc:text-slate-950 transition-colors">{uc}</span>
             </div>
           ))}
         </div>
@@ -1136,18 +1147,18 @@ function SingleToolPanelContent({
         subtitle="Workflow replacement & migration options"
         defaultOpen={false}
       >
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {dynamicCompetitorComparison.length > 0 ? (
             dynamicCompetitorComparison.map((s) => (
               <div
                 key={s.competitor}
-                className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs space-y-2"
+                className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2 hover:border-slate-300 transition-colors"
               >
                 <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                  <span className="text-[12px] font-black text-slate-900">
+                  <span className="text-[12.5px] font-black text-slate-900">
                     Switch to {s.competitor}
                   </span>
-                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
                     Alternative
                   </span>
                 </div>
@@ -1162,8 +1173,8 @@ function SingleToolPanelContent({
               </div>
             ))
           ) : (
-            <div className="p-4 rounded-xl bg-white border border-slate-200/80 text-center">
-              <p className="text-[11.5px] text-slate-500 italic">
+            <div className="p-4 rounded-xl bg-white border border-slate-200 text-center shadow-sm">
+              <p className="text-[11.5px] text-slate-500 italic font-medium">
                 No direct platform replacement recommended for this workflow.
               </p>
             </div>
@@ -1190,17 +1201,17 @@ function SingleToolPanelContent({
         subtitle="Comprehensive audit summary"
         defaultOpen={false}
       >
-        <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-2xs space-y-3">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500">Subscription Value Assessment</span>
+            <span className="text-[11px] font-bold text-slate-600">Subscription Value Assessment</span>
             <ValueBadge value={subscriptionValue} />
           </div>
           <p className="text-[12px] text-slate-700 leading-relaxed font-medium">
             {formatHighlightedExecutiveText(executiveSummary)}
           </p>
           {(insight.detailedReason || insight.reason) && (
-            <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 space-y-1">
-              <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 block">
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block">
                 Audit Finding
               </span>
               {renderAuditFinding(insight.detailedReason || insight.reason || '')}
@@ -1208,7 +1219,6 @@ function SingleToolPanelContent({
           )}
         </div>
       </AccordionSection>
-
 
       {/* ── 9. Subscription & Billing ───────────────────────── */}
       <AccordionSection
@@ -1218,22 +1228,22 @@ function SingleToolPanelContent({
         subtitle="Current setup vs. recommended plan"
         defaultOpen={false}
       >
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <div className="grid grid-cols-2 gap-2.5">
-            <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
-              <span className="text-[8.5px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm">
+              <span className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
                 Monthly Outlay
               </span>
               <span className="text-lg font-black font-mono text-slate-900">
                 {billingAnalysis.monthlySpend > 0 ? `$${billingAnalysis.monthlySpend}` : '—'}
-                {billingAnalysis.monthlySpend > 0 && <span className="text-xs font-medium text-slate-400">/mo</span>}
+                {billingAnalysis.monthlySpend > 0 && <span className="text-xs font-semibold text-slate-400">/mo</span>}
               </span>
             </div>
             <div
-              className={`p-3.5 rounded-xl bg-white border shadow-2xs ${billingAnalysis.potentialSaving > 0 ? 'border-emerald-200/80' : 'border-slate-200/80'
+              className={`p-3.5 rounded-xl bg-white border shadow-sm ${billingAnalysis.potentialSaving > 0 ? 'border-emerald-200' : 'border-slate-200'
                 }`}
             >
-              <span className="text-[8.5px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              <span className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
                 Optimization Target
               </span>
               <span
@@ -1245,25 +1255,25 @@ function SingleToolPanelContent({
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs space-y-2">
-            <div className="flex items-center justify-between text-[11px]">
+          <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
+            <div className="flex items-center justify-between text-[11.5px]">
               <span className="text-slate-500 font-medium">Current Setup</span>
-              <span className="font-bold text-slate-800">{insight.currentSetup || 'Active subscription'}</span>
+              <span className="font-bold text-slate-900">{insight.currentSetup || 'Active subscription'}</span>
             </div>
             <div className="border-t border-slate-100" />
-            <div className="flex items-center justify-between text-[11px]">
+            <div className="flex items-center justify-between text-[11.5px]">
               <span className="text-slate-500 font-medium">Recommended Setup</span>
-              <span className="font-extrabold text-indigo-700">{insight.recommendedSetup || insight.suggestion}</span>
+              <span className="font-black text-indigo-700">{insight.recommendedSetup || insight.suggestion}</span>
             </div>
           </div>
 
           {billingAnalysis.annualDiscountAvailable && (
-            <div className="p-3.5 rounded-xl bg-white border border-indigo-100 shadow-2xs flex items-center justify-between gap-3">
+            <div className="p-3.5 rounded-xl bg-indigo-50/40 border border-indigo-200 shadow-sm flex items-center justify-between gap-3">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-800 block">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-900 block">
                   Annual Billing Opportunity
                 </span>
-                <span className="text-[11px] text-slate-600">
+                <span className="text-[11px] text-slate-600 font-medium">
                   Switching to annual saves {billingAnalysis.annualDiscountPercent}% per seat.
                 </span>
               </div>
@@ -1276,11 +1286,11 @@ function SingleToolPanelContent({
           )}
 
           {billingAnalysis.tradeoffs && (
-            <div className="p-3 rounded-xl bg-white border border-amber-200/70 shadow-2xs">
-              <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 block mb-1">
+            <div className="p-3 rounded-xl bg-amber-50/40 border border-amber-200 shadow-sm">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-amber-800 block mb-1">
                 Trade-offs & Considerations
               </span>
-              <p className="text-[11px] text-slate-700">{billingAnalysis.tradeoffs}</p>
+              <p className="text-[11px] text-slate-700 font-medium">{billingAnalysis.tradeoffs}</p>
             </div>
           )}
         </div>
@@ -1370,12 +1380,12 @@ function AllStackPanelContent({
         subtitle="Multi-tool synergy & architecture health"
         defaultOpen={true}
         badge={
-          <span className="text-[9.5px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100/80 text-emerald-800">
+          <span className="text-[9.5px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
             94% Stack Health
           </span>
         }
       >
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-3">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-3">
           <p className="text-[13px] font-bold text-slate-900 leading-snug">
             Your active software stack ({toolNames}) provides comprehensive multi-model coverage with zero functional duplication.
           </p>
@@ -1383,19 +1393,19 @@ function AllStackPanelContent({
             {insight.detailedReason || insight.reason}
           </p>
 
-          <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-slate-100">
-            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-center">
-              <span className="text-[8.5px] font-extrabold uppercase text-slate-400 block mb-0.5">Stack Health</span>
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100">
+            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-center">
+              <span className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-0.5">Stack Health</span>
               <span className="text-base font-black font-mono text-emerald-600">94%</span>
             </div>
-            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-center">
-              <span className="text-[8.5px] font-extrabold uppercase text-slate-400 block mb-0.5">Monthly Spend</span>
+            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-center">
+              <span className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-0.5">Monthly Spend</span>
               <span className="text-base font-black font-mono text-slate-900">
                 ${insight.currentMonthlySpend || 0}/mo
               </span>
             </div>
-            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-center">
-              <span className="text-[8.5px] font-extrabold uppercase text-slate-400 block mb-0.5">Waste Risk</span>
+            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-center">
+              <span className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-0.5">Waste Risk</span>
               <span className="text-base font-black text-indigo-600">Low</span>
             </div>
           </div>
@@ -1410,7 +1420,7 @@ function AllStackPanelContent({
         subtitle="Full-spectrum workflow coverage"
         defaultOpen={true}
       >
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-3">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-3">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <span className="text-[12px] font-bold text-slate-900">Domain Capability Matrix</span>
             <span className="text-base font-black font-mono text-emerald-600">94%</span>
@@ -1421,7 +1431,7 @@ function AllStackPanelContent({
               <div key={domain.name} className="space-y-1">
                 <div className="flex justify-between items-center text-[11px]">
                   <span className="font-semibold text-slate-700">{domain.name}</span>
-                  <span className="font-bold text-slate-800">{domain.status} ({domain.score}%)</span>
+                  <span className="font-bold text-slate-900">{domain.status} ({domain.score}%)</span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                   <div
@@ -1443,19 +1453,19 @@ function AllStackPanelContent({
         subtitle="Key features by active provider"
         defaultOpen={false}
       >
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {providersToUse.map((p) => {
             const availableFeatures = Object.entries(p.capabilities || {})
               .filter(([_, cap]) => (cap as any).score >= 7)
               .map(([key, _]) => key.replace(/([A-Z])/g, ' $1').trim());
             return (
-              <div key={p.id} className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs space-y-2">
+              <div key={p.id} className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2 hover:border-slate-300 transition-colors">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
                   <div>
-                    <span className="font-extrabold text-slate-900 text-[12px] block leading-none">{p.name}</span>
+                    <span className="font-black text-slate-900 text-[12.5px] block leading-none">{p.name}</span>
                     <span className="text-[9.5px] text-slate-400 font-medium">{p.vendor} · {p.primaryRole}</span>
                   </div>
-                  <span className="text-[9px] font-extrabold uppercase bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">
+                  <span className="text-[9px] font-extrabold uppercase bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">
                     {availableFeatures.length} Key Capabilities
                   </span>
                 </div>
@@ -1482,8 +1492,8 @@ function AllStackPanelContent({
         subtitle="Team adoption vs. underutilized features"
         defaultOpen={false}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs space-y-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2.5">
             <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-700 block">
               Most Used Workflows
             </span>
@@ -1502,7 +1512,7 @@ function AllStackPanelContent({
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs space-y-2.5">
+          <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2.5">
             <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-amber-700 block">
               Underutilized Features
             </span>
@@ -1531,15 +1541,15 @@ function AllStackPanelContent({
         subtitle="Workload contribution per tool"
         defaultOpen={false}
       >
-        <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-2xs space-y-2.5">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2.5">
           {toolContributions.map((tc) => (
             <div key={tc.toolName} className="space-y-1">
               <div className="flex justify-between items-center text-[11px]">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-slate-800">{tc.toolName}</span>
+                  <span className="font-bold text-slate-900">{tc.toolName}</span>
                   <span className="text-[9.5px] text-slate-400">({tc.vendor})</span>
                 </div>
-                <span className="font-extrabold font-mono text-indigo-600 text-[11.5px]">{tc.percentage}%</span>
+                <span className="font-black font-mono text-indigo-600 text-[11.5px]">{tc.percentage}%</span>
               </div>
               <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                 <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${tc.percentage}%` }} />
@@ -1648,20 +1658,20 @@ function PanelHeader({
   const logoSrc = toolLogoMap[insight.toolId.toLowerCase()];
 
   return (
-    <div className="sticky top-0 z-20 flex flex-col bg-[#0F172A] text-white border-b border-slate-800 shadow-md">
+    <div className="sticky top-0 z-20 flex flex-col bg-[#0C1526] text-white border-b border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
 
       {/* ── Top Navigation / Breadcrumb Row ────────────────────── */}
-      <div className="px-5 pt-3.5 pb-2.5 flex items-center justify-between gap-3 border-b border-slate-800">
-        <div className="flex items-center gap-2 text-xs text-slate-300 font-medium">
-          <span>Tool Analysis</span>
-          <span className="text-slate-500">/</span>
+      <div className="px-5 pt-3 pb-2.5 flex items-center justify-between gap-3 border-b border-white/[0.07]">
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+          <span className="text-slate-500">Tool Analysis</span>
+          <span className="text-slate-700">/</span>
           {!isAllStack && provider && (
             <>
-              <span className="text-slate-300">{provider.vendor}</span>
-              <span className="text-slate-500">/</span>
+              <span className="text-slate-400">{provider.vendor}</span>
+              <span className="text-slate-700">/</span>
             </>
           )}
-          <span className="text-white font-bold">{categoryTitle}</span>
+          <span className="text-slate-200 font-semibold">{categoryTitle}</span>
         </div>
 
 
@@ -1695,22 +1705,22 @@ function PanelHeader({
           {/* Name and context */}
           <div className="min-w-0">
             <div className="flex items-baseline gap-2 flex-wrap">
-              <h2 className="text-2xl font-black tracking-tight text-white leading-tight">
+              <h2 className="text-[22px] font-black tracking-tight text-white leading-tight">
                 {isAllStack ? 'Stack Intelligence' : insight.toolName}
               </h2>
               {planLabel && (
-                <span className="text-xs font-bold text-slate-100 bg-slate-800 px-2.5 py-0.5 rounded-md border border-slate-700 shadow-xs">
+                <span className="text-[11px] font-bold text-slate-300 bg-white/10 px-2.5 py-0.5 rounded-md border border-white/[0.12]">
                   {planLabel}
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-300 mt-1.5 leading-normal flex items-center gap-1.5 flex-wrap font-medium">
+            <p className="text-[11px] text-slate-400 mt-1 leading-normal flex items-center gap-1.5 flex-wrap font-medium">
               {isAllStack
                 ? `${auditTools.length || 5} active platforms configured`
                 : (
                   <>
                     <span>{seats === 1 ? '1 seat' : `${seats} seats`}</span>
-                    {activeFocusLabel && <span className="text-slate-500">·</span>}
+                    {activeFocusLabel && <span className="text-white/20">·</span>}
                     {activeFocusLabel && <span>{activeFocusLabel} focus</span>}
                   </>
                 )}
@@ -1720,64 +1730,64 @@ function PanelHeader({
 
         {/* High-visibility status tag */}
         {!isAllStack && (
-          <div className={`px-3 py-1 rounded-full border text-xs font-bold shrink-0 self-center sm:self-auto shadow-xs ${valueStatus.cls}`}>
+          <div className={`px-3 py-1.5 rounded-lg border text-[11px] font-extrabold shrink-0 self-center sm:self-auto tracking-wide ${valueStatus.cls}`}>
             {valueStatus.label}
           </div>
         )}
       </div>
 
       {/* ── High-Contrast Metric Strip ────────────────────────── */}
-      <div className="grid grid-cols-3 divide-x divide-slate-800 border-t border-slate-800 bg-slate-950/70">
+      <div className="grid grid-cols-3 divide-x divide-white/[0.06] border-t border-white/10 bg-[#0B1120]">
         {/* Metric 1: Monthly Spend */}
-        <div className="px-5 py-3.5">
-          <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-300">
+        <div className="px-5 py-4">
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-slate-400 leading-none">
             Monthly Spend
           </p>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-[23px] font-black text-white font-mono tracking-tight leading-none">
+          <div className="flex items-baseline gap-0.5 mt-2">
+            <span className="text-[22px] font-black text-white font-mono tracking-tight leading-none">
               {insight.currentMonthlySpend > 0 ? `$${insight.currentMonthlySpend}` : '—'}
             </span>
             {insight.currentMonthlySpend > 0 && (
-              <span className="text-xs font-semibold text-slate-300">/mo</span>
+              <span className="text-[11px] font-semibold text-slate-400 ml-0.5">/mo</span>
             )}
           </div>
-          <p className="text-xs text-slate-300 mt-1.5 font-medium">
+          <p className="text-[11px] text-slate-500 mt-1 font-medium">
             {insight.currentMonthlySpend > 0 ? `$${insight.currentMonthlySpend * 12}/yr baseline` : 'No direct cost'}
           </p>
         </div>
 
-        {/* Metric 2: Potential Savings (Hero Focus) */}
-        <div className="px-5 py-3.5">
-          <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">
+        {/* Metric 2: Potential Savings — hero emphasis with emerald accent border-top */}
+        <div className={`px-5 py-4 relative ${savingMo > 0 ? 'border-t-2 border-t-emerald-500 -mt-[2px]' : ''}`}>
+          <p className={`text-[9px] font-extrabold uppercase tracking-[0.18em] leading-none ${savingMo > 0 ? 'text-emerald-400' : 'text-slate-400'}`}>
             Potential Savings
           </p>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className={`text-[23px] font-black font-mono tracking-tight leading-none ${savingMo > 0 ? 'text-emerald-400' : 'text-slate-400'}`}>
-              {savingMo > 0 ? `$${savingMo}` : '$0'}
+          <div className="flex items-baseline gap-0.5 mt-2">
+            <span className={`text-[22px] font-black font-mono tracking-tight leading-none ${savingMo > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
+              {savingMo > 0 ? `+$${savingMo}` : '$0'}
             </span>
             {savingMo > 0 && (
-              <span className="text-xs font-bold text-emerald-400">/mo</span>
+              <span className="text-[11px] font-bold text-emerald-500 ml-0.5">/mo</span>
             )}
           </div>
-          <p className={`text-xs mt-1.5 ${savingMo > 0 ? 'text-emerald-300 font-bold' : 'text-slate-300 font-medium'}`}>
-            {savingYr > 0 ? `+${savingYr}/yr savings` : 'Fully optimized'}
+          <p className={`text-[11px] mt-1 font-semibold ${savingMo > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
+            {savingYr > 0 ? `+$${savingYr}/yr savings` : 'Fully optimized'}
           </p>
         </div>
 
         {/* Metric 3: Annual Discount */}
-        <div className="px-5 py-3.5">
-          <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-300">
+        <div className="px-5 py-4">
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-slate-400 leading-none">
             Annual Contract
           </p>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className={`text-[23px] font-black font-mono tracking-tight leading-none ${annualDiscountPercent > 0 ? 'text-slate-100' : 'text-slate-400'}`}>
+          <div className="flex items-baseline gap-0.5 mt-2">
+            <span className={`text-[22px] font-black font-mono tracking-tight leading-none ${annualDiscountPercent > 0 ? 'text-white' : 'text-slate-600'}`}>
               {annualDiscountPercent > 0 ? `${annualDiscountPercent}%` : '—'}
             </span>
             {annualDiscountPercent > 0 && (
-              <span className="text-xs font-semibold text-slate-300">off</span>
+              <span className="text-[11px] font-semibold text-slate-400 ml-0.5">off</span>
             )}
           </div>
-          <p className="text-xs text-slate-300 mt-1.5 font-medium">
+          <p className="text-[11px] text-slate-500 mt-1 font-medium">
             {annualDiscountPercent > 0 ? 'Annual discount' : 'Monthly term'}
           </p>
         </div>

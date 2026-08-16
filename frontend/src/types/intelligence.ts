@@ -38,6 +38,7 @@ export interface FeatureMatrixRow {
   recommendedScore?: number;
   delta: 'better' | 'worse' | 'same' | 'new' | 'lost';
   note?: string;
+  capabilityEvidence?: string;
 }
 
 export interface StackVisualization {
@@ -108,6 +109,8 @@ export interface RankedRecommendation {
   confidence: ConfidenceLevel;
   monthlySavings: number;
   annualSavings: number;
+  netMonthlyCostDelta?: number;
+  replacementMonthlyCost?: number;
   capabilityRetention: number;
   riskLevel: RiskLevel;
   summary: string;
@@ -148,6 +151,9 @@ export interface ScenarioOption {
   action: string;
   monthlySavings: number;
   annualSavings: number;
+  netMonthlyCostDelta?: number;
+  costDirection?: 'savings' | 'increase' | 'neutral';
+  replacementMonthlyCost?: number;
   coveragePercent: number;
   riskLevel: RiskLevel;
   tradeoffs: string[];
@@ -167,6 +173,8 @@ export interface WhyNotSelectedExplanation {
   scoreDifferences: Array<{ metric: string; targetScore: number; alternativeScore: number }>;
   keyDeficiencies: string[];
   tradeoffSummary: string;
+  monthlyCostDiff?: number;
+  alternativeMonthlyCost?: number;
 }
 
 export interface RecommendationTrace {
@@ -203,6 +211,15 @@ export interface DecisionReport {
   projectedMonthlyCost: number;
   monthlySavings: number;
   annualSavings: number;
+  netCostDelta?: number;
+  costDirection?: 'savings' | 'increase' | 'neutral';
+  financialExplanation?: string;
+  perSeatBreakdown?: {
+    seats: number;
+    currentCostPerSeat: number;
+    replacementCostPerSeat: number;
+    netDeltaPerSeat: number;
+  };
 
   capabilityRetentionPercent: number;
   capabilitiesLost: string[];
@@ -241,6 +258,9 @@ export interface ReplaceOpportunity {
   workflowImpact: 'Positive' | 'Neutral' | 'Minor Impact' | 'Major Impact';
   monthlySavings: number;
   annualSavings: number;
+  netCostDelta?: number;
+  costDirection?: 'savings' | 'increase' | 'neutral';
+  replacementMonthlyCost?: number;
   migrationDifficulty: DifficultyLevel;
   learningCurve: LearningCurveLevel;
   vendorLockInImpact: RiskLevel;

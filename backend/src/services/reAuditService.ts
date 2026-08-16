@@ -106,6 +106,7 @@ export function generateAuditDiff(oldAudit: AuditDocument, newAudit: AuditDocume
 
   // 1. Find added and changed recommendations
   for (const [key, newIns] of newMap.entries()) {
+    if (newIns.toolId === 'all-stack-tools' || newIns.toolName === 'All Stack Tools') continue;
     const oldIns = oldMap.get(key);
     if (!oldIns) {
       recommendationDiffs.push({
@@ -140,6 +141,9 @@ export function generateAuditDiff(oldAudit: AuditDocument, newAudit: AuditDocume
 
   // 2. Find removed recommendations
   for (const [key, oldIns] of oldMap.entries()) {
+    if (oldIns.toolId === 'all-stack-tools' || oldIns.toolName === 'All Stack Tools') continue;
+    // Skip boilerplate verified tips with zero savings
+    if (oldIns.potentialMonthlySaving <= 0 && (oldIns.severity === 'info' || oldIns.message?.toLowerCase().includes('plan verified'))) continue;
     if (!newMap.has(key)) {
       recommendationDiffs.push({
         toolId: oldIns.toolId,

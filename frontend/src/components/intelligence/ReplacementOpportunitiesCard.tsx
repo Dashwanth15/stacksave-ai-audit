@@ -1,27 +1,24 @@
 import { useState } from 'react';
-import { m, AnimatePresence } from 'framer-motion';
-import type { ReplaceOpportunity, DecisionReport } from '../../types/intelligence';
+import { AnimatePresence } from 'framer-motion';
+import type { ReplaceOpportunity } from '../../types/intelligence';
+import CompactOpportunitySurface from './CompactOpportunitySurface';
+import InteractiveDecisionExplorer from './InteractiveDecisionExplorer';
 
 interface ReplacementOpportunitiesCardProps {
   opportunities: ReplaceOpportunity[];
-  onOpenReport: (report: DecisionReport) => void;
 }
 
 export default function ReplacementOpportunitiesCard({
   opportunities,
-  onOpenReport,
 }: ReplacementOpportunitiesCardProps) {
-  const [expanded, setExpanded] = useState(true);
+  const [activeExplorerIdx, setActiveExplorerIdx] = useState<number | null>(null);
 
   if (opportunities.length === 0) return null;
 
   return (
     <div className="p-6 border border-slate-100 rounded-2xl bg-white shadow-xs space-y-4">
       {/* Header */}
-      <div
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center justify-between cursor-pointer select-none"
-      >
+      <div className="select-none">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-lg">
             🔁
@@ -32,94 +29,40 @@ export default function ReplacementOpportunitiesCard({
                 AI Replacement Opportunities
               </h3>
               <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
-                {opportunities.length} Ranked Path(s)
+                {opportunities.length} Opportunity
+                {opportunities.length !== 1 ? 'ies' : ''}
               </span>
             </div>
-            <p className="text-xs text-slate-500">
-              Auto-discovered replacement paths with Opportunity Scores and multiple ranked recommendations.
+            <p className="text-xs text-slate-500 mt-1">
+              Scan the opportunities below. Click to explore the decision in detail.
             </p>
           </div>
         </div>
-
-        <button className="text-slate-400 hover:text-slate-600 font-bold text-sm">
-          {expanded ? '▲' : '▼'}
-        </button>
       </div>
 
-      {/* List */}
-      <AnimatePresence>
-        {expanded && (
-          <m.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="space-y-4 pt-2"
-          >
-            {opportunities.map((opp, idx) => (
-              <div
-                key={idx}
-                className="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:border-indigo-100 hover:bg-indigo-50/10 transition-all space-y-3"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900">
-                    <span className="px-3 py-1 rounded-xl bg-white border border-slate-200 shadow-2xs">
-                      {opp.sourceToolName}
-                    </span>
-                    <span className="text-indigo-600">➔</span>
-                    <span className="px-3 py-1 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 shadow-2xs">
-                      {opp.targetToolName}
-                    </span>
-                  </div>
+      {/* Opportunities Grid */}
+      <div className="pt-2 space-y-3">
+        {opportunities.map((opp, idx) => (
+          <div key={idx}>
+            <CompactOpportunitySurface
+              opportunity={opp}
+              rank={idx + 1}
+              onExplore={() => setActiveExplorerIdx(idx)}
+            />
 
-                  <div className="flex items-center gap-3">
-                    <div className="text-center bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
-                      <span className="text-[9px] font-extrabold text-slate-400 block uppercase">Opp. Score</span>
-                      <span className="text-base font-black text-emerald-600 font-mono-financial">{opp.opportunityScore?.overall ?? 85}/100</span>
-                    </div>
-
-                    {opp.monthlySavings > 0 && (
-                      <div className="text-right">
-                        <span className="text-lg font-black font-mono-financial text-emerald-600 block">
-                          Save ${opp.monthlySavings}/mo
-                        </span>
-                        <span className="text-[10px] font-medium text-slate-400 block">
-                          ≈ ${opp.annualSavings}/year
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Ranked Options Preview */}
-                {opp.rankedRecommendations && opp.rankedRecommendations.length > 1 && (
-                  <div className="p-3 rounded-xl bg-white border border-slate-100 space-y-1 text-xs">
-                    <span className="text-[10px] font-bold uppercase text-slate-400 block">Ranked Options Available:</span>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {opp.rankedRecommendations.map((rec, rIdx) => (
-                        <span key={rIdx} className="px-2 py-0.5 rounded bg-slate-50 text-slate-700 font-medium text-[11px]">
-                          <strong>#{rec.rank} {rec.label}:</strong> {rec.toolName} ({rec.monthlySavings > 0 ? `+$${rec.monthlySavings}/mo` : 'Parity'})
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-slate-100 pt-3">
-                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    {opp.recommendation}
-                  </p>
-                  <button
-                    onClick={() => onOpenReport(opp.decisionReport)}
-                    className="shrink-0 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1"
-                  >
-                    View Full Decision Report ➔
-                  </button>
-                </div>
-              </div>
-            ))}
-          </m.div>
-        )}
-      </AnimatePresence>
+            {/* Decision Explorer Modal */}
+            <AnimatePresence>
+              {activeExplorerIdx === idx && (
+                <InteractiveDecisionExplorer
+                  opportunity={opp}
+                  report={opp.decisionReport}
+                  onClose={() => setActiveExplorerIdx(null)}
+                />
+              )}
+            </AnimatePresence>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

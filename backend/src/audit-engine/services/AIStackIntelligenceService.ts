@@ -120,10 +120,13 @@ export class AIStackIntelligenceService {
       // Score every candidate provider as replacement for this source tool
       const candidateScores: Array<{
         targetScored: ScoredProviderProfile;
+        targetProfile: typeof allProviders[0];
         rel: ReturnType<typeof RelationshipEngine.analyze>;
         compatibilityScore: number;
         capabilityRetentionPercent: number;
-        monthlySavings: number;
+        targetMonthlyCost: number;   // Actual replacement tool cost (seats × per-seat price)
+        netCostDelta: number;        // Signed: negative = savings, positive = cost increase
+        monthlySavings: number;      // Unsigned magnitude (0 when increasing)
         riskLevel: RiskLevel;
       }> = [];
 
@@ -136,31 +139,54 @@ export class AIStackIntelligenceService {
         const targetScored = scoredMap.get(targetProfile.id);
         if (!targetScored) continue;
 
-        const cheapestPlan = targetProfile.plans[0]?.monthlyPricePerSeat
-          || Object.values(targetProfile.pricing)[0] || 20;
-        const targetPrice = cheapestPlan * tool.seats;
-        const monthlySavings = Math.max(0, tool.monthlySpend - targetPrice);
+        // ── FIX: Use first PAID plan, not plans[0] which may be free ──────────
+        const paidPlans = targetProfile.plans.filter(
+          (p) => p.monthlyPricePerSeat > 0 && !p.isPayPerUse
+        );
+        const pricePerSeat = paidPlans.length > 0
+          ? paidPlans[0].monthlyPricePerSeat
+          : (Object.values(targetProfile.pricing).find((v) => v > 0) || 20) as number;
+
+        const targetMonthlyCost = pricePerSeat * tool.seats;
+        // ── FIX: Signed delta — negative means cheaper (savings), positive means more expensive ──
+        const netCostDelta = targetMonthlyCost - tool.monthlySpend;
+        const monthlySavings = Math.max(0, -netCostDelta); // Unsigned savings magnitude
+
         const compatibilityScore = Math.round((rel.workflowOverlap + rel.replacementConfidence) / 2);
         const capabilityRetentionPercent = Math.round(rel.replacementConfidence);
         const riskLevel: RiskLevel = capabilityRetentionPercent >= 80 && targetScored.enterpriseScore >= 70
           ? 'Low' : capabilityRetentionPercent >= 60 ? 'Medium' : 'High';
 
-        candidateScores.push({ targetScored, rel, compatibilityScore, capabilityRetentionPercent, monthlySavings, riskLevel });
+        candidateScores.push({
+          targetScored, targetProfile, rel, compatibilityScore,
+          capabilityRetentionPercent, targetMonthlyCost, netCostDelta, monthlySavings, riskLevel,
+        });
       }
 
       if (candidateScores.length === 0) continue;
 
-      // Sort by composite business value
-      candidateScores.sort((a, b) =>
-        (b.monthlySavings * 0.4 + b.compatibilityScore * 0.6) -
-        (a.monthlySavings * 0.4 + a.compatibilityScore * 0.6)
-      );
+      // Sort by composite: capability-first (60%), financial benefit (40%)
+      // Normalize savings to a 0-100 scale to prevent zero-savings tools from always ranking last
+      const maxSavingsAmt = Math.max(1, ...candidateScores.map(c => Math.abs(c.netCostDelta)));
+      candidateScores.sort((a, b) => {
+        // Savings bonus: positive for savings, penalty for cost increases (capped)
+        const savingsBonusA = Math.max(-40, Math.min(40, (-a.netCostDelta / maxSavingsAmt) * 40));
+        const savingsBonusB = Math.max(-40, Math.min(40, (-b.netCostDelta / maxSavingsAmt) * 40));
+        const scoreA = a.compatibilityScore * 0.6 + savingsBonusA * 0.4;
+        const scoreB = b.compatibilityScore * 0.6 + savingsBonusB * 0.4;
+        return scoreB - scoreA;
+      });
 
       // Take best candidate as the primary recommendation
       const best = candidateScores[0];
-      const { targetScored, rel, compatibilityScore, capabilityRetentionPercent, monthlySavings, riskLevel } = best;
+      const {
+        targetScored, targetMonthlyCost, netCostDelta, rel,
+        compatibilityScore, capabilityRetentionPercent, monthlySavings, riskLevel,
+      } = best;
 
       const annualSavings = monthlySavings * 12;
+      const costDirection: 'savings' | 'increase' | 'neutral' =
+        netCostDelta < -0.01 ? 'savings' : netCostDelta > 0.01 ? 'increase' : 'neutral';
       const confidence: ConfidenceLevel = compatibilityScore >= 75 ? 'High' : compatibilityScore >= 50 ? 'Medium' : 'Low';
 
       const workflowImpact = (() => {
@@ -172,9 +198,11 @@ export class AIStackIntelligenceService {
         return 'Neutral' as const;
       })();
 
-      const recommendation = monthlySavings > 0
-        ? `Replace ${sourceScored.name} with ${targetScored.name} to save $${monthlySavings}/mo while retaining ${capabilityRetentionPercent}% of capabilities.`
-        : `Migrate to ${targetScored.name} for ${Math.max(0, targetScored.codingScore - sourceScored.codingScore)}pt capability improvement.`;
+      const recommendation = costDirection === 'savings'
+        ? `Replace ${sourceScored.name} with ${targetScored.name} to save $${monthlySavings.toFixed(2)}/mo while retaining ${capabilityRetentionPercent}% of capabilities.`
+        : costDirection === 'increase'
+        ? `Migrate to ${targetScored.name} for ${Math.max(0, targetScored.codingScore - sourceScored.codingScore)}pt capability improvement at +$${Math.abs(netCostDelta).toFixed(2)}/mo additional spend.`
+        : `Swap to ${targetScored.name} at cost-neutral pricing with ${capabilityRetentionPercent}% capability retention.`;
 
       // Build ranked recommendations from top-5 candidates
       const rankedRecommendations = this.buildRankedRecommendations(
@@ -182,7 +210,7 @@ export class AIStackIntelligenceService {
       );
 
       const opportunityScore = this.buildOpportunityScore(
-        monthlySavings, tool.monthlySpend, capabilityRetentionPercent,
+        netCostDelta, tool.monthlySpend, capabilityRetentionPercent,
         riskLevel, targetScored, sourceScored
       );
 
@@ -192,14 +220,19 @@ export class AIStackIntelligenceService {
       const futureGrowthAnalysis = this.buildFutureGrowthAnalysis(tool, targetScored);
 
       const whyNotSelected = candidateScores.slice(1, 4).map((c) =>
-        this.buildWhyNotSelected(c.targetScored, best, sourceScored, c.compatibilityScore, c.capabilityRetentionPercent)
+        this.buildWhyNotSelected(
+          c.targetScored, best, sourceScored,
+          c.compatibilityScore, c.capabilityRetentionPercent,
+          c.targetMonthlyCost, targetMonthlyCost
+        )
       );
 
       const decisionReport = this.buildDecisionReport(
         `rep-${sourceId}-${targetScored.id}`,
         `${sourceScored.name} → ${targetScored.name}`,
         tool, sourceScored, targetScored, rel,
-        monthlySavings, annualSavings, compatibilityScore, capabilityRetentionPercent,
+        targetMonthlyCost, netCostDelta, monthlySavings, annualSavings,
+        compatibilityScore, capabilityRetentionPercent,
         confidence, riskLevel, recommendation, useCase,
         rankedRecommendations, opportunityScore, featureMatrix,
         migrationChecklist, audienceGuidance, futureGrowthAnalysis, whyNotSelected
@@ -219,6 +252,9 @@ export class AIStackIntelligenceService {
         workflowImpact,
         monthlySavings,
         annualSavings,
+        netCostDelta,
+        costDirection,
+        replacementMonthlyCost: targetMonthlyCost,
         migrationDifficulty: targetScored.raw.productivityScores.migrationCost || 'Medium',
         learningCurve: targetScored.raw.productivityScores.learningCurve || 'Medium',
         vendorLockInImpact: targetScored.raw.financialProfile.vendorLockInRisk || 'Low',
@@ -300,7 +336,7 @@ export class AIStackIntelligenceService {
           const recommendation = `Consolidate ${pairNames.join(' + ')} into ${absorbingScored.name} to eliminate redundant licensing and save $${monthlySavings}/mo.`;
 
           const opportunityScore = this.buildOpportunityScore(
-            monthlySavings, currentCost, coverageRetainedPercent, riskLevel, absorbingScored, null
+            -(monthlySavings), currentCost, coverageRetainedPercent, riskLevel, absorbingScored, null
           );
 
           const rankedRecommendations: RankedRecommendation[] = [
@@ -309,6 +345,8 @@ export class AIStackIntelligenceService {
               toolId: absorberProfile.id, toolName: absorbingScored.name,
               overallScore: businessValueScore, confidence,
               monthlySavings, annualSavings,
+              netMonthlyCostDelta: -(monthlySavings),
+              replacementMonthlyCost: projectedCost,
               capabilityRetention: coverageRetainedPercent,
               riskLevel,
               summary: recommendation,
@@ -318,6 +356,7 @@ export class AIStackIntelligenceService {
               toolId: pairIds[0], toolName: pairNames.join(' + '),
               overallScore: 50, confidence: 'High',
               monthlySavings: 0, annualSavings: 0,
+              netMonthlyCostDelta: 0, replacementMonthlyCost: currentCost,
               capabilityRetention: 100,
               riskLevel: 'Low',
               summary: 'Maintain current multi-tool licensing at existing cost.',
@@ -424,7 +463,7 @@ export class AIStackIntelligenceService {
         : `${toolScored.name} is an optional add-on. Evaluate team utilization before removing.`;
 
       const opportunityScore = this.buildOpportunityScore(
-        monthlySavings, monthlySavings, remainingCoveragePercent, riskLevel, toolScored, null
+        -(monthlySavings), monthlySavings, remainingCoveragePercent, riskLevel, toolScored, null
       );
 
       const rankedRecommendations: RankedRecommendation[] = [
@@ -433,7 +472,10 @@ export class AIStackIntelligenceService {
           label: classification === 'safe_to_remove' ? 'Best Recommendation' : 'Best Budget',
           toolId: tool.toolId, toolName: toolScored.name,
           overallScore: opportunityScore.overall, confidence: removalConfidence,
-          monthlySavings, annualSavings, capabilityRetention: remainingCoveragePercent,
+          monthlySavings, annualSavings,
+          netMonthlyCostDelta: -(monthlySavings),
+          replacementMonthlyCost: 0,
+          capabilityRetention: remainingCoveragePercent,
           riskLevel, summary: recommendation,
         },
         {
@@ -441,6 +483,7 @@ export class AIStackIntelligenceService {
           toolId: tool.toolId, toolName: toolScored.name,
           overallScore: 50, confidence: 'High',
           monthlySavings: 0, annualSavings: 0,
+          netMonthlyCostDelta: 0, replacementMonthlyCost: monthlySavings,
           capabilityRetention: 100, riskLevel: 'Low',
           summary: `Continue using ${toolScored.name} at current spend of $${monthlySavings}/mo.`,
         }
@@ -478,16 +521,25 @@ export class AIStackIntelligenceService {
   // HELPER: Build Opportunity Score
   // ──────────────────────────────────────────────────────────────────────────
   private static buildOpportunityScore(
-    monthlySavings: number,
+    netCostDelta: number,       // SIGNED: negative = savings, positive = cost increase
     currentCost: number,
     capabilityRetentionPercent: number,
     riskLevel: RiskLevel,
     target: ScoredProviderProfile,
     source: ScoredProviderProfile | null
   ): OpportunityScore {
-    const financialOpportunity = currentCost > 0
-      ? Math.min(100, Math.round((monthlySavings / currentCost) * 100 * 2))
-      : 50;
+    // Financial opportunity: 50 = neutral, >50 = savings, <50 = cost increase
+    // Never fabricates 50 when data exists — always computed from actual delta
+    let financialOpportunity: number;
+    if (currentCost <= 0) {
+      // Source tool is free — replacement opportunity is purely capability-driven
+      financialOpportunity = netCostDelta < 0 ? 60 : netCostDelta > 0 ? 30 : 50;
+    } else {
+      // Score: 100 = huge savings (>50% of current cost), 50 = cost-neutral, 0 = major cost increase
+      const savingsRatio = (-netCostDelta) / currentCost; // positive ratio = savings
+      financialOpportunity = Math.round(50 + savingsRatio * 100);
+      financialOpportunity = Math.max(0, Math.min(100, financialOpportunity));
+    }
 
     const technicalOpportunity = source
       ? Math.round(Math.max(0, Math.min(100,
@@ -543,6 +595,8 @@ export class AIStackIntelligenceService {
       compatibilityScore: number;
       capabilityRetentionPercent: number;
       monthlySavings: number;
+      netCostDelta: number;
+      targetMonthlyCost: number;
       riskLevel: RiskLevel;
     }>,
     _useCase: UseCase
@@ -550,10 +604,8 @@ export class AIStackIntelligenceService {
     if (candidates.length === 0) return [];
 
     const sorted = [...candidates];
-    // Best overall = highest composite
-    const bestIdx = 0;
-    // Best budget = highest savings
-    const budgetIdx = [...sorted].sort((a, b) => b.monthlySavings - a.monthlySavings);
+    // Best budget = highest savings (most negative netCostDelta)
+    const budgetIdx = [...sorted].sort((a, b) => a.netCostDelta - b.netCostDelta);
     // Best performance = highest capability score
     const perfIdx = [...sorted].sort((a, b) =>
       b.targetScored.codingScore + b.targetScored.reasoningScore -
@@ -564,21 +616,34 @@ export class AIStackIntelligenceService {
       c: typeof candidates[0],
       rank: number,
       label: RankedRecommendation['label']
-    ): RankedRecommendation => ({
-      rank,
-      label,
-      toolId: c.targetScored.id,
-      toolName: c.targetScored.name,
-      overallScore: Math.round(c.compatibilityScore * 0.6 + (c.monthlySavings > 0 ? 40 : 20) * 0.4),
-      confidence: c.compatibilityScore >= 75 ? 'High' : c.compatibilityScore >= 50 ? 'Medium' : 'Low',
-      monthlySavings: c.monthlySavings,
-      annualSavings: c.monthlySavings * 12,
-      capabilityRetention: c.capabilityRetentionPercent,
-      riskLevel: c.riskLevel,
-      summary: c.monthlySavings > 0
-        ? `Save $${c.monthlySavings}/mo with ${c.capabilityRetentionPercent}% capability retention.`
-        : `Gain superior performance with ${c.capabilityRetentionPercent}% capability retention.`,
-    });
+    ): RankedRecommendation => {
+      // Overall score: 60% capability compatibility + 40% financial score (50=neutral)
+      const financialScore = tool.monthlySpend > 0
+        ? Math.max(0, Math.min(100, 50 + (-c.netCostDelta / Math.max(1, tool.monthlySpend)) * 100))
+        : 50;
+      const costDir: 'savings' | 'increase' | 'neutral' =
+        c.netCostDelta < -0.01 ? 'savings' : c.netCostDelta > 0.01 ? 'increase' : 'neutral';
+      const deltaMagnitude = Math.abs(c.netCostDelta).toFixed(2);
+      return {
+        rank,
+        label,
+        toolId: c.targetScored.id,
+        toolName: c.targetScored.name,
+        overallScore: Math.round(c.compatibilityScore * 0.6 + financialScore * 0.4),
+        confidence: c.compatibilityScore >= 75 ? 'High' : c.compatibilityScore >= 50 ? 'Medium' : 'Low',
+        monthlySavings: c.monthlySavings,
+        annualSavings: c.monthlySavings * 12,
+        netMonthlyCostDelta: c.netCostDelta,
+        replacementMonthlyCost: c.targetMonthlyCost,
+        capabilityRetention: c.capabilityRetentionPercent,
+        riskLevel: c.riskLevel,
+        summary: costDir === 'savings'
+          ? `Save $${deltaMagnitude}/mo ($${(Number(deltaMagnitude)*12).toFixed(0)}/yr) with ${c.capabilityRetentionPercent}% capability retention.`
+          : costDir === 'increase'
+          ? `+$${deltaMagnitude}/mo additional spend. Capability improvement: ${c.targetScored.codingScore - source.codingScore > 0 ? '+' : ''}${c.targetScored.codingScore - source.codingScore}pts.`
+          : `Cost-neutral swap. Retains ${c.capabilityRetentionPercent}% of capabilities.`,
+      };
+    };
 
     const ranked: RankedRecommendation[] = [];
     if (sorted[0]) ranked.push(makeRec(sorted[0], 1, 'Best Recommendation'));
@@ -595,6 +660,7 @@ export class AIStackIntelligenceService {
       toolId: source.id, toolName: source.name,
       overallScore: 50, confidence: 'High',
       monthlySavings: 0, annualSavings: 0,
+      netMonthlyCostDelta: 0, replacementMonthlyCost: tool.monthlySpend,
       capabilityRetention: 100, riskLevel: 'Low',
       summary: `Maintain current ${source.name} subscription at $${tool.monthlySpend}/mo.`,
     });
@@ -610,8 +676,10 @@ export class AIStackIntelligenceService {
     target: ScoredProviderProfile
   ): FeatureMatrixRow[] {
     return FEATURE_MATRIX_KEYS.map(({ key, label }) => {
-      const srcScore = source.raw.capabilities[key]?.score ?? 0;
-      const tgtScore = target.raw.capabilities[key]?.score ?? 0;
+      const srcCap = source.raw.capabilities[key];
+      const tgtCap = target.raw.capabilities[key];
+      const srcScore = srcCap?.score ?? 0;
+      const tgtScore = tgtCap?.score ?? 0;
 
       const currentStatus: FeatureMatrixRow['currentStatus'] = srcScore >= 7 ? 'yes' : srcScore >= 4 ? 'partial' : 'no';
       const recommendedStatus: FeatureMatrixRow['recommendedStatus'] = tgtScore >= 7 ? 'yes' : tgtScore >= 4 ? 'partial' : 'no';
@@ -622,13 +690,33 @@ export class AIStackIntelligenceService {
       else if (tgtScore > srcScore + 1) delta = 'better';
       else if (tgtScore < srcScore - 1) delta = 'worse';
 
+      // ── FIX: Use actual context window data from knowledge base, not hardcoded 128K ──
+      const srcContextWindow = (source.raw as any).contextWindow
+        || (source.raw.plans?.find((p: any) => p.contextWindow)?.contextWindow)
+        || (srcScore >= 9 ? '200K+' : srcScore >= 7 ? '128K' : '32K');
+      const tgtContextWindow = (target.raw as any).contextWindow
+        || (target.raw.plans?.find((p: any) => p.contextWindow)?.contextWindow)
+        || (tgtScore >= 9 ? '200K+' : tgtScore >= 7 ? '128K' : '32K');
+
       const note = key === 'longContext'
-        ? `${source.name}: ~128K • ${target.name}: ~${tgtScore >= 9 ? '200K+' : '128K'}`
+        ? `${source.name}: ~${srcContextWindow} • ${target.name}: ~${tgtContextWindow}`
         : key === 'latency'
         ? `${source.name}: ${srcScore >= 8 ? 'Fast' : 'Standard'} • ${target.name}: ${tgtScore >= 8 ? 'Fast' : 'Standard'}`
         : undefined;
 
-      return { feature: label, featureKey: key, currentStatus, currentScore: srcScore, recommendedStatus, recommendedScore: tgtScore, delta, note };
+      // ── Evidence text from knowledge base ──
+      const srcEvidence = srcCap?.evidence || '';
+      const tgtEvidence = tgtCap?.evidence || '';
+      const capabilityEvidence = (srcEvidence || tgtEvidence)
+        ? `${source.name}: ${srcEvidence || `Score ${srcScore}/10`} | ${target.name}: ${tgtEvidence || `Score ${tgtScore}/10`}`
+        : undefined;
+
+      return {
+        feature: label, featureKey: key,
+        currentStatus, currentScore: srcScore,
+        recommendedStatus, recommendedScore: tgtScore,
+        delta, note, capabilityEvidence,
+      };
     }).filter(row => row.currentStatus !== 'no' || row.recommendedStatus !== 'no');
   }
 
@@ -757,8 +845,11 @@ export class AIStackIntelligenceService {
     tool: ToolEntry,
     target: ScoredProviderProfile
   ): FutureGrowthAnalysis {
-    const planCost = target.raw.plans[0]?.monthlyPricePerSeat
-      || Object.values(target.raw.pricing)[0] || 20;
+    // ── FIX: Use first paid plan, not plans[0] which may be free ────────────────────
+    const paidPlans = target.raw.plans.filter((p) => p.monthlyPricePerSeat > 0 && !p.isPayPerUse);
+    const planCost = paidPlans.length > 0
+      ? paidPlans[0].monthlyPricePerSeat
+      : (Object.values(target.raw.pricing).find((v) => (v as number) > 0) || 20) as number;
 
     const currentTier: FutureGrowthTier = {
       teamSize: tool.seats,
@@ -792,32 +883,59 @@ export class AIStackIntelligenceService {
   // ──────────────────────────────────────────────────────────────────────────
   private static buildWhyNotSelected(
     alternative: ScoredProviderProfile,
-    best: { targetScored: ScoredProviderProfile; compatibilityScore: number; capabilityRetentionPercent: number; monthlySavings: number },
+    best: {
+      targetScored: ScoredProviderProfile;
+      compatibilityScore: number;
+      capabilityRetentionPercent: number;
+      monthlySavings: number;
+      netCostDelta: number;
+      targetMonthlyCost: number;
+    },
     source: ScoredProviderProfile,
     altCompatibility: number,
-    altRetention: number
+    altRetention: number,
+    altMonthlyCost: number,
+    bestMonthlyCost: number
   ): WhyNotSelectedExplanation {
     const reasons: string[] = [];
     if (altCompatibility < best.compatibilityScore - 10)
-      reasons.push('Lower overall workflow compatibility score');
+      reasons.push(`Lower workflow compatibility: ${alternative.name} scored ${altCompatibility}% vs ${best.targetScored.name}'s ${best.compatibilityScore}%`);
     if (altRetention < best.capabilityRetentionPercent - 10)
-      reasons.push('Lower capability retention compared to recommended option');
+      reasons.push(`Lower capability retention: ${altRetention}% vs ${best.capabilityRetentionPercent}% for ${best.targetScored.name}`);
     if (alternative.enterpriseScore < best.targetScored.enterpriseScore - 15)
-      reasons.push('Lower enterprise suitability / compliance readiness');
+      reasons.push(`Lower enterprise readiness: ${alternative.enterpriseScore}/100 vs ${best.targetScored.enterpriseScore}/100`);
     if (alternative.raw.productivityScores.migrationCost === 'High' && best.targetScored.raw.productivityScores.migrationCost !== 'High')
-      reasons.push('Higher migration complexity');
+      reasons.push(`Higher migration complexity (${alternative.raw.productivityScores.migrationCost}) vs ${best.targetScored.name} (${best.targetScored.raw.productivityScores.migrationCost})`);
+
+    // Cost comparison between this alternative and the recommended option
+    const monthlyCostDiff = altMonthlyCost - bestMonthlyCost; // positive = alternative costs more
+    const costComparisonNote = monthlyCostDiff > 0.01
+      ? `${alternative.name} costs $${monthlyCostDiff.toFixed(2)}/mo more than ${best.targetScored.name}`
+      : monthlyCostDiff < -0.01
+      ? `${alternative.name} costs $${Math.abs(monthlyCostDiff).toFixed(2)}/mo less than ${best.targetScored.name} (lower capability justifies price)`
+      : `Similar pricing to ${best.targetScored.name}`;
+
+    if (!reasons.length) {
+      reasons.push(
+        `${best.targetScored.name} offers superior overall compatibility (${best.compatibilityScore}% vs ${altCompatibility}%). ${costComparisonNote}.`
+      );
+    }
 
     return {
       providerId: alternative.id,
       providerName: alternative.name,
-      primaryReason: reasons[0] || `${best.targetScored.name} offers superior overall compatibility (${best.compatibilityScore}% vs ${altCompatibility}%).`,
+      primaryReason: reasons[0],
       scoreDifferences: [
-        { metric: 'Workflow Compatibility', targetScore: best.compatibilityScore, alternativeScore: altCompatibility },
-        { metric: 'Capability Retention', targetScore: best.capabilityRetentionPercent, alternativeScore: altRetention },
-        { metric: 'Enterprise Score', targetScore: best.targetScored.enterpriseScore, alternativeScore: alternative.enterpriseScore },
+        { metric: 'Workflow Compatibility (%)', targetScore: best.compatibilityScore, alternativeScore: altCompatibility },
+        { metric: 'Capability Retention (%)', targetScore: best.capabilityRetentionPercent, alternativeScore: altRetention },
+        { metric: 'Enterprise Score (/100)', targetScore: best.targetScored.enterpriseScore, alternativeScore: alternative.enterpriseScore },
+        { metric: 'Coding Score', targetScore: best.targetScored.codingScore, alternativeScore: alternative.codingScore },
+        { metric: 'Monthly Cost ($)', targetScore: Math.round(bestMonthlyCost * 100) / 100, alternativeScore: Math.round(altMonthlyCost * 100) / 100 },
       ],
       keyDeficiencies: alternative.raw.weaknesses?.slice(0, 3) || reasons.slice(0, 3),
-      tradeoffSummary: `${alternative.name} was not selected as the primary recommendation due to lower composite compatibility vs. ${source.name}. It may be suitable as a fallback depending on team-specific workflow needs.`,
+      tradeoffSummary: `${alternative.name} was not selected. ${costComparisonNote}. Primary gap: ${reasons[0]}`,
+      monthlyCostDiff,
+      alternativeMonthlyCost: altMonthlyCost,
     };
   }
 
@@ -830,7 +948,10 @@ export class AIStackIntelligenceService {
     source: ScoredProviderProfile,
     target: ScoredProviderProfile,
     rel: any,
-    monthlySavings: number, annualSavings: number,
+    targetMonthlyCost: number,  // Actual cost of the replacement tool
+    netCostDelta: number,       // Signed: negative = savings, positive = cost increase
+    monthlySavings: number,     // Unsigned magnitude
+    annualSavings: number,
     compatibilityScore: number, capabilityRetentionPercent: number,
     confidence: ConfidenceLevel, riskLevel: RiskLevel,
     recommendation: string, useCase: UseCase,
@@ -842,11 +963,14 @@ export class AIStackIntelligenceService {
     futureGrowthAnalysis: FutureGrowthAnalysis,
     whyNotSelected: WhyNotSelectedExplanation[]
   ): DecisionReport {
+    const costDirection: 'savings' | 'increase' | 'neutral' =
+      netCostDelta < -0.01 ? 'savings' : netCostDelta > 0.01 ? 'increase' : 'neutral';
+
     const stackVisualization: StackVisualization = {
       currentStack: [{ toolId: source.id, toolName: source.name, role: source.raw.primaryRole, monthlySpend: tool.monthlySpend, seats: tool.seats, isRemoved: true }],
-      recommendedStack: [{ toolId: target.id, toolName: target.name, role: target.raw.primaryRole, estimatedMonthlyCost: Math.max(0, tool.monthlySpend - monthlySavings), seats: tool.seats, isNew: true, isRetained: false }],
+      recommendedStack: [{ toolId: target.id, toolName: target.name, role: target.raw.primaryRole, estimatedMonthlyCost: targetMonthlyCost, seats: tool.seats, isNew: true, isRetained: false }],
       currentMonthlyCost: tool.monthlySpend,
-      recommendedMonthlyCost: Math.max(0, tool.monthlySpend - monthlySavings),
+      recommendedMonthlyCost: targetMonthlyCost,
       monthlySavings,
     };
 
@@ -859,8 +983,16 @@ export class AIStackIntelligenceService {
       security:  { delta: target.securityScore - source.securityScore, rationale: `Security score: ${target.name} (${target.securityScore}) vs ${source.name} (${source.securityScore})` },
     };
 
+    // ── FIX: Use actual context window from knowledge data ─────────────────────────────
+    const srcCtxWindow = (source.raw as any).contextWindow
+      || (source.raw.plans?.find((p: any) => p.contextWindow)?.contextWindow)
+      || (source.raw.capabilities['longContext']?.score >= 9 ? '200K+' : '128K');
+    const tgtCtxWindow = (target.raw as any).contextWindow
+      || (target.raw.plans?.find((p: any) => p.contextWindow)?.contextWindow)
+      || (target.raw.capabilities['longContext']?.score >= 9 ? '200K+' : '128K');
+
     const operationalDeltas: OperationalDeltas = {
-      contextWindowDiff: `${source.name}: ~128K tokens • ${target.name}: ~${target.raw.capabilities['longContext']?.score >= 9 ? '200K+' : '128K'} tokens`,
+      contextWindowDiff: `${source.name}: ~${srcCtxWindow} tokens • ${target.name}: ~${tgtCtxWindow} tokens`,
       latencyDiff: target.latencyScore > source.latencyScore ? `${target.name} offers faster response times` : 'Comparable response times',
       integrationChanges: target.raw.supportedPlatforms?.slice(0, 4) || ['REST API', 'Web UI'],
       migrationDifficulty: target.raw.productivityScores.migrationCost || 'Medium',
@@ -869,7 +1001,11 @@ export class AIStackIntelligenceService {
     };
 
     const businessImpact: BusinessImpactSummary = {
-      costReduction: monthlySavings > 0 ? `$${monthlySavings}/mo ($${annualSavings}/yr) direct spend reduction` : 'Cost-neutral replacement with capability improvements',
+      costReduction: costDirection === 'savings'
+        ? `$${monthlySavings.toFixed(2)}/mo ($${annualSavings.toFixed(0)}/yr) direct spend reduction`
+        : costDirection === 'increase'
+        ? `+$${Math.abs(netCostDelta).toFixed(2)}/mo additional spend — capability improvement justifies cost`
+        : 'Cost-neutral replacement with capability improvements',
       developerProductivity: `${domainImpact.coding.delta >= 5 ? 'Improved' : domainImpact.coding.delta <= -5 ? 'Reduced' : 'Neutral'} coding productivity (${domainImpact.coding.delta > 0 ? '+' : ''}${domainImpact.coding.delta} pts)`,
       workflowImpact: `${capabilityRetentionPercent}% workflow capability retention — ${rel.featureLoss.length} gaps identified`,
       enterpriseReadiness: `Target enterprise score: ${target.enterpriseScore}/100`,
@@ -879,18 +1015,30 @@ export class AIStackIntelligenceService {
       overallRisk: `${riskLevel} risk with ${confidence} confidence`,
     };
 
+    // ── FIX: Scenarios now carry signed cost fields and correct cost direction ──────────
     const scenarios: ScenarioSimulation = {
       primaryScenario: {
         id: 'scenario-a', title: `Scenario A: Complete Migration to ${target.name}`,
         action: `Migrate all ${tool.seats} seats from ${source.name} to ${target.name}`,
-        monthlySavings, annualSavings, coveragePercent: capabilityRetentionPercent, riskLevel,
+        monthlySavings, annualSavings,
+        netMonthlyCostDelta: netCostDelta,
+        costDirection,
+        replacementMonthlyCost: targetMonthlyCost,
+        coveragePercent: capabilityRetentionPercent, riskLevel,
         tradeoffs: rel.featureLoss.length > 0 ? [`Capability delta: ${rel.featureLoss.slice(0, 3).join(', ')}`] : ['Minimal friction — high capability overlap'],
-        recommendation: `Primary recommended path. Recovers $${annualSavings}/yr.`,
+        recommendation: costDirection === 'savings'
+          ? `Primary recommended path. Saves $${monthlySavings.toFixed(2)}/mo ($${annualSavings.toFixed(0)}/yr).`
+          : costDirection === 'increase'
+          ? `Capability upgrade. Net cost increase: +$${Math.abs(netCostDelta).toFixed(2)}/mo vs current $${tool.monthlySpend}/mo.`
+          : `Cost-neutral migration with ${capabilityRetentionPercent}% capability retention.`,
       },
       statusQuoScenario: {
         id: 'scenario-c', title: `Scenario C: Maintain ${source.name}`,
         action: `Continue ${source.name} on ${tool.plan} plan at $${tool.monthlySpend}/mo`,
-        monthlySavings: 0, annualSavings: 0, coveragePercent: 100, riskLevel: 'Low',
+        monthlySavings: 0, annualSavings: 0,
+        netMonthlyCostDelta: 0, costDirection: 'neutral',
+        replacementMonthlyCost: tool.monthlySpend,
+        coveragePercent: 100, riskLevel: 'Low',
         tradeoffs: ['Zero financial savings', 'Potential licensing overpay continues'],
         recommendation: 'Baseline status quo — no action taken.',
       },
@@ -900,10 +1048,11 @@ export class AIStackIntelligenceService {
       knowledgeVersion: source.raw.knowledgeVersion || 'v1.0.0',
       generatedAt: new Date().toISOString(),
       useCase,
-      scoringProfile: { compatibilityScore, capabilityRetentionPercent, monthlySavings, opportunityScore: opportunityScore.overall },
+      scoringProfile: { compatibilityScore, capabilityRetentionPercent, monthlySavings, netCostDelta, opportunityScore: opportunityScore.overall },
       decisionPath: [
         `Loaded provider vectors for ${source.name} and ${target.name}`,
         `RelationshipEngine directional analysis: replacement confidence ${capabilityRetentionPercent}%`,
+        `Computed signed netCostDelta: ${netCostDelta >= 0 ? '+' : ''}$${netCostDelta.toFixed(2)}/mo (${costDirection})`,
         `Computed 6-dimension domain impact matrix`,
         `Built feature matrix across ${featureMatrix.length} capability dimensions`,
         `Generated ranked recommendations, migration checklist, audience guidance`,
@@ -913,20 +1062,41 @@ export class AIStackIntelligenceService {
         capabilityMatch: capabilityRetentionPercent,
         workflowFit: compatibilityScore,
         enterpriseReadiness: target.enterpriseScore,
-        financialFit: Math.min(100, (monthlySavings / (tool.monthlySpend || 1)) * 100 * 2 + 50),
+        financialFit: opportunityScore.financialOpportunity,
         riskScore: riskLevel === 'Low' ? 90 : riskLevel === 'Medium' ? 65 : 35,
       },
     };
 
+    // ── Signed financial explanation for human-readable display ───────────────────────
+    const financialExplanation = costDirection === 'savings'
+      ? `${source.name} costs $${tool.monthlySpend.toFixed(2)}/mo × ${tool.seats} seats = $${tool.monthlySpend.toFixed(2)}/mo. ${target.name} costs $${(targetMonthlyCost / tool.seats).toFixed(2)}/seat × ${tool.seats} seats = $${targetMonthlyCost.toFixed(2)}/mo. Net savings: $${monthlySavings.toFixed(2)}/mo ($${annualSavings.toFixed(0)}/yr).`
+      : costDirection === 'increase'
+      ? `${source.name} costs $${tool.monthlySpend.toFixed(2)}/mo. ${target.name} costs $${(targetMonthlyCost / tool.seats).toFixed(2)}/seat × ${tool.seats} seats = $${targetMonthlyCost.toFixed(2)}/mo. Net cost increase: +$${Math.abs(netCostDelta).toFixed(2)}/mo. Justified by capability improvement of ${Math.max(0, target.codingScore - source.codingScore)}pts coding + ${Math.max(0, target.reasoningScore - source.reasoningScore)}pts reasoning.`
+      : `${source.name} and ${target.name} have equivalent monthly costs at $${tool.monthlySpend.toFixed(2)}/mo. This is a capability-driven swap with neutral financial impact.`;
+
     return {
       id, title, targetToolName: source.name, proposedAction: `Migrate to ${target.name}`,
       opportunityScore, executiveSummary:
-        `Replacing ${source.name} with ${target.name} yields $${monthlySavings}/mo ($${annualSavings}/yr) with ${capabilityRetentionPercent}% capability retention. Opportunity Score: ${opportunityScore.overall}/100.`,
+        costDirection === 'savings'
+          ? `Replacing ${source.name} with ${target.name} saves $${monthlySavings.toFixed(2)}/mo ($${annualSavings.toFixed(0)}/yr) with ${capabilityRetentionPercent}% capability retention. Opportunity Score: ${opportunityScore.overall}/100.`
+          : costDirection === 'increase'
+          ? `Migrating ${source.name} to ${target.name} costs +$${Math.abs(netCostDelta).toFixed(2)}/mo more but delivers ${Math.max(0, target.codingScore - source.codingScore)}pts coding improvement. Opportunity Score: ${opportunityScore.overall}/100.`
+          : `Replacing ${source.name} with ${target.name} at neutral cost delivers ${capabilityRetentionPercent}% capability retention. Opportunity Score: ${opportunityScore.overall}/100.`,
       recommendation, confidence, confidenceScore: compatibilityScore,
       stackVisualization, rankedRecommendations,
       currentMonthlyCost: tool.monthlySpend,
-      projectedMonthlyCost: Math.max(0, tool.monthlySpend - monthlySavings),
-      monthlySavings, annualSavings, capabilityRetentionPercent,
+      projectedMonthlyCost: targetMonthlyCost,      // FIX: Actual replacement cost, not capped
+      monthlySavings, annualSavings,
+      netCostDelta,                                 // FIX: Signed financial delta
+      costDirection,
+      financialExplanation,
+      perSeatBreakdown: {
+        seats: tool.seats,
+        currentCostPerSeat: tool.monthlySpend / Math.max(1, tool.seats),
+        replacementCostPerSeat: targetMonthlyCost / Math.max(1, tool.seats),
+        netDeltaPerSeat: netCostDelta / Math.max(1, tool.seats),
+      },
+      capabilityRetentionPercent,
       capabilitiesLost: rel.featureLoss, capabilitiesGained: rel.featureGain,
       remainingCoveragePercent: capabilityRetentionPercent,
       featureMatrix, domainImpact, operationalDeltas, businessImpact,
@@ -1023,11 +1193,21 @@ export class AIStackIntelligenceService {
       targetToolName: pairNames.join(', '),
       proposedAction: `Consolidate into ${absorber.name}`,
       opportunityScore,
-      executiveSummary: `Consolidating ${pairNames.join(' and ')} into ${absorber.name} saves $${monthlySavings}/mo with ${coverageRetainedPercent}% capability retention. Opportunity Score: ${opportunityScore.overall}/100.`,
+      executiveSummary: `Consolidating ${pairNames.join(' and ')} into ${absorber.name} saves $${monthlySavings.toFixed(2)}/mo ($${annualSavings.toFixed(0)}/yr) with ${coverageRetainedPercent}% capability retention. Opportunity Score: ${opportunityScore.overall}/100.`,
       recommendation, confidence, confidenceScore: coverageRetainedPercent,
       stackVisualization, rankedRecommendations,
       currentMonthlyCost: currentCost, projectedMonthlyCost: projectedCost,
-      monthlySavings, annualSavings, capabilityRetentionPercent: coverageRetainedPercent,
+      monthlySavings, annualSavings,
+      netCostDelta: -(monthlySavings),  // Consolidation always saves
+      costDirection: monthlySavings > 0 ? 'savings' : 'neutral',
+      financialExplanation: `Consolidating ${pairNames.join(' and ')} eliminates $${monthlySavings.toFixed(2)}/mo in duplicated spend. Single ${absorber.name} subscription at $${projectedCost.toFixed(2)}/mo replaces $${currentCost.toFixed(2)}/mo combined.`,
+      perSeatBreakdown: {
+        seats: Math.max(...pair.map(p => p.seats)),
+        currentCostPerSeat: currentCost / Math.max(1, Math.max(...pair.map(p => p.seats))),
+        replacementCostPerSeat: projectedCost / Math.max(1, Math.max(...pair.map(p => p.seats))),
+        netDeltaPerSeat: -(monthlySavings) / Math.max(1, Math.max(...pair.map(p => p.seats))),
+      },
+      capabilityRetentionPercent: coverageRetainedPercent,
       capabilitiesLost: combinedLost, capabilitiesGained: combinedGained,
       remainingCoveragePercent: coverageRetainedPercent,
       featureMatrix, domainImpact, operationalDeltas, businessImpact,
@@ -1036,8 +1216,27 @@ export class AIStackIntelligenceService {
       audienceGuidance, migrationChecklist,
       riskLevel, riskFactors: combinedLost.length > 0 ? [`Workflow gaps: ${combinedLost.slice(0, 2).join(', ')}`] : ['Increased vendor concentration'],
       scenarios: {
-        primaryScenario: { id: 'cons-a', title: 'Scenario A: Full Consolidation', action: `Decommission ${pairNames.join(' & ')} and expand ${absorber.name}`, monthlySavings, annualSavings, coveragePercent: coverageRetainedPercent, riskLevel, tradeoffs: combinedLost.length > 0 ? [`Gaps: ${combinedLost.slice(0, 2).join(', ')}`] : ['Streamlined tool count'], recommendation },
-        statusQuoScenario: { id: 'cons-c', title: 'Scenario C: Keep Fragmented Stack', action: `Maintain separate licenses for ${pairNames.join(' and ')}`, monthlySavings: 0, annualSavings: 0, coveragePercent: 100, riskLevel: 'Low', tradeoffs: ['Continued license fragmentation', 'Overlapping capability spend'], recommendation: 'Baseline status quo.' },
+        primaryScenario: {
+          id: 'cons-a', title: 'Scenario A: Full Consolidation',
+          action: `Decommission ${pairNames.join(' & ')} and expand ${absorber.name}`,
+          monthlySavings, annualSavings,
+          netMonthlyCostDelta: -(monthlySavings),
+          costDirection: 'savings',
+          replacementMonthlyCost: projectedCost,
+          coveragePercent: coverageRetainedPercent, riskLevel,
+          tradeoffs: combinedLost.length > 0 ? [`Gaps: ${combinedLost.slice(0, 2).join(', ')}`] : ['Streamlined tool count'],
+          recommendation,
+        },
+        statusQuoScenario: {
+          id: 'cons-c', title: 'Scenario C: Keep Fragmented Stack',
+          action: `Maintain separate licenses for ${pairNames.join(' and ')}`,
+          monthlySavings: 0, annualSavings: 0,
+          netMonthlyCostDelta: 0, costDirection: 'neutral',
+          replacementMonthlyCost: currentCost,
+          coveragePercent: 100, riskLevel: 'Low',
+          tradeoffs: ['Continued license fragmentation', 'Overlapping capability spend'],
+          recommendation: 'Baseline status quo.',
+        },
       },
       whyNotSelected: [],
       futureGrowthAnalysis,
@@ -1100,11 +1299,21 @@ export class AIStackIntelligenceService {
       title: `Tool Removal Analysis: ${target.name}`,
       targetToolName: target.name, proposedAction: `Decommission ${target.name}`,
       opportunityScore,
-      executiveSummary: `Removing ${target.name} saves $${monthlySavings}/mo ($${annualSavings}/yr). Remaining stack covers ${remainingCoveragePercent}% of capabilities. Classification: ${classificationLabel}. Opportunity Score: ${opportunityScore.overall}/100.`,
+      executiveSummary: `Removing ${target.name} saves $${monthlySavings.toFixed(2)}/mo ($${annualSavings.toFixed(0)}/yr). Remaining stack covers ${remainingCoveragePercent}% of capabilities. Classification: ${classificationLabel}. Opportunity Score: ${opportunityScore.overall}/100.`,
       recommendation, confidence, confidenceScore: remainingCoveragePercent,
       stackVisualization, rankedRecommendations,
       currentMonthlyCost: monthlySavings, projectedMonthlyCost: 0,
-      monthlySavings, annualSavings, capabilityRetentionPercent: remainingCoveragePercent,
+      monthlySavings, annualSavings,
+      netCostDelta: -(monthlySavings),  // Removal always saves
+      costDirection: 'savings',
+      financialExplanation: `Decommissioning ${target.name} eliminates $${monthlySavings.toFixed(2)}/mo in recurring spend ($${annualSavings.toFixed(0)}/yr). ${remaining.length > 0 ? `${remaining.map(r => r.name).join(', ')} in remaining stack covers ${remainingCoveragePercent}% of the removed tool\'s capabilities.` : 'No replacement tool required.'}`,
+      perSeatBreakdown: {
+        seats: tool.seats,
+        currentCostPerSeat: monthlySavings / Math.max(1, tool.seats),
+        replacementCostPerSeat: 0,
+        netDeltaPerSeat: -(monthlySavings) / Math.max(1, tool.seats),
+      },
+      capabilityRetentionPercent: remainingCoveragePercent,
       capabilitiesLost: lostCaps, capabilitiesGained: [],
       remainingCoveragePercent, featureMatrix, domainImpact,
       operationalDeltas: { contextWindowDiff: 'N/A', latencyDiff: 'N/A', integrationChanges: ['Remove API key / subscription'], migrationDifficulty: 'Low', learningCurve: 'Very Low', vendorLockInImpact: 'Low' },
@@ -1114,8 +1323,27 @@ export class AIStackIntelligenceService {
       audienceGuidance, migrationChecklist,
       riskLevel, riskFactors: lostCaps.length > 0 ? [`Gaps in: ${lostCaps.slice(0, 3).join(', ')}`] : ['Minimal workflow disruption'],
       scenarios: {
-        primaryScenario: { id: 'rem-a', title: 'Scenario A: Decommission Tool', action: `Cancel all ${tool.seats} seats of ${target.name}`, monthlySavings, annualSavings, coveragePercent: remainingCoveragePercent, riskLevel, tradeoffs: lostCaps.length > 0 ? [`Gaps: ${lostCaps.slice(0, 2).join(', ')}`] : ['Zero workflow impact'], recommendation },
-        statusQuoScenario: { id: 'rem-c', title: 'Scenario C: Retain License', action: `Maintain ${target.name} subscription`, monthlySavings: 0, annualSavings: 0, coveragePercent: 100, riskLevel: 'Low', tradeoffs: ['Continued recurring spend'], recommendation: 'Baseline status quo.' },
+        primaryScenario: {
+          id: 'rem-a', title: 'Scenario A: Decommission Tool',
+          action: `Cancel all ${tool.seats} seats of ${target.name}`,
+          monthlySavings, annualSavings,
+          netMonthlyCostDelta: -(monthlySavings),
+          costDirection: 'savings',
+          replacementMonthlyCost: 0,
+          coveragePercent: remainingCoveragePercent, riskLevel,
+          tradeoffs: lostCaps.length > 0 ? [`Gaps: ${lostCaps.slice(0, 2).join(', ')}`] : ['Zero workflow impact'],
+          recommendation,
+        },
+        statusQuoScenario: {
+          id: 'rem-c', title: 'Scenario C: Retain License',
+          action: `Maintain ${target.name} subscription`,
+          monthlySavings: 0, annualSavings: 0,
+          netMonthlyCostDelta: 0, costDirection: 'neutral',
+          replacementMonthlyCost: monthlySavings,
+          coveragePercent: 100, riskLevel: 'Low',
+          tradeoffs: ['Continued recurring spend'],
+          recommendation: 'Baseline status quo.',
+        },
       },
       whyNotSelected: [],
       futureGrowthAnalysis,

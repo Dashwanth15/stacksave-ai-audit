@@ -11,6 +11,8 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
   const [activeTab, setActiveTab] = useState<
     'overview' | 'financial' | 'matrix' | 'business' | 'migration' | 'scenarios' | 'whyNot' | 'trace'
   >('overview');
+  const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
+  const [expandedEvidenceRow, setExpandedEvidenceRow] = useState<string | null>(null);
 
   if (!report) return null;
 
@@ -43,6 +45,8 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
       confidence: report.confidence || 'High',
       monthlySavings: report.monthlySavings || 0,
       annualSavings: report.annualSavings || 0,
+      netMonthlyCostDelta: report.netCostDelta || 0,
+      replacementMonthlyCost: report.projectedMonthlyCost || 0,
       capabilityRetention: report.capabilityRetentionPercent || 90,
       riskLevel: report.riskLevel || 'Low',
       summary: report.recommendation || 'Recommended optimization path.',
@@ -95,6 +99,11 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
     confidenceBreakdown: { capabilityMatch: 90, workflowFit: 85, enterpriseReadiness: 85, financialFit: 90, riskScore: 90 },
   };
 
+  // Financial Direction & Delta computation
+  const isSavings = report.costDirection === 'savings' || (report.netCostDelta !== undefined && report.netCostDelta < -0.01) || (report.monthlySavings > 0);
+  const isCostIncrease = report.costDirection === 'increase' || (report.netCostDelta !== undefined && report.netCostDelta > 0.01);
+  const netDeltaAbs = report.netCostDelta !== undefined ? Math.abs(report.netCostDelta) : report.monthlySavings;
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-end bg-slate-900/60 backdrop-blur-xs p-2 sm:p-4" role="dialog" aria-modal="true">
@@ -124,6 +133,19 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
                 }`}>
                   {report.riskLevel} Risk • {report.confidence} Confidence
                 </span>
+                {isSavings ? (
+                  <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    💰 Net Savings
+                  </span>
+                ) : isCostIncrease ? (
+                  <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    ⚡ Capability Upgrade (+Spend)
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-slate-700 text-slate-300 border border-slate-600">
+                    ⚖️ Cost Neutral
+                  </span>
+                )}
               </div>
               <h2 className="text-xl font-bold tracking-tight">{report.title}</h2>
               <p className="text-xs text-slate-400">{report.proposedAction}</p>
@@ -131,10 +153,19 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
 
             <div className="flex items-center gap-4">
               {/* Opportunity Score Gauge */}
-              <div className="text-center bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700">
-                <span className="text-[9px] font-extrabold text-slate-400 block uppercase tracking-wider">Opportunity Score</span>
-                <span className="text-2xl font-black text-emerald-400 font-mono-financial">{opportunityScore.overall}<span className="text-xs font-normal text-slate-400">/100</span></span>
-              </div>
+              <button
+                onClick={() => setShowScoreBreakdown(!showScoreBreakdown)}
+                className="text-center bg-slate-800/90 hover:bg-slate-800 px-4 py-2 rounded-xl border border-slate-700 hover:border-indigo-500/50 transition-all text-left group cursor-pointer"
+                title="Click to view 6-dimension score breakdown"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-extrabold text-slate-400 block uppercase tracking-wider">Opportunity Score</span>
+                  <span className="text-[10px] text-indigo-400 opacity-60 group-hover:opacity-100">ℹ️</span>
+                </div>
+                <span className="text-2xl font-black text-emerald-400 font-mono-financial">
+                  {opportunityScore.overall}<span className="text-xs font-normal text-slate-400">/100</span>
+                </span>
+              </button>
 
               <button
                 onClick={onClose}
@@ -145,6 +176,53 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
               </button>
             </div>
           </div>
+
+          {/* ── Score Breakdown Popover ────────────────────────────────── */}
+          <AnimatePresence>
+            {showScoreBreakdown && (
+              <m.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-slate-900 border-b border-slate-800 px-6 py-4 text-xs text-slate-300"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h5 className="font-bold text-slate-200 uppercase tracking-wider text-[11px]">
+                    Opportunity Score Decomposition (6 Vectors)
+                  </h5>
+                  <button
+                    onClick={() => setShowScoreBreakdown(false)}
+                    className="text-slate-500 hover:text-slate-300 text-[11px]"
+                  >
+                    Close ✕
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    { label: 'Financial Opportunity (25%)', val: opportunityScore.financialOpportunity, color: 'emerald' },
+                    { label: 'Technical Opportunity (20%)', val: opportunityScore.technicalOpportunity, color: 'indigo' },
+                    { label: 'Business Opportunity (20%)', val: opportunityScore.businessOpportunity, color: 'blue' },
+                    { label: 'Migration Simplicity (15%)', val: opportunityScore.migrationSimplicity, color: 'amber' },
+                    { label: 'Future Scalability (10%)', val: opportunityScore.futureScalability, color: 'violet' },
+                    { label: 'Vendor Optimization (10%)', val: opportunityScore.vendorOptimization, color: 'teal' },
+                  ].map((dim, i) => (
+                    <div key={i} className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60 space-y-1">
+                      <div className="flex justify-between text-[11px] font-bold">
+                        <span className="text-slate-300">{dim.label}</span>
+                        <span className="font-mono-financial text-white">{dim.val}/100</span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                        <div
+                          className={`h-full ${dim.val >= 70 ? 'bg-emerald-500' : dim.val >= 50 ? 'bg-indigo-500' : 'bg-amber-500'} rounded-full`}
+                          style={{ width: `${dim.val}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </m.div>
+            )}
+          </AnimatePresence>
 
           {/* ── 8 Exact Tabs Requested ─────────────────────────────────── */}
           <div className="flex items-center px-6 border-b border-slate-100 bg-slate-50/80 overflow-x-auto gap-1">
@@ -178,6 +256,32 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
             {/* TAB 1: OVERVIEW */}
             {activeTab === 'overview' && (
               <div className="space-y-6 animate-fade-in">
+                {/* Executive Decision Banner */}
+                <div className={`p-4 rounded-2xl border ${
+                  isSavings
+                    ? 'border-emerald-200 bg-emerald-50/40 text-emerald-950'
+                    : isCostIncrease
+                    ? 'border-amber-200 bg-amber-50/40 text-amber-950'
+                    : 'border-slate-200 bg-slate-50/70 text-slate-900'
+                } space-y-1.5`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                      <span>{isSavings ? '🟢' : isCostIncrease ? '⚡' : '⚖️'}</span>
+                      Executive Verdict & Recommendation
+                    </span>
+                    <span className="text-xs font-black font-mono-financial">
+                      {isSavings
+                        ? `Save $${netDeltaAbs.toFixed(2)}/mo ($${(netDeltaAbs * 12).toFixed(0)}/yr)`
+                        : isCostIncrease
+                        ? `+$${netDeltaAbs.toFixed(2)}/mo Additional Spend`
+                        : '$0/mo Net Cost Delta'}
+                    </span>
+                  </div>
+                  <p className="text-xs font-medium leading-relaxed">
+                    {report.recommendation}
+                  </p>
+                </div>
+
                 {/* Before vs After Stack */}
                 <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
@@ -188,7 +292,7 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
                     <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-2">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                         <span className="text-xs font-black uppercase text-slate-400">Current Stack</span>
-                        <span className="text-xs font-bold font-mono-financial text-slate-700">${stackVisualization.currentMonthlyCost}/mo</span>
+                        <span className="text-xs font-bold font-mono-financial text-slate-700">${report.currentMonthlyCost.toFixed(2)}/mo</span>
                       </div>
                       <div className="space-y-1.5">
                         {stackVisualization.currentStack.map((item, i) => (
@@ -205,7 +309,9 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
                     <div className="p-4 rounded-xl border border-indigo-200 bg-indigo-50/20 space-y-2">
                       <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
                         <span className="text-xs font-black uppercase text-indigo-700">Recommended Stack</span>
-                        <span className="text-xs font-bold font-mono-financial text-emerald-600">${stackVisualization.recommendedMonthlyCost}/mo</span>
+                        <span className={`text-xs font-bold font-mono-financial ${isSavings ? 'text-emerald-600' : isCostIncrease ? 'text-amber-600' : 'text-slate-700'}`}>
+                          ${report.projectedMonthlyCost.toFixed(2)}/mo
+                        </span>
                       </div>
                       <div className="space-y-1.5">
                         {stackVisualization.recommendedStack.map((item, i) => (
@@ -287,47 +393,143 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
             {/* TAB 2: FINANCIAL */}
             {activeTab === 'financial' && (
               <div className="space-y-6 animate-fade-in">
+                {/* 4 KPI Cards with Truthful Directional Color Coding */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="p-4 rounded-xl border border-slate-100 bg-slate-50">
-                    <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block mb-1">Monthly Savings</span>
-                    <span className="text-2xl font-black font-mono-financial text-emerald-600">${report.monthlySavings}/mo</span>
+                  <div className={`p-4 rounded-xl border ${
+                    isSavings ? 'border-emerald-100 bg-emerald-50/30' : isCostIncrease ? 'border-amber-100 bg-amber-50/30' : 'border-slate-100 bg-slate-50'
+                  }`}>
+                    <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block mb-1">
+                      {isSavings ? 'Monthly Net Savings' : isCostIncrease ? 'Monthly Net Spend Delta' : 'Monthly Delta'}
+                    </span>
+                    <span className={`text-2xl font-black font-mono-financial ${
+                      isSavings ? 'text-emerald-600' : isCostIncrease ? 'text-amber-600' : 'text-slate-800'
+                    }`}>
+                      {isSavings ? `+$${netDeltaAbs.toFixed(2)}/mo` : isCostIncrease ? `+$${netDeltaAbs.toFixed(2)}/mo` : '$0.00/mo'}
+                    </span>
                   </div>
-                  <div className="p-4 rounded-xl border border-slate-100 bg-slate-50">
-                    <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block mb-1">Annual Impact</span>
-                    <span className="text-2xl font-black font-mono-financial text-slate-900">${report.annualSavings}/yr</span>
+
+                  <div className={`p-4 rounded-xl border ${
+                    isSavings ? 'border-emerald-100 bg-emerald-50/30' : isCostIncrease ? 'border-amber-100 bg-amber-50/30' : 'border-slate-100 bg-slate-50'
+                  }`}>
+                    <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block mb-1">
+                      {isSavings ? 'Annual Savings' : isCostIncrease ? 'Annual Spend Increase' : 'Annual Delta'}
+                    </span>
+                    <span className={`text-2xl font-black font-mono-financial ${
+                      isSavings ? 'text-emerald-600' : isCostIncrease ? 'text-amber-600' : 'text-slate-800'
+                    }`}>
+                      {isSavings ? `$${(netDeltaAbs * 12).toFixed(0)}/yr` : isCostIncrease ? `+$${(netDeltaAbs * 12).toFixed(0)}/yr` : '$0/yr'}
+                    </span>
                   </div>
+
                   <div className="p-4 rounded-xl border border-slate-100 bg-slate-50">
-                    <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block mb-1">Current Monthly</span>
-                    <span className="text-2xl font-black font-mono-financial text-slate-700">${report.currentMonthlyCost}/mo</span>
+                    <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block mb-1">Current Monthly Spend</span>
+                    <span className="text-2xl font-black font-mono-financial text-slate-700">${report.currentMonthlyCost.toFixed(2)}/mo</span>
                   </div>
+
                   <div className="p-4 rounded-xl border border-slate-100 bg-slate-50">
-                    <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block mb-1">Projected Monthly</span>
-                    <span className="text-2xl font-black font-mono-financial text-indigo-600">${report.projectedMonthlyCost}/mo</span>
+                    <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block mb-1">Projected Replacement</span>
+                    <span className="text-2xl font-black font-mono-financial text-indigo-600">${report.projectedMonthlyCost.toFixed(2)}/mo</span>
                   </div>
                 </div>
 
+                {/* Side-by-Side Current vs Replacement Cost Math */}
+                <div className="p-5 rounded-2xl border border-slate-200 bg-white space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
+                    <span>Pricing & Seat Breakdown</span>
+                    {report.perSeatBreakdown && (
+                      <span className="text-[10px] font-semibold text-slate-400">
+                        {report.perSeatBreakdown.seats} seat(s) configured
+                      </span>
+                    )}
+                  </h4>
+
+                  <div className="overflow-x-auto rounded-xl border border-slate-100">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
+                        <tr>
+                          <th className="p-3">Cost Dimension</th>
+                          <th className="p-3 font-mono-financial">Current ({report.targetToolName})</th>
+                          <th className="p-3 font-mono-financial">Replacement</th>
+                          <th className="p-3 font-mono-financial">Net Delta</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        <tr>
+                          <td className="p-3 font-semibold text-slate-700">Monthly Spend</td>
+                          <td className="p-3 font-mono-financial font-bold text-slate-800">${report.currentMonthlyCost.toFixed(2)}/mo</td>
+                          <td className="p-3 font-mono-financial font-bold text-indigo-600">${report.projectedMonthlyCost.toFixed(2)}/mo</td>
+                          <td className={`p-3 font-mono-financial font-black ${isSavings ? 'text-emerald-600' : isCostIncrease ? 'text-amber-600' : 'text-slate-600'}`}>
+                            {isSavings ? `-$${netDeltaAbs.toFixed(2)}/mo (Saved)` : isCostIncrease ? `+$${netDeltaAbs.toFixed(2)}/mo (Spend)` : '$0.00/mo (Parity)'}
+                          </td>
+                        </tr>
+                        {report.perSeatBreakdown && (
+                          <tr>
+                            <td className="p-3 font-semibold text-slate-700">Cost Per Seat</td>
+                            <td className="p-3 font-mono-financial text-slate-600">${report.perSeatBreakdown.currentCostPerSeat.toFixed(2)}/seat</td>
+                            <td className="p-3 font-mono-financial text-indigo-600">${report.perSeatBreakdown.replacementCostPerSeat.toFixed(2)}/seat</td>
+                            <td className={`p-3 font-mono-financial font-bold ${isSavings ? 'text-emerald-600' : isCostIncrease ? 'text-amber-600' : 'text-slate-600'}`}>
+                              {report.perSeatBreakdown.netDeltaPerSeat < 0 ? `-$${Math.abs(report.perSeatBreakdown.netDeltaPerSeat).toFixed(2)}/seat` : report.perSeatBreakdown.netDeltaPerSeat > 0 ? `+$${report.perSeatBreakdown.netDeltaPerSeat.toFixed(2)}/seat` : '$0/seat'}
+                            </td>
+                          </tr>
+                        )}
+                        <tr>
+                          <td className="p-3 font-semibold text-slate-700">Annual Run-Rate</td>
+                          <td className="p-3 font-mono-financial text-slate-600">${(report.currentMonthlyCost * 12).toFixed(2)}/yr</td>
+                          <td className="p-3 font-mono-financial text-indigo-600">${(report.projectedMonthlyCost * 12).toFixed(2)}/yr</td>
+                          <td className={`p-3 font-mono-financial font-black ${isSavings ? 'text-emerald-600' : isCostIncrease ? 'text-amber-600' : 'text-slate-600'}`}>
+                            {isSavings ? `-$${(netDeltaAbs * 12).toFixed(2)}/yr` : isCostIncrease ? `+$${(netDeltaAbs * 12).toFixed(2)}/yr` : '$0.00/yr'}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {report.financialExplanation && (
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600 leading-relaxed font-medium">
+                      <span className="font-bold text-slate-700 block mb-0.5">Financial Analysis Summary:</span>
+                      {report.financialExplanation}
+                    </div>
+                  )}
+                </div>
+
+                {/* Full 6-Dimension Score Breakdown */}
                 <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Financial Opportunity Score Breakdown</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs font-bold">
-                      <span>Financial Score</span>
-                      <span className="text-emerald-600 font-mono-financial">{opportunityScore.financialOpportunity}/100</span>
-                    </div>
-                    <div className="w-full h-2.5 rounded-full bg-slate-200 overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${opportunityScore.financialOpportunity}%` }} />
-                    </div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Opportunity Score Multi-Vector Evaluation</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { label: 'Financial Score (25%)', val: opportunityScore.financialOpportunity, desc: isSavings ? 'High financial upside from spend recovery' : isCostIncrease ? 'Cost increase weighed against capability gain' : 'Cost-neutral baseline' },
+                      { label: 'Technical Fit (20%)', val: opportunityScore.technicalOpportunity, desc: 'Coding, reasoning, and technical benchmark match' },
+                      { label: 'Business Opportunity (20%)', val: opportunityScore.businessOpportunity, desc: 'Enterprise posture, compliance, and capability retention' },
+                      { label: 'Migration Simplicity (15%)', val: opportunityScore.migrationSimplicity, desc: 'Estimated migration ease and learning curve' },
+                      { label: 'Future Scalability (10%)', val: opportunityScore.futureScalability, desc: 'Long-term tier readiness at team scale' },
+                      { label: 'Vendor Optimization (10%)', val: opportunityScore.vendorOptimization, desc: 'Vendor lock-in resilience and stability' },
+                    ].map((dim, i) => (
+                      <div key={i} className="p-3 rounded-xl bg-white border border-slate-100 space-y-1.5">
+                        <div className="flex justify-between text-xs font-bold">
+                          <span className="text-slate-800">{dim.label}</span>
+                          <span className="font-mono-financial text-indigo-600">{dim.val}/100</span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                          <div
+                            className={`h-full ${dim.val >= 70 ? 'bg-emerald-500' : dim.val >= 50 ? 'bg-indigo-500' : 'bg-amber-500'} rounded-full`}
+                            style={{ width: `${dim.val}%` }}
+                          />
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-medium">{dim.desc}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
                 {/* Team Scalability & Future Cost Growth */}
                 <div className="p-5 rounded-2xl border border-slate-200 bg-white space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Team Scalability & Cost Projections</h4>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Team Scalability & Future Cost Projections</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {(futureGrowthAnalysis.growthTiers || []).map((tier, i) => (
                       <div key={i} className="p-3.5 rounded-xl border border-slate-100 bg-slate-50 text-xs space-y-1">
                         <div className="flex justify-between font-bold">
                           <span className="text-slate-800">{tier.label}</span>
-                          <span className="text-indigo-600 font-mono-financial">${tier.projectedMonthlyCost}/mo</span>
+                          <span className="text-indigo-600 font-mono-financial">${tier.projectedMonthlyCost.toFixed(2)}/mo</span>
                         </div>
                         <p className="text-[11px] text-slate-500">Enterprise Readiness: {tier.enterpriseReadiness}</p>
                       </div>
@@ -356,27 +558,50 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {featureMatrix.map((row, i) => (
-                        <tr key={i} className="hover:bg-slate-50/80">
-                          <td className="p-3 font-bold text-slate-800">
-                            {row.feature}
-                            {row.note && <span className="block text-[10px] font-normal text-slate-400">{row.note}</span>}
-                          </td>
-                          <td className="p-3 font-mono-financial">
-                            {row.currentStatus === 'yes' ? '✅ Available' : row.currentStatus === 'partial' ? '⚠️ Partial' : '❌ Missing'}
-                          </td>
-                          <td className="p-3 font-mono-financial">
-                            {row.recommendedStatus === 'yes' ? '✅ Available' : row.recommendedStatus === 'partial' ? '⚠️ Partial' : '❌ Missing'}
-                          </td>
-                          <td className="p-3 font-bold">
-                            <span className={`px-2 py-0.5 rounded text-[10px] uppercase ${
-                              row.delta === 'better' || row.delta === 'new' ? 'bg-emerald-50 text-emerald-700' : row.delta === 'worse' || row.delta === 'lost' ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600'
-                            }`}>
-                              {row.delta === 'better' ? '▲ Superior' : row.delta === 'new' ? '★ Net New' : row.delta === 'lost' ? '✖ Feature Gap' : row.delta === 'worse' ? '▼ Lower' : '● Parity'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      {featureMatrix.map((row, i) => {
+                        const isExpanded = expandedEvidenceRow === row.featureKey;
+                        return (
+                          <tr
+                            key={i}
+                            onClick={() => row.capabilityEvidence && setExpandedEvidenceRow(isExpanded ? null : row.featureKey)}
+                            className={`hover:bg-slate-50/80 transition-colors ${row.capabilityEvidence ? 'cursor-pointer' : ''}`}
+                          >
+                            <td className="p-3 font-bold text-slate-800">
+                              <div className="flex items-center gap-1.5">
+                                <span>{row.feature}</span>
+                                {row.capabilityEvidence && (
+                                  <span className="text-[9px] text-indigo-500 font-normal px-1.5 py-0.5 rounded bg-indigo-50 border border-indigo-100">
+                                    Evidence
+                                  </span>
+                                )}
+                              </div>
+                              {row.note && <span className="block text-[10px] font-normal text-slate-400 mt-0.5">{row.note}</span>}
+                              {isExpanded && row.capabilityEvidence && (
+                                <div className="mt-1.5 p-2 rounded-lg bg-indigo-50/60 border border-indigo-100 text-[11px] text-indigo-900 font-medium leading-relaxed">
+                                  📖 {row.capabilityEvidence}
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-3 font-mono-financial">
+                              {row.currentStatus === 'yes' ? '✅ Available' : row.currentStatus === 'partial' ? '⚠️ Partial' : '❌ Missing'}
+                            </td>
+                            <td className="p-3 font-mono-financial">
+                              {row.recommendedStatus === 'yes' ? '✅ Available' : row.recommendedStatus === 'partial' ? '⚠️ Partial' : '❌ Missing'}
+                            </td>
+                            <td className="p-3 font-bold">
+                              <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${
+                                row.delta === 'better' || row.delta === 'new'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                  : row.delta === 'worse' || row.delta === 'lost'
+                                  ? 'bg-rose-50 text-rose-700 border border-rose-100'
+                                  : 'bg-slate-100 text-slate-600'
+                              }`}>
+                                {row.delta === 'better' ? '▲ Superior' : row.delta === 'new' ? '★ Net New' : row.delta === 'lost' ? '✖ Feature Gap' : row.delta === 'worse' ? '▼ Lower' : '● Parity'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -436,22 +661,31 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Multiple Ranked Options & Scenarios</h4>
 
                 <div className="space-y-3">
-                  {rankedRecommendations.map((rec, i) => (
-                    <div key={i} className={`p-4 rounded-2xl border ${
-                      i === 0 ? 'border-indigo-500 bg-indigo-50/20' : 'border-slate-200 bg-slate-50/50'
-                    } space-y-2`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded bg-indigo-100 text-indigo-800">
-                            #{rec.rank} {rec.label}
+                  {rankedRecommendations.map((rec, i) => {
+                    const isRecSave = (rec.netMonthlyCostDelta && rec.netMonthlyCostDelta < -0.01) || rec.monthlySavings > 0;
+                    const isRecUp = rec.netMonthlyCostDelta && rec.netMonthlyCostDelta > 0.01;
+                    const deltaAmt = Math.abs(rec.netMonthlyCostDelta ?? rec.monthlySavings);
+                    return (
+                      <div key={i} className={`p-4 rounded-2xl border ${
+                        i === 0 ? 'border-indigo-500 bg-indigo-50/20' : 'border-slate-200 bg-slate-50/50'
+                      } space-y-2`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded bg-indigo-100 text-indigo-800">
+                              #{rec.rank} {rec.label}
+                            </span>
+                            <span className="font-extrabold text-sm text-slate-900">{rec.toolName}</span>
+                          </div>
+                          <span className={`text-sm font-black font-mono-financial ${
+                            isRecSave ? 'text-emerald-600' : isRecUp ? 'text-amber-600' : 'text-slate-600'
+                          }`}>
+                            {isRecSave ? `-$${deltaAmt.toFixed(2)}/mo (Save)` : isRecUp ? `+$${deltaAmt.toFixed(2)}/mo (Spend)` : '$0.00/mo (Parity)'}
                           </span>
-                          <span className="font-extrabold text-sm text-slate-900">{rec.toolName}</span>
                         </div>
-                        <span className="text-sm font-black text-emerald-600 font-mono-financial">+${rec.monthlySavings}/mo</span>
+                        <p className="text-xs text-slate-600 font-medium">{rec.summary}</p>
                       </div>
-                      <p className="text-xs text-slate-600">{rec.summary}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -463,12 +697,63 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
 
                 {(report.whyNotSelected || []).length > 0 ? (
                   report.whyNotSelected.map((why, i) => (
-                    <div key={i} className="p-4 rounded-xl border border-slate-100 bg-slate-50 space-y-2">
+                    <div key={i} className="p-4 rounded-xl border border-slate-100 bg-slate-50 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-xs text-slate-900">{why.providerName}</span>
-                        <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wider bg-rose-50 px-2 py-0.5 rounded">Not Selected</span>
+                        <div className="flex items-center gap-2">
+                          {why.monthlyCostDiff !== undefined && (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                              why.monthlyCostDiff > 0.01
+                                ? 'bg-rose-50 text-rose-700 border border-rose-100'
+                                : why.monthlyCostDiff < -0.01
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}>
+                              {why.monthlyCostDiff > 0.01
+                                ? `+$${why.monthlyCostDiff.toFixed(2)}/mo vs winner`
+                                : why.monthlyCostDiff < -0.01
+                                ? `-$${Math.abs(why.monthlyCostDiff).toFixed(2)}/mo vs winner`
+                                : 'Similar pricing'}
+                            </span>
+                          )}
+                          <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wider bg-rose-50 px-2 py-0.5 rounded border border-rose-100">
+                            Not Selected
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-600 leading-relaxed">{why.primaryReason}</p>
+
+                      <p className="text-xs text-slate-700 leading-relaxed font-medium">{why.primaryReason}</p>
+
+                      {/* Score Differences Table */}
+                      {why.scoreDifferences && why.scoreDifferences.length > 0 && (
+                        <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+                          <table className="w-full text-[11px] text-left">
+                            <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[9px]">
+                              <tr>
+                                <th className="p-2">Evaluation Metric</th>
+                                <th className="p-2 font-mono-financial">Recommended ({report.title?.split('→')[1]?.trim() || 'Winner'})</th>
+                                <th className="p-2 font-mono-financial">{why.providerName}</th>
+                                <th className="p-2 font-mono-financial">Delta</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {why.scoreDifferences.map((score, sIdx) => {
+                                const diff = score.targetScore - score.alternativeScore;
+                                return (
+                                  <tr key={sIdx} className="hover:bg-slate-50">
+                                    <td className="p-2 font-semibold text-slate-700">{score.metric}</td>
+                                    <td className="p-2 font-mono-financial font-bold text-emerald-600">{score.targetScore}</td>
+                                    <td className="p-2 font-mono-financial text-slate-600">{score.alternativeScore}</td>
+                                    <td className={`p-2 font-mono-financial font-bold ${diff > 0 ? 'text-emerald-600' : diff < 0 ? 'text-rose-600' : 'text-slate-400'}`}>
+                                      {diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : '0'}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
                     </div>
                   ))
                 ) : (
