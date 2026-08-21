@@ -649,12 +649,19 @@ export async function ingestPayloadToBackend(
     const statusCode = res.status;
     if (!res.ok) {
       const errorText = await res.text();
+      let hint = '';
+      if (statusCode === 503 && errorText.includes('ADMIN_SECRET not configured on server')) {
+        hint = '\n   💡 DIAGNOSTIC: ADMIN_SECRET is not configured on your Render server.\n      Log in to Render Dashboard -> stacksave-backend -> Environment -> Add ADMIN_SECRET (same value as GitHub Secrets), then wait for Render to finish deploying.';
+      } else if (statusCode === 401) {
+        hint = '\n   💡 DIAGNOSTIC: Unauthorized (401). The ADMIN_SECRET passed from GitHub Secrets does not match the ADMIN_SECRET configured on Render.\n      Ensure the exact same secret value is set in both Render Environment and GitHub Repository Secrets.';
+      }
       return {
         success: false,
         statusCode,
-        error: `Server returned HTTP ${statusCode}: ${errorText}`,
+        error: `Server returned HTTP ${statusCode}: ${errorText}${hint}`,
       };
     }
+
 
     let json: any;
     try {
