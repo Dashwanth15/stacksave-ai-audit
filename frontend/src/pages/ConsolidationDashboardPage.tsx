@@ -4,6 +4,8 @@ import type { StackIntelligenceResult, DecisionReport, ConsolidateOpportunity } 
 import Logo from '../components/Logo';
 import DecisionReportModal from '../components/intelligence/DecisionReportModal';
 import PlatformLogo from '../components/intelligence/PlatformLogo';
+import OfferNotificationBell from '../components/OfferNotificationBell';
+
 
 export default function ConsolidationDashboardPage() {
   const navigate = useNavigate();
@@ -56,16 +58,18 @@ export default function ConsolidationDashboardPage() {
             </div>
           </div>
 
-          <button
-            onClick={() => {
-              if (id) navigate(`/audit/${id}`);
-              else navigate(-1);
-            }}
-            className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
-          >
-            ← Back to Audit Results
-          </button>
-
+          <div className="flex items-center gap-3">
+            <OfferNotificationBell />
+            <button
+              onClick={() => {
+                if (id) navigate(`/audit/${id}`);
+                else navigate(-1);
+              }}
+              className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              ← Back to Audit Results
+            </button>
+          </div>
         </div>
       </header>
 

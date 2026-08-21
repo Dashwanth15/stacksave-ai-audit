@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import type { StackRecommendation, RankedStack } from '../types';
 import Logo from '../components/Logo';
+import OfferNotificationBell from '../components/OfferNotificationBell';
+
 
 const STACK_TABS = [
   { key: 'bestOverall',     label: '⭐ Best Overall',     color: '#1E3A5F' },
@@ -129,9 +131,10 @@ export default function BuildStackResultsPage() {
             <Logo size="md" asDiv />
           </button>
           <div className="flex items-center gap-3">
-            <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+            <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/60">
               Flow 2 Architecture
             </span>
+            <OfferNotificationBell />
             <button
               onClick={() => navigate('/build-stack')}
               className="text-xs font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 transition-all bg-white"
@@ -141,6 +144,7 @@ export default function BuildStackResultsPage() {
           </div>
         </div>
       </header>
+
 
       {/* Metadata Bar */}
       <div className="bg-white border-b border-slate-200 py-2 px-4 text-center text-xs text-slate-500 flex items-center justify-center gap-2 flex-wrap">

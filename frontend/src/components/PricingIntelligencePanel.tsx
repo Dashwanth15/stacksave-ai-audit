@@ -15,6 +15,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { fetchPricingStatus, fetchPublicOffers } from '../services/api';
+import ProviderLogo from './ProviderLogo';
+import { formatOfferForDisplay } from '../utils/offerFormatter';
+
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -49,17 +52,8 @@ interface PricingSummary {
   overlayLastAppliedAt: string | null;
 }
 
-interface PublicOffer {
-  providerId: string;
-  providerName: string;
-  title: string;
-  description: string | null;
-  discount: string | null;
-  discountType: string | null;
-  sourceUrl: string;
-  detectedAt: string;
-  expiresAt: string | null;
-}
+import type { PublicOffer } from '../types';
+
 
 // ── Helper functions ──────────────────────────────────────────
 
@@ -533,108 +527,119 @@ export default function PricingIntelligencePanel() {
                 </div>
               ) : (
                 <div style={{ display: 'grid', gap: 8 }}>
-                  {offers.map((offer, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        borderRadius: 8,
-                        border: '1px solid rgba(124,58,237,0.12)',
-                        background: 'linear-gradient(135deg, rgba(124,58,237,0.03), rgba(139,92,246,0.02))',
-                        padding: '10px 12px',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                            <span
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 700,
-                                background: '#EDE9FE',
-                                color: '#5B21B6',
-                                borderRadius: 4,
-                                padding: '1px 6px',
-                              }}
-                            >
-                              {offer.providerName}
-                            </span>
-                            {offer.discount && (
+                  {offers.map((rawOffer, idx) => {
+                    const offer = formatOfferForDisplay(rawOffer);
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          borderRadius: 8,
+                          border: '1px solid rgba(226, 232, 240, 0.9)',
+                          background: '#FAFAFA',
+                          padding: '10px 12px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                              <ProviderLogo providerId={offer.providerId} providerName={offer.providerName} size="xs" />
                               <span
                                 style={{
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: 700,
-                                  background: '#DCFCE7',
-                                  color: '#065F46',
-                                  borderRadius: 4,
-                                  padding: '1px 6px',
+                                  color: 'var(--color-text-heading)',
                                 }}
                               >
-                                {offer.discount}
+                                {offer.providerName}
                               </span>
-                            )}
-                            <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>
-                              {formatTimeAgo(offer.detectedAt)}
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              fontSize: 12,
-                              fontWeight: 600,
-                              color: 'var(--color-text-heading)',
-                              marginTop: 4,
-                              lineHeight: 1.4,
-                            }}
-                          >
-                            {offer.title}
-                          </div>
-                          {offer.description && (
+                              {offer.discountBadge && (
+                                <span
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    background: '#ECFDF5',
+                                    color: '#065F46',
+                                    borderRadius: 4,
+                                    padding: '1px 6px',
+                                    border: '1px solid #A7F3D0',
+                                  }}
+                                >
+                                  {offer.discountBadge}
+                                </span>
+                              )}
+                              <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>
+                                {formatTimeAgo(offer.detectedAt)}
+                              </span>
+                            </div>
                             <div
                               style={{
-                                fontSize: 10,
-                                color: 'var(--color-text-muted)',
-                                marginTop: 3,
-                                lineHeight: 1.5,
-                                display: '-webkit-box',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                color: 'var(--color-text-heading)',
+                                marginTop: 4,
+                                lineHeight: 1.4,
                               }}
                             >
-                              {offer.description}
+                              {offer.title}
                             </div>
-                          )}
+                            {offer.summary && (
+                              <div
+                                style={{
+                                  fontSize: 11,
+                                  color: 'var(--color-text-body, #475569)',
+                                  marginTop: 3,
+                                  lineHeight: 1.5,
+                                }}
+                              >
+                                {offer.summary}
+                              </div>
+                            )}
+                          </div>
+                          <a
+                            href={offer.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              flexShrink: 0,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color: 'var(--color-text-heading)',
+                              textDecoration: 'none',
+                              background: '#F1F5F9',
+                              border: '1px solid #E2E8F0',
+                              borderRadius: 5,
+                              padding: '3px 8px',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            Official source ↗
+                          </a>
                         </div>
-                        <a
-                          href={offer.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            flexShrink: 0,
-                            fontSize: 10,
-                            fontWeight: 700,
-                            color: '#5B21B6',
-                            textDecoration: 'none',
-                            background: '#EDE9FE',
-                            borderRadius: 5,
-                            padding: '3px 8px',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          Official source ↗
-                        </a>
+                        {offer.expiresAt && (
+                          <div style={{ fontSize: 10, color: 'var(--color-text-muted)', marginTop: 5 }}>
+                            Expires: {new Date(offer.expiresAt).toLocaleDateString()}
+                          </div>
+                        )}
                       </div>
-                      {offer.expiresAt && (
-                        <div style={{ fontSize: 10, color: 'var(--color-text-muted)', marginTop: 5 }}>
-                          Expires: {new Date(offer.expiresAt).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
 
-                  <div style={{ fontSize: 10, color: 'var(--color-text-muted)', marginTop: 4, lineHeight: 1.5 }}>
-                    These are publicly announced promotions from official provider sources only.
-                    Account-specific or private offers are never included.
-                    Keyword detection — verify on the official page before acting.
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(30,58,95,0.06)' }}>
+                    <div style={{ fontSize: 10, color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
+                      Official provider sources only • Account-specific offers excluded
+                    </div>
+                    <a
+                      href="/offers"
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: 'var(--color-primary, #1E3A5F)',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      View all in Offers Hub →
+                    </a>
                   </div>
                 </div>
               )}
@@ -642,6 +647,7 @@ export default function PricingIntelligencePanel() {
           )}
         </div>
       )}
+
     </div>
   );
 }

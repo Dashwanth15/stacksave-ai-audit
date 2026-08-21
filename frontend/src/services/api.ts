@@ -4,7 +4,17 @@
 // ============================================================
 
 import axios from 'axios';
-import type { AuditRequest, AuditResult, LeadCaptureRequest, ReAuditResponse, AuditDiff, StackBuilderRequest, StackRecommendation } from '../types';
+import type {
+  AuditRequest,
+  AuditResult,
+  LeadCaptureRequest,
+  ReAuditResponse,
+  AuditDiff,
+  StackBuilderRequest,
+  StackRecommendation,
+  PublicOffer,
+} from '../types';
+
 
 const getBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
@@ -218,17 +228,7 @@ export async function fetchPricingStatus(): Promise<{
  * Only genuinely new offers; repeat promotions are deduped by fingerprint.
  */
 export async function fetchPublicOffers(): Promise<{
-  offers: Array<{
-    providerId: string;
-    providerName: string;
-    title: string;
-    description: string | null;
-    discount: string | null;
-    discountType: string | null;
-    sourceUrl: string;
-    detectedAt: string;
-    expiresAt: string | null;
-  }>;
+  offers: PublicOffer[];
   count: number;
   note: string;
 }> {
@@ -238,3 +238,4 @@ export async function fetchPublicOffers(): Promise<{
   }
   return response.data.data;
 }
+

@@ -13,6 +13,10 @@ import Logo from '../components/Logo';
 import StrategicGuidanceSection from '../components/intelligence/StrategicGuidanceSection';
 import ToolIntelligencePanel from '../components/ToolIntelligencePanel';
 import PricingIntelligencePanel from '../components/PricingIntelligencePanel';
+import OfferNotificationBell from '../components/OfferNotificationBell';
+import DashboardOfferGlimpse from '../components/DashboardOfferGlimpse';
+
+
 
 
 
@@ -680,7 +684,8 @@ export default function ResultsPage() {
             <Logo asDiv />
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <OfferNotificationBell />
             <button
               onClick={handleDownloadPDF}
               disabled={generatingPDF}
@@ -707,6 +712,7 @@ export default function ResultsPage() {
           </div>
         </div>
       </nav>
+
 
       {audit?.allVersions && audit.allVersions.length > 1 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
@@ -869,10 +875,14 @@ export default function ResultsPage() {
               />
             )}
 
+            {/* ── AI Marketplace Insights (Live Offers Glimpse) ───────── */}
+            <DashboardOfferGlimpse />
+
             {/* ── Pricing Intelligence Panel ─────────────────────── */}
             {/* Shows live pricing sync status + new public offers   */}
             {/* Visible only on the Results page (post-audit)        */}
             <PricingIntelligencePanel />
+
 
           </div>
 

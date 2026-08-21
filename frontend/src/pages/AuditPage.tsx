@@ -7,7 +7,9 @@ import { submitAudit, fetchAudit } from '../services/api';
 import type { ToolEntry, UseCase, AuditRequest } from '../types';
 import Logo from '../components/Logo';
 import ToolBrowser from '../components/ToolBrowser';
+import OfferNotificationBell from '../components/OfferNotificationBell';
 import './AuditPage.css';
+
 
 const logoMap: Record<string, string> = {
   'cursor': '/logos/cursor.svg',
@@ -385,8 +387,12 @@ export default function AuditPage() {
             Back
           </button>
           <Logo asDiv />
+          <div className="flex items-center gap-3">
+            <OfferNotificationBell />
+          </div>
         </div>
       </header>
+
 
       <div className="w-full max-w-[1600px] xl:max-w-[1720px] px-4 sm:px-8 xl:px-12 py-12 mx-auto">
 

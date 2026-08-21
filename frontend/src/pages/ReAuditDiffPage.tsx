@@ -16,6 +16,8 @@ import {
   severityLabel,
 } from '../utils/formatters';
 import Logo from '../components/Logo';
+import OfferNotificationBell from '../components/OfferNotificationBell';
+
 
 interface ReAuditDiffPageProps {
   auditId?: string;
@@ -539,9 +541,11 @@ export default function ReAuditDiffPage({
 
           {/* ── Right: Actions ── */}
           <div className="flex items-center gap-2">
+            <OfferNotificationBell />
 
             {/* View toggle pill */}
             <div className="hidden lg:flex items-center p-1 rounded-lg bg-slate-100 border border-slate-200 gap-0.5">
+
               <span className="px-3 py-1.5 text-[11px] font-bold rounded-md bg-white text-slate-900 shadow-sm whitespace-nowrap leading-none">
                 Diff Report
               </span>

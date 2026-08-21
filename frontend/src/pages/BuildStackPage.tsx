@@ -4,6 +4,8 @@ import { m, AnimatePresence } from 'framer-motion';
 import { submitStackBuilder } from '../services/api';
 import type { StackBuilderRequest } from '../types';
 import Logo from '../components/Logo';
+import OfferNotificationBell from '../components/OfferNotificationBell';
+
 
 const WORKFLOWS = [
   { id: 'coding',        label: 'Software Development', icon: '💻', desc: 'Code generation, refactoring, and inline autocomplete' },
@@ -119,9 +121,10 @@ export default function BuildStackPage() {
             <Logo size="md" asDiv />
           </button>
           <div className="flex items-center gap-3">
-            <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+            <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/60">
               Flow 2 · Stack Architect
             </span>
+            <OfferNotificationBell />
             <button
               onClick={() => navigate('/audit')}
               className="text-xs font-medium text-slate-500 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 transition-all"
@@ -131,6 +134,7 @@ export default function BuildStackPage() {
           </div>
         </div>
       </header>
+
 
       {/* ── Progress Bar ── */}
       <div className="w-full h-1 bg-slate-100">

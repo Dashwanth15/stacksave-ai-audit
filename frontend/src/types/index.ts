@@ -427,3 +427,23 @@ export interface StackRecommendation {
   featureCoverage: StackCoverageResult;
   trace?: unknown;
 }
+
+// ── Public Offers & Pricing Intelligence ───────────────────────
+
+export interface PublicOffer {
+  id: string;
+  fingerprint?: string;
+  providerId: string;
+  providerName: string;
+  title: string;
+  description: string | null;
+  discount: string | null;
+  discountType: string | null;
+  sourceUrl: string;
+  detectedAt: string;
+  expiresAt: string | null;
+  isVerified?: boolean;
+}
+
+export type OfferFilterTab = 'all' | 'new' | 'active' | 'expired';
+

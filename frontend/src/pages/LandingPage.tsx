@@ -3,7 +3,9 @@ import { m, animate } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import LogoLoop from '../components/LogoLoop';
 import Logo from '../components/Logo';
+import OfferNotificationBell from '../components/OfferNotificationBell';
 import InteractiveBackground from '../components/InteractiveBackground';
+
 import './LandingBackground.css';
 
 const navItems = [
@@ -230,11 +232,11 @@ function AuditDemoCard() {
           filter: 'blur(0px)',
         }}
         transition={{
-          opacity:  { duration: 0.6, ease: 'easeOut' },
-          scale:    { duration: 1.6, ease: [0.16, 1, 0.3, 1] },
-          rotateY:  { duration: 1.6, ease: [0.16, 1, 0.3, 1], times: [0, 1] },
-          rotateX:  { duration: 1.6, ease: [0.16, 1, 0.3, 1] },
-          filter:   { duration: 0.8, ease: 'easeOut' },
+          opacity: { duration: 0.6, ease: 'easeOut' },
+          scale: { duration: 1.6, ease: [0.16, 1, 0.3, 1] },
+          rotateY: { duration: 1.6, ease: [0.16, 1, 0.3, 1], times: [0, 1] },
+          rotateX: { duration: 1.6, ease: [0.16, 1, 0.3, 1] },
+          filter: { duration: 0.8, ease: 'easeOut' },
         }}
         style={{
           position: 'relative',
@@ -401,10 +403,13 @@ export default function LandingPage() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center ml-[32px]">
+          <div className="ml-auto flex items-center gap-3.5 ml-[32px]">
+            <OfferNotificationBell />
+
             <button
+
               onClick={() => navigate('/audit')}
-              className="h-[48px] px-6 flex items-center justify-center rounded-xl font-medium text-[15px] transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5"
+              className="h-[44px] px-5 flex items-center justify-center rounded-xl font-medium text-[14px] transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5"
               style={{ background: 'var(--color-primary)', color: '#ffffff' }}
               aria-label="Start free audit"
             >
@@ -414,6 +419,7 @@ export default function LandingPage() {
         </div>
       </header>
 
+
       {/* ── 1. Hero with compact preview teaser ─────────── */}
       <section className="hero-section pt-12 pb-16 md:pt-16 md:pb-20" style={{ borderBottom: '1px solid var(--color-border)' }}>
         {/* Layered continuous background canvas with mouse interaction */}
@@ -422,7 +428,7 @@ export default function LandingPage() {
         <div className="hero-content max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-16 xl:px-20">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 xl:gap-24 items-center">
 
-             {/* Left: Headline & CTA */}
+            {/* Left: Headline & CTA */}
             <div className="lg:col-span-6 space-y-6 text-left">
               <div className="space-y-4">
                 <span
@@ -452,66 +458,180 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                {/* Flow 1 Card */}
+              {/* ── 3 Action Cards (Audit, Build, Offers) ────────────────── */}
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+
+                {/* 1. Audit Existing Stack (Dark Luxury Card) */}
                 <div
                   onClick={() => navigate('/audit')}
-                  className="group relative p-5 rounded-2xl cursor-pointer transition-all duration-300 border flex flex-col justify-between"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.7)',
-                    borderColor: 'rgba(99, 102, 241, 0.25)',
-                    backdropFilter: 'blur(12px)',
-                    boxShadow: '0 4px 20px -2px rgba(99, 102, 241, 0.08)',
-                  }}
+                  className="group relative cursor-pointer rounded-2xl bg-slate-950 p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-800 shadow-sm hover:border-slate-700 transition-colors duration-150"
                 >
+                  {/* Subtle top-light gradient sheen */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-transparent pointer-events-none" />
+
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xl">🔍</span>
-                      <span className="font-bold text-sm tracking-tight" style={{ color: 'var(--color-text-heading)' }}>Audit Existing Stack</span>
+                    {/* Top Icon */}
+                    <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-3.5">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                        <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                        <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                        <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
                     </div>
-                    <p className="text-xs leading-snug mb-4" style={{ color: 'var(--color-text-body)' }}>
-                      Already paying for subscriptions? Uncover duplicate seats and optimize your current spend.
+
+                    {/* Eyebrow */}
+                    <p className="text-[10px] font-bold text-white/50 tracking-widest uppercase">
+                      Already using AI tools?
                     </p>
+
+                    {/* Title */}
+                    <h3 className="text-base font-extrabold text-white tracking-tight leading-snug mt-1">
+                      Audit My Existing Stack
+                    </h3>
+
+                    {/* Description */}
+                    <p className="text-xs text-white/60 mt-1.5 leading-relaxed">
+                      Get a deterministic breakdown of waste, overlap, and savings opportunities in minutes.
+                    </p>
+
+                    {/* Benefit Bullets */}
+                    <ul className="mt-4 space-y-2">
+                      {['Detect duplicate subscriptions', 'Flag idle seats & unused tiers', 'Identify billing anomalies'].map((item) => (
+                        <li key={item} className="flex items-center gap-2 text-[11px] text-white/75">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <button
-                    className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-200"
-                    style={{ background: 'var(--color-primary)', color: '#ffffff' }}
-                  >
-                    Start Audit <span>→</span>
-                  </button>
+
+                  {/* Bottom Action Footer — Clean Matte Highlighted Button */}
+                  <div className="mt-6 pt-3.5 border-t border-white/10">
+                    <div className="w-full py-2.5 px-3.5 rounded-xl bg-white text-slate-950 text-xs font-bold flex items-center justify-between shadow-2xs group-hover:bg-slate-100 transition-colors duration-150">
+                      <span className="tracking-tight">Start Free Audit</span>
+                      <span className="w-6 h-6 rounded-full bg-slate-950 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-0.5 transition-transform duration-150">
+                        →
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Flow 2 Card */}
+                {/* 2. Build AI Stack (Light Glass Card) */}
                 <div
                   onClick={() => navigate('/build-stack')}
-                  className="group relative p-5 rounded-2xl cursor-pointer transition-all duration-300 border flex flex-col justify-between"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.7)',
-                    borderColor: 'rgba(16, 185, 129, 0.3)',
-                    backdropFilter: 'blur(12px)',
-                    boxShadow: '0 4px 20px -2px rgba(16, 185, 129, 0.08)',
-                  }}
+                  className="group relative cursor-pointer rounded-2xl p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-200/90 bg-white/95 backdrop-blur-md shadow-2xs hover:border-slate-300 transition-colors duration-150"
                 >
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xl">🏗️</span>
-                      <span className="font-bold text-sm tracking-tight" style={{ color: 'var(--color-text-heading)' }}>Build AI Stack</span>
+                    {/* Top Icon */}
+                    <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center mb-3.5">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                        <polyline points="2 17 12 22 22 17" />
+                        <polyline points="2 12 12 17 22 12" />
+                      </svg>
                     </div>
-                    <p className="text-xs leading-snug mb-4" style={{ color: 'var(--color-text-body)' }}>
-                      Starting from scratch? Select your budget, workflow & team size to build the perfect suite.
+
+                    {/* Eyebrow */}
+                    <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">
+                      Starting from scratch?
                     </p>
+
+                    {/* Title */}
+                    <h3 className="text-base font-extrabold text-slate-950 tracking-tight leading-snug mt-1">
+                      Build My AI Stack
+                    </h3>
+
+                    {/* Description */}
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      Tell us your budget, team size, and workflow. Get a curated, cost-optimised AI tool suite.
+                    </p>
+
+                    {/* Benefit Bullets */}
+                    <ul className="mt-4 space-y-2">
+                      {['Personalised tool recommendations', 'Compare plans side-by-side', 'Avoid vendor lock-in from day 1'].map((item) => (
+                        <li key={item} className="flex items-center gap-2 text-[11px] text-slate-600">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <button
-                    className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-200"
-                    style={{ background: '#10b981', color: '#ffffff' }}
-                  >
-                    Build My Stack <span>✨</span>
-                  </button>
+
+                  {/* Bottom Action Footer — Clean Matte Highlighted Button */}
+                  <div className="mt-6 pt-3.5 border-t border-slate-100">
+                    <div className="w-full py-2.5 px-3.5 rounded-xl bg-slate-950 text-white text-xs font-bold flex items-center justify-between shadow-2xs group-hover:bg-slate-800 transition-colors duration-150">
+                      <span className="tracking-tight">Build My AI Stack</span>
+                      <span className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-0.5 transition-transform duration-150">
+                        →
+                      </span>
+                    </div>
+                  </div>
                 </div>
+
+                {/* 3. AI Offers & Pricing (Emerald Accent Glass Card) */}
+                <div
+                  onClick={() => navigate('/offers')}
+                  className="group relative cursor-pointer rounded-2xl p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-200/90 bg-white/95 backdrop-blur-md shadow-2xs hover:border-emerald-300 transition-colors duration-150"
+                >
+                  <div>
+                    {/* Top Icon */}
+                    <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center justify-center mb-3.5">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                      </svg>
+                    </div>
+
+                    {/* Eyebrow */}
+                    <p className="text-[10px] font-bold text-emerald-700 tracking-widest uppercase flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Live Intelligence
+                    </p>
+
+                    {/* Title */}
+                    <h3 className="text-base font-extrabold text-slate-950 tracking-tight leading-snug mt-1">
+                      AI Offers &amp; Pricing
+                    </h3>
+
+                    {/* Description */}
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      Track verified vendor discounts, promotions, and price shifts across 13 providers.
+                    </p>
+
+                    {/* Benefit Bullets */}
+                    <ul className="mt-4 space-y-2">
+                      {['13 AI providers monitored 24/7', 'Live discounts & batch promotions', 'Direct official vendor feeds'].map((item) => (
+                        <li key={item} className="flex items-center gap-2 text-[11px] text-slate-600">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Bottom Action Footer — Clean Matte Highlighted Button */}
+                  <div className="mt-6 pt-3.5 border-t border-slate-100">
+                    <div className="w-full py-2.5 px-3.5 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center justify-between shadow-2xs group-hover:bg-emerald-700 transition-colors duration-150">
+                      <span className="tracking-tight">View AI Offers</span>
+                      <span className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-0.5 transition-transform duration-150">
+                        →
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+
+
               </div>
             </div>
 
-             {/* Right: Premium AI Audit Demo Card with entrance animation */}
+
+
+
+
+            {/* Right: Premium AI Audit Demo Card with entrance animation */}
             <div className="lg:col-span-6 lg:flex lg:justify-end">
               <div className="hero-card-stage w-full">
                 <div className="hero-card-wrapper mx-auto lg:mx-0">
@@ -672,7 +792,7 @@ export default function LandingPage() {
         <SectionHeading
           overline="Audit Report"
           title="What your StackSave report looks like"
-          subtitle="This is the exact summary generated after your audit, with clear spend, waste, and actions." 
+          subtitle="This is the exact summary generated after your audit, with clear spend, waste, and actions."
           align="left"
         />
 
@@ -815,7 +935,7 @@ export default function LandingPage() {
         <SectionHeading
           overline="Audit Engine"
           title="A clearer view of what StackSave analyzes"
-          subtitle="This section is an inspection dashboard, not a feature list. Each item represents a real cost check our engine performs against your AI bill." 
+          subtitle="This section is an inspection dashboard, not a feature list. Each item represents a real cost check our engine performs against your AI bill."
           align="left"
         />
 

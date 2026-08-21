@@ -91,15 +91,27 @@ router.get('/pricing-status', async (_req: Request, res: Response) => {
       let authorityCategory:
         | 'VERIFIED_OFFICIAL_SUBSCRIPTION_PRICE'
         | 'VERIFIED_API_MODEL_PRICE'
+        | 'VERIFIED_FREE_TIER'
         | 'AUTHORITATIVE_STATIC_BASELINE'
         | 'STALE'
         | 'NO_RELIABLE_PUBLIC_SOURCE';
 
       let authorityDescription: string;
 
+      const isApiProvider = ['openai-api', 'anthropic-api', 'deepseek', 'kimi'].includes(s.providerId);
+      const isFreeTierProvider = ['codex', 'github-models'].includes(s.providerId);
+
       if (status === 'VERIFIED') {
-        authorityCategory = 'VERIFIED_OFFICIAL_SUBSCRIPTION_PRICE';
-        authorityDescription = 'Official pricing verified directly from vendor page markup (JSON-LD / Contentful / Docs Table).';
+        if (isFreeTierProvider) {
+          authorityCategory = 'VERIFIED_FREE_TIER';
+          authorityDescription = 'Verified zero-cost public access or developer preview tier directly from official provider.';
+        } else if (isApiProvider) {
+          authorityCategory = 'VERIFIED_API_MODEL_PRICE';
+          authorityDescription = 'Official API model token pricing verified directly from vendor-owned pricing and documentation pages.';
+        } else {
+          authorityCategory = 'VERIFIED_OFFICIAL_SUBSCRIPTION_PRICE';
+          authorityDescription = 'Official pricing verified directly from vendor page markup (JSON-LD / Contentful / Docs Table / Hydrated DOM).';
+        }
       } else if (status === 'STALE') {
         authorityCategory = 'STALE';
         authorityDescription = 'Last verified >24h ago; previous confirmed pricing retained.';
@@ -113,6 +125,7 @@ router.get('/pricing-status', async (_req: Request, res: Response) => {
         authorityCategory = 'NO_RELIABLE_PUBLIC_SOURCE';
         authorityDescription = 'No scrapeable public source. Authoritative baseline retained.';
       }
+
 
 
       return {
@@ -178,11 +191,13 @@ router.get('/offers', async (_req: Request, res: Response) => {
   try {
     const events = await NotificationEventModel.find({ eventType: 'NEW_OFFER' })
       .sort({ detectedAt: -1 })
-      .limit(20)
-      .select('providerId providerName title description discount discountType sourceUrl detectedAt expiresAt')
+      .limit(30)
+      .select('providerId providerName title description discount discountType sourceUrl detectedAt expiresAt fingerprint')
       .lean();
 
     const offers = events.map((e) => ({
+      id: e.fingerprint || (e as { _id?: unknown })._id?.toString() || `${e.providerId}-${e.title}`,
+      fingerprint: e.fingerprint,
       providerId: e.providerId,
       providerName: e.providerName || e.providerId,
       title: e.title,
@@ -207,5 +222,6 @@ router.get('/offers', async (_req: Request, res: Response) => {
     return res.status(500).json({ success: false, error: 'Failed to fetch public offers' });
   }
 });
+
 
 export default router;

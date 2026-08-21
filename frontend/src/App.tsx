@@ -11,6 +11,7 @@ import BuildStackResultsPage from './pages/BuildStackResultsPage';
 import ReplacementsDashboardPage from './pages/ReplacementsDashboardPage';
 import ConsolidationDashboardPage from './pages/ConsolidationDashboardPage';
 import RemovalDashboardPage from './pages/RemovalDashboardPage';
+import OffersPage from './pages/OffersPage';
 import ChatBot from './components/ChatBot';
 
 function ScrollToTop() {
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="/results/removal" element={<RemovalDashboardPage />} />
           <Route path="/build-stack" element={<BuildStackPage />} />
           <Route path="/build-stack/results" element={<BuildStackResultsPage />} />
+          <Route path="/offers" element={<OffersPage />} />
           <Route path="/results/:id" element={<LegacyResultsRedirect />} />
           <Route path="/reaudit/:id" element={<LegacyReauditRedirect />} />
           <Route path="*" element={<NotFoundPage />} />
@@ -58,4 +60,5 @@ export default function App() {
     </LazyMotion>
   );
 }
+
 
