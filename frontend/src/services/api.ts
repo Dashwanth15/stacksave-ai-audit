@@ -14,13 +14,14 @@ const getBaseUrl = (): string => {
   // Auto-detect production environment to avoid build-time env configuration issues
   if (typeof window !== 'undefined' && window.location) {
     const hostname = window.location.hostname;
-    if (hostname.includes('stacksave-round2-frontend.onrender.com')) {
-      return 'https://stacksave-round2-backend.onrender.com/api';
+    if (hostname.includes('stacksave-frontend.onrender.com') || hostname.includes('stacksave-round2-frontend.onrender.com')) {
+      return 'https://stacksave-backend.onrender.com/api';
     }
     if (hostname.includes('onrender.com')) {
       return window.location.origin.replace('-frontend', '-backend') + '/api';
     }
   }
+
   return '/api';
 };
 
@@ -160,6 +161,80 @@ export async function submitStackBuilder(request: StackBuilderRequest): Promise<
   }
   if (!response.data.data) {
     throw new Error('Server returned success, but the recommendation data payload is missing.');
+  }
+  return response.data.data;
+}
+
+// ── Pricing Intelligence — Public Read-Only Endpoints ────────
+// No auth required. Fetched by PricingIntelligencePanel on ResultsPage.
+
+/**
+ * GET /api/intelligence/pricing-status
+ * Returns per-provider pricing sync status and recommendation engine state.
+ * PUBLIC endpoint — no admin secret required.
+ */
+export async function fetchPricingStatus(): Promise<{
+  providers: Array<{
+    providerId: string;
+    displayName: string;
+    syncStatus: 'VERIFIED' | 'STALE' | 'FETCH_BLOCKED' | 'PARSE_FAILED' | 'NO_RELIABLE_PUBLIC_SOURCE';
+    authorityCategory:
+      | 'VERIFIED_OFFICIAL_SUBSCRIPTION_PRICE'
+      | 'AUTHORITATIVE_STATIC_BASELINE'
+      | 'STALE'
+      | 'NO_RELIABLE_PUBLIC_SOURCE';
+
+    authorityDescription: string;
+    lastVerifiedAt: string | null;
+    consecutiveFailures: number;
+    sourceUrl: string | null;
+    pricingStrategy: string | null;
+    engineStatus: 'APPLIED' | 'SKIPPED' | 'NOT_IN_REGISTRY' | 'UNKNOWN';
+    engineReason: string | null;
+    plansPatched: number;
+  }>;
+  summary: {
+    totalProviders: number;
+    verifiedCount: number;
+    staleCount: number;
+    blockedCount: number;
+    overallHealth: 'ALL_VERIFIED' | 'PARTIAL' | 'DEGRADED';
+    overlayLastAppliedAt: string | null;
+  };
+}> {
+  const response = await api.get('/intelligence/pricing-status', { timeout: 10_000 });
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.error ?? 'Failed to fetch pricing status');
+  }
+  return response.data.data;
+}
+
+
+
+/**
+ * GET /api/intelligence/offers
+ * Returns recent new public offers detected from official provider sources.
+ * PUBLIC endpoint — no admin secret required.
+ * Only genuinely new offers; repeat promotions are deduped by fingerprint.
+ */
+export async function fetchPublicOffers(): Promise<{
+  offers: Array<{
+    providerId: string;
+    providerName: string;
+    title: string;
+    description: string | null;
+    discount: string | null;
+    discountType: string | null;
+    sourceUrl: string;
+    detectedAt: string;
+    expiresAt: string | null;
+  }>;
+  count: number;
+  note: string;
+}> {
+  const response = await api.get('/intelligence/offers', { timeout: 10_000 });
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.error ?? 'Failed to fetch public offers');
   }
   return response.data.data;
 }

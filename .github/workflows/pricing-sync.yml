@@ -1,0 +1,96 @@
+name: Official AI Pricing & Offer Intelligence Sync
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# REQUIRED GITHUB REPOSITORY SECRETS (Settings → Secrets → Actions):
+#
+#   BACKEND_URL   The full base URL of the deployed backend.
+#                 Value: https://stacksave-backend.onrender.com
+#
+#   ADMIN_SECRET  The same secret configured in Render Dashboard →
+#                 stacksave-backend → Environment → ADMIN_SECRET.
+#                 Generate: openssl rand -hex 32
+#                 Must be identical in BOTH Render and GitHub Secrets.
+#
+# Runs daily at 02:00 UTC and on workflow_dispatch.
+# Flow:
+#   1. Runs Playwright Chromium headless runner on Ubuntu 16GB runner
+#   2. Extracts live official rates (Claude, Gemini, ChatGPT, Cursor, etc.)
+#   3. POSTs structured payload to BACKEND_URL/api/admin/pricing/ingest
+#   4. Backend validates, updates MongoDB, and patches Recommendation Engine
+# ═══════════════════════════════════════════════════════════════════════════════
+
+on:
+  schedule:
+    # Run daily at 02:00 UTC (low-traffic window)
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  official-pricing-sync:
+    name: Official Provider Pricing & Offer Sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: backend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Official Pricing & Offer Extractor (Playwright + Fast Static)
+        working-directory: backend
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
+        run: npx tsx scripts/official_pricing_extractor.ts
+
+      - name: Run Server-Side Offer Monitor Scan
+        run: |
+          echo "▶ Running server-side offer scan verification..."
+          HTTP_STATUS=$(curl -s -o /tmp/offers_response.json -w "%{http_code}" \
+            -X POST "${{ secrets.BACKEND_URL }}/api/admin/offers/scan" \
+            -H "Authorization: Bearer ${{ secrets.ADMIN_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --max-time 120)
+          echo "HTTP Status: $HTTP_STATUS"
+          cat /tmp/offers_response.json | python3 -m json.tool 2>/dev/null || cat /tmp/offers_response.json
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "❌ Offer scan returned non-200 status: $HTTP_STATUS"
+            exit 1
+          fi
+          echo "✅ Offer scan complete"
+
+      - name: Check Final Authority Status Summary
+        if: ${{ always() }}
+        run: |
+          echo "▶ Fetching intelligence pricing status summary..."
+          curl -s \
+            "${{ secrets.BACKEND_URL }}/api/intelligence/pricing-status" \
+            | python3 -c "
+          import sys, json
+          try:
+              data = json.load(sys.stdin)
+              providers = data.get('data', {}).get('providers', [])
+              print(f'Total providers tracked: {len(providers)}')
+              for p in providers:
+                  status = p.get('syncStatus', 'UNKNOWN')
+                  cat = p.get('authorityCategory', '')
+                  icon = '✅' if status == 'VERIFIED' else ('⚠️' if status == 'STALE' else 'ℹ️')
+                  print(f'  {icon} {p.get(\"displayName\", p.get(\"providerId\"))}: {status} ({cat})')
+          except Exception as e:
+              print(f'Summary parse note: {e}')
+          "
+

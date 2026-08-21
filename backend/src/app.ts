@@ -14,9 +14,11 @@ import healthRouter from './routes/health';
 import chatRouter from './routes/chat';
 import stackBuilderRouter from './routes/stackBuilder';
 import intelligenceRouter from './routes/intelligence';
+import adminRouter from './routes/admin';
 import { globalLimiter, leadLimiter } from './middleware/rateLimit';
 import { requestLogger } from './middleware/logger';
 import { findAvailablePort } from './utils/port';
+import { PricingOverlayService } from './pricing/pricingOverlay';
 
 const app = express();
 const preferredPort = Number(process.env.PORT) || 5000;
@@ -85,6 +87,7 @@ app.use('/api/leads', leadLimiter, leadsRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/stack-builder', stackBuilderRouter);
 app.use('/api/intelligence', intelligenceRouter);
+app.use('/api/admin', adminRouter);
 
 // ── 404 Handler ──────────────────────────────────────────────
 app.use((_req, res) => {
@@ -96,10 +99,21 @@ app.use((_req, res) => {
 // ── Start ─────────────────────────────────────────────────────
 async function start() {
   await connectDB();
+
+  // ── Apply DB-verified pricing to recommendation engine ────
+  // This is the critical link: VERIFIED prices from MongoDB patch
+  // the KnowledgeLoader in-memory cache so audits use live pricing.
+  // Runs on every cold start; re-runs after each sync completes.
+  PricingOverlayService.applyVerifiedPricing().catch((err) => {
+    // Non-fatal: server starts with static plans if DB overlay fails
+    console.error('[PricingOverlay] Startup overlay failed — using static plans:', err);
+  });
+
   const PORT = await findAvailablePort(preferredPort);
   app.listen(PORT, () => {
-    const serverUrl = NODE_ENV === 'production' ? `https://stacksave-round2-backend.onrender.com` : `http://localhost:${PORT}`;
+    const serverUrl = NODE_ENV === 'production' ? `https://stacksave-backend.onrender.com` : `http://localhost:${PORT}`;
     console.log(`🚀 StackSave API running at ${serverUrl}`);
+
     console.log(`   Health: ${serverUrl}/api/health`);
     console.log(`   Environment: ${NODE_ENV}`);
   });

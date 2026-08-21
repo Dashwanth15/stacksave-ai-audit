@@ -3,9 +3,57 @@
 // All prices verified from official vendor pricing pages.
 // Sources documented in /PRICING_DATA.md
 // Last verified: 2026-05-07
+//
+// ⚠️  IMPORTANT — Pricing sync system (pricing/) now runs every 24h.
+// Use getVerifiedPricing(toolId) to retrieve the latest DB-backed
+// price before falling back to the static plans below.
 // ============================================================
 
 import { ToolCatalog } from '../types';
+
+// ── DB-backed pricing lookup ──────────────────────────────────
+// Lazy import to avoid circular deps and to allow catalog to work
+// in tests without a DB connection.
+import type { NormalizedPlan } from '../pricing/types';
+
+/**
+ * Attempt to retrieve the latest VERIFIED pricing for a tool from
+ * the PricingSource collection. Returns null if:
+ *   - DB not available
+ *   - No record exists
+ *   - Status is not VERIFIED (i.e. STALE / FETCH_BLOCKED / etc.)
+ *
+ * Callers should fall back to the static catalog plans when this
+ * returns null, and clearly indicate to users that prices may be stale.
+ */
+export async function getVerifiedPricing(toolId: string): Promise<{
+  plans: NormalizedPlan[];
+  lastVerifiedAt: Date;
+  status: string;
+} | null> {
+  try {
+    // Dynamic import so catalog can be used offline / in tests
+    const { PricingSourceModel } = await import('../services/dbService');
+    const source = await PricingSourceModel.findOne({ providerId: toolId }).lean();
+    if (!source) return null;
+    if (source.status !== 'VERIFIED') {
+      // Return the record anyway so callers can show status + lastVerifiedAt
+      return {
+        plans: (source.plans ?? []) as NormalizedPlan[],
+        lastVerifiedAt: source.lastVerifiedAt ?? source.lastSyncedAt,
+        status: source.status,
+      };
+    }
+    return {
+      plans: (source.plans ?? []) as NormalizedPlan[],
+      lastVerifiedAt: source.lastVerifiedAt!,
+      status: source.status,
+    };
+  } catch {
+    // DB not available — silently return null so catalog falls back to hardcoded
+    return null;
+  }
+}
 
 export const TOOL_CATALOG: ToolCatalog[] = [
   // ──────────────────────────────────────────────

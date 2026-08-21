@@ -528,6 +528,83 @@ export class KnowledgeLoader {
   }
 
   /**
+   * Patches the in-memory plan cache with DB-verified plans from PricingOverlayService.
+   *
+   * Called exclusively by PricingOverlayService after a successful pricing sync.
+   * Only VERIFIED records are passed here — the overlay service enforces this.
+   *
+   * Maps NormalizedPlan[] (from the sync pipeline) into PlanEntry[] format
+   * (used by KnowledgeLoader) by preserving all compatible fields.
+   *
+   * @param providerId - The provider ID to patch (must match knowledgeCache key)
+   * @param dbPlans - VERIFIED plans from PricingSource collection
+   * @returns true if the provider was found and patched, false if not in cache
+   */
+  public static patchPlansFromDB(
+    providerId: string,
+    dbPlans: Array<{
+      id: string;
+      label: string;
+      monthlyPricePerSeat: number;
+      annualPricePerSeat?: number;
+      isPayPerUse?: boolean;
+      currency?: string;
+    }>
+  ): boolean {
+    const key = providerId.toLowerCase();
+    const pk = this.knowledgeCache.get(key);
+    if (!pk) return false;
+
+    // Convert NormalizedPlan[] → PlanEntry[], preserving fields compatible with both schemas.
+    // We only update plans that exist in the DB sync; we don't remove static-only plans
+    // (e.g. enterprise plans that are never returned by the sync).
+    const existingPlans = pk.plans;
+    const dbPlanMap = new Map(dbPlans.map((p) => [p.id, p]));
+
+    const patchedPlans: PlanEntry[] = existingPlans.map((existing) => {
+      const dbPlan = dbPlanMap.get(existing.id);
+      if (dbPlan) {
+        // Apply DB-verified price — preserve non-pricing fields (features, tierRank, etc.)
+        return {
+          ...existing,
+          monthlyPricePerSeat: dbPlan.monthlyPricePerSeat,
+          annualPricePerSeat: dbPlan.annualPricePerSeat ?? existing.annualPricePerSeat,
+          isPayPerUse: dbPlan.isPayPerUse ?? existing.isPayPerUse,
+        };
+      }
+      return existing; // No DB record for this plan — keep static value
+    });
+
+    // Also add any new plans from DB that aren't in the static list
+    for (const dbPlan of dbPlans) {
+      if (!existingPlans.find((p) => p.id === dbPlan.id)) {
+        patchedPlans.push({
+          id: dbPlan.id,
+          label: dbPlan.label,
+          monthlyPricePerSeat: dbPlan.monthlyPricePerSeat,
+          annualPricePerSeat: dbPlan.annualPricePerSeat,
+          isPayPerUse: dbPlan.isPayPerUse,
+        });
+      }
+    }
+
+    // Mutate in-place so all references to pk.plans see the updated prices
+    pk.plans.length = 0;
+    pk.plans.push(...patchedPlans);
+
+    // Also update the pricingMap in the synthesized ProviderProfile cache
+    const profile = this.cache.get(key);
+    if (profile) {
+      for (const p of patchedPlans) {
+        profile.pricing[p.id] = p.monthlyPricePerSeat;
+      }
+      profile.plans = patchedPlans;
+    }
+
+    return true;
+  }
+
+  /**
    * Validates raw JSON object structure before registering.
    */
   private static validateSchema(raw: any, fileName: string): boolean {

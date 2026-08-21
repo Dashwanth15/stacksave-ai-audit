@@ -12,6 +12,7 @@ import ReAuditDiffPage from './ReAuditDiffPage';
 import Logo from '../components/Logo';
 import StrategicGuidanceSection from '../components/intelligence/StrategicGuidanceSection';
 import ToolIntelligencePanel from '../components/ToolIntelligencePanel';
+import PricingIntelligencePanel from '../components/PricingIntelligencePanel';
 
 
 
@@ -867,6 +868,11 @@ export default function ResultsPage() {
                 auditId={audit?.auditId}
               />
             )}
+
+            {/* ── Pricing Intelligence Panel ─────────────────────── */}
+            {/* Shows live pricing sync status + new public offers   */}
+            {/* Visible only on the Results page (post-audit)        */}
+            <PricingIntelligencePanel />
 
           </div>
 

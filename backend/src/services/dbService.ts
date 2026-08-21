@@ -186,6 +186,148 @@ LeadSchema.index({ email: 1, auditId: 1 }, { unique: true });
 
 export const LeadModel = mongoose.model<LeadDocument>('Lead', LeadSchema);
 
+// ── Pricing Source Schema ─────────────────────────────────────
+// Current verified state per provider. One record per provider, upserted on each sync.
+export interface PricingSourceDocument extends Document {
+  providerId: string;
+  displayName: string;
+  pricingUrl: string;
+  strategy: string;           // ExtractionStrategy
+  status: string;             // SyncStatus
+  lastSyncedAt: Date;
+  lastVerifiedAt?: Date;      // Only set when status = 'VERIFIED'
+  plans: object[];            // NormalizedPlan[]
+  failureReason?: string;
+  consecutiveFailures: number;
+}
+
+const PricingSourceSchema = new Schema<PricingSourceDocument>(
+  {
+    providerId:          { type: String, required: true, unique: true, index: true },
+    displayName:         { type: String, required: true },
+    pricingUrl:          { type: String, required: true },
+    strategy:            { type: String, required: true },
+    status:              { type: String, required: true, default: 'STALE' },
+    lastSyncedAt:        { type: Date, required: true },
+    lastVerifiedAt:      { type: Date },
+    plans:               { type: [Schema.Types.Mixed], default: [] },
+    failureReason:       { type: String },
+    consecutiveFailures: { type: Number, default: 0 },
+  },
+  { timestamps: false }
+);
+
+export const PricingSourceModel = mongoose.model<PricingSourceDocument>(
+  'PricingSource',
+  PricingSourceSchema
+);
+
+// ── Pricing History Schema ─────────────────────────────────────
+// Immutable append-only log of all confirmed price changes.
+export interface PricingHistoryDocument extends Document {
+  providerId: string;
+  detectedAt: Date;
+  previousPlans: object[];
+  newPlans: object[];
+  changeSummary: string;     // Human-readable diff
+  isSuspicious: boolean;
+  syncRunId: string;
+}
+
+const PricingHistorySchema = new Schema<PricingHistoryDocument>(
+  {
+    providerId:    { type: String, required: true, index: true },
+    detectedAt:    { type: Date, required: true, default: Date.now },
+    previousPlans: { type: [Schema.Types.Mixed], default: [] },
+    newPlans:      { type: [Schema.Types.Mixed], default: [] },
+    changeSummary: { type: String, required: true },
+    isSuspicious:  { type: Boolean, default: false },
+    syncRunId:     { type: String, required: true },
+  },
+  { timestamps: false }
+);
+
+export const PricingHistoryModel = mongoose.model<PricingHistoryDocument>(
+  'PricingHistory',
+  PricingHistorySchema
+);
+
+// ── Sync Log Schema ───────────────────────────────────────────
+// One record per sync run (covers all providers in a batch).
+export interface SyncLogDocument extends Document {
+  syncRunId: string;
+  startedAt: Date;
+  completedAt?: Date;
+  triggeredBy: string;       // 'github-actions' | 'manual' | 'api'
+  providerResults: object[]; // Summary per provider
+  totalProviders: number;
+  successCount: number;
+  failureCount: number;
+  staleCount: number;
+  priceChangeCount: number;
+}
+
+const SyncLogSchema = new Schema<SyncLogDocument>(
+  {
+    syncRunId:        { type: String, required: true, unique: true, index: true },
+    startedAt:        { type: Date, required: true, default: Date.now },
+    completedAt:      { type: Date },
+    triggeredBy:      { type: String, required: true, default: 'api' },
+    providerResults:  { type: [Schema.Types.Mixed], default: [] },
+    totalProviders:   { type: Number, default: 0 },
+    successCount:     { type: Number, default: 0 },
+    failureCount:     { type: Number, default: 0 },
+    staleCount:       { type: Number, default: 0 },
+    priceChangeCount: { type: Number, default: 0 },
+  },
+  { timestamps: false }
+);
+
+export const SyncLogModel = mongoose.model<SyncLogDocument>('SyncLog', SyncLogSchema);
+
+// ── Notification Event Schema ─────────────────────────────────
+// Tracks offer/promotion notifications; fingerprint prevents duplicates.
+export interface NotificationEventDocument extends Document {
+  providerId: string;
+  providerName?: string;     // Human-readable provider name
+  eventType?: string;        // 'NEW_OFFER' | 'PROMOTION_NEW' | 'PROMOTION_UPDATED' | 'PROMOTION_EXPIRED'
+  type?: string;             // Legacy alias for eventType
+  fingerprint: string;       // SHA-256 of offer content — unique constraint prevents re-notification
+  title: string;
+  description: string;
+  sourceUrl: string;
+  detectedAt: Date;
+  notifiedAt?: Date;
+  expiresAt?: Date;
+  discount?: string;         // Human-readable discount amount, e.g. "20% off" or "$5/mo"
+  discountType?: string;     // 'percentage' | 'fixed' | 'trial' | 'free'
+}
+
+const NotificationEventSchema = new Schema<NotificationEventDocument>(
+  {
+    providerId:   { type: String, required: true, index: true },
+    providerName: { type: String },
+    eventType:    { type: String, default: 'NEW_OFFER' },
+    type:         { type: String },                        // Legacy field — kept for backward compat
+    fingerprint:  { type: String, required: true, unique: true, index: true },
+    title:        { type: String, required: true },
+    description:  { type: String, required: true },
+    sourceUrl:    { type: String, required: true },
+    detectedAt:   { type: Date, required: true, default: Date.now },
+    notifiedAt:   { type: Date },
+    expiresAt:    { type: Date },
+    discount:     { type: String },
+    discountType: { type: String },
+  },
+  { timestamps: false }
+);
+
+export const NotificationEventModel = mongoose.model<NotificationEventDocument>(
+  'NotificationEvent',
+  NotificationEventSchema
+);
+
+
 // ── Connection ────────────────────────────────────────────────
 let isConnected = false;
 

@@ -1,12 +1,28 @@
 # Render Deployment Configuration — StackSave AI Audit Backend
 # This file configures automatic deployment from GitHub to Render
+#
+# ── Required secrets (set via Render Dashboard, NOT committed here) ──────────
+#
+# ADMIN_SECRET  — shared secret for /api/admin/* routes and GitHub Actions sync.
+#                 Generate a secure random value: openssl rand -hex 32
+#                 Set this in:
+#                   1. Render Dashboard → stacksave-backend → Environment
+#                   2. GitHub repo → Settings → Secrets → ADMIN_SECRET
+#
+# BACKEND_URL   — public URL of this backend service (GitHub Actions only).
+#                 Value: https://stacksave-backend.onrender.com
+#                 Set this in:
+#                   GitHub repo → Settings → Secrets → BACKEND_URL
+#
+# ─────────────────────────────────────────────────────────────────────────────
 
 services:
   - type: web
-    name: stacksave-round2-backend
+    name: stacksave-backend
     runtime: node
     plan: free
     region: oregon
+
     buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:
@@ -16,6 +32,8 @@ services:
         sync: false
       - key: RESEND_API_KEY
         sync: false
+      - key: ADMIN_SECRET
+        sync: false   # Set manually in Render Dashboard — never committed to Git
       - key: FRONTEND_URL
         value: https://stacksave-round2-frontend.onrender.com
       - key: PORT
@@ -25,6 +43,7 @@ services:
     # Health check
     healthcheckPath: /api/health
     # Auto-deploy from main branch
-    branch: round-2-reaudit
+    branch: main
     # Build from the backend directory
     rootDirectory: backend
+
