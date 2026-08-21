@@ -82,16 +82,25 @@ function ConfidenceBar({ label, value, color }: { label: string; value: number; 
 
 export default function BuildStackResultsPage() {
   const navigate = useNavigate();
-  const [rec, setRec] = useState<StackRecommendation | null>(null);
+  const [rec] = useState<StackRecommendation | null>(() => {
+    const raw = sessionStorage.getItem('stackRecommendation');
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as StackRecommendation;
+    } catch {
+      return null;
+    }
+  });
   const [activeTab, setActiveTab] = useState<string>('bestOverall');
   const [growthView, setGrowthView] = useState<'2x' | '5x'>('2x');
   const [showAlts, setShowAlts] = useState(false);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem('stackRecommendation');
-    if (!raw) { navigate('/build-stack'); return; }
-    try { setRec(JSON.parse(raw)); } catch { navigate('/build-stack'); }
-  }, [navigate]);
+    if (!rec) {
+      navigate('/build-stack', { replace: true });
+    }
+  }, [rec, navigate]);
+
 
   if (!rec) {
     return (

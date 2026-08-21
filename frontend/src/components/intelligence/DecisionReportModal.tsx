@@ -226,7 +226,7 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
 
           {/* ── 8 Exact Tabs Requested ─────────────────────────────────── */}
           <div className="flex items-center px-6 border-b border-slate-100 bg-slate-50/80 overflow-x-auto gap-1">
-            {[
+            {([
               { id: 'overview', label: '📊 Overview' },
               { id: 'financial', label: '💰 Financial' },
               { id: 'matrix', label: '⚖️ Capability Matrix' },
@@ -235,10 +235,10 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
               { id: 'scenarios', label: '🔄 Scenarios' },
               { id: 'whyNot', label: '❌ Why Not Selected' },
               { id: 'trace', label: '🔍 Recommendation Trace' },
-            ].map((tab) => (
+            ] as const).map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id)}
                 className={`py-3 px-3.5 text-xs font-bold whitespace-nowrap border-b-2 transition-all ${
                   activeTab === tab.id
                     ? 'border-indigo-600 text-indigo-600 bg-white shadow-2xs rounded-t-lg'
@@ -249,6 +249,7 @@ export default function DecisionReportModal({ report, onClose }: DecisionReportM
               </button>
             ))}
           </div>
+
 
           {/* ── Tab Contents ────────────────────────────────────────── */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">

@@ -99,10 +99,13 @@ export default function BuildStackPage() {
       const result = await submitStackBuilder(req);
       sessionStorage.setItem('stackRecommendation', JSON.stringify(result));
       navigate('/build-stack/results');
-    } catch (e: any) {
-      setError(e.message || 'Failed to generate recommendation. Please try again.');
+    } catch (e: unknown) {
+
+      const msg = e instanceof Error ? e.message : 'Failed to generate recommendation. Please try again.';
+      setError(msg);
       setLoading(false);
     }
+
   };
 
   const pct = ((step - 1) / (STEPS.length - 1)) * 100;

@@ -413,7 +413,8 @@ export default function SubscriptionHealthReport({ insight, auditTools }: Props)
   const isAllStackTools =
     insight.toolName === 'All Stack Tools' ||
     insight.toolId === 'all-stack-tools' ||
-    insight.toolId === ('all' as any);
+    (insight.toolId as string) === 'all';
+
 
   // ── Render Aggregated Ecosystem Analysis if "All Stack Tools" ──
   if (isAllStackTools) {

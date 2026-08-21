@@ -191,20 +191,24 @@ function generatePricingChangeSummary(changedTools: ToolPriceChange[]): string {
 }
 
 /**
- * Scans all saved audits and detects which ones are affected by pricing changes
+ * Scans saved audits and detects which ones are affected by pricing changes
  * Compares each audit's pricing snapshot against current pricing
  *
+ * @param queryFilter Optional MongoDB query filter to isolate targeted audits
  * @returns PricingChangeDetectionResult with affected audits
  */
-export async function scanAuditsForPricingChanges(): Promise<PricingChangeDetectionResult> {
+export async function scanAuditsForPricingChanges(
+  queryFilter?: Record<string, any>
+): Promise<PricingChangeDetectionResult> {
   const startTime = Date.now();
 
   try {
     // Get current pricing snapshot
     const currentSnapshot = capturePricingSnapshot();
 
-    // Fetch all audits from database
-    const allAudits = await AuditModel.find({}).lean();
+    // Fetch audits from database (defaulting to active latest versions only)
+    const filter = queryFilter || { isLatestVersion: { $ne: false } };
+    const allAudits = await AuditModel.find(filter).lean();
 
     const affectedAudits: AuditPricingChange[] = [];
     let auditsScanned = 0;
@@ -216,6 +220,7 @@ export async function scanAuditsForPricingChanges(): Promise<PricingChangeDetect
       if (audit.isLatestVersion === false) {
         continue;
       }
+
       
       auditsScanned++;
 

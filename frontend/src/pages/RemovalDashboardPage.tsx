@@ -10,14 +10,18 @@ export default function RemovalDashboardPage() {
   const { id } = useParams();
   const location = useLocation();
 
-  const intelligence: StackIntelligenceResult | null = (location.state as any)?.intelligence || null;
+  const locationState = location.state as { intelligence?: StackIntelligenceResult } | null;
+  const intelligence: StackIntelligenceResult | null = locationState?.intelligence || null;
   const [activeReport, setActiveReport] = useState<DecisionReport | null>(null);
 
   const [search, setSearch] = useState('');
   const [classFilter, setClassFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'score' | 'savings' | 'coverage'>('score');
 
-  const rawRemovals: RemoveOpportunity[] = intelligence?.removals || [];
+  const rawRemovals: RemoveOpportunity[] = useMemo(
+    () => intelligence?.removals || [],
+    [intelligence]
+  );
 
   const filtered = useMemo(() => {
     return rawRemovals
@@ -53,11 +57,15 @@ export default function RemovalDashboardPage() {
           </div>
 
           <button
-            onClick={() => navigate(id ? `/audit/${id}` : (-1 as any))}
+            onClick={() => {
+              if (id) navigate(`/audit/${id}`);
+              else navigate(-1);
+            }}
             className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
           >
             ← Back to Audit Results
           </button>
+
         </div>
       </header>
 
@@ -120,9 +128,10 @@ export default function RemovalDashboardPage() {
               <span className="font-bold text-slate-500">Sort By:</span>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as 'score' | 'savings' | 'coverage')}
                 className="py-2 px-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white cursor-pointer"
               >
+
                 <option value="score">Highest Opportunity Score</option>
                 <option value="savings">Highest Savings</option>
                 <option value="coverage">Remaining Coverage</option>

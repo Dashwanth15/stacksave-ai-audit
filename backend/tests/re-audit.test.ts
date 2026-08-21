@@ -402,10 +402,12 @@ describe('4. pricingChangeDetectionService notifications & duplicate protection'
 
     // 3. Scan first time: Should trigger re-audit and send email
     const { scanAuditsForPricingChanges } = await import('../src/services/pricingChangeDetectionService');
-    const result1 = await scanAuditsForPricingChanges();
+    const result1 = await scanAuditsForPricingChanges({
+      $or: [{ auditId: rootAuditId }, { reAuditOf: rootAuditId }],
+    });
 
     expect(result1.success).toBe(true);
-    expect(result1.auditsWithChanges).toBeGreaterThanOrEqual(1);
+    expect(result1.auditsWithChanges).toBe(1);
 
     // Verify re-audit was run (which invalidates v1 as latest)
     const updatedOriginal = await AuditModel.findOne({ auditId: originalAuditId });
@@ -419,13 +421,16 @@ describe('4. pricingChangeDetectionService notifications & duplicate protection'
     sendEmailSpy.mockClear();
 
     // 4. Scan second time immediately: Should NOT send duplicate notification email
-    const result2 = await scanAuditsForPricingChanges();
+    const result2 = await scanAuditsForPricingChanges({
+      $or: [{ auditId: rootAuditId }, { reAuditOf: rootAuditId }],
+    });
     expect(result2.success).toBe(true);
     // Original is no longer latest (v1 isLatestVersion = false), and the new latest is v2 which is up-to-date.
     // So there shouldn't be any active updates or duplicate emails sent.
     expect(sendEmailSpy).not.toHaveBeenCalled();
 
     sendEmailSpy.mockRestore();
-  }, 45000);
+  });
 });
+
 

@@ -334,14 +334,7 @@ export default function AuditPage() {
 
   const estimatedSpend = form.tools.reduce((total, t) => total + t.monthlySpend, 0);
 
-  const hasMetadata = form.teamSize > 0;
-  const hasTools = form.tools.length > 0;
-  const hasSpend = form.tools.length > 0 && form.tools.every((t) => t.monthlySpend > 0);
 
-  let readinessScore = 0;
-  if (hasMetadata) readinessScore += 30;
-  if (hasTools) readinessScore += 40;
-  if (hasSpend) readinessScore += 30;
 
 
   const ideSpend = form.tools.filter(t => {
@@ -533,8 +526,10 @@ export default function AuditPage() {
                   <select
                     id="optimizationGoal"
                     value={form.optimizationGoal}
-                    onChange={(e) => setForm((p) => ({ ...p, optimizationGoal: e.target.value as any }))}
+                    onChange={(e) => setForm((p) => ({ ...p, optimizationGoal: e.target.value as FormState['optimizationGoal'] }))}
                     className={inputClass}
+
+
                     style={inputStyle}
                     {...inputFocusHandlers}
                     aria-label="Optimization goal"

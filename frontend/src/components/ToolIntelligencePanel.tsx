@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import type { Insight, ToolEntry } from '../types';
+import type { Insight, ToolEntry, UseCase } from '../types';
 import {
   buildAuditAwareReport,
   getProviderJSON,
@@ -17,14 +17,16 @@ import {
 } from '../data/providerKnowledge';
 
 
+
 // ─── Props ───────────────────────────────────────────────────────────────────
 
 interface PanelProps {
   insight: Insight | null;
   auditTools?: ToolEntry[];
-  useCase?: string;
+  useCase?: UseCase;
   onClose: () => void;
 }
+
 
 // ─── Premium Active Accordion Section ─────────────────────────────────────────
 
@@ -247,7 +249,7 @@ function ValueBadge({ value }: { value: 'Excellent' | 'Good' | 'Average' | 'Poor
 
 // ─── Model & Version Comparison Section ─────────────────────────────────────
 
-function extractContextLabel(modelObj: any): string {
+function extractContextLabel(modelObj?: { contextWindow?: string; capabilities?: Record<string, { evidence?: string }> } | null): string {
   if (modelObj?.contextWindow) return modelObj.contextWindow;
   const lc = modelObj?.capabilities?.longContext || modelObj?.capabilities?.largeCodebaseUnderstanding;
   if (lc?.evidence) {
@@ -263,7 +265,7 @@ function formatVisionCapability(score: number | undefined): string {
   if (score === undefined || score === 0) return 'No Vision';
   if (score >= 8) return 'Supported (High Quality)';
   if (score >= 5) return 'Supported';
-  return 'Limited';
+  return 'Limited / Basic';
 }
 
 function formatLatencyProfile(score: number | undefined): string {
@@ -275,6 +277,8 @@ function formatLatencyProfile(score: number | undefined): string {
 }
 
 function CleanModelDropdown({
+
+
   value,
   onChange,
   sameProviderModels,
@@ -528,8 +532,9 @@ function ModelComparisonSection({
   if (compLatencyScore > primLatencyScore) betterCompared.push(`Faster Speed (${compLatency})`);
   else if (primLatencyScore > compLatencyScore) betterCurrent.push(`Faster Speed (${primLatency})`);
 
-  let diffAnalysis = '';
-  let recommendationVerdict = '';
+  let diffAnalysis: string;
+  let recommendationVerdict: string;
+
 
   if (focusUseCase === 'coding') {
     if (compCoding > primCoding || compReasoning > primReasoning) {
@@ -744,10 +749,11 @@ function SingleToolPanelContent({
 }: {
   insight: Insight;
   auditTools?: ToolEntry[];
-  useCase?: string;
+  useCase?: UseCase;
 }) {
-  const report = buildAuditAwareReport(insight, auditTools, useCase as any);
+  const report = buildAuditAwareReport(insight, auditTools, useCase);
   const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
+
 
   if (!report) {
     return (
@@ -1456,8 +1462,9 @@ function AllStackPanelContent({
         <div className="space-y-2">
           {providersToUse.map((p) => {
             const availableFeatures = Object.entries(p.capabilities || {})
-              .filter(([_, cap]) => (cap as any).score >= 7)
-              .map(([key, _]) => key.replace(/([A-Z])/g, ' $1').trim());
+              .filter(([, cap]) => cap.score >= 7)
+              .map(([key]) => key.replace(/([A-Z])/g, ' $1').trim());
+
             return (
               <div key={p.id} className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2 hover:border-slate-300 transition-colors">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
@@ -1572,12 +1579,12 @@ function PanelContent({
 }: {
   insight: Insight;
   auditTools: ToolEntry[];
-  useCase?: string;
+  useCase?: UseCase;
 }) {
   const isAllStack =
     insight.toolName === 'All Stack Tools' ||
     insight.toolId === 'all-stack-tools' ||
-    insight.toolId === ('all' as any);
+    (insight.toolId as string) === 'all';
 
   if (isAllStack) return <AllStackPanelContent insight={insight} auditTools={auditTools} />;
 
@@ -1607,7 +1614,7 @@ function PanelHeader({
 }: {
   insight: Insight;
   auditTools?: ToolEntry[];
-  useCase?: string;
+  useCase?: UseCase;
   onClose: () => void;
 }) {
   const currentToolEntry = auditTools.find((t) => t.toolId === insight.toolId);
@@ -1619,8 +1626,9 @@ function PanelHeader({
   );
   const isAllStack = insight.toolName === 'All Stack Tools' || insight.toolId === 'all-stack-tools';
 
-  const selectedPlan = (provider as any)?.selectedPlan;
+  const selectedPlan = provider?.selectedPlan;
   const planLabel = selectedPlan ? selectedPlan.label : currentToolEntry?.plan || '';
+
   const seats = currentToolEntry?.seats || 1;
 
   const useCaseLabels: Record<string, string> = {
@@ -1811,14 +1819,7 @@ export default function ToolIntelligencePanel({
   useCase,
   onClose,
 }: PanelProps) {
-  const prevInsightIdRef = useRef<string | null>(null);
   const currentInsightId = insight ? `${insight.toolId}-${insight.type}` : null;
-  const contentChanged =
-    prevInsightIdRef.current !== null && prevInsightIdRef.current !== currentInsightId;
-
-  useEffect(() => {
-    if (currentInsightId) prevInsightIdRef.current = currentInsightId;
-  }, [currentInsightId]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -1865,7 +1866,7 @@ export default function ToolIntelligencePanel({
               <AnimatePresence mode="wait">
                 <m.div
                   key={currentInsightId}
-                  initial={contentChanged ? { opacity: 0, y: 8 } : false}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.18, ease: 'easeOut' }}
@@ -1880,6 +1881,7 @@ export default function ToolIntelligencePanel({
     </AnimatePresence>
   );
 }
+
 
 
 

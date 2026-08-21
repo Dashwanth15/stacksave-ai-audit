@@ -15,9 +15,9 @@ interface ReplacementOpportunityCardProps {
 
 export default function ReplacementOpportunityCard({
   opportunity,
-  report: _report,
   onViewReport,
 }: ReplacementOpportunityCardProps) {
+
   const savingsAmount = Math.max(0, Number(opportunity.monthlySavings) || 0);
   const annualAmount = savingsAmount * 12;
   const isCostSave = opportunity.costDirection === 'savings' || (opportunity.netCostDelta && opportunity.netCostDelta < -0.01) || (opportunity.monthlySavings > 0);

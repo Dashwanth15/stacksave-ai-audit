@@ -93,6 +93,33 @@ export interface ProviderPlan {
   monthlyPricePerSeat: number;
   annualPricePerSeat?: number;
   isPayPerUse?: boolean;
+  features?: string[];
+}
+
+export interface RawProvider {
+  id: string;
+  name: string;
+  category: string;
+  vendor: string;
+  primaryRole: string;
+  secondaryRole?: string;
+  billingModels?: string[];
+  knownStrengths?: string[];
+  knownWeaknesses?: string[];
+  bestUseCases?: string[];
+  supportedModels?: string[];
+  supportedPlatforms?: string[];
+}
+
+export interface RawPlans {
+  pricing?: Record<string, number>;
+  annualDiscountPercent?: number;
+  plans?: ProviderPlan[];
+}
+
+export interface RawModel {
+  capabilities?: Record<string, ProviderCapability>;
+  contextWindow?: string;
 }
 
 export interface ProviderJSON {
@@ -110,12 +137,12 @@ export interface ProviderJSON {
   bestUseCases: string[];
   annualDiscountPercent?: number;
   plans?: ProviderPlan[];
-  selectedPlan?: any;
+  selectedPlan?: ProviderPlan;
   supportedModels?: string[];
   ideSupport?: string[];
 }
 
-function buildProviderJSON(provider: any, plans: any, model: any): ProviderJSON {
+function buildProviderJSON(provider: RawProvider, plans: RawPlans, model: RawModel): ProviderJSON {
   return {
     id: provider.id,
     name: provider.name,
@@ -140,10 +167,11 @@ export interface ModelOption {
   modelId: string;
   name: string;
   shortName: string;
-  modelObj: any;
+  modelObj: RawModel;
 }
 
-export const providerModelCatalog: Record<string, { provider: any; plans: any; models: ModelOption[] }> = {
+export const providerModelCatalog: Record<string, { provider: RawProvider; plans: RawPlans; models: ModelOption[] }> = {
+
   claude: {
     provider: claudeProvider,
     plans: claudePlans,
@@ -362,9 +390,9 @@ export function getProviderJSON(toolId: string, modelId?: string, planId?: strin
   const cat = providerModelCatalog[normalized];
   if (!cat) {
     const base = providerKnowledgeMap[normalized] || null;
-    if (base && planId && (base as any).plans) {
+    if (base && planId && base.plans) {
       const pSlug = planId.toLowerCase().trim();
-      const foundPlan = (base as any).plans.find((p: any) => p.id.toLowerCase() === pSlug || p.label?.toLowerCase() === pSlug);
+      const foundPlan = base.plans.find((p) => p.id.toLowerCase() === pSlug || p.label?.toLowerCase() === pSlug);
       if (foundPlan) {
         return { ...base, selectedPlan: foundPlan };
       }
@@ -382,9 +410,9 @@ export function getProviderJSON(toolId: string, modelId?: string, planId?: strin
   }
 
   const baseJSON = buildProviderJSON(cat.provider, cat.plans, targetModelObj);
-  if (planId && cat.plans && (cat.plans as any).plans) {
+  if (planId && cat.plans && cat.plans.plans) {
     const pSlug = planId.toLowerCase().trim();
-    const foundPlan = (cat.plans as any).plans.find((p: any) => p.id.toLowerCase() === pSlug || p.label?.toLowerCase() === pSlug);
+    const foundPlan = cat.plans.plans.find((p) => p.id.toLowerCase() === pSlug || p.label?.toLowerCase() === pSlug);
     if (foundPlan) {
       return { ...baseJSON, selectedPlan: foundPlan };
     }
@@ -442,7 +470,7 @@ export function buildAuditAwareReport(
   const provider = getProviderJSON(insight.toolId, currentToolEntry?.modelId, currentToolEntry?.plan);
   if (!provider) return null;
 
-  const selectedPlan = (provider as any).selectedPlan;
+  const selectedPlan = provider.selectedPlan;
   const planLabel = selectedPlan ? selectedPlan.label : (currentToolEntry?.plan || '');
 
   const seats = currentToolEntry?.seats || 1;
@@ -459,6 +487,9 @@ export function buildAuditAwareReport(
 
   const useCaseFocus = primaryUseCase || currentToolEntry?.useCase || 'mixed';
   const formattedUseCase = useCaseFocus === 'mixed' ? 'mixed/general' : useCaseFocus;
+  const planStr = planLabel ? `${provider.name} ${planLabel}` : provider.name;
+  const seatStr = seats === 1 ? '1 seat' : `${seats} seats`;
+  const spendStr = `$${monthlySpend}/mo`;
 
   // ── Dynamic scale classifiers ─────────────────────────────────
   // Seat scale: solo (1), small (2-4), medium (5-14), large (15+)
@@ -473,11 +504,6 @@ export function buildAuditAwareReport(
   const savingsUrgency: 'negligible' | 'notable' | 'strong' | 'critical' =
     annualSaving < 60 ? 'negligible' : annualSaving < 300 ? 'notable' : annualSaving < 1000 ? 'strong' : 'critical';
 
-  const planStr = planLabel ? `${provider.name} ${planLabel}` : provider.name;
-  const seatStr = seats === 1 ? '1 seat' : `${seats} seats`;
-  const spendStr = `$${monthlySpend}/mo`;
-
-  // ── Helper: seat-scale context phrase ────────────────────────
   function seatContext(): string {
     if (seatScale === 'solo') return 'your individual setup';
     if (seatScale === 'small') return `your ${seats}-person team`;
@@ -485,7 +511,6 @@ export function buildAuditAwareReport(
     return `your ${seats}-seat organization`;
   }
 
-  // ── Helper: spend-scale qualifier ────────────────────────────
   function spendQualifier(): string {
     if (spendScale === 'trivial') return 'a modest';
     if (spendScale === 'moderate') return 'a moderate';
@@ -493,7 +518,6 @@ export function buildAuditAwareReport(
     return 'an enterprise-level';
   }
 
-  // ── Helper: savings-urgency framing ──────────────────────────
   function savingsFrame(savingMo: number, savingYr: number): string {
     if (savingsUrgency === 'negligible') return `saves $${savingMo}/mo ($${savingYr}/year)`;
     if (savingsUrgency === 'notable') return `recovers $${savingMo}/mo — $${savingYr}/year in contract savings`;
@@ -502,7 +526,8 @@ export function buildAuditAwareReport(
   }
 
   // ── Executive Summary — Dynamic, insight-type specific ───────
-  let executiveSummary = '';
+  let executiveSummary: string;
+
 
   if (insight.type === 'annual_discount') {
     if (savingsUrgency === 'negligible') {
@@ -608,7 +633,7 @@ export function buildAuditAwareReport(
     if (memoryScore >= 7) underutilizedFeatures.push({ name: 'Custom GPTs & Memory Base', context: 'Low team adoption for pure coding tasks' });
   } else if (useCaseFocus === 'writing') {
     if (writingScore >= 7 || reasoningScore >= 7) activelyUsedFeatures.push({ name: 'Writing & Composition Quality', context: 'Primary content creation workflow' });
-    if (caps.editing?.score || 7) activelyUsedFeatures.push({ name: 'Editing, Grammar & Rewriting', context: 'Refining tone & document structure' });
+    if ((caps.editing?.score ?? 7) >= 7) activelyUsedFeatures.push({ name: 'Editing, Grammar & Rewriting', context: 'Refining tone & document structure' });
     if (longContextScore >= 7) activelyUsedFeatures.push({ name: 'Long-Form Document Generation', context: 'Extended manuscript & report drafting' });
     if (reasoningScore >= 8) activelyUsedFeatures.push({ name: 'Content Planning & Structure', context: 'Outlining & logical flow' });
 
@@ -616,7 +641,7 @@ export function buildAuditAwareReport(
     if (codingScore >= 7) underutilizedFeatures.push({ name: 'Code Generation & Autocomplete', context: 'Paid in subscription but unused by writers' });
     if (caps.api?.score || 0) underutilizedFeatures.push({ name: 'Developer Console & API Keys', context: 'Unused technical features' });
   } else if (useCaseFocus === 'research') {
-    if (researchScore >= 7 || caps.webSearch?.score || 7) activelyUsedFeatures.push({ name: 'Web Search & Real-Time Grounding', context: 'Live web & cited search active' });
+    if (researchScore >= 7 || (caps.webSearch?.score ?? 7) >= 7) activelyUsedFeatures.push({ name: 'Web Search & Real-Time Grounding', context: 'Live web & cited search active' });
     if (longContextScore >= 7) activelyUsedFeatures.push({ name: 'Long-Context & PDF Synthesis', context: 'Parsing lengthy whitepapers & docs' });
     if (reasoningScore >= 8) activelyUsedFeatures.push({ name: 'Deep Research & Multi-Step Reasoning', context: 'Complex investigative synthesis' });
     if (visionScore >= 7) activelyUsedFeatures.push({ name: 'Document & Diagram Visual Parsing', context: 'Extracting data from charts & images' });
@@ -625,7 +650,7 @@ export function buildAuditAwareReport(
     if (codingScore >= 7) underutilizedFeatures.push({ name: 'Code Interpreter & Syntax Execution', context: 'Technical code generation underutilized' });
     if (voiceScore < 6) underutilizedFeatures.push({ name: 'Voice Interaction Mode', context: 'Secondary feature for research synthesis' });
   } else if (useCaseFocus === 'data') {
-    if (codingScore >= 7 || caps.codeInterpreter?.score || 7) activelyUsedFeatures.push({ name: 'Python Execution & Code Interpreter', context: 'Data transformation & analysis' });
+    if (codingScore >= 7 || (caps.codeInterpreter?.score ?? 7) >= 7) activelyUsedFeatures.push({ name: 'Python Execution & Code Interpreter', context: 'Data transformation & analysis' });
     if (reasoningScore >= 8) activelyUsedFeatures.push({ name: 'Data Reasoning & Quantitative Logic', context: 'Statistical evaluation & calculations' });
     if (visionScore >= 7) activelyUsedFeatures.push({ name: 'Chart & Visualization Generation', context: 'Rendering plots & visual reports' });
     if (longContextScore >= 7) activelyUsedFeatures.push({ name: 'CSV & Large Dataset Support', context: 'Parsing tabular data files' });
@@ -686,7 +711,7 @@ export function buildAuditAwareReport(
   }
 
   // Consultant Verdict (Audit-Aware, Scale-Dynamic)
-  let consultantVerdict = '';
+  let consultantVerdict: string;
   if (insight.type === 'annual_discount') {
     if (savingsUrgency === 'negligible') {
       consultantVerdict = `The ${planStr} plan tier is correctly selected. Switch to annual billing to capture the available $${annualSaving}/year saving — a simple billing change with no operational impact.`;
