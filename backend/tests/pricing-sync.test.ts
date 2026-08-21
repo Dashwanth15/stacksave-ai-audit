@@ -447,4 +447,174 @@ describe('Provider Coverage Completeness & Official Adapters', () => {
   });
 });
 
+// ────────────────────────────────────────────────────────────────────────────
+// 8. PRODUCTION GITHUB ACTIONS RUNNER & INGESTION PIPELINE TESTS
+// ────────────────────────────────────────────────────────────────────────────
+
+describe('Production GitHub Actions Runner & Ingestion Verification', () => {
+  const originalEnv = { ...process.env };
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    global.fetch = originalFetch;
+  });
+
+  it('validateEnvironmentPreflight fails loudly in CI if BACKEND_URL is missing', async () => {
+    const { validateEnvironmentPreflight } = await import('../scripts/official_pricing_extractor');
+    process.env.CI = 'true';
+    process.env.BACKEND_URL = '';
+    process.env.ADMIN_SECRET = 'test-secret';
+
+    const check = validateEnvironmentPreflight();
+    expect(check.isValid).toBe(false);
+    expect(check.error).toContain('BACKEND_URL');
+  });
+
+  it('validateEnvironmentPreflight fails loudly in CI if ADMIN_SECRET is missing', async () => {
+    const { validateEnvironmentPreflight } = await import('../scripts/official_pricing_extractor');
+    process.env.CI = 'true';
+    process.env.BACKEND_URL = 'https://stacksave-backend.onrender.com';
+    process.env.ADMIN_SECRET = '';
+
+    const check = validateEnvironmentPreflight();
+    expect(check.isValid).toBe(false);
+    expect(check.error).toContain('ADMIN_SECRET');
+  });
+
+  it('validateEnvironmentPreflight succeeds in CI when all secrets are present', async () => {
+    const { validateEnvironmentPreflight } = await import('../scripts/official_pricing_extractor');
+    process.env.CI = 'true';
+    process.env.BACKEND_URL = 'https://stacksave-backend.onrender.com';
+    process.env.ADMIN_SECRET = 'valid-secret-token';
+
+    const check = validateEnvironmentPreflight();
+    expect(check.isValid).toBe(true);
+  });
+
+  it('validateEnvironmentPreflight allows local development without ADMIN_SECRET', async () => {
+    const { validateEnvironmentPreflight } = await import('../scripts/official_pricing_extractor');
+    delete process.env.CI;
+    delete process.env.GITHUB_ACTIONS;
+    delete process.env.ADMIN_SECRET;
+
+    const check = validateEnvironmentPreflight();
+    expect(check.isValid).toBe(true);
+  });
+
+  it('ingestPayloadToBackend returns failure when ADMIN_SECRET is missing', async () => {
+    const { ingestPayloadToBackend } = await import('../scripts/official_pricing_extractor');
+    const dummyPayload = {
+      runnerVersion: '2.0.0-playwright-official',
+      executedAt: new Date(),
+      providers: [],
+    };
+
+    const res = await ingestPayloadToBackend(dummyPayload, 'http://localhost:3000', '');
+    expect(res.success).toBe(false);
+    expect(res.error).toContain('ADMIN_SECRET is missing');
+  });
+
+  it('ingestPayloadToBackend handles non-2xx HTTP errors gracefully', async () => {
+    const { ingestPayloadToBackend } = await import('../scripts/official_pricing_extractor');
+    const dummyPayload = {
+      runnerVersion: '2.0.0-playwright-official',
+      executedAt: new Date(),
+      providers: [],
+    };
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => 'Unauthorized: Invalid admin secret',
+    });
+    global.fetch = mockFetch as any;
+
+    const res = await ingestPayloadToBackend(dummyPayload, 'http://localhost:3000', 'invalid-secret');
+    expect(res.success).toBe(false);
+    expect(res.statusCode).toBe(401);
+    expect(res.error).toContain('HTTP 401');
+  });
+
+  it('ingestPayloadToBackend handles invalid JSON response without crashing', async () => {
+    const { ingestPayloadToBackend } = await import('../scripts/official_pricing_extractor');
+    const dummyPayload = {
+      runnerVersion: '2.0.0-playwright-official',
+      executedAt: new Date(),
+      providers: [],
+    };
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => { throw new Error('Unexpected token < in JSON'); },
+    });
+    global.fetch = mockFetch as any;
+
+    const res = await ingestPayloadToBackend(dummyPayload, 'http://localhost:3000', 'valid-secret');
+    expect(res.success).toBe(false);
+    expect(res.error).toContain('not valid JSON');
+  });
+
+  it('official extraction runner produces 13 providers without OpenRouter dependency', async () => {
+    const { chromium } = await import('playwright');
+    const mockPage = {
+      goto: vi.fn().mockResolvedValue(undefined),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+      evaluate: vi.fn().mockResolvedValue([]),
+      content: vi.fn().mockResolvedValue('<html><body>Pricing</body></html>'),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+    const mockContext = {
+      newPage: vi.fn().mockResolvedValue(mockPage),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+    const mockBrowser = {
+      newContext: vi.fn().mockResolvedValue(mockContext),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+    vi.spyOn(chromium, 'launch').mockResolvedValue(mockBrowser as any);
+
+    const { runOfficialExtraction } = await import('../scripts/official_pricing_extractor');
+    const payload = await runOfficialExtraction('both');
+
+    expect(payload.providers).toHaveLength(13);
+    for (const p of payload.providers) {
+      expect(p.sourceUrl).not.toContain('openrouter');
+      expect(p.sourceUrl).toMatch(/^https?:\/\//);
+      expect(p.plans.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('official extraction respects pricing sync target filtering', async () => {
+    const { chromium } = await import('playwright');
+    const mockPage = {
+      goto: vi.fn().mockResolvedValue(undefined),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+      evaluate: vi.fn().mockResolvedValue([]),
+      content: vi.fn().mockResolvedValue('<html><body>Pricing</body></html>'),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+    const mockContext = {
+      newPage: vi.fn().mockResolvedValue(mockPage),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+    const mockBrowser = {
+      newContext: vi.fn().mockResolvedValue(mockContext),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+    vi.spyOn(chromium, 'launch').mockResolvedValue(mockBrowser as any);
+
+    const { runOfficialExtraction } = await import('../scripts/official_pricing_extractor');
+    const payload = await runOfficialExtraction('pricing');
+
+    expect(payload.providers).toHaveLength(13);
+    for (const p of payload.providers) {
+      expect(p.offers).toHaveLength(0);
+    }
+  });
+});
+
+
+
 

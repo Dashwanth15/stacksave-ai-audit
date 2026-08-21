@@ -433,8 +433,9 @@ async function extractKimi(browser: Browser): Promise<OfficialExtractedProviderD
 
 // ── Main Extractor Execution ──────────────────────────────────
 
-export async function runOfficialExtraction(): Promise<OfficialIngestPayload> {
+export async function runOfficialExtraction(syncTarget: string = 'both'): Promise<OfficialIngestPayload> {
   console.log('========================================================================================');
+
   console.log('STACKSAVE AI AUDIT — OFFICIAL SOURCE EXTRACTION RUNNER (PLAYWRIGHT + FAST STATIC)');
   console.log('========================================================================================\n');
 
@@ -587,13 +588,128 @@ export async function runOfficialExtraction(): Promise<OfficialIngestPayload> {
     providers: extractedProviders,
   };
 
+  if (syncTarget === 'pricing') {
+    for (const p of payload.providers) {
+      p.offers = [];
+    }
+  }
+
   return payload;
+}
+
+// ── Environment Preflight & Ingestion Helpers ─────────────────
+
+export function validateEnvironmentPreflight(): { isValid: boolean; error?: string } {
+  const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+  const backendUrl = (process.env.BACKEND_URL || '').trim();
+  const adminSecret = (process.env.ADMIN_SECRET || '').trim();
+
+  if (isCI) {
+    if (!backendUrl) {
+      return {
+        isValid: false,
+        error: 'BACKEND_URL is not set in GitHub Secrets. Please add BACKEND_URL (e.g. https://stacksave-backend.onrender.com) to GitHub Repository Settings -> Secrets and variables -> Actions.',
+      };
+    }
+    if (!adminSecret) {
+      return {
+        isValid: false,
+        error: 'ADMIN_SECRET is not set in GitHub Secrets. Please add ADMIN_SECRET to GitHub Repository Settings -> Secrets and variables -> Actions.',
+      };
+    }
+  }
+  return { isValid: true };
+}
+
+export async function ingestPayloadToBackend(
+  payload: OfficialIngestPayload,
+  backendUrl: string,
+  adminSecret: string
+): Promise<{ success: boolean; data?: any; error?: string; statusCode?: number }> {
+  if (!adminSecret) {
+    return {
+      success: false,
+      error: 'ADMIN_SECRET is missing. Cannot authenticate ingestion request.',
+    };
+  }
+
+  const endpoint = `${backendUrl.replace(/\/+$/, '')}/api/admin/pricing/ingest`;
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Secret': adminSecret,
+        'Authorization': `Bearer ${adminSecret}`,
+        'X-Triggered-By': 'github_actions_playwright',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const statusCode = res.status;
+    if (!res.ok) {
+      const errorText = await res.text();
+      return {
+        success: false,
+        statusCode,
+        error: `Server returned HTTP ${statusCode}: ${errorText}`,
+      };
+    }
+
+    let json: any;
+    try {
+      json = await res.json();
+    } catch {
+      return {
+        success: false,
+        statusCode,
+        error: 'Response from /api/admin/pricing/ingest was not valid JSON',
+      };
+    }
+
+    if (!json.success || !json.data) {
+      return {
+        success: false,
+        statusCode,
+        error: json.error || 'Server responded with success=false',
+      };
+    }
+
+    return {
+      success: true,
+      statusCode,
+      data: json.data,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      success: false,
+      error: `Connection error reaching ${endpoint}: ${msg}`,
+    };
+  }
 }
 
 // ── Runner CLI Main Execution ─────────────────────────────────
 
-async function main() {
-  const payload = await runOfficialExtraction();
+export async function main() {
+  console.log('════════════════════════════════════════════════════════════════════════════════════════');
+  console.log('STACKSAVE AI AUDIT — OFFICIAL PRICING & OFFER INTELLIGENCE RUNNER (PLAYWRIGHT + STATIC)');
+  console.log('════════════════════════════════════════════════════════════════════════════════════════');
+
+  const preflight = validateEnvironmentPreflight();
+  if (!preflight.isValid) {
+    console.error(`\n❌ [Preflight Failure] ${preflight.error}\n`);
+    process.exit(1);
+  }
+
+  const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+  const rawBackendUrl = (process.env.BACKEND_URL || (isCI ? '' : 'http://localhost:3000')).trim();
+  const adminSecret = (process.env.ADMIN_SECRET || '').trim();
+  const syncTarget = (process.env.SYNC_TARGET || 'both').toLowerCase();
+
+  console.log(`[Config] Target: ${syncTarget} | Mode: ${isCI ? 'GitHub Actions Production' : 'Local Development'}`);
+
+  const payload = await runOfficialExtraction(syncTarget);
 
   console.log('\n========================================================================================================================');
   console.log('OFFICIAL SOURCE EXTRACTION SUMMARY (ALL 13 PROVIDERS)');
@@ -620,34 +736,32 @@ async function main() {
   }
   console.log('========================================================================================================================\n');
 
-  // Ingest into backend if configured
-  if (ADMIN_SECRET) {
-    console.log(`[Ingest] Sending verified payload to backend: ${BACKEND_URL}/api/admin/pricing/ingest...`);
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/admin/pricing/ingest`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Secret': ADMIN_SECRET,
-          'X-Triggered-By': 'github_actions_playwright',
-        },
-        body: JSON.stringify(payload),
-      });
+  if (payload.providers.length < 13) {
+    console.error(`❌ [Extraction Failure] Expected 13 providers, but only extracted ${payload.providers.length}. Failing workflow.`);
+    process.exit(1);
+  }
 
-      if (!res.ok) {
-        const text = await res.text();
-        console.error(`[Ingest] Ingestion failed HTTP ${res.status}: ${text}`);
-        process.exit(1);
-      }
+  // If in CI or ADMIN_SECRET is set, perform authenticated production ingestion
+  if (adminSecret && rawBackendUrl) {
+    console.log(`[Ingest] Sending verified payload to backend: ${rawBackendUrl}/api/admin/pricing/ingest...`);
+    const ingestResult = await ingestPayloadToBackend(payload, rawBackendUrl, adminSecret);
 
-      const json = await res.json();
-      console.log(`✅ [Ingest] Successfully ingested into backend! SyncRunId: ${json.data?.syncRunId}`);
-    } catch (err: any) {
-      console.error(`[Ingest] Connection error: ${err.message}`);
+    if (!ingestResult.success) {
+      console.error(`❌ [Ingest Failure] ${ingestResult.error}`);
       process.exit(1);
     }
+
+    const data = ingestResult.data;
+    console.log(`✅ [Ingest Success] Successfully ingested ${data?.totalProviders || payload.providers.length} providers into production database!`);
+    console.log(`   SyncRunId: ${data?.syncRunId}`);
+    console.log(`   Verified: ${data?.successCount} | Stale: ${data?.staleCount} | Price Changes: ${data?.priceChangeCount}`);
   } else {
-    console.log('ℹ ADMIN_SECRET not set in local environment — skipping remote HTTP POST. Testing direct DB ingestion via unit tests.');
+    if (isCI) {
+      console.error('❌ [Ingest Failure] Missing ADMIN_SECRET or BACKEND_URL in CI environment.');
+      process.exit(1);
+    } else {
+      console.log('ℹ [Local Dev] ADMIN_SECRET not set in local environment — skipping remote HTTP POST. Testing direct DB ingestion via unit tests.');
+    }
   }
 
   process.exit(0);
@@ -659,3 +773,5 @@ if (require.main === module) {
     process.exit(1);
   });
 }
+
+

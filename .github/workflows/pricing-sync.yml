@@ -1,22 +1,24 @@
 name: Official AI Pricing & Offer Intelligence Sync
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# REQUIRED GITHUB REPOSITORY SECRETS (Settings → Secrets → Actions):
+# REQUIRED GITHUB REPOSITORY SECRETS (Settings → Secrets and variables → Actions):
 #
 #   BACKEND_URL   The full base URL of the deployed backend.
 #                 Value: https://stacksave-backend.onrender.com
 #
 #   ADMIN_SECRET  The same secret configured in Render Dashboard →
 #                 stacksave-backend → Environment → ADMIN_SECRET.
-#                 Generate: openssl rand -hex 32
 #                 Must be identical in BOTH Render and GitHub Secrets.
 #
 # Runs daily at 02:00 UTC and on workflow_dispatch.
 # Flow:
 #   1. Runs Playwright Chromium headless runner on Ubuntu 16GB runner
-#   2. Extracts live official rates (Claude, Gemini, ChatGPT, Cursor, etc.)
-#   3. POSTs structured payload to BACKEND_URL/api/admin/pricing/ingest
-#   4. Backend validates, updates MongoDB, and patches Recommendation Engine
+#   2. Extracts live official rates (Cursor, Copilot, DeepSeek, Claude, Gemini, ChatGPT, etc.)
+#   3. Extracts official public offers (trials, student discounts, annual savings)
+#   4. Authenticated POST to BACKEND_URL/api/admin/pricing/ingest
+#   5. Backend validates, updates MongoDB, records history & deduplicates offers
+#   6. PricingOverlayService & KnowledgeLoader update recommendation engine in real time
+#   7. Verifies live production /api/intelligence/pricing-status authority summary
 # ═══════════════════════════════════════════════════════════════════════════════
 
 on:
@@ -24,6 +26,16 @@ on:
     # Run daily at 02:00 UTC (low-traffic window)
     - cron: '0 2 * * *'
   workflow_dispatch:
+    inputs:
+      target:
+        description: 'Sync Target (both, pricing, offers)'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - pricing
+          - offers
 
 jobs:
   official-pricing-sync:
@@ -50,47 +62,90 @@ jobs:
         working-directory: backend
         run: npx playwright install --with-deps chromium
 
-      - name: Run Official Pricing & Offer Extractor (Playwright + Fast Static)
+      - name: Preflight Secret Verification
+        run: |
+          echo "▶ Verifying GitHub Actions Production Environment Secrets..."
+          if [ -z "${{ secrets.BACKEND_URL }}" ]; then
+            echo "❌ [Preflight Error] BACKEND_URL secret is missing in GitHub Repository Secrets!"
+            echo "   Please navigate to: Repository Settings -> Secrets and variables -> Actions -> New repository secret"
+            echo "   Name: BACKEND_URL"
+            echo "   Value: https://stacksave-backend.onrender.com"
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.ADMIN_SECRET }}" ]; then
+            echo "❌ [Preflight Error] ADMIN_SECRET secret is missing in GitHub Repository Secrets!"
+            echo "   Please navigate to: Repository Settings -> Secrets and variables -> Actions -> New repository secret"
+            echo "   Name: ADMIN_SECRET"
+            echo "   Value: (The ADMIN_SECRET configured in your Render dashboard environment)"
+            exit 1
+          fi
+
+          echo "✅ Preflight Secrets verified: BACKEND_URL is configured and ADMIN_SECRET is present."
+
+      - name: Run Official Pricing & Offer Extractor & Production Ingestion (Playwright + Fast Static)
         working-directory: backend
         env:
           BACKEND_URL: ${{ secrets.BACKEND_URL }}
           ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
+          SYNC_TARGET: ${{ inputs.target || 'both' }}
+          CI: 'true'
         run: npx tsx scripts/official_pricing_extractor.ts
 
-      - name: Run Server-Side Offer Monitor Scan
+      - name: Verify Live Production Authority Status Summary
         run: |
-          echo "▶ Running server-side offer scan verification..."
-          HTTP_STATUS=$(curl -s -o /tmp/offers_response.json -w "%{http_code}" \
-            -X POST "${{ secrets.BACKEND_URL }}/api/admin/offers/scan" \
-            -H "Authorization: Bearer ${{ secrets.ADMIN_SECRET }}" \
-            -H "Content-Type: application/json" \
-            --max-time 120)
-          echo "HTTP Status: $HTTP_STATUS"
-          cat /tmp/offers_response.json | python3 -m json.tool 2>/dev/null || cat /tmp/offers_response.json
+          echo "▶ Querying live intelligence pricing status from production backend..."
+          HTTP_STATUS=$(curl -s -w "%{http_code}" -o /tmp/status_response.json \
+            "${{ secrets.BACKEND_URL }}/api/intelligence/pricing-status" \
+            --max-time 30)
+
+          echo "HTTP Response Status: $HTTP_STATUS"
           if [ "$HTTP_STATUS" -ne 200 ]; then
-            echo "❌ Offer scan returned non-200 status: $HTTP_STATUS"
+            echo "❌ [Verification Failure] Pricing status endpoint returned non-200 HTTP code: $HTTP_STATUS"
+            cat /tmp/status_response.json
             exit 1
           fi
-          echo "✅ Offer scan complete"
 
-      - name: Check Final Authority Status Summary
-        if: ${{ always() }}
-        run: |
-          echo "▶ Fetching intelligence pricing status summary..."
-          curl -s \
-            "${{ secrets.BACKEND_URL }}/api/intelligence/pricing-status" \
-            | python3 -c "
+          python3 -c "
           import sys, json
-          try:
-              data = json.load(sys.stdin)
-              providers = data.get('data', {}).get('providers', [])
-              print(f'Total providers tracked: {len(providers)}')
-              for p in providers:
-                  status = p.get('syncStatus', 'UNKNOWN')
-                  cat = p.get('authorityCategory', '')
-                  icon = '✅' if status == 'VERIFIED' else ('⚠️' if status == 'STALE' else 'ℹ️')
-                  print(f'  {icon} {p.get(\"displayName\", p.get(\"providerId\"))}: {status} ({cat})')
-          except Exception as e:
-              print(f'Summary parse note: {e}')
-          "
 
+          try:
+              with open('/tmp/status_response.json') as f:
+                  data = json.load(f)
+          except Exception as e:
+              print(f'❌ [Verification Failure] Failed to parse JSON from /api/intelligence/pricing-status: {e}')
+              sys.exit(1)
+
+          if not data.get('success'):
+              print(f'❌ [Verification Failure] Backend returned success=false: {data}')
+              sys.exit(1)
+
+          providers = data.get('data', {}).get('providers', [])
+          summary = data.get('data', {}).get('summary', {})
+          total = len(providers)
+          verified = summary.get('verifiedCount', 0)
+          health = summary.get('overallHealth', 'UNKNOWN')
+
+          print('\n════════════════════════════════════════════════════════════════════════════════════════')
+          print(f'LIVE PRODUCTION AUTHORITY STATUS: {total}/13 PROVIDERS TRACKED')
+          print(f'Verified: {verified} | Stale: {summary.get(\"staleCount\", 0)} | Overall Health: {health}')
+          print('════════════════════════════════════════════════════════════════════════════════════════')
+          print(f'{\"Provider\":<18} {\"Sync Status\":<14} {\"Engine Overlay\":<16} {\"Authority Category\"}')
+          print('-' * 90)
+
+          for p in providers:
+              name = p.get('displayName', p.get('providerId', 'Unknown'))
+              status = p.get('syncStatus', 'UNKNOWN')
+              engine = p.get('engineStatus', 'UNKNOWN')
+              cat = p.get('authorityCategory', '')
+              icon = '✅' if status == 'VERIFIED' else ('⚠️' if status == 'STALE' else 'ℹ️')
+              print(f'{icon} {name:<16} {status:<14} {engine:<16} {cat}')
+
+          print('════════════════════════════════════════════════════════════════════════════════════════\n')
+
+          if total < 13:
+              print(f'❌ [Verification Failure] Expected 13 providers in production status, but found {total}')
+              sys.exit(1)
+
+          print('✅ Production authority verification successfully completed!')
+          "
