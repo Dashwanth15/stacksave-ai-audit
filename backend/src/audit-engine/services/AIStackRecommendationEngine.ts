@@ -223,9 +223,21 @@ export class AIStackRecommendationEngine {
       const applicationRanking = allProviderScores.filter(p => p.category !== 'api');
       const apiRanking = allProviderScores.filter(p => p.category === 'api');
 
+      // Trace how the working domain was resolved so a fired neutral fallback is auditable.
+      const domainExplicitlyProvided = Boolean(
+        (rawReq.domain && DOMAIN_LABELS[rawReq.domain]) ||
+        (rawReq.primaryWorkflow && DOMAIN_LABELS[rawReq.primaryWorkflow]) ||
+        (rawReq.engineeringFocus && rawReq.engineeringFocus[0] && DOMAIN_LABELS[rawReq.engineeringFocus[0]])
+      );
+
       response.trace = {
         requestId: recommendationId,
         timestamp: new Date().toISOString(),
+        domainResolution: {
+          rawDomain: rawReq.domain ?? null,
+          resolvedDomain: domain,
+          usedNeutralFallback: !domainExplicitlyProvided
+        },
         inputs: {
           domain,
           domainLabel: userContextSummary.domainLabel,
@@ -262,7 +274,7 @@ export class AIStackRecommendationEngine {
     weights: any
   ): CategoryResult {
     const meta = STRATEGY_METAS[strategy];
-    const domain = req.domain || req.primaryWorkflow || 'software-engineering';
+    const domain = req.domain || req.primaryWorkflow || 'general-productivity';
     const requirements = req.requirements || req.mustHaveFeatures || [];
 
     // Separate Workspace Applications from Developer APIs
@@ -623,7 +635,7 @@ export class AIStackRecommendationEngine {
     forceSingleTool: boolean = false,
     forcedSecondarySeed?: ScoredProviderProfile
   ): StructuredStack {
-    const domain = req.domain || req.primaryWorkflow || 'software-engineering';
+    const domain = req.domain || req.primaryWorkflow || 'general-productivity';
     const requirements = req.requirements || req.mustHaveFeatures || [];
     const teamSize = req.teamSize;
 
@@ -1166,7 +1178,7 @@ export class AIStackRecommendationEngine {
     strategy: StackStrategy,
     allScored: ScoredProviderProfile[]
   ): RejectedAlternative {
-    const domain = req.domain || req.primaryWorkflow || 'software-engineering';
+    const domain = req.domain || req.primaryWorkflow || 'general-productivity';
     const requirements = req.requirements || req.mustHaveFeatures || [];
     const domainScore = WorkflowEngine.calculateSuitability(p.raw, domain);
     const primary = bestStack.primary;
@@ -1337,7 +1349,7 @@ export class AIStackRecommendationEngine {
       'openai-api': 70,
       'github-models': 50
     },
-    'autonomous-terminal': {
+    'automated-task-execution': {
       'windsurf': 100,
       'cursor': 92,
       'github-copilot': 65,
@@ -1419,7 +1431,7 @@ export class AIStackRecommendationEngine {
     weights: any,
     strategy: StackStrategy = 'balanced'
   ): number {
-    const domain = req.domain || req.primaryWorkflow || 'software-engineering';
+    const domain = req.domain || req.primaryWorkflow || 'general-productivity';
     const requirements = req.requirements || req.mustHaveFeatures || [];
 
     const domainScore = WorkflowEngine.calculateSuitability(p.raw, domain);
@@ -1621,7 +1633,7 @@ export class AIStackRecommendationEngine {
     if (req.engineeringFocus && req.engineeringFocus.length > 0 && DOMAIN_LABELS[req.engineeringFocus[0]]) {
       return req.engineeringFocus[0];
     }
-    return 'software-engineering';
+    return 'general-productivity';
   }
 
   private static normalizeRequirements(req: StackBuilderRequest): string[] {
