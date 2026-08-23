@@ -1,4 +1,76 @@
 {
+  "software-engineering": {
+    "coding": 10,
+    "autocomplete": 10,
+    "multiFileEditing": 10,
+    "aiAgent": 9,
+    "terminalIntegration": 9,
+    "largeCodebaseUnderstanding": 9,
+    "reasoning": 8,
+    "ideIntegration": 8,
+    "githubIntegration": 7
+  },
+  "ai-data-ml": {
+    "api": 10,
+    "functionCalling": 10,
+    "reasoning": 10,
+    "embeddings": 9,
+    "aiAgent": 8,
+    "coding": 8,
+    "longContext": 8,
+    "research": 7
+  },
+  "research-knowledge": {
+    "research": 10,
+    "longContext": 10,
+    "reasoning": 10,
+    "memory": 8,
+    "vision": 7,
+    "imageUnderstanding": 7,
+    "planning": 6
+  },
+  "product-design": {
+    "reasoning": 10,
+    "vision": 10,
+    "imageUnderstanding": 10,
+    "planning": 9,
+    "writing": 8,
+    "architectureDesign": 8,
+    "multiFileEditing": 6
+  },
+  "business-operations": {
+    "functionCalling": 10,
+    "reasoning": 9,
+    "planning": 9,
+    "reliability": 9,
+    "writing": 8,
+    "sso": 8,
+    "enterpriseSecurity": 8,
+    "memory": 7
+  },
+  "content-communication": {
+    "writing": 10,
+    "reasoning": 9,
+    "longContext": 9,
+    "memory": 7,
+    "planning": 6
+  },
+  "enterprise-compliance": {
+    "enterpriseSecurity": 10,
+    "sso": 10,
+    "auditLogs": 10,
+    "adminControls": 10,
+    "reasoning": 8,
+    "reliability": 9
+  },
+  "general-productivity": {
+    "reasoning": 9,
+    "writing": 9,
+    "coding": 7,
+    "research": 8,
+    "memory": 7,
+    "vision": 7
+  },
   "coding": {
     "coding": 10,
     "reasoning": 9,

@@ -22,27 +22,24 @@ async function runMultiAuthorityAudit() {
   const inputTools: ToolEntry[] = [
     {
       toolId: 'cursor',
-      name: 'Cursor',
-      tier: 'pro',
+      plan: 'pro',
       seats: 5,
       monthlySpend: 100, // 5 seats * $20
-      features: ['autocomplete', 'agent', 'multi-file-editing'],
+      useCase: 'coding',
     },
     {
       toolId: 'claude',
-      name: 'Claude',
-      tier: 'pro',
+      plan: 'pro',
       seats: 5,
       monthlySpend: 100, // 5 seats * $20
-      features: ['reasoning', 'coding', 'long-context'],
+      useCase: 'coding',
     },
     {
       toolId: 'deepseek',
-      name: 'DeepSeek',
-      tier: 'pay_per_use',
+      plan: 'pay_per_use',
       seats: 5,
       monthlySpend: 15,  // API usage estimate
-      features: ['reasoning', 'coding'],
+      useCase: 'coding',
     },
   ];
 
@@ -76,9 +73,8 @@ async function runMultiAuthorityAudit() {
     console.log(`[${ins.type.toUpperCase()}] [${ins.severity.toUpperCase()}] ${ins.toolName || ins.toolId}`);
     console.log(`  Message: ${ins.message}`);
     console.log(`  Potential Monthly Saving: $${ins.potentialMonthlySaving}/mo`);
-    if (ins.actionableSteps && ins.actionableSteps.length > 0) {
-      console.log(`  Actionable Steps:`);
-      ins.actionableSteps.forEach(step => console.log(`    - ${step}`));
+    if (ins.suggestion) {
+      console.log(`  Suggestion: ${ins.suggestion}`);
     }
     console.log();
   }

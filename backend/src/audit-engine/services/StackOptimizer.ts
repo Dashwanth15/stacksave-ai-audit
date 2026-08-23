@@ -141,27 +141,36 @@ export class StackOptimizer {
     const mustHaves = req.mustHaveFeatures;
 
     // Convert scored profiles to ToolsInStack
-    const tools: ToolInStack[] = pStack.map(p => {
+    const tools: ToolInStack[] = pStack.map((p, idx) => {
       const cheapest = p.plans.length > 0 ? Math.min(...p.plans.map(pl => pl.monthlyPricePerSeat)) : 0;
       const targetPlan = p.plans.find(pl => pl.monthlyPricePerSeat === cheapest)?.label || 'Pro';
       
       const highlights = p.raw.strengths ? p.raw.strengths.slice(0, 3) : [];
       const reasons = [
-        `Ranked high for primary workflow "${req.primaryWorkflow}" (${WorkflowEngine.calculateSuitability(p.raw, req.primaryWorkflow)}% suitability).`,
+        `Ranked high for primary workflow "${req.primaryWorkflow || req.domain}" (${WorkflowEngine.calculateSuitability(p.raw, req.primaryWorkflow || req.domain || 'general')}% suitability).`,
         `Cost efficient option at $${cheapest}/seat/mo.`
       ];
 
-      const featuresCovered = StackCoverageAnalyzer.newFeaturesCovered(p, [], mustHaves);
+      const featuresCovered = StackCoverageAnalyzer.newFeaturesCovered(p, [], mustHaves || []);
+      const role = idx === 0 ? 'primary' : 'secondary';
+      const buyingPriority = idx === 0 ? '01 PRIMARY' : '02 SECONDARY';
+      const priorityLabel = idx === 0 ? 'Buy this first' : 'Recommended companion';
 
       return {
         toolId: p.id,
         toolName: p.name,
         category: p.category,
         vendor: p.vendor,
+        role,
+        buyingPriority,
+        priorityLabel,
         recommendedPlan: targetPlan,
+        monthlyCostPerSeat: cheapest,
         estimatedMonthlyCostPerTeam: cheapest * teamSize,
-        workflowFitScore: WorkflowEngine.calculateSuitability(p.raw, req.primaryWorkflow),
+        workflowFitScore: WorkflowEngine.calculateSuitability(p.raw, req.primaryWorkflow || req.domain || 'general'),
         capabilityHighlights: highlights,
+        whyRecommended: reasons[0],
+        uniqueValueAdded: `${p.category.toUpperCase()} layer for ${req.domain || 'team workflow'}.`,
         reasons,
         featuresCovered
       };
@@ -169,20 +178,19 @@ export class StackOptimizer {
 
     const estimatedMonthlyCost = tools.reduce((sum, t) => sum + t.estimatedMonthlyCostPerTeam, 0);
     const estimatedAnnualCost = estimatedMonthlyCost * 12;
+    const perSeatMonthlyCost = tools.reduce((sum, t) => sum + t.monthlyCostPerSeat, 0);
 
-    const coverageResult = StackCoverageAnalyzer.analyze(pStack, mustHaves);
+    const coverageResult = StackCoverageAnalyzer.analyze(pStack, mustHaves || []);
 
     let workflowFitScore = 0;
     if (pStack.length > 0) {
-      const scores = pStack.map(p => WorkflowEngine.calculateSuitability(p.raw, req.primaryWorkflow));
+      const scores = pStack.map(p => WorkflowEngine.calculateSuitability(p.raw, req.primaryWorkflow || req.domain || 'general'));
       workflowFitScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
     }
 
-    let capabilityCoverageScore = 0;
-    if (pStack.length > 0) {
-      const scores = pStack.map(p => p.benchmarkScore);
-      capabilityCoverageScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-    }
+    const capabilityCoverageScore = pStack.length > 0
+      ? Math.round(pStack.reduce((sum, p) => sum + p.benchmarkScore, 0) / pStack.length)
+      : 0;
 
     // Determine budget status
     let budgetStatus: RankedStack['budgetStatus'] = 'no-limit';
@@ -210,11 +218,10 @@ export class StackOptimizer {
     }
 
     // Stack Capability Superiority compared to average provider score
-    const stackAvgCap = capabilityCoverageScore;
-    const capabilitySuperiorityFactor = Math.round(stackAvgCap);
+    const capabilitySuperiorityFactor = capabilityCoverageScore;
 
     // Security factor
-    const securityRequest = mustHaves.some(f => f === 'enterprise-sso' || f === 'hipaa-soc2' || f === 'private-deployment');
+    const securityRequest = (mustHaves || []).some(f => f === 'enterprise-sso' || f === 'hipaa-soc2' || f === 'private-deployment');
     const stackAvgSecurity = pStack.length > 0
       ? Math.round(pStack.reduce((sum, p) => sum + p.securityScore, 0) / pStack.length)
       : 50;
@@ -239,13 +246,21 @@ export class StackOptimizer {
     ));
 
     const tradeoffs = this.deriveStackTradeoffs(pStack, req);
+    const strengths = ['Integrated toolchain providing balanced capability coverage without duplicate redundancy.'];
+    const whyThisStack = `Optimized stack configuration satisfying target requirements for ${req.domain || req.primaryWorkflow || 'your domain'}.`;
 
     return {
       stackId,
       label: 'Best Overall', // Temporary label, overridden during selection
+      rank: 1,
+      rankTitle: 'Recommended Stack',
+      canonicalSignature: tools.map(t => `${t.toolId}:${t.recommendedPlan}`).sort().join('|'),
+      primary: tools[0],
+      secondary: tools[1],
       tools,
       estimatedMonthlyCost,
       estimatedAnnualCost,
+      perSeatMonthlyCost,
       coverageResult,
       workflowFitScore,
       capabilityCoverageScore,
@@ -260,6 +275,9 @@ export class StackOptimizer {
         vendorStability: vendorStabilityFactor,
         futureGrowth: futureGrowthFactor
       },
+      whyThisStack,
+      advantages: strengths,
+      strengths,
       tradeoffs,
       budgetStatus,
       budgetOverrunPercent
@@ -268,7 +286,7 @@ export class StackOptimizer {
 
   private static deriveStackTradeoffs(stack: ScoredProviderProfile[], req: StackBuilderRequest): string[] {
     const list: string[] = [];
-    const mustHaves = req.mustHaveFeatures;
+    const mustHaves = req.mustHaveFeatures || req.requirements || [];
 
     // Coverage gaps
     const analyzer = StackCoverageAnalyzer.analyze(stack, mustHaves);
@@ -312,14 +330,14 @@ export class StackOptimizer {
   }
 
   private static selectBestBudget(stacks: RankedStack[], req: StackBuilderRequest, weights: any): RankedStack {
-    // Best Budget = lowest cost meeting minimum coverage threshold (e.g. 70%)
+    // Best Value = lowest cost meeting minimum coverage threshold (e.g. 70%)
     const minCoverage = weights.optimizer?.minCoverageForBudgetStack || 0.70;
     const eligible = stacks.filter(s => s.coverageResult.coverageScore >= minCoverage * 100);
     
     const pool = eligible.length > 0 ? eligible : stacks;
     const sorted = [...pool].sort((a, b) => a.estimatedMonthlyCost - b.estimatedMonthlyCost);
     const selected = { ...sorted[0] };
-    selected.label = 'Best Budget';
+    selected.label = 'Best Value';
     return selected;
   }
 

@@ -1,15 +1,50 @@
 {
-  "schemaVersion": "1.0.0",
-  "description": "Configurable weights for AIStackRecommendationEngine. Edit values here to tune recommendation behavior without code changes.",
+  "schemaVersion": "2.0.0",
+  "description": "Configurable strategy and recommendation weights for AIStackRecommendationEngine.",
 
   "compositeScore": {
-    "_comment": "Weights for per-provider composite score. Must sum to 1.0.",
-    "workflowMatch":    0.30,
-    "featureCoverage":  0.25,
-    "capabilityScore":  0.20,
-    "costEfficiency":   0.15,
-    "enterpriseScore":  0.05,
-    "vendorStability":  0.05
+    "_comment": "Default baseline weights if no strategy is specified.",
+    "domainMatch":         0.25,
+    "featureCoverage":     0.25,
+    "capabilityScore":     0.20,
+    "costEfficiency":      0.15,
+    "enterpriseScore":     0.08,
+    "vendorStability":     0.07
+  },
+
+  "strategies": {
+    "balanced": {
+      "domainMatch":         0.25,
+      "featureCoverage":     0.25,
+      "capabilityScore":     0.20,
+      "costEfficiency":      0.15,
+      "enterpriseScore":     0.08,
+      "vendorStability":     0.07
+    },
+    "best-value": {
+      "domainMatch":         0.20,
+      "featureCoverage":     0.20,
+      "capabilityScore":     0.10,
+      "costEfficiency":      0.40,
+      "enterpriseScore":     0.05,
+      "vendorStability":     0.05
+    },
+    "max-performance": {
+      "domainMatch":         0.30,
+      "featureCoverage":     0.25,
+      "capabilityScore":     0.30,
+      "costEfficiency":      0.05,
+      "enterpriseScore":     0.05,
+      "vendorStability":     0.05
+    },
+    "enterprise-security": {
+      "domainMatch":         0.15,
+      "featureCoverage":     0.20,
+      "capabilityScore":     0.15,
+      "costEfficiency":      0.10,
+      "enterpriseScore":     0.25,
+      "vendorStability":     0.15
+    }
   },
 
   "preferenceModifiers": {
@@ -20,12 +55,15 @@
     },
     "maximizeSavings": {
       "costEfficiencyBoost": 0.15,
-      "capabilityReduction": -0.10,
-      "_comment": "When active, rebalances weights: costEfficiency += 0.15, capabilityScore -= 0.10"
+      "capabilityReduction": -0.10
     },
     "preferOpenSource": {
-      "bonus": 5,
+      "bonus": 8,
       "applyWhen": "apiSupport_true"
+    },
+    "requireZeroRetention": {
+      "penalty": -25,
+      "applyWhen": "zeroDataRetention_false"
     },
     "preferEstablishedVendors": {
       "penalty": -10,
@@ -45,7 +83,6 @@
   },
 
   "stackGeneration": {
-    "_comment": "Parameters controlling the GreedyCoverStrategy stack generation.",
     "maxToolsPerStack":        4,
     "minCoverageThreshold":    0.80,
     "candidateSeedCount":      8,
@@ -54,21 +91,18 @@
   },
 
   "optimizer": {
-    "_comment": "Thresholds used by StackOptimizer post-processing.",
-    "redundancyOverlapThreshold": 75,
+    "redundancyOverlapThreshold": 70,
     "maxVendorConcentrationHHI":  6000,
     "budgetOverrunTolerance":     0.10,
-    "minCoverageForBudgetStack":  0.70,
+    "minCoverageForBudgetStack":  0.75,
     "minCoverageForPerfStack":    0.85
   },
 
   "knowledgeScoring": {
-    "_comment": "Weights used by KnowledgeScoringEngine to compute normalized dimension scores.",
     "enterpriseComplianceWeight": 0.40,
     "enterpriseIdentityWeight":   0.30,
     "enterpriseAdminWeight":      0.30,
     "costTiers": {
-      "_comment": "costEfficiencyScore based on cheapest monthly plan price per seat.",
       "free":    100,
       "lte10":    85,
       "lte20":    70,

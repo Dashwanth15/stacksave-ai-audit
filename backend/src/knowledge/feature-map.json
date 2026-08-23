@@ -1,7 +1,58 @@
 {
-  "schemaVersion": "1.0.0",
-  "description": "Maps user-facing feature labels to provider capability keys in JSON profiles. Edit this file to add new selectable features without touching engine code.",
+  "schemaVersion": "2.0.0",
+  "description": "Maps human-readable business requirements to provider capability keys and enterprise configurations.",
   "features": {
+    "editor-code-generation": {
+      "label": "In-Editor Code Generation & Refactoring",
+      "capabilityKeys": ["autocomplete", "coding", "multiFileEditing"],
+      "minimumScore": 7,
+      "description": "Write, refactor, and auto-complete code inline across multiple files"
+    },
+    "deep-reasoning-analysis": {
+      "label": "Deep Reasoning & Problem Solving",
+      "capabilityKeys": ["reasoning", "planning"],
+      "minimumScore": 8,
+      "description": "Handle complex algorithmic, mathematical, and logical problem solving"
+    },
+    "large-document-processing": {
+      "label": "Large Document & Codebase Indexing",
+      "capabilityKeys": ["longContext", "largeCodebaseUnderstanding"],
+      "minimumScore": 7,
+      "description": "Process 100k+ token documents, contracts, and full repository vector embeddings"
+    },
+    "live-web-research": {
+      "label": "Live Web Research & Citations",
+      "capabilityKeys": ["research"],
+      "minimumScore": 7,
+      "description": "Search real-time internet sources with verified citations and synthetic summaries"
+    },
+    "visual-diagram-understanding": {
+      "label": "Visual, Diagram & UI Design Parsing",
+      "capabilityKeys": ["vision", "imageUnderstanding"],
+      "minimumScore": 7,
+      "description": "Analyze architectural diagrams, UI mockups, charts, and image inputs"
+    },
+    "automated-task-execution": {
+      "label": "Autonomous Task & Terminal Execution",
+      "capabilityKeys": ["aiAgent", "functionCalling", "terminalIntegration"],
+      "minimumScore": 7,
+      "description": "Execute multi-step workflows, command line operations, and tool actions"
+    },
+    "developer-api-access": {
+      "label": "Programmatic API & Model Integration",
+      "capabilityKeys": ["api", "functionCalling", "embeddings"],
+      "minimumScore": 7,
+      "description": "Integrate AI models directly into software stacks via developer APIs",
+      "derivedFrom": "apiSupport === true"
+    },
+    "enterprise-governance": {
+      "label": "Enterprise Governance & Security",
+      "capabilityKeys": ["enterpriseSecurity", "sso"],
+      "minimumScore": 7,
+      "description": "Enforce zero data retention, SOC 2 / HIPAA compliance, and SAML SSO",
+      "derivedFrom": "enterprise.compliance.soc2 || enterprise.identity.sso"
+    },
+
     "code-completion": {
       "label": "Code Completion",
       "capabilityKeys": ["autocomplete", "coding"],

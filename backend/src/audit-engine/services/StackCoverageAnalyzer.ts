@@ -2,11 +2,9 @@
 // Stack Coverage Analyzer — StackSave AI Platform Intelligence
 //
 // Flow 2 dedicated engine for feature coverage gap analysis.
-// Reads feature-map.json at runtime. Adding a new user-facing
-// feature requires only a JSON edit — zero engine code changes.
-//
-// NOTE: The legacy CapabilityCoverageEngine.ts serves Flow 1 (audit)
-// and is kept unchanged. This engine is exclusively for Flow 2.
+// Evaluates real-world provider capability coverage with strict
+// category validation (e.g. APIs cannot claim in-editor coding,
+// web chat cannot claim autocomplete without an IDE client).
 // ============================================================
 
 import { KnowledgeLoader } from './KnowledgeLoader';
@@ -149,13 +147,33 @@ export class StackCoverageAnalyzer {
     for (const provider of stack) {
       let score = 0;
 
+      // ── Category Prerequisites ──
+      // 1. In-Editor Code Generation requires an IDE application (Cursor, Windsurf, Copilot, Codex)
+      if (featureKey === 'editor-code-generation' || featureKey === 'code-completion' || featureKey === 'code-review') {
+        if (provider.category !== 'ide') {
+          // Pure chat or API products cannot satisfy in-editor inline generation
+          continue;
+        }
+      }
+
+      // 2. Chat Interface requires a workspace app with interactive chat UI
+      if (featureKey === 'chat-interface') {
+        if (provider.category === 'api') {
+          // Raw developer API endpoints do not have an end-user chat interface
+          continue;
+        }
+      }
+
+      // ── Capability Evaluation ──
       if (mapEntry.derivedFrom) {
         score = this.evaluateDerivedFrom(mapEntry.derivedFrom, provider) ? 10 : 0;
       } else if (featureKey === 'multi-model') {
         const modelCount = (provider.raw as any).supportedModels?.length ?? 0;
         score = modelCount >= 3 ? 10 : modelCount >= 2 ? 6 : 0;
       } else if (mapEntry.capabilityKeys.length > 0) {
-        score = Math.max(0, ...mapEntry.capabilityKeys.map(k => provider.capabilityVector[k] ?? 0));
+        // Evaluate relevant capability scores
+        const scores = mapEntry.capabilityKeys.map(k => provider.capabilityVector[k] ?? 0);
+        score = Math.max(0, ...scores);
       }
 
       if (score >= mapEntry.minimumScore) {
@@ -173,8 +191,17 @@ export class StackCoverageAnalyzer {
   private static evaluateDerivedFrom(derivedFrom: string, provider: ScoredProviderProfile): boolean {
     const raw = provider.raw as any;
     try {
-      if (derivedFrom.includes('enterprise.compliance.hipaa') || derivedFrom.includes('enterprise.compliance.soc2')) {
+      if (derivedFrom.includes('apiSupport === true')) {
+        return raw.apiSupport === true || provider.category === 'api';
+      }
+      if (derivedFrom.includes('enterprise.compliance.hipaa') || derivedFrom.includes('enterprise.compliance.soc2') || derivedFrom.includes('soc2')) {
         return raw.enterprise?.compliance?.hipaa === true || raw.enterprise?.compliance?.soc2 === true;
+      }
+      if (derivedFrom.includes('enterprise.identity.sso') || derivedFrom.includes('sso')) {
+        return raw.enterprise?.identity?.sso === true || raw.enterprise?.identity?.saml === true;
+      }
+      if (derivedFrom.includes('enterprise.security.zeroDataRetention')) {
+        return raw.enterprise?.security?.zeroDataRetention === true;
       }
       if (derivedFrom.includes('enterprise.security.privateDeployment')) {
         return raw.enterprise?.security?.privateDeployment === true;

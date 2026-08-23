@@ -243,9 +243,10 @@ describe('PricingOverlayService', () => {
 
     // Restore original price so other tests aren't affected
     KnowledgeLoader.patchPlansFromDB('cursor', [
-      { id: 'pro', label: 'Pro', monthlyPricePerSeat: proPlan.monthlyPricePerSeat, currency: 'USD' },
+      { id: 'pro', label: 'Pro', monthlyPricePerSeat: proPlan!.monthlyPricePerSeat, currency: 'USD' },
     ]);
   });
+
 
   it('patchPlansFromDB adds a new plan not in the static list', () => {
     KnowledgeLoader.initialize();

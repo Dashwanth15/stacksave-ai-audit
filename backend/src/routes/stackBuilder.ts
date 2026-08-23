@@ -14,54 +14,52 @@ const router = Router();
 // ── POST /api/stack-builder ────────────────────────────────────
 router.post('/', auditLimiter, (req: Request, res: Response) => {
   try {
-    const body = req.body as StackBuilderRequest;
+    const body = req.body as Partial<StackBuilderRequest>;
 
-    // Validate required fields
-    if (typeof body.teamSize !== 'number' || body.teamSize < 1) {
-      return res.status(400).json({
-        success: false,
-        error: 'teamSize must be a positive number.'
-      });
-    }
+    // Validate teamSize
+    const rawTeamSize = typeof body.teamSize === 'number' ? body.teamSize : 1;
+    const teamSize = Math.min(Math.max(1, Math.round(rawTeamSize)), 10000);
 
-    if (typeof body.primaryWorkflow !== 'string' || !body.primaryWorkflow) {
-      return res.status(400).json({
-        success: false,
-        error: 'primaryWorkflow is required.'
-      });
-    }
+    // Validate domain / workflow
+    const domain = body.domain || body.primaryWorkflow || (body.engineeringFocus && body.engineeringFocus[0]) || 'software-engineering';
 
-    if (!Array.isArray(body.mustHaveFeatures)) {
-      return res.status(400).json({
-        success: false,
-        error: 'mustHaveFeatures must be an array.'
-      });
-    }
+    // Validate requirements
+    const requirements = Array.isArray(body.requirements)
+      ? body.requirements
+      : Array.isArray(body.mustHaveFeatures)
+      ? body.mustHaveFeatures
+      : [];
 
-    if (!body.preferences || typeof body.preferences !== 'object') {
-      return res.status(400).json({
-        success: false,
-        error: 'preferences object is required.'
-      });
-    }
+    const strategy = body.strategy || (body.preferences?.maximizeSavings ? 'best-value' : 'balanced');
 
-    // Ensure teamSize is reasonable
-    const teamSize = Math.min(Math.max(1, Math.round(body.teamSize)), 10000);
-    const monthlyBudget = body.monthlyBudget !== null && body.monthlyBudget !== undefined
-      ? Math.max(0, body.monthlyBudget)
+    // Validate budget
+    const monthlyBudget = body.monthlyBudget !== null && body.monthlyBudget !== undefined && !isNaN(Number(body.monthlyBudget))
+      ? Math.max(0, Number(body.monthlyBudget))
       : null;
 
+    const prefs = body.preferences && typeof body.preferences === 'object' ? body.preferences : {
+      preferOpenSource: false,
+      avoidLockIn: false,
+      maximizeSavings: strategy === 'best-value',
+      preferEstablishedVendors: false,
+      requireZeroRetention: strategy === 'enterprise-security'
+    };
+
     const normalizedReq: StackBuilderRequest = {
-      monthlyBudget,
+      domain,
+      requirements,
+      strategy,
       teamSize,
-      engineeringFocus: Array.isArray(body.engineeringFocus) ? body.engineeringFocus : [],
-      primaryWorkflow: body.primaryWorkflow,
-      mustHaveFeatures: body.mustHaveFeatures,
+      monthlyBudget,
+      engineeringFocus: [domain],
+      primaryWorkflow: domain,
+      mustHaveFeatures: requirements,
       preferences: {
-        preferOpenSource: Boolean(body.preferences.preferOpenSource),
-        avoidLockIn: Boolean(body.preferences.avoidLockIn),
-        maximizeSavings: Boolean(body.preferences.maximizeSavings),
-        preferEstablishedVendors: Boolean(body.preferences.preferEstablishedVendors)
+        preferOpenSource: Boolean(prefs.preferOpenSource),
+        avoidLockIn: Boolean(prefs.avoidLockIn),
+        maximizeSavings: Boolean(prefs.maximizeSavings || strategy === 'best-value'),
+        preferEstablishedVendors: Boolean(prefs.preferEstablishedVendors),
+        requireZeroRetention: Boolean(prefs.requireZeroRetention || strategy === 'enterprise-security')
       },
       constraints: body.constraints || {},
       debug: body.debug === true

@@ -131,9 +131,9 @@ export type BillingType = 'per-seat' | 'usage-based' | 'flat' | 'custom';
 export interface ToolInfo {
   id: ToolId;
   name: string;
-  icon: string;        // emoji for now, can swap for SVG
+  icon: string;
   category: string;
-  description: string; // one-line tagline for the tool
+  description: string;
   plans: PlanOption[];
   defaultPlan: string;
 }
@@ -144,12 +144,12 @@ export interface PlanOption {
   monthlyPricePerSeat: number;
   billingType: BillingType;
   isPayPerUse?: boolean;
-  isEnterprise?: boolean; // true = "Contact Sales" instead of price
-  minSeats?: number;      // minimum seat requirement
-  maxSeats?: number;      // maximum seat limit
-  annualPrice?: number;   // annual per-seat price (if discount exists)
-  features?: string[];    // key plan features for display
-  tagline?: string;       // short plan description
+  isEnterprise?: boolean;
+  minSeats?: number;
+  maxSeats?: number;
+  annualPrice?: number;
+  features?: string[];
+  tagline?: string;
 }
 
 // ── Batch 4: Re-Audit Comparison Types ───────────────────────
@@ -285,17 +285,25 @@ export interface DecisionLog {
 
 // ── Flow 2: Build Stack Types ─────────────────────────────────
 
+export type StackStrategy = 'balanced' | 'best-value' | 'max-performance' | 'enterprise-security';
+
+export type ToolRole = 'primary' | 'secondary' | 'optional' | 'api' | 'supporting' | 'research' | 'automation-api' | 'specialized';
+
 export interface StackBuilderRequest {
+  domain?: string;
+  requirements?: string[];
+  strategy?: StackStrategy;
   monthlyBudget: number | null;
   teamSize: number;
-  engineeringFocus: string[];
-  primaryWorkflow: string;
-  mustHaveFeatures: string[];
+  engineeringFocus?: string[];
+  primaryWorkflow?: string;
+  mustHaveFeatures?: string[];
   preferences: {
     preferOpenSource: boolean;
     avoidLockIn: boolean;
     maximizeSavings: boolean;
     preferEstablishedVendors: boolean;
+    requireZeroRetention?: boolean;
   };
   constraints?: Record<string, unknown>;
   debug?: boolean;
@@ -312,18 +320,43 @@ export interface ConfidenceBreakdown {
   futureGrowth: number;
 }
 
+export type BuyingPriority = '01 PRIMARY' | '02 SECONDARY' | '03 OPTIONAL' | '04 API LAYER';
+
+export interface ProcurementFitReasons {
+  domainFit: string;
+  workflowFit: string;
+  teamFit: string;
+  budgetFit: string;
+}
+
 export interface ToolInStack {
   toolId: string;
   toolName: string;
-  category: string;
+  category: 'ide' | 'chat' | 'api' | 'search' | string;
   vendor: string;
+  role?: ToolRole;
+  buyingPriority?: BuyingPriority;
+  priorityLabel?: string;
   recommendedPlan: string;
+  monthlyCostPerSeat: number;
   estimatedMonthlyCostPerTeam: number;
   workflowFitScore: number;
   capabilityHighlights: string[];
-  reasons: string[];
+  whyRecommended?: string;
+  uniqueValueAdded?: string;
+  whatItComplements?: string;
+  mainTradeoff?: string;
+  procurementFitReasons?: ProcurementFitReasons;
+  missingCapabilities?: string[];
+  procurementRisks?: string[];
+  bestFor?: string;
+  notIdealFor?: string;
+  purchaseDecision?: 'BUY_NOW' | 'STRONGLY_CONSIDER' | 'OPTIONAL_ADDON' | 'INFRASTRUCTURE_ONLY';
+  reasons?: string[];
   featuresCovered: string[];
 }
+
+export type StackToolAssignment = ToolInStack;
 
 export interface CoveredFeature {
   featureKey: string;
@@ -363,19 +396,72 @@ export interface GrowthSimulation {
 
 export interface RankedStack {
   stackId: string;
-  label: 'Best Overall' | 'Best Budget' | 'Best Performance' | 'Best Enterprise';
+  label: 'Best Overall' | 'Best Budget' | 'Best Value' | 'Best Performance' | 'Best Enterprise';
+  rank?: number;
+  rankTitle?: string;
+  purposeLabel?: string;
+  canonicalSignature?: string;
+  primary?: ToolInStack;
+  secondary?: ToolInStack;
+  optional?: ToolInStack;
+  apiLayer?: ToolInStack;
   tools: ToolInStack[];
   estimatedMonthlyCost: number;
   estimatedAnnualCost: number;
+  perSeatMonthlyCost: number;
   coverageResult: StackCoverageResult;
   workflowFitScore: number;
   capabilityCoverageScore: number;
   confidenceScore: number;
   confidenceBreakdown: ConfidenceBreakdown;
+  whyThisStack?: string;
+  advantages?: string[];
+  strengths?: string[];
   tradeoffs: string[];
   growthSimulation?: GrowthSimulation;
   budgetStatus: 'within' | 'over' | 'no-limit';
   budgetOverrunPercent?: number;
+  bestFor?: string;
+}
+
+export type StructuredStack = RankedStack;
+
+export interface AlternativeStackComparison {
+  rank: number;
+  rankTitle: string;
+  purposeLabel?: string;
+  architectureType?: string;
+  stackSummary: string;
+  stack?: StructuredStack;
+  perSeatCost: number;
+  monthlyCost: number;
+  matchScore: number;
+  domainFit?: number;
+  requirementCoverage?: number;
+  budgetFit?: 'within' | 'over' | 'no-limit';
+  budgetString?: string;
+  mainAdvantage: string;
+  mainTradeoff: string;
+  bestFor?: string;
+  whyThisStack?: string;
+  whyChooseInstead?: string;
+  whyNotRecommended?: string;
+  costDeltaVsPrimary?: number;
+}
+
+export interface CategoryResult {
+  categoryId: 'bestOverall' | 'bestValue' | 'bestPerformance' | 'bestEnterprise';
+  title: string;
+  badge?: string;
+  description: string;
+  strategyUsed: StackStrategy;
+  recommendedStack?: StructuredStack;
+  alternativeA?: StructuredStack;
+  alternativeB?: StructuredStack;
+  alternativeComparisons?: AlternativeStackComparison[];
+  rank1: RankedStack;
+  rank2?: RankedStack;
+  rank3?: RankedStack;
 }
 
 export interface OptimizedStackSet {
@@ -385,15 +471,32 @@ export interface OptimizedStackSet {
   bestEnterprise?: RankedStack;
 }
 
+export type RejectionCategory =
+  | 'DOMAIN_MISMATCH'
+  | 'REQUIREMENT_GAP'
+  | 'BUDGET_OVERRUN'
+  | 'LOWER_BENCHMARK'
+  | 'REDUNDANCY'
+  | 'ENTERPRISE_GAP'
+  | 'API_INFRASTRUCTURE';
+
 export interface RejectedAlternative {
   toolId: string;
   toolName: string;
+  vendor?: string;
   category: string;
   compositeScore: number;
+  rejectionCategory?: RejectionCategory;
+  rejectionBadge?: string;
+  consideredFor?: string;
   whyNotSelected: string;
+  whereItWins?: string;
+  whyWinnerWon?: string;
   wouldHaveCovered: string[];
   estimatedMonthlyCostPerSeat: number;
   tradeoffVsSelected: string;
+  bestFor?: string;
+  notIdealFor?: string;
 }
 
 export interface BudgetTierResult {
@@ -417,11 +520,28 @@ export interface KnowledgeVersionMetadata {
   generatedAt: string;
 }
 
+export interface UserContextSummary {
+  domain: string;
+  domainLabel: string;
+  teamSize: number;
+  budgetFormatted: string;
+  strategy: StackStrategy;
+  strategyLabel: string;
+  requirementCount: number;
+}
+
 export interface StackRecommendation {
   recommendationId: string;
   createdAt: string;
+  userContextSummary?: UserContextSummary;
   knowledgeVersion: KnowledgeVersionMetadata;
   stacks: OptimizedStackSet;
+  categories?: {
+    bestOverall: CategoryResult;
+    bestValue: CategoryResult;
+    bestPerformance: CategoryResult;
+    bestEnterprise: CategoryResult;
+  };
   alternatives: RejectedAlternative[];
   budgetSimulation: BudgetSimulation;
   featureCoverage: StackCoverageResult;
@@ -446,4 +566,3 @@ export interface PublicOffer {
 }
 
 export type OfferFilterTab = 'all' | 'new' | 'active' | 'expired';
-
