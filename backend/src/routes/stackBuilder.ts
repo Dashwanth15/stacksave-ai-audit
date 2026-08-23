@@ -21,7 +21,7 @@ router.post('/', auditLimiter, (req: Request, res: Response) => {
     const teamSize = Math.min(Math.max(1, Math.round(rawTeamSize)), 10000);
 
     // Validate domain / workflow
-    const domain = body.domain || body.primaryWorkflow || (body.engineeringFocus && body.engineeringFocus[0]) || 'software-engineering';
+    const domain = body.domain || body.primaryWorkflow || (body.engineeringFocus && body.engineeringFocus[0]) || 'general-productivity';
 
     // Validate requirements
     const requirements = Array.isArray(body.requirements)

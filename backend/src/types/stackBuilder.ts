@@ -289,6 +289,11 @@ export interface RecommendationTrace {
     strategy: string;
     preferences: Record<string, unknown>;
   };
+  domainResolution?: {
+    rawDomain: string | null;
+    resolvedDomain: string;
+    usedNeutralFallback: boolean;
+  };
   strategyUsed: string;
   knowledgeSnapshot: KnowledgeVersionMetadata;
   applicationRanking: ProviderScoreTrace[];

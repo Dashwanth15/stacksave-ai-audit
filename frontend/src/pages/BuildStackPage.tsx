@@ -185,7 +185,7 @@ export default function BuildStackPage() {
   const [loading, setLoading] = useState(false);
 
   // Form State
-  const [domain, setDomain] = useState('software-engineering');
+  const [domain, setDomain] = useState('');
   const [teamSize, setTeamSize] = useState(10);
   const [noBudget, setNoBudget] = useState(false);
   const [budget, setBudget] = useState(0);
@@ -205,6 +205,8 @@ export default function BuildStackPage() {
   };
 
   const handleNext = () => {
+    // Require an explicit domain choice before leaving Step 1 — no biased default.
+    if (step === 1 && !domain) return;
     if (step < 4) {
       setStep(s => s + 1);
     }
@@ -363,6 +365,11 @@ export default function BuildStackPage() {
                     );
                   })}
                 </div>
+                {!domain && (
+                  <p className="text-xs font-medium text-slate-500 pt-1">
+                    Select the primary domain your team works in to continue — this drives the entire recommendation.
+                  </p>
+                )}
               </div>
             )}
 
@@ -618,7 +625,8 @@ export default function BuildStackPage() {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-md shadow-sm transition-all"
+                  disabled={step === 1 && !domain}
+                  className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-md shadow-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Continue →
                 </button>
