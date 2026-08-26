@@ -48,10 +48,10 @@
   },
 
   "preferenceModifiers": {
-    "_comment": "Score adjustments applied based on user preference toggles.",
+    "_comment": "Maximum score adjustment per user preference toggle. Each is applied GRADED against provider-specific measured data (see getPreferenceModifiersNet), not fired by a threshold: the value below is the adjustment at full effect. The previous `applyWhen` thresholds were inert — vendorLockInRisk is \"Low\" in all 13 provider files, vendorStabilityScore < 50 matches one provider, and zeroDataRetention is unverified catalogue-wide so it subtracted the same constant from every candidate.",
     "avoidLockIn": {
       "penalty": -10,
-      "applyWhen": "vendorLockInRisk_High"
+      "gradedBy": "exitFriction = 0.7 x (100 - portability) + 0.3 x vendorConcentration; portability = model breadth + researched api capability"
     },
     "maximizeSavings": {
       "costEfficiencyBoost": 0.15,
@@ -59,15 +59,15 @@
     },
     "preferOpenSource": {
       "bonus": 8,
-      "applyWhen": "apiSupport_true"
+      "gradedBy": "portability (model breadth + researched api capability). No openWeights field exists in the knowledge base; portability is the honest proxy."
     },
     "requireZeroRetention": {
       "penalty": -25,
-      "applyWhen": "zeroDataRetention_false"
+      "gradedBy": "verified + flag true -> 0; verified + flag false -> full penalty; unverified -> penalty x (1 - researched enterpriseSecurity/10)"
     },
     "preferEstablishedVendors": {
       "penalty": -10,
-      "applyWhen": "vendorStabilityScore_lt50"
+      "gradedBy": "vendorTrackRecord = stabilityRating, establishedYear, fundingStage, enterprisePresence"
     }
   },
 
@@ -108,7 +108,8 @@
       "lte20":    70,
       "lte40":    55,
       "lte80":    35,
-      "above80":  20
+      "above80":  20,
+      "unknown":  50
     },
     "vendorStabilityWeights": {
       "reliabilityScore":       0.50,

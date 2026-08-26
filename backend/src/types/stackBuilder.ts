@@ -48,6 +48,17 @@ export interface ConfidenceBreakdown {
   securityMatch: number;
   vendorStability: number;
   futureGrowth: number;
+  // ── Certainty terms (how sure the recommendation is, not how good it is) ──
+  /** Composite-score lead of the chosen primary over the best provider not chosen. */
+  scoreMargin?: number;
+  /** 0–100: share of provenance-verified governance, financial and benchmark data in the stack. */
+  dataCompleteness?: number;
+  /** 0–100: benchmark data availability across the stack. */
+  benchmarkAvailability?: number;
+  /** Multiplier (0–1) applied to the weighted factor score to reflect the terms above. */
+  certaintyMultiplier?: number;
+  /** True when the winner's lead over the runner-up is inside statistical noise. */
+  statisticalTie?: boolean;
 }
 
 // ── Plan Upgrade (Growth Simulation) ────────────────────────────────────────
@@ -115,6 +126,26 @@ export type ToolInStack = StackToolAssignment;
 
 // ── Structured Stack Architecture ────────────────────────────────────────────
 
+/**
+ * Explicit signal that the monthly procurement ceiling — not the capability data —
+ * is what prevents this stack from covering every required capability.
+ * Emitted so the caller never has to infer a silent downgrade from the tool list.
+ */
+export interface BudgetConstraintState {
+  constrained: true;
+  reason:
+    | 'budget-blocks-full-coverage'      // affordable tools exist, but none cover every requirement
+    | 'budget-blocks-any-paid-plan'      // no paid plan fits at all; stack falls back to free tiers
+    | 'budget-forced-primary-substitution'; // the ranked winner was unaffordable and was replaced
+  monthlyBudget: number;
+  teamSize: number;
+  requiredFeatures: string[];
+  uncoveredFeatures: string[];
+  /** Cheapest monthly team cost that would cover every required feature, or null if unattainable. */
+  minimumMonthlyCostForFullCoverage: number | null;
+  message: string;
+}
+
 export interface StructuredStack {
   stackId: string;
   label: 'Best Overall' | 'Best Value' | 'Best Performance' | 'Best Enterprise';
@@ -142,6 +173,8 @@ export interface StructuredStack {
   growthSimulation?: GrowthSimulation;
   budgetStatus: 'within' | 'over' | 'no-limit';
   budgetOverrunPercent?: number;
+  /** Present only when the budget itself blocks full requirement coverage. */
+  budgetConstraint?: BudgetConstraintState;
   bestFor?: string;
 }
 
@@ -275,6 +308,8 @@ export interface ProviderScoreTrace {
   vendorStabilityScore: number;
   budgetFit: boolean;
   preferenceModifierApplied: number;
+  /** True when this provider's composite lead/deficit vs the pool leader is inside noise (±2). */
+  statisticalTie?: boolean;
 }
 
 export interface RecommendationTrace {

@@ -18,11 +18,85 @@ export interface FeatureMapEntry {
   minimumScore: number;
   description: string;
   derivedFrom?: string;  // e.g. "enterprise.compliance.hipaa === true"
+  /**
+   * When true, a `derivedFrom` expression that reads the provider's `enterprise.*`
+   * block is only trusted for providers whose governance data passed boilerplate
+   * detection (`governanceDataVerified`). Unverified governance data stays unknown
+   * instead of counting as a satisfied requirement.
+   */
+  requiresVerifiedGovernanceData?: boolean;
+  /**
+   * `"unsupported"` marks a requirement that no provider in the knowledge base can
+   * satisfy. It is still reported in `missing`, but excluded from the coverage-score
+   * denominator so an unsatisfiable request is not scored as a stack failure.
+   */
+  availability?: 'supported' | 'unsupported';
+  /**
+   * Hard capability prerequisite: a provider that scores below `minimumScore` on
+   * `key` cannot satisfy this feature at any level, however strong its other
+   * capabilities are. This replaces the per-feature `provider.category` checks that
+   * used to be hardcoded in StackCoverageAnalyzer: the delivery surface a feature
+   * requires is now declared here and answered from researched per-provider data, so
+   * a newly added product qualifies (or not) on its own measured capability instead
+   * of on a hand-assigned category label.
+   */
+  requiresCapability?: { key: string; minimumScore: number };
+  /**
+   * Delivery categories that structurally cannot expose this feature to an end user,
+   * regardless of capability scores (a raw developer API endpoint has no interactive
+   * chat surface). Kept as declared data rather than an `if` in the analyzer.
+   */
+  excludesCategories?: string[];
+  /**
+   * Marks a requirement that a dedicated stack role satisfies rather than the primary
+   * workspace tool. `api-layer` requirements are fulfilled by the 04 API LAYER slot, so
+   * they must not gate which workspace application becomes the 01 PRIMARY — otherwise
+   * asking for programmatic access silently rewrites the editor/chat recommendation.
+   */
+  satisfiedByRole?: 'api-layer';
+  /**
+   * Terms matched (case-insensitively) against each provider's own published plan copy
+   * (`plans[].features` + `plans[].premiumFeatures`) to locate the LOWEST tier that
+   * entitles this capability. Used to make coverage plan-aware: a capability the vendor
+   * sells only from its Teams tier upward is not delivered by the free tier, even though
+   * the provider-level capability vector scores it.
+   *
+   * Absence of a match anywhere in a provider's ladder yields NO gate — unpublished plan
+   * copy is not evidence of a restriction, so nothing is inferred and the provider-level
+   * capability stands.
+   */
+  planEvidenceTerms?: string[];
+  /**
+   * Marks an ORGANIZATION-SCOPED requirement: one that needs a tier with an
+   * administrative surface (a directory to federate, an administrator to enforce a
+   * policy), not merely a product capable of it. Such a requirement is never entitled by
+   * a tier whose published copy describes no organizational surface at all, which closes
+   * the gap `planEvidenceTerms` alone leaves for vendors that deliver the capability
+   * through a suite rather than naming it in per-plan copy.
+   *
+   * The floor is read from `FeatureMap.planAdminEvidenceTerms` against the provider's own
+   * plan copy, so it is still the vendor's published tier position; a ladder that
+   * publishes no organizational tier yields NO gate from this rule.
+   */
+  requiresOrgAdministration?: boolean;
+  /** Documentation-only provenance note; ignored by the engine. */
+  _note?: string;
+  /** Documentation-only provenance note for `planEvidenceTerms`; ignored by the engine. */
+  _planEvidenceNote?: string;
 }
 
 export interface FeatureMap {
   schemaVersion: string;
   description: string;
+  /**
+   * Shared evidence terms for an organizational delivery surface, applied to every
+   * feature that declares `requiresOrgAdministration`. Kept at map level because the
+   * question ("does this tier have an org surface at all?") is the same for every such
+   * requirement.
+   */
+  planAdminEvidenceTerms?: string[];
+  /** Documentation-only provenance note for `planAdminEvidenceTerms`; ignored by the engine. */
+  _planAdminEvidenceNote?: string;
   features: Record<string, FeatureMapEntry>;
 }
 
@@ -151,6 +225,17 @@ export interface FinancialProfile {
   industryFit?: string[];
 }
 
+export interface VendorProfile {
+  vendorId: string;
+  vendorName: string;
+  establishedYear?: number;
+  headquarters?: string;
+  fundingStage?: 'Public' | 'Private' | string;
+  productFamily?: string[];
+  stabilityRating?: 'Very High' | 'High' | 'Medium' | 'Low' | string;
+  enterprisePresence?: boolean;
+}
+
 export interface ProviderProfile {
   schemaVersion?: string;
   knowledgeVersion?: string;
@@ -163,6 +248,7 @@ export interface ProviderProfile {
   name: string;
   category: 'ide' | 'chat' | 'api' | 'search';
   vendor: string;
+  vendorProfile?: VendorProfile;
   primaryRole: string;
   secondaryRole: string;
   pricing: Record<string, number>;
@@ -179,6 +265,18 @@ export interface ProviderProfile {
   developerExperience: DeveloperExperience;
   financialProfile: FinancialProfile;
 
+  // ── Data provenance flags ──
+  // The shipped knowledge base carries an identical, copy-pasted `enterprise`
+  // block in every provider's plans.json (all 13 assert soc2/rbac/auditLogs/
+  // sso/saml/zeroDataRetention = true), which contradicts the per-provider
+  // capability evidence (e.g. kimi's own `sso` entry scores 0 with the note
+  // "No SSO or identity management capability is documented"). When a block is
+  // detected as shared boilerplate it is flagged UNVERIFIED here so scoring can
+  // treat it as unknown instead of as a verified certification. See
+  // detectBoilerplateGovernanceData().
+  governanceDataVerified?: boolean;
+  financialDataVerified?: boolean;
+
   strengths: string[];
   weaknesses: string[];
   limitations: string[];
@@ -189,6 +287,12 @@ export interface ProviderProfile {
   ideSupport?: string[];
   annualDiscountPercent?: number;
   apiSupport: boolean;
+  /**
+   * Product lifecycle stage, declared in provider.json. Absent means `active`.
+   * `deprecated` / `sunset` products must not be scored as healthy growing
+   * products — see KnowledgeScoringEngine.computeFutureGrowthScore().
+   */
+  lifecycleStatus?: 'active' | 'maintenance' | 'deprecated' | 'sunset';
   sources: string[];
 }
 
@@ -197,7 +301,7 @@ export interface ProviderMetadata {
   name: string;
   category: 'ide' | 'chat' | 'api' | 'search';
   vendor: string;
-  vendorProfile?: any;
+  vendorProfile?: VendorProfile;
   primaryRole: string;
   secondaryRole: string;
   billingModels: string[];
@@ -210,6 +314,7 @@ export interface ProviderMetadata {
   supportedModels: string[];
   supportedPlatforms: string[];
   apiSupport: boolean;
+  lifecycleStatus?: 'active' | 'maintenance' | 'deprecated' | 'sunset';
   knowledgeVersion: string;
   schemaVersion: string;
   lastUpdated: string;
@@ -244,6 +349,9 @@ export class KnowledgeLoader {
   private static knowledgeCache = new Map<string, ProviderKnowledge>();
   private static initialized = false;
   private static healthReport: KnowledgeHealthReport | null = null;
+  /** Signatures of `enterprise` / `financialProfile` blocks shared across the catalogue. */
+  private static boilerplateEnterpriseSignatures = new Set<string>();
+  private static boilerplateFinancialSignatures = new Set<string>();
 
   /**
    * Initializes the repository by loading hierarchical provider directories
@@ -332,10 +440,11 @@ export class KnowledgeLoader {
 
             // Synthesize ProviderProfile for backward compatibility with audit engines
             const synthesizedProfile = this.synthesizeProfile(pk);
+            // NOTE: only the canonical id is written to `this.cache` (the enumerated
+            // profile cache). Lookup aliases (e.g. 'copilot') live ONLY in
+            // `knowledgeCache` above, so getProvider('copilot') still resolves while
+            // getAllProviders() enumerates each provider exactly once.
             this.cache.set(synthesizedProfile.id.toLowerCase(), synthesizedProfile);
-            if (synthesizedProfile.id.toLowerCase() === 'github-copilot') {
-              this.cache.set('copilot', synthesizedProfile);
-            }
           } catch (err) {
             console.error(`❌ Failed to load hierarchical provider '${entry}':`, err);
           }
@@ -355,10 +464,89 @@ export class KnowledgeLoader {
       }
     }
 
+    // Flag copy-pasted governance/financial blocks as unverified before any
+    // engine reads them (must run after every provider is cached).
+    this.detectBoilerplateGovernanceData();
+
     // Run Knowledge Quality Engine validation once during initialization
     this.healthReport = KnowledgeQualityEngine.validateKnowledgeBase(Array.from(this.cache.values()));
 
     this.initialized = true;
+  }
+
+  /**
+   * Marks `enterprise` / `financialProfile` blocks that are shared boilerplate
+   * rather than researched per-provider data.
+   *
+   * Why this exists: every provider's plans.json currently ships a byte-identical
+   * `enterprise` block (soc2/rbac/auditLogs/sso/saml/zeroDataRetention all true)
+   * and an identical `financialProfile` (vendorLockInRisk "Low", scalingCost 50,
+   * ...). Consuming those as facts produced constant securityScore (67),
+   * enterpriseScore (70) and complianceScore (50) for all 13 providers, made the
+   * enterprise-security strategy's 35% security weight inert, and made the
+   * `requireZeroRetention` penalty impossible to trigger — while directly
+   * contradicting the per-provider capability evidence.
+   *
+   * Detection is structural, not name-based: any block whose canonical signature
+   * is shared by at least half of the catalogue (and by 3+ providers) is
+   * boilerplate. If real per-provider data is authored later, its signature
+   * becomes distinct and the flag flips to verified with no code change.
+   */
+  private static detectBoilerplateGovernanceData(): void {
+    const profiles = Array.from(this.cache.values());
+    if (profiles.length === 0) return;
+
+    const threshold = Math.max(3, Math.ceil(profiles.length / 2));
+
+    const collect = (pick: (p: ProviderProfile) => unknown): Set<string> => {
+      const counts = new Map<string, number>();
+      for (const p of profiles) {
+        const sig = this.canonicalSignature(pick(p));
+        if (sig === null) continue;
+        counts.set(sig, (counts.get(sig) ?? 0) + 1);
+      }
+      const shared = new Set<string>();
+      counts.forEach((count, sig) => { if (count >= threshold) shared.add(sig); });
+      return shared;
+    };
+
+    this.boilerplateEnterpriseSignatures = collect(p => p.enterprise);
+    this.boilerplateFinancialSignatures = collect(p => p.financialProfile);
+
+    for (const p of profiles) this.applyDataProvenanceFlags(p);
+  }
+
+  /**
+   * Stamps `governanceDataVerified` / `financialDataVerified` onto a profile.
+   * Called both by the startup detection pass and by every fresh
+   * synthesizeProfile() call, so profiles obtained via getProvider(id, modelId)
+   * carry the same provenance flags as the cached ones.
+   */
+  private static applyDataProvenanceFlags(p: ProviderProfile): void {
+    const entSig = this.canonicalSignature(p.enterprise);
+    const finSig = this.canonicalSignature(p.financialProfile);
+    p.governanceDataVerified = entSig !== null && !this.boilerplateEnterpriseSignatures.has(entSig);
+    p.financialDataVerified = finSig !== null && !this.boilerplateFinancialSignatures.has(finSig);
+  }
+
+  /** Order-independent JSON signature used to spot duplicated data blocks. */
+  private static canonicalSignature(value: unknown): string | null {
+    if (value === null || value === undefined) return null;
+    const walk = (v: any): any => {
+      if (Array.isArray(v)) return v.map(walk);
+      if (v && typeof v === 'object') {
+        return Object.keys(v).sort().reduce<Record<string, any>>((acc, k) => {
+          acc[k] = walk(v[k]);
+          return acc;
+        }, {});
+      }
+      return v;
+    };
+    try {
+      return JSON.stringify(walk(value));
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -480,7 +668,7 @@ export class KnowledgeLoader {
       industryFit: ['Software', 'Technology', 'Financial Services']
     };
 
-    return {
+    const profile: ProviderProfile = {
       schemaVersion: provider.schemaVersion || '2.0.0',
       knowledgeVersion: provider.knowledgeVersion || '1.0.0',
       lastVerified: provider.lastUpdated || '2026-05-07',
@@ -490,6 +678,12 @@ export class KnowledgeLoader {
       name: provider.name,
       category: provider.category,
       vendor: provider.vendor,
+      // Real, per-provider vendor data (stabilityRating "Very High"/"High"/
+      // "Medium", establishedYear, fundingStage, enterprisePresence, vendorId,
+      // productFamily). Previously dropped here, which made
+      // KnowledgeScoringEngine's `raw.vendorProfile?.stabilityRating` lookup
+      // always undefined and silently collapsed vendor stability to a constant.
+      vendorProfile: provider.vendorProfile,
       primaryRole: provider.primaryRole,
       secondaryRole: provider.secondaryRole,
       pricing: pricingMap,
@@ -515,8 +709,12 @@ export class KnowledgeLoader {
       ideSupport: provider.supportedPlatforms || [],
       annualDiscountPercent: pk.annualDiscountPercent ?? 0,
       apiSupport: provider.apiSupport,
+      lifecycleStatus: provider.lifecycleStatus,
       sources: provider.sources || []
     };
+
+    this.applyDataProvenanceFlags(profile);
+    return profile;
   }
 
   /**
@@ -737,6 +935,7 @@ export class KnowledgeLoader {
       name,
       category,
       vendor,
+      vendorProfile: raw.vendorProfile,
       primaryRole,
       secondaryRole,
       pricing,
@@ -759,6 +958,7 @@ export class KnowledgeLoader {
       supportedModels: raw.supportedModels || [],
       supportedPlatforms: raw.supportedPlatforms || raw.ideSupport || [],
       apiSupport: raw.apiSupport ?? (category === 'api'),
+      lifecycleStatus: raw.lifecycleStatus,
       sources: raw.sources || []
     };
   }
@@ -774,7 +974,15 @@ export class KnowledgeLoader {
 
   public static getAllProviders(): ProviderProfile[] {
     this.initialize();
-    return Array.from(this.cache.values());
+    // Defensive de-duplication by canonical id: guarantees each provider is
+    // enumerated exactly once even if a future lookup alias leaks into `cache`.
+    // First occurrence wins, preserving insertion order.
+    const unique = new Map<string, ProviderProfile>();
+    for (const profile of this.cache.values()) {
+      const key = profile.id.toLowerCase();
+      if (!unique.has(key)) unique.set(key, profile);
+    }
+    return Array.from(unique.values());
   }
 
   public static getProvidersByCategory(category: 'ide' | 'chat' | 'api' | 'search'): ProviderProfile[] {

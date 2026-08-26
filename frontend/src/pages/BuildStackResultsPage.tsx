@@ -14,6 +14,7 @@
 //   - One-click Executive Brief copy & Print / PDF export
 // ============================================================
 
+import type { ReactNode } from 'react';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
@@ -29,45 +30,47 @@ import ProviderLogo from '../components/ProviderLogo';
 import OfferNotificationBell from '../components/OfferNotificationBell';
 import ProcurementIntelligenceDrawer from '../components/intelligence/ProcurementIntelligenceDrawer';
 import type { DrawerSelection } from '../components/intelligence/ProcurementIntelligenceDrawer';
+import RecommendationReveal, { getProviderRole } from '../components/build-stack/RecommendationReveal';
 
 type StrategyKey = 'bestOverall' | 'bestValue' | 'bestPerformance' | 'bestEnterprise';
 
-interface StrategyTabMeta {
+interface StrategyTabConfig {
   key: StrategyKey;
-  label: string;
-  badge: string;
-  icon: string;
-  description: string;
+  icon: (props: { className?: string }) => ReactNode;
 }
 
-const STRATEGY_TABS: StrategyTabMeta[] = [
+const STRATEGY_CONFIGS: StrategyTabConfig[] = [
   {
     key: 'bestOverall',
-    label: 'Best Overall',
-    badge: 'Recommended',
-    icon: '🌟',
-    description: 'Optimal balance of core domain execution, complementary reasoning, and seat cost efficiency.'
+    icon: ({ className = 'w-4 h-4' }: { className?: string }) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18m-8-6l8 6 8-6M4 9l8-6 8 6" />
+      </svg>
+    ),
   },
   {
     key: 'bestValue',
-    label: 'Best Value',
-    badge: 'Cost Optimized',
-    icon: '💡',
-    description: 'Maximizes capability retention per dollar while keeping total spend strictly constrained.'
+    icon: ({ className = 'w-4 h-4' }: { className?: string }) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
   },
   {
     key: 'bestPerformance',
-    label: 'Max Performance',
-    badge: 'Frontier Benchmarks',
-    icon: '⚡',
-    description: 'Uncompromised frontier reasoning depth, top benchmark models, and maximum execution velocity.'
+    icon: ({ className = 'w-4 h-4' }: { className?: string }) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    ),
   },
   {
     key: 'bestEnterprise',
-    label: 'Enterprise Security',
-    badge: 'Strict Security',
-    icon: '🛡',
-    description: 'Zero data retention, SAML SSO, SOC 2/HIPAA compliance, and centralized admin governance.'
+    icon: ({ className = 'w-4 h-4' }: { className?: string }) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>
+    ),
   }
 ];
 
@@ -109,7 +112,7 @@ export default function BuildStackResultsPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] text-slate-500 gap-3">
         <div className="w-8 h-8 border-3 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
-        <p className="text-xs font-bold uppercase tracking-wider text-slate-600">Generating Procurement Intelligence…</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-600">Generating your recommendations…</p>
       </div>
     );
   }
@@ -177,7 +180,7 @@ export default function BuildStackResultsPage() {
       `============================================================`,
       `Domain Workflow : ${context?.domainLabel || 'Custom Workflow'}`,
       `Team Scale      : ${teamSize} Seats`,
-      `Procurement Goal: ${STRATEGY_TABS.find(t => t.key === selectedStrategyKey)?.label} Architecture`,
+      `Procurement Goal: ${currentCategory?.title || selectedStrategyKey}`,
       `Monthly Spend   : $${activeStack.estimatedMonthlyCost.toLocaleString()}/mo ($${activeStack.perSeatMonthlyCost}/seat/mo)`,
       `Annual Run-Rate : $${activeStack.estimatedAnnualCost.toLocaleString()}/yr`,
       `Match Score     : ${activeStack.confidenceScore}% (Requirements Met: ${activeStack.coverageResult.coverageScore}%)`,
@@ -198,6 +201,17 @@ export default function BuildStackResultsPage() {
     showToast('Executive procurement brief copied to clipboard!');
   };
 
+  const stackToolNames = useMemo(() => {
+    const names: string[] = [];
+    if (primaryTool) names.push(primaryTool.toolName);
+    if (secondaryTool) names.push(secondaryTool.toolName);
+    optionalTools.forEach(t => names.push(t.toolName));
+    apiTools.forEach(t => names.push(t.toolName));
+    return names;
+  }, [primaryTool, secondaryTool, optionalTools, apiTools]);
+
+  const recommendationRevealKey = `${selectedStrategyKey}-${customActiveStack?.canonicalSignature ?? 'default'}-${activeStack.estimatedMonthlyCost}-${activeStack.confidenceScore}-${activeStack.coverageResult.coverageScore}`;
+
   const filteredAlternatives = useMemo(() => {
     if (evaluatedFilter === 'ALL') return rec.alternatives;
     return rec.alternatives.filter(a => a.rejectionCategory === evaluatedFilter);
@@ -212,7 +226,7 @@ export default function BuildStackResultsPage() {
   }, [rec.alternatives]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-800 antialiased font-sans">
+    <div className="min-h-screen flex flex-col bg-[#F4F6F9] text-slate-800 antialiased font-sans">
       <ProcurementIntelligenceDrawer
         selection={drawerSelection}
         onClose={() => setDrawerSelection(null)}
@@ -283,269 +297,319 @@ export default function BuildStackResultsPage() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-[1240px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-7">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-slate-200/80 pb-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100">
-                AI Stack Advisor
-              </span>
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
-                StackSave Procurement Intelligence
-              </span>
+      <main className="flex-1 max-w-[1240px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-6">
+        {/* ── Page Header: Executive Summary Hero (0ms stagger) ── */}
+        <m.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="pb-6 border-b border-slate-200/80"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+            <div className="min-w-0">
               {customActiveStack && (
-                <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                  Custom Applied Architecture
-                </span>
+                <>
+                  <span className="text-[10px] text-slate-300">·</span>
+                  <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                    Custom Stack Applied
+                  </span>
+                </>
+              )}
+
+              <h1 className="text-2xl sm:text-[1.85rem] font-bold text-slate-950 tracking-tight leading-tight">
+                Your Recommended AI Stack
+              </h1>
+
+              {context && (
+                <div className="mt-3.5 flex items-stretch gap-0 divide-x divide-slate-200 border border-slate-200/90 rounded-xl overflow-hidden bg-white w-fit shadow-xs">
+                  <div className="px-4 py-2.5">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 block leading-none mb-1.5">Operating Domain</span>
+                    <span className="text-[14px] font-extrabold text-slate-950 leading-none">{context.domainLabel}</span>
+                  </div>
+                  <div className="px-4 py-2.5">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 block leading-none mb-1.5">Team Scale</span>
+                    <span className="text-[14px] font-extrabold text-slate-950 leading-none tabular-nums">{teamSize} {teamSize === 1 ? 'Seat' : 'Seats'}</span>
+                  </div>
+                  <div className="px-4 py-2.5">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 block leading-none mb-1.5">Monthly Budget</span>
+                    <span className="text-[14px] font-extrabold text-slate-950 leading-none tabular-nums">{context.budgetFormatted}</span>
+                  </div>
+                  <div className="px-4 py-2.5">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 block leading-none mb-1.5">Your Requirements</span>
+                    <span className="text-[14px] font-extrabold text-slate-950 leading-none tabular-nums">{context.requirementCount} Specified</span>
+                  </div>
+                </div>
               )}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
-              Recommended AI Procurement Stack
-            </h1>
-
-            {context && (
-              <div className="flex items-center gap-2 flex-wrap text-xs text-slate-600 font-medium pt-0.5">
-                <span className="font-extrabold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
-                  {context.domainLabel}
+            {/* Dark hero metrics panel */}
+            <m.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.08, ease: 'easeOut' }}
+              className="flex items-stretch gap-0 divide-x divide-white/10 rounded-2xl overflow-hidden shrink-0 shadow-lg border border-slate-900"
+              style={{ background: 'linear-gradient(135deg, #0A1320 0%, #152A45 50%, #1E3A5F 100%)' }}
+            >
+              <div className="px-6 py-4.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/50 block leading-none mb-2">
+                  Total Team Spend
                 </span>
-                <span className="text-slate-300">·</span>
-                <span className="font-bold text-slate-700">{teamSize} {teamSize === 1 ? 'Seat' : 'Seats'}</span>
-                <span className="text-slate-300">·</span>
-                <span>Procurement Ceiling: <strong className="text-slate-900 font-bold">{context.budgetFormatted}</strong></span>
-                <span className="text-slate-300">·</span>
-                <span>{context.requirementCount} Specified Requirements</span>
+                <AnimatePresence mode="wait">
+                  <m.div
+                    key={activeStack.estimatedMonthlyCost}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-baseline gap-0.5"
+                  >
+                    <span className="text-sm font-bold text-white/50 mr-0.5">$</span>
+                    <span className="text-[2rem] font-bold text-white leading-none tabular-nums font-sans">
+                      {activeStack.estimatedMonthlyCost.toLocaleString()}
+                    </span>
+                    <span className="text-sm text-white/40 ml-0.5">/mo</span>
+                  </m.div>
+                </AnimatePresence>
+                <span className="text-[11.5px] text-white/60 block mt-1.5 tabular-nums font-medium">
+                  ${activeStack.perSeatMonthlyCost}/seat/mo · ${activeStack.estimatedAnnualCost.toLocaleString()}/yr
+                </span>
               </div>
-            )}
+              <div className="px-6 py-4.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/50 block leading-none mb-2">
+                  Stack Fit
+                </span>
+                <AnimatePresence mode="wait">
+                  <m.span
+                    key={activeStack.confidenceScore}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-[2rem] font-bold text-emerald-400 leading-none tabular-nums block font-sans"
+                  >
+                    {activeStack.confidenceScore}%
+                  </m.span>
+                </AnimatePresence>
+                <span className="text-[11.5px] text-emerald-400 font-semibold block mt-1.5 tabular-nums">
+                  {activeStack.coverageResult.coverageScore}% Requirements Met
+                </span>
+              </div>
+            </m.div>
           </div>
+        </m.div>
 
-          <div className="flex items-center gap-4 sm:gap-6 shrink-0 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-            <div>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                Total Team Spend
-              </span>
-              <span className="text-2xl sm:text-3xl font-black font-mono text-slate-900 leading-none">
-                ${activeStack.estimatedMonthlyCost.toLocaleString()}
-                <span className="text-xs font-normal text-slate-500">/mo</span>
-              </span>
-              <span className="text-[11px] text-slate-400 block mt-1 font-mono font-medium">
-                ${activeStack.perSeatMonthlyCost}/user/mo (${(activeStack.estimatedAnnualCost).toLocaleString()}/yr)
-              </span>
-            </div>
-
-            <div className="w-[1px] h-12 bg-slate-100" />
-
-            <div>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                Match Score
-              </span>
-              <span className="text-2xl sm:text-3xl font-black font-mono text-emerald-600 leading-none">
-                {activeStack.confidenceScore}%
-              </span>
-              <span className="text-[11px] text-emerald-700 font-bold block mt-1">
-                {activeStack.coverageResult.coverageScore}% Requirements Met
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <section className="space-y-3">
+        {/* ── Strategy Command Hub: Segmented Navigation Rail (160ms stagger) ── */}
+        <m.section
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.16, ease: 'easeOut' }}
+          className="space-y-3.5"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 block">
-              SELECT PROCUREMENT STRATEGY DIMENSION
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-black uppercase tracking-[0.14em] text-[#1E3A5F]">
+                Procurement Strategies
+              </span>
+              <span className="text-slate-300">·</span>
+              <span className="text-xs text-slate-600 font-medium">
+                Select an architectural lens to balance execution speed, reasoning depth & cost
+              </span>
+            </div>
             {customActiveStack && (
               <button
                 onClick={() => {
                   setCustomActiveStack(null);
                   showToast('Reset to default strategy recommendation.');
                 }}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+                className="text-xs font-bold text-[#1E3A5F] hover:underline transition-colors cursor-pointer flex items-center gap-1"
               >
-                ↺ Reset to Default Recommendation
+                <span>↺</span>
+                <span>Reset to Default Recommendation</span>
               </button>
             )}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-            {STRATEGY_TABS.map(tab => {
+          {/* Distinct Segmented Strategy Tab Rail */}
+          <div className="bg-slate-200/70 p-1.5 rounded-2xl border border-slate-300/80 grid grid-cols-2 md:grid-cols-4 gap-1.5 shadow-2xs">
+            {STRATEGY_CONFIGS.map((tab, idx) => {
               const isSelected = selectedStrategyKey === tab.key && !customActiveStack;
               const catData = rec.categories?.[tab.key];
+              const title = catData?.title || 'Architecture';
+              const badge = catData?.badge || 'Strategy';
               const cost = catData?.recommendedStack?.estimatedMonthlyCost ?? 0;
+              const Icon = tab.icon;
 
               return (
                 <button
                   key={tab.key}
+                  type="button"
                   onClick={() => {
                     setSelectedStrategyKey(tab.key);
                     setCustomActiveStack(null);
                   }}
-                  className={`p-3.5 rounded-xl border text-left transition-all duration-150 cursor-pointer flex flex-col justify-between ${
-                    isSelected
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-slate-900/10'
-                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-2xs'
-                  }`}
+                  className={`relative p-3.5 sm:p-4 rounded-xl text-left cursor-pointer transition-all duration-150 flex flex-col justify-between group select-none ${isSelected
+                      ? 'bg-white shadow-sm border border-slate-300/90 text-slate-950 ring-2 ring-[#1E3A5F]/20'
+                      : 'hover:bg-white/70 text-slate-700 hover:text-slate-950 border border-transparent'
+                    }`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm">{tab.icon}</span>
-                    <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                      isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
-                    }`}>
-                      {tab.badge}
-                    </span>
+                  {isSelected && (
+                    <m.div
+                      layoutId="strategy-active-tab-glow"
+                      className="absolute inset-0 rounded-xl bg-white -z-10 shadow-sm border border-slate-300/90"
+                      transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                    />
+                  )}
+
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${isSelected
+                        ? 'bg-[#1E3A5F] text-white shadow-xs'
+                        : 'bg-slate-300/70 text-slate-700 group-hover:bg-[#1E3A5F]/10 group-hover:text-[#1E3A5F]'
+                      }`}>
+                      <Icon className="w-3.5 h-3.5" />
+                    </div>
+                    {badge && (
+                      <span className={`text-[10px] font-black uppercase tracking-[0.1em] px-2.5 py-0.5 rounded-full transition-colors ${isSelected
+                          ? 'bg-[#1E3A5F]/10 text-[#1E3A5F] border border-[#1E3A5F]/25'
+                          : 'bg-slate-200/90 text-slate-600'
+                        }`}>
+                        {badge}
+                      </span>
+                    )}
                   </div>
 
-                  <div className="mt-2.5">
-                    <h3 className={`text-xs font-bold tracking-tight ${isSelected ? 'text-white' : 'text-slate-900'}`}>
-                      {tab.label}
-                    </h3>
-                    <span className={`text-[11px] font-mono block mt-0.5 ${isSelected ? 'text-slate-300' : 'text-slate-500'}`}>
-                      ${cost.toLocaleString()}/mo
+                  <div className="mt-0.5">
+                    <span className="text-[10px] font-bold text-slate-600 block leading-none mb-1">
+                      0{idx + 1}
                     </span>
+                    <h3 className={`text-[14px] font-extrabold tracking-tight leading-snug transition-colors ${isSelected ? 'text-slate-950' : 'text-slate-800 group-hover:text-slate-950'
+                      }`}>
+                      {title}
+                    </h3>
+                    <div className="flex items-baseline gap-1 mt-1.5">
+                      <span className={`text-xs tabular-nums font-black transition-colors ${isSelected ? 'text-[#1E3A5F]' : 'text-slate-600'
+                        }`}>
+                        ${cost.toLocaleString()}
+                      </span>
+                      <span className="text-[11px] text-slate-600 font-medium">/mo total</span>
+                    </div>
                   </div>
                 </button>
               );
             })}
           </div>
+        </m.section>
 
-          <p className="text-xs text-slate-500 font-medium px-1">
-            {STRATEGY_TABS.find(t => t.key === selectedStrategyKey)?.description}
-          </p>
-        </section>
+        {/* ── Recommendation Reveal + Provider Stack ── */}
+        <m.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.32, ease: 'easeOut' }}
+          className="space-y-3"
+        >
+          <RecommendationReveal
+            revealKey={recommendationRevealKey}
+            strategyTitle={currentCategory?.title}
+            strategyDescription={currentCategory?.description}
+            domainLabel={context?.domainLabel || 'your'}
+            toolNames={stackToolNames}
+            monthlyCost={activeStack.estimatedMonthlyCost}
+            alignmentScore={activeStack.confidenceScore}
+            coverageScore={activeStack.coverageResult.coverageScore}
+            deeperExplanation={activeStack.whyThisStack}
+          />
 
-        {monthlyBudget !== null && (
-          <div className={`p-4 rounded-xl border flex items-center justify-between flex-wrap gap-3 ${
-            isOverBudget
-              ? 'bg-amber-50/70 border-amber-200 text-amber-950'
-              : 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
-          }`}>
-            <div className="flex items-center gap-3 min-w-0">
-              <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 ${
-                isOverBudget ? 'bg-amber-200 text-amber-900' : 'bg-emerald-200 text-emerald-900'
-              }`}>
-                {isOverBudget ? '⚠' : '✓'}
-              </span>
-              <div>
-                <span className="text-xs font-black uppercase tracking-wider block">
-                  {isOverBudget ? `Advisory Procurement Limit Exceeded (+$${budgetOverrun.toLocaleString()}/mo)` : 'Procurement Ceiling Compliant'}
-                </span>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  {isOverBudget
-                    ? `This ${STRATEGY_TABS.find(t => t.key === selectedStrategyKey)?.label} setup totals $${activeStack.estimatedMonthlyCost.toLocaleString()}/mo against your $${monthlyBudget.toLocaleString()}/mo target. Switch to Best Value or pick a single-tool alternative below to fit strictly.`
-                    : `Architecture total of $${activeStack.estimatedMonthlyCost.toLocaleString()}/mo is fully within your $${monthlyBudget.toLocaleString()}/mo ceiling ($${(monthlyBudget - activeStack.estimatedMonthlyCost).toLocaleString()} budget headroom remaining).`
-                  }
-                </p>
-              </div>
-            </div>
-
-            {isOverBudget && selectedStrategyKey !== 'bestValue' && (
-              <button
-                onClick={() => {
-                  setSelectedStrategyKey('bestValue');
-                  setCustomActiveStack(null);
-                }}
-                className="text-xs font-bold bg-amber-900 text-white px-3 py-1.5 rounded-lg hover:bg-amber-800 transition-colors shrink-0 cursor-pointer shadow-2xs"
-              >
-                Switch to Best Value →
-              </button>
+          <div className="space-y-2.5 pt-0.5">
+            {primaryTool && (
+              <PrimaryRecommendationCard
+                tool={primaryTool}
+                teamSize={teamSize}
+                isActive={drawerSelection?.type === 'tool' && drawerSelection.tool.toolId === primaryTool.toolId}
+                onViewAnalysis={() => openToolDrawer(primaryTool, true)}
+                animationDelay={0.08}
+              />
             )}
-          </div>
-        )}
 
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400 block mb-0.5">
-                ACTIVE PROCUREMENT ARCHITECTURE
-              </span>
-              <h2 className="text-xl font-black text-slate-900 tracking-tight">
-                {customActiveStack ? customActiveStack.rankTitle || 'Selected Custom Architecture' : `${STRATEGY_TABS.find(t => t.key === selectedStrategyKey)?.label} Architecture`}
-              </h2>
-            </div>
-            <div className="text-right hidden sm:block">
-              <span className="text-xs text-slate-500">Combined Monthly Commitment:</span>
-              <span className="text-base font-black font-mono text-slate-900 ml-1.5">
-                ${activeStack.estimatedMonthlyCost.toLocaleString()}/mo
-              </span>
-            </div>
+            {secondaryTool && (
+              <SecondaryRecommendationCard
+                tool={secondaryTool}
+                teamSize={teamSize}
+                isActive={drawerSelection?.type === 'tool' && drawerSelection.tool.toolId === secondaryTool.toolId}
+                onViewAnalysis={() => openToolDrawer(secondaryTool, false)}
+                animationDelay={0.14}
+              />
+            )}
+
+            {optionalTools.map((tool, idx) => (
+              <SupportingToolCard
+                key={tool.toolId}
+                tool={tool}
+                teamSize={teamSize}
+                roleIndex={3 + idx}
+                isActive={drawerSelection?.type === 'tool' && drawerSelection.tool.toolId === tool.toolId}
+                onViewAnalysis={() => openToolDrawer(tool, false)}
+                animationDelay={0.2 + idx * 0.05}
+              />
+            ))}
+
+            {apiTools.map((tool, idx) => (
+              <SupportingToolCard
+                key={tool.toolId}
+                tool={tool}
+                teamSize={teamSize}
+                roleIndex={3 + optionalTools.length + idx}
+                isActive={drawerSelection?.type === 'tool' && drawerSelection.tool.toolId === tool.toolId}
+                onViewAnalysis={() => openToolDrawer(tool, false)}
+                animationDelay={0.25 + idx * 0.05}
+              />
+            ))}
           </div>
 
-          {activeStack.whyThisStack && (
-            <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-2">
+          {/* Active Mandate Summary Block — positioned below the assembled architecture */}
+          <div className="bg-white border-l-4 border-l-[#1E3A5F] border-y border-r border-slate-200/90 rounded-xl px-4.5 py-3 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1.5">
+            <div className="space-y-0.5">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                  Strategic Rationale
+                <span className="text-[10.5px] font-black uppercase tracking-wider text-[#1E3A5F]">
+                  Active Strategy Mandate
+                </span>
+                <span className="text-slate-300">·</span>
+                <span className="text-xs font-black text-slate-950">
+                  {currentCategory?.title || 'Selected Architecture'}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
-                {activeStack.whyThisStack}
+              <p className="text-xs text-slate-700 leading-relaxed font-normal">
+                {currentCategory?.description}
               </p>
             </div>
-          )}
-
-          {primaryTool && (
-            <PrimaryRecommendationCard
-              tool={primaryTool}
-              teamSize={teamSize}
-              coverageScore={activeStack.coverageResult.coverageScore}
-              isActive={drawerSelection?.type === 'tool' && drawerSelection.tool.toolId === primaryTool.toolId}
-              onViewAnalysis={() => openToolDrawer(primaryTool, true)}
-            />
-          )}
-
-          {secondaryTool && (
-            <SecondaryRecommendationCard
-              tool={secondaryTool}
-              teamSize={teamSize}
-              isActive={drawerSelection?.type === 'tool' && drawerSelection.tool.toolId === secondaryTool.toolId}
-              onViewAnalysis={() => openToolDrawer(secondaryTool, false)}
-            />
-          )}
-
-          {optionalTools.map(tool => (
-            <SupportingToolCard
-              key={tool.toolId}
-              tool={tool}
-              teamSize={teamSize}
-              isActive={drawerSelection?.type === 'tool' && drawerSelection.tool.toolId === tool.toolId}
-              onViewAnalysis={() => openToolDrawer(tool, false)}
-            />
-          ))}
-
-          {apiTools.map(tool => (
-            <SupportingToolCard
-              key={tool.toolId}
-              tool={tool}
-              teamSize={teamSize}
-              isActive={drawerSelection?.type === 'tool' && drawerSelection.tool.toolId === tool.toolId}
-              onViewAnalysis={() => openToolDrawer(tool, false)}
-            />
-          ))}
-        </section>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs font-black text-[#1E3A5F] bg-[#1E3A5F]/10 px-3 py-1 rounded-full border border-[#1E3A5F]/20">
+                ${activeStack.estimatedMonthlyCost.toLocaleString()}/mo total spend
+              </span>
+            </div>
+          </div>
+        </m.section>
 
         {comparisons.length > 0 && (
           <section className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-black text-slate-900 tracking-tight">
-                  Alternative AI Stacks ({comparisons.length} Commercial Architectures)
+                <h3 className="text-lg font-bold text-slate-950 tracking-tight">
+                  Alternative Commercial Architectures ({comparisons.length})
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-600 mt-0.5 font-medium">
                   Explore ranked alternatives. Click any architecture card to inspect full intelligence or set it as active.
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => scrollAlts('left')}
-                  className="w-8 h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                  className="w-8 h-8 rounded-lg border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
                   aria-label="Scroll left"
                 >
                   ←
                 </button>
                 <button
                   onClick={() => scrollAlts('right')}
-                  className="w-8 h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                  className="w-8 h-8 rounded-lg border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
                   aria-label="Scroll right"
                 >
                   →
@@ -562,8 +626,8 @@ export default function BuildStackResultsPage() {
                 const matchedStack = alt.stack || (alt.rank === 1
                   ? currentCategory?.recommendedStack
                   : alt.rank === 2
-                  ? currentCategory?.alternativeA
-                  : currentCategory?.alternativeB);
+                    ? currentCategory?.alternativeA
+                    : currentCategory?.alternativeB);
 
                 const isAltOverBudget = alt.budgetFit === 'over';
                 const isCurrentActive = customActiveStack?.canonicalSignature === matchedStack?.canonicalSignature;
@@ -573,31 +637,29 @@ export default function BuildStackResultsPage() {
                     key={alt.rank || idx}
                     onClick={() => openStackDrawer(alt, matchedStack)}
                     style={{ scrollSnapAlign: 'start', minWidth: '330px', maxWidth: '370px' }}
-                    className={`shrink-0 p-5 rounded-2xl border transition-all duration-200 group flex flex-col justify-between space-y-4 cursor-pointer ${
-                      isCurrentActive
-                        ? 'bg-white border-slate-900 ring-2 ring-slate-900/10 shadow-md'
-                        : 'bg-white border-slate-200/90 hover:border-slate-400 hover:shadow-md shadow-xs'
-                    }`}
+                    className={`shrink-0 p-5 rounded-2xl border transition-all duration-200 group flex flex-col justify-between space-y-4 cursor-pointer ${isCurrentActive
+                        ? 'bg-white border-2 border-[#1E3A5F] ring-1 ring-[#1E3A5F]/15 shadow-sm'
+                        : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-md shadow-xs'
+                      }`}
                   >
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-900 text-white font-mono">
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#1E3A5F] text-white tabular-nums">
                               #{alt.rank || idx + 2}
                             </span>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block">
                               {alt.purposeLabel || alt.architectureType || alt.rankTitle}
                             </span>
                           </div>
                         </div>
 
                         {alt.budgetFit && alt.budgetFit !== 'no-limit' && (
-                          <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded shrink-0 font-mono ${
-                            isAltOverBudget
-                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                              : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                          }`}>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shrink-0 tabular-nums ${isAltOverBudget
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200/80'
+                              : 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
+                            }`}>
                             {isAltOverBudget ? 'Over Budget' : 'Within Budget'}
                           </span>
                         )}
@@ -606,57 +668,72 @@ export default function BuildStackResultsPage() {
                       {matchedStack?.tools && (
                         <div className="flex items-center gap-1.5 pt-0.5">
                           {matchedStack.tools.map(t => (
-                            <div key={t.toolId} className="w-7 h-7 rounded-md bg-slate-50 border border-slate-200 p-1 flex items-center justify-center" title={t.toolName}>
+                            <div key={t.toolId} className="w-7 h-7 rounded-md bg-slate-50 border border-slate-200/80 p-1 flex items-center justify-center" title={t.toolName}>
                               <ProviderLogo providerId={t.toolId} size="sm" className="w-full h-full object-contain" />
                             </div>
                           ))}
                         </div>
                       )}
 
-                      <h4 className="text-sm font-black tracking-tight text-slate-900 leading-snug">
+                      <h4 className="text-[14px] font-bold tracking-tight text-slate-950 leading-snug">
                         {alt.stackSummary}
                       </h4>
 
-                      <div className="flex items-baseline justify-between pt-1 border-t border-slate-100 font-mono">
+                      <div className="flex items-baseline justify-between pt-1.5 border-t border-slate-100">
                         <div>
-                          <span className="text-[10px] uppercase font-bold text-slate-400 block">Total</span>
-                          <span className="text-sm font-black text-slate-900">${alt.monthlyCost.toLocaleString()}/mo</span>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block leading-none mb-0.5">Total Spend</span>
+                          <span className="text-[14px] font-extrabold text-slate-950 tabular-nums">${alt.monthlyCost.toLocaleString()}/mo</span>
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] uppercase font-bold text-slate-400 block">Per Seat</span>
-                          <span className="text-xs font-bold text-slate-600">${alt.perSeatCost}/user</span>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block leading-none mb-0.5">Per Seat</span>
+                          <span className="text-xs font-bold text-slate-700 tabular-nums">${alt.perSeatCost}/user</span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 text-xs font-mono py-1.5 px-2.5 rounded-lg bg-slate-50 border border-slate-100 text-slate-600">
-                        <span>Domain: <strong className="text-slate-900">{alt.domainFit || alt.matchScore}%</strong></span>
+                      <div className="flex items-center gap-2 text-xs py-1.5 px-2.5 rounded-lg bg-slate-50 border border-slate-100 text-slate-700 font-medium">
+                        <span>Domain: <strong className="text-slate-950 tabular-nums font-bold">{alt.domainFit || alt.matchScore}%</strong></span>
                         <span className="text-slate-300">·</span>
-                        <span>Match: <strong className="text-emerald-700">{alt.matchScore}%</strong></span>
+                        <span>Match: <strong className="text-emerald-700 tabular-nums font-bold">{alt.matchScore}%</strong></span>
                       </div>
 
-                      <div className="space-y-1.5 pt-1 text-xs text-slate-600 font-medium">
+                      <div className="space-y-1.5 pt-1 text-[12.5px] text-slate-700 leading-relaxed font-normal">
                         {alt.bestFor && (
                           <p className="line-clamp-2">
-                            <strong className="text-slate-800">Best for:</strong> {alt.bestFor}
+                            <strong className="text-slate-950 font-bold">Best for:</strong> {alt.bestFor}
                           </p>
                         )}
                         {alt.whyChooseInstead && (
                           <p className="line-clamp-2">
-                            <strong className="text-indigo-700">Why choose:</strong> {alt.whyChooseInstead}
+                            <strong className="text-[#1E3A5F] font-bold">Why choose:</strong> {alt.whyChooseInstead}
                           </p>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs font-mono pt-3 border-t border-slate-100">
-                      <span className="text-[11px] text-slate-400 font-sans">
+                    <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-100 gap-2">
+                      <span className="text-[11.5px] text-slate-600 font-medium tabular-nums">
                         {alt.costDeltaVsPrimary !== undefined && alt.costDeltaVsPrimary !== 0
                           ? (alt.costDeltaVsPrimary < 0 ? `Saves $${Math.abs(alt.costDeltaVsPrimary)}/mo` : `+$${alt.costDeltaVsPrimary}/mo premium`)
                           : 'Baseline price'}
                       </span>
-                      <span className="font-extrabold text-slate-900 group-hover:text-indigo-600 flex items-center gap-1 transition-colors">
-                        Inspect →
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {!isCurrentActive && matchedStack && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCustomActiveStack(matchedStack);
+                              showToast(`Applied ${alt.purposeLabel || 'Architecture'} as active.`);
+                            }}
+                            className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 hover:bg-[#1E3A5F] hover:text-white text-slate-800 transition-colors cursor-pointer"
+                          >
+                            Apply Stack
+                          </button>
+                        )}
+                        <span className="font-bold text-[#1E3A5F] group-hover:underline flex items-center gap-0.5 transition-colors text-[11.5px]">
+                          Inspect →
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -666,17 +743,16 @@ export default function BuildStackResultsPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          <section className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+          <section className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
               <div>
-                <h3 className="text-sm font-black text-slate-900 tracking-tight">Requirement Coverage Verification</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Verification of your requested operational capabilities</p>
+                <h3 className="text-sm font-bold text-slate-900 tracking-tight">Requirement Coverage Verification</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Verification of requested operational capabilities</p>
               </div>
-              <span className={`text-xs font-black font-mono px-3 py-1 rounded-full border ${
-                activeStack.coverageResult.coverageScore >= 80
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-amber-50 text-amber-700 border-amber-200'
-              }`}>
+              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border tabular-nums ${activeStack.coverageResult.coverageScore >= 80
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
+                  : 'bg-amber-50 text-amber-800 border-amber-200/80'
+                }`}>
                 {activeStack.coverageResult.coverageScore}% Satisfied
               </span>
             </div>
@@ -697,21 +773,21 @@ export default function BuildStackResultsPage() {
                         </div>
                         <div>
                           <h4 className="text-xs font-bold text-slate-900">{f.featureLabel}</h4>
-                          <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-1">
+                          <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-0.5">
                             {primaryCovered && (
                               <span>
-                                <strong className="text-slate-700">Primary Core:</strong> {primaryTool?.toolName}
+                                <strong className="text-slate-700 font-semibold">Primary Core:</strong> {primaryTool?.toolName}
                               </span>
                             )}
                             {secondaryCovered && (
                               <span>
-                                <strong className="text-slate-700">Companion:</strong> {secondaryTool?.toolName}
+                                <strong className="text-slate-700 font-semibold">Companion:</strong> {secondaryTool?.toolName}
                               </span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 shrink-0">
                         {primaryCovered ? 'Direct' : 'Full'}
                       </span>
                     </div>
@@ -728,10 +804,10 @@ export default function BuildStackResultsPage() {
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-slate-900">{f.featureLabel}</h4>
-                        <p className="text-[11px] text-amber-700 mt-0.5">Partially covered by {f.coveredBy.join(', ')}.</p>
+                        <p className="text-[11px] text-amber-800 mt-0.5">Partially covered by {f.coveredBy.join(', ')}.</p>
                       </div>
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
                       Partial
                     </span>
                   </div>
@@ -748,11 +824,11 @@ export default function BuildStackResultsPage() {
                       <div>
                         <h4 className="text-xs font-bold text-slate-900 capitalize">{f.replace(/-/g, ' ')}</h4>
                         <p className="text-[11px] text-rose-600 mt-0.5">
-                          Not satisfied by the core tools. Consider adding a specialized tool from the catalog.
+                          Not satisfied by core tools. Consider adding a specialized tool from catalog.
                         </p>
                       </div>
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
                       Missing
                     </span>
                   </div>
@@ -761,17 +837,17 @@ export default function BuildStackResultsPage() {
             </div>
           </section>
 
-          <section className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+          <section className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
               <div>
-                <h3 className="text-sm font-black text-slate-900 tracking-tight">
-                  Procurement Decision Intelligence ({activeStack.confidenceScore}%)
+                <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+                  How We Scored This Stack ({activeStack.confidenceScore}%)
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">7-factor confidence and stability evaluation</p>
               </div>
               <div className="text-right">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Overall Score</span>
-                <span className="text-sm font-black font-mono text-slate-900">{activeStack.confidenceScore}%</span>
+                <span className="text-sm font-bold text-slate-900 tabular-nums">{activeStack.confidenceScore}%</span>
               </div>
             </div>
 
@@ -794,8 +870,8 @@ export default function BuildStackResultsPage() {
                     note: activeStack.budgetStatus === 'within'
                       ? 'Within your target monthly budget ceiling'
                       : activeStack.budgetStatus === 'over'
-                      ? `Exceeds target budget ceiling`
-                      : 'Predictable per-seat subscription'
+                        ? `Exceeds target budget ceiling`
+                        : 'Predictable per-seat subscription'
                   },
                   {
                     label: 'Capability Benchmarks & Depth',
@@ -821,16 +897,15 @@ export default function BuildStackResultsPage() {
                   <div key={item.label} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-800">{item.label}</span>
+                        <span className="font-semibold text-slate-800">{item.label}</span>
                         <span className="text-[11px] text-slate-400 hidden sm:inline">· {item.note}</span>
                       </div>
-                      <span className="font-mono font-bold text-slate-900 shrink-0">{item.val}%</span>
+                      <span className="font-bold text-slate-900 tabular-nums shrink-0">{item.val}%</span>
                     </div>
                     <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-300 ${
-                          item.val >= 80 ? 'bg-emerald-500' : item.val >= 60 ? 'bg-indigo-500' : 'bg-amber-500'
-                        }`}
+                        className={`h-full rounded-full transition-all duration-300 ${item.val >= 80 ? 'bg-emerald-500' : item.val >= 60 ? 'bg-[#1E3A5F]' : 'bg-amber-500'
+                          }`}
                         style={{ width: `${item.val}%` }}
                       />
                     </div>
@@ -838,15 +913,15 @@ export default function BuildStackResultsPage() {
                 ))}
               </div>
 
-              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 text-xs text-slate-600 leading-relaxed">
-                <strong className="text-slate-900 block font-bold mb-0.5">Procurement Verdict:</strong>
+              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 text-xs text-slate-600 leading-relaxed font-normal">
+                <strong className="text-slate-900 block font-bold mb-0.5">Bottom Line:</strong>
                 {isOverBudget ? (
                   <span>
-                    This stack delivers maximum functional velocity for {context?.domainLabel || 'your team'}, but exceeds your target monthly spend. If strict budget adherence is required, evaluate the <strong>Best Value</strong> tab above.
+                    This stack delivers maximum functional velocity for {context?.domainLabel || 'your team'}, but exceeds your target monthly spend. If strict budget adherence is required, evaluate the <strong>Best Value</strong> strategy above.
                   </span>
                 ) : (
                   <span>
-                    Strong functional synergy and domain velocity within target financial parameters. Recommended for immediate team rollout.
+                    Strong functional synergy and domain velocity within target financial parameters. Recommended for immediate team procurement.
                   </span>
                 )}
               </div>
@@ -855,22 +930,21 @@ export default function BuildStackResultsPage() {
         </div>
 
         {growthSim && (
-          <section className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+          <section className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <div>
-                <h3 className="text-sm font-black text-slate-900 tracking-tight">Team Scaling Simulation</h3>
+                <h3 className="text-sm font-bold text-slate-900 tracking-tight">Team Scaling Simulation</h3>
                 <p className="text-xs text-slate-500 mt-0.5">Projected subscription growth and tier upgrade milestones</p>
               </div>
-              <div className="flex gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+              <div className="flex gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200/80">
                 {(['2x', '5x', '10x'] as const).map(v => {
                   const targetSeats = v === '2x' ? growthSim.projection2x.teamSize : v === '5x' ? growthSim.projection5x.teamSize : teamSize * 10;
                   return (
                     <button
                       key={v}
                       onClick={() => setGrowthView(v)}
-                      className={`px-2.5 py-0.5 rounded text-xs font-bold transition-all cursor-pointer ${
-                        growthView === v ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                      }`}
+                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${growthView === v ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                        }`}
                     >
                       {v} ({targetSeats} seats)
                     </button>
@@ -894,8 +968,8 @@ export default function BuildStackResultsPage() {
                     { label: 'Per Seat Cost', val: `$${activeStack.perSeatMonthlyCost}/user/mo` },
                   ].map(stat => (
                     <div key={stat.label} className="px-6 py-4">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">{stat.label}</span>
-                      <span className="text-xl font-black font-mono text-slate-900 mt-0.5 block">{stat.val}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">{stat.label}</span>
+                      <span className="text-lg font-bold text-slate-900 mt-0.5 block tabular-nums">{stat.val}</span>
                     </div>
                   ))}
                 </div>
@@ -912,10 +986,10 @@ export default function BuildStackResultsPage() {
         )}
 
         {rec.alternatives.length > 0 && (
-          <section className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+          <section className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                <h3 className="text-sm font-bold text-slate-900 tracking-tight">
                   Why Weren't Other Providers Selected? ({rec.alternatives.length} Evaluated)
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -925,7 +999,7 @@ export default function BuildStackResultsPage() {
 
               <button
                 onClick={() => setShowEvaluated(v => !v)}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+                className="text-xs font-bold text-[#1E3A5F] hover:underline transition-colors cursor-pointer"
               >
                 {showEvaluated ? '▲ Collapse Matrix' : '▼ Expand Matrix'}
               </button>
@@ -943,9 +1017,8 @@ export default function BuildStackResultsPage() {
                     <span className="text-[10px] font-bold uppercase text-slate-400 shrink-0">Filter:</span>
                     <button
                       onClick={() => setEvaluatedFilter('ALL')}
-                      className={`text-xs px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer shrink-0 ${
-                        evaluatedFilter === 'ALL' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-                      }`}
+                      className={`text-xs px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer shrink-0 ${evaluatedFilter === 'ALL' ? 'bg-slate-900 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                        }`}
                     >
                       All ({rec.alternatives.length})
                     </button>
@@ -953,9 +1026,8 @@ export default function BuildStackResultsPage() {
                       <button
                         key={cat}
                         onClick={() => setEvaluatedFilter(cat)}
-                        className={`text-xs px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer shrink-0 ${
-                          evaluatedFilter === cat ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-                        }`}
+                        className={`text-xs px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer shrink-0 ${evaluatedFilter === cat ? 'bg-slate-900 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                          }`}
                       >
                         {cat.replace(/_/g, ' ')}
                       </button>
@@ -981,15 +1053,14 @@ export default function BuildStackResultsPage() {
                           <span className="text-xs font-bold text-slate-900">{alt.toolName}</span>
                           <span className="text-xs text-slate-400">({alt.category.toUpperCase()})</span>
                         </div>
-                        <p className="text-[11.5px] text-slate-500 truncate mt-0.5">{alt.whyNotSelected}</p>
+                        <p className="text-[11.5px] text-slate-500 truncate mt-0.5 font-normal">{alt.whyNotSelected}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className={`font-mono font-bold text-xs ${
-                          alt.compositeScore >= 70 ? 'text-indigo-600' : 'text-slate-500'
-                        }`}>
+                        <span className={`font-bold text-xs tabular-nums ${alt.compositeScore >= 70 ? 'text-[#1E3A5F]' : 'text-slate-500'
+                          }`}>
                           {alt.compositeScore}% fit
                         </span>
-                        <span className="text-[11px] text-slate-400 block group-hover:text-indigo-600 transition-colors">
+                        <span className="text-[11px] text-slate-400 block group-hover:text-[#1E3A5F] transition-colors">
                           Inspect →
                         </span>
                       </div>
@@ -1005,129 +1076,176 @@ export default function BuildStackResultsPage() {
   );
 }
 
+function ProviderRoleBadge({
+  role,
+}: {
+  role: ReturnType<typeof getProviderRole>;
+}) {
+  const isPrimary = role.variant === 'primary';
+  const isSecondary = role.variant === 'secondary';
+  const isApi = role.variant === 'api';
+
+  const badgeBg = isPrimary
+    ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
+    : isSecondary
+      ? 'bg-slate-800 text-white border-slate-800'
+      : isApi
+        ? 'bg-indigo-900 text-white border-indigo-900'
+        : 'bg-slate-700 text-white border-slate-700';
+
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg border text-xs font-black tracking-wider uppercase shadow-2xs ${badgeBg}`}
+      >
+        <span className="opacity-60 text-[10.5px] font-mono tracking-normal">{role.index}</span>
+        <span className="w-1 h-1 rounded-full bg-white/40" />
+        <span className="text-[11.5px] font-bold">{role.label}</span>
+      </span>
+    </div>
+  );
+}
+
 function PrimaryRecommendationCard({
   tool,
   teamSize,
-  coverageScore,
   isActive,
   onViewAnalysis,
+  animationDelay = 0,
 }: {
   tool: ToolInStack;
   teamSize: number;
-  coverageScore: number;
   isActive: boolean;
   onViewAnalysis: () => void;
+  animationDelay?: number;
 }) {
+  const role = getProviderRole(tool.buyingPriority, 1);
+  const fitScore = tool.workflowFitScore ?? 80;
+  const qualitativeFit = fitScore >= 90 ? 'Exceptional Fit' : fitScore >= 80 ? 'Strong Domain Fit' : fitScore >= 65 ? 'Good Domain Fit' : 'Moderate Fit';
+
   return (
     <m.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      onClick={onViewAnalysis}
-      className={`p-5 sm:p-6 bg-white border-2 rounded-2xl transition-all duration-200 flex flex-col justify-between cursor-pointer group ${
-        isActive
-          ? 'border-slate-900 ring-4 ring-slate-900/10 shadow-lg'
-          : 'border-slate-900 shadow-sm hover:shadow-md'
-      }`}
+      transition={{ duration: 0.28, delay: animationDelay, ease: [0.22, 1, 0.36, 1] }}
+      className={`p-4 sm:p-5 bg-white border-2 rounded-2xl transition-all duration-200 flex flex-col ${isActive
+          ? 'border-[#1E3A5F] ring-2 ring-[#1E3A5F]/15 shadow-md'
+          : 'border-slate-300 shadow-xs hover:border-slate-400 hover:shadow-sm'
+        }`}
     >
-      <div className="space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 p-2 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform duration-150">
-              <ProviderLogo providerId={tool.toolId} size="md" className="w-full h-full object-contain" />
-            </div>
-
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-900">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
-                <span>01 Primary · Core Workspace Driver</span>
-                <span className="text-slate-300">·</span>
-                <span className="text-emerald-700 font-extrabold">Buy First</span>
-              </div>
-              <h3 className="font-black text-2xl tracking-tight text-slate-900 leading-tight mt-0.5">
-                {tool.toolName}
-              </h3>
-              <span className="text-xs font-bold text-slate-500 block mt-0.5">
-                {tool.vendor} · <strong className="text-indigo-600 font-extrabold">{tool.recommendedPlan} Plan</strong>
-              </span>
-            </div>
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-slate-50 border border-slate-200/90 p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+            <ProviderLogo providerId={tool.toolId} size="md" className="w-full h-full object-contain" />
           </div>
 
-          <div className="text-right shrink-0">
-            <div className="flex items-baseline justify-end gap-0.5">
-              <span className="text-xs font-bold text-slate-500 mr-0.5">$</span>
-              <span className="text-2xl sm:text-3xl font-black font-mono text-slate-900 tracking-tight leading-none">
-                {tool.monthlyCostPerSeat}
-              </span>
-              <span className="text-xs font-semibold text-slate-500">/seat/mo</span>
-            </div>
-            <span className="text-xs font-bold text-slate-500 block mt-1 font-mono">
-              ${tool.estimatedMonthlyCostPerTeam.toLocaleString()}/mo ({teamSize} seats)
-            </span>
+          <div className="min-w-0 flex-1">
+            <ProviderRoleBadge role={role} />
+            <h3 className="font-black text-xl sm:text-[1.45rem] tracking-tight text-slate-950 leading-tight mt-1">
+              {tool.toolName}
+            </h3>
+            <p className="text-xs font-semibold text-slate-500 mt-0.5">
+              {tool.recommendedPlan} Plan
+            </p>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-50/90 border border-slate-200/70 space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="font-extrabold text-sm text-slate-900 tracking-tight">
-              Primary Workflow Execution
+        {/* Compact Structured pricing block */}
+        <div className="text-right shrink-0 bg-slate-50 border border-slate-200/90 rounded-lg px-3.5 py-2 shadow-2xs">
+          <div className="flex items-baseline justify-end gap-1">
+            <span className="text-xl sm:text-2xl font-black text-slate-950 leading-none tabular-nums font-sans">
+              ${tool.monthlyCostPerSeat}
             </span>
-            <div className="flex items-center gap-3 text-xs font-mono font-bold">
-              <span className="text-emerald-700">{tool.workflowFitScore}% Domain Fit</span>
-              <span className="text-slate-300">·</span>
-              <span className="text-indigo-700">{coverageScore}% Requirements</span>
-            </div>
+            <span className="text-[11px] font-bold text-slate-500">/user/mo</span>
           </div>
-          <p className="text-xs text-slate-700 leading-relaxed font-medium">
-            {tool.whyRecommended}
-          </p>
-
-          {tool.featuresCovered && tool.featuresCovered.length > 0 && (
-            <div className="pt-2 border-t border-slate-200/60 flex items-center gap-2 text-xs text-slate-600 font-medium flex-wrap">
-              <span className="font-bold text-slate-700">Covers:</span>
-              {tool.featuresCovered.map((f, i) => (
-                <span key={f} className="flex items-center gap-1">
-                  {i > 0 && <span className="text-slate-300 mr-1">·</span>}
-                  <span className="text-emerald-600 font-bold text-[11px]">✓</span>
-                  <span className="capitalize">{f.replace(/-/g, ' ')}</span>
-                </span>
-              ))}
-            </div>
-          )}
+          <span className="text-[11px] font-medium text-slate-600 block mt-0.5 tabular-nums">
+            ${(tool.estimatedMonthlyCostPerTeam || tool.monthlyCostPerSeat * teamSize).toLocaleString()}/mo ({teamSize} {teamSize === 1 ? 'seat' : 'seats'})
+          </span>
         </div>
       </div>
 
-      <div className="mt-3.5 flex items-center justify-between flex-wrap gap-3">
+      {/* Compact Grey Information Panel */}
+      {(tool.whyRecommended || (tool.featuresCovered && tool.featuresCovered.length > 0)) && (
+        <div className="mt-3 p-3.5 sm:p-4 rounded-xl bg-slate-50 border border-slate-200/90 shadow-2xs space-y-2.5">
+          <div className="flex items-center justify-between gap-2 flex-wrap border-b border-slate-200/60 pb-2">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#1E3A5F]" />
+              <h4 className="text-[11px] font-black uppercase tracking-wider text-[#1E3A5F]">
+                Architectural Rationale
+              </h4>
+            </div>
+
+            {/* Compact Inline Domain Fit Block */}
+            <div className="flex items-center gap-2 bg-white border border-slate-200/90 rounded-md px-2.5 py-1 shadow-2xs">
+              <span className="text-xs font-black text-slate-950 tabular-nums">
+                {fitScore}%
+              </span>
+              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">
+                Domain Fit
+              </span>
+              <div className="w-10 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${fitScore >= 80 ? 'bg-emerald-500' : fitScore >= 65 ? 'bg-[#1E3A5F]' : 'bg-amber-500'
+                    }`}
+                  style={{ width: `${fitScore}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-bold text-slate-600">
+                {qualitativeFit}
+              </span>
+            </div>
+          </div>
+
+          {tool.whyRecommended && (
+            <p className="text-[13.5px] sm:text-[14px] text-slate-800 leading-snug font-normal">
+              {tool.whyRecommended}
+            </p>
+          )}
+
+          {tool.featuresCovered && tool.featuresCovered.length > 0 && (
+            <div className="pt-2 border-t border-slate-200/60 space-y-1.5">
+              <span className="text-[10.5px] font-black uppercase tracking-wider text-slate-500 block">
+                Fulfills Requirements
+              </span>
+              <ul className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
+                {tool.featuresCovered.map(f => (
+                  <li key={f} className="flex items-center gap-1.5 text-[13px] text-slate-900 font-medium leading-tight">
+                    <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span className="capitalize">{f.replace(/-/g, ' ')}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Compact Card Footer */}
+      <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2">
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onViewAnalysis();
-          }}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-150 cursor-pointer shadow-xs ${
-            isActive
-              ? 'bg-slate-900 text-white ring-2 ring-slate-800 shadow-sm'
-              : 'bg-slate-900 hover:bg-slate-800 text-white hover:shadow'
-          }`}
+          onClick={onViewAnalysis}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${isActive
+              ? 'bg-[#1E3A5F] text-white shadow-xs'
+              : 'bg-slate-100 hover:bg-slate-200/80 text-slate-800 hover:text-slate-950 border border-slate-200/90'
+            }`}
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <path d="M7 15v-4M12 15V9M17 15v-2" />
+          <span>{isActive ? 'Close Analysis Drawer' : 'View Full Architecture Analysis'}</span>
+          <svg
+            className={`w-3.5 h-3.5 transition-transform duration-150 ${isActive ? 'rotate-180' : 'group-hover:translate-x-0.5'}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
           </svg>
-          <span>{isActive ? 'Close Analysis' : 'Open Tool Analysis'}</span>
-          <span className="transition-transform duration-150 group-hover:translate-x-0.5">→</span>
         </button>
-
-        <div className="flex items-center gap-2 flex-wrap text-xs text-slate-500 font-medium">
-          <div className="flex items-center gap-1">
-            <span className="text-slate-400">Suitability:</span>
-            <span className="font-extrabold font-mono text-emerald-700">{tool.workflowFitScore}%</span>
-          </div>
-          <span className="text-slate-300">·</span>
-          <span className="text-emerald-700 font-bold flex items-center gap-1">
-            Procurement Verified ✓
-          </span>
-        </div>
+        <span className="text-xs font-bold text-slate-600 tabular-nums">
+          Domain Suitability: <strong className="text-slate-950 font-black">{fitScore}%</strong>
+        </span>
       </div>
     </m.div>
   );
@@ -1138,97 +1256,141 @@ function SecondaryRecommendationCard({
   teamSize,
   isActive,
   onViewAnalysis,
+  animationDelay = 0,
 }: {
   tool: ToolInStack;
   teamSize: number;
   isActive: boolean;
   onViewAnalysis: () => void;
+  animationDelay?: number;
 }) {
+  const role = getProviderRole(tool.buyingPriority, 2);
+  const fitScore = tool.workflowFitScore ?? 80;
+  const qualitativeFit = fitScore >= 90 ? 'Exceptional Fit' : fitScore >= 80 ? 'Strong Domain Fit' : fitScore >= 65 ? 'Good Domain Fit' : 'Moderate Fit';
+
   return (
     <m.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.05, duration: 0.25 }}
-      onClick={onViewAnalysis}
-      className={`p-5 sm:p-6 bg-white border rounded-2xl transition-all duration-200 flex flex-col justify-between cursor-pointer group ${
-        isActive
-          ? 'border-slate-800 ring-2 ring-slate-800/10 shadow-md'
+      transition={{ duration: 0.28, delay: animationDelay, ease: [0.22, 1, 0.36, 1] }}
+      className={`p-4 sm:p-5 bg-white border rounded-2xl transition-all duration-200 flex flex-col ${isActive
+          ? 'border-slate-800 ring-2 ring-slate-800/15 shadow-md'
           : 'border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-sm'
-      }`}
+        }`}
     >
-      <div className="space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/80 p-2 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform duration-150">
-              <ProviderLogo providerId={tool.toolId} size="sm" className="w-full h-full object-contain" />
-            </div>
-
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
-                <span>02 Secondary · Recommended Companion</span>
-              </div>
-              <h3 className="font-extrabold text-xl tracking-tight text-slate-900 leading-tight mt-0.5">
-                {tool.toolName}
-              </h3>
-              <span className="text-xs font-semibold text-slate-400 block mt-0.5">
-                {tool.vendor} · <strong className="text-slate-700 font-bold">{tool.recommendedPlan} Plan</strong>
-              </span>
-            </div>
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-slate-50 border border-slate-200/90 p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+            <ProviderLogo providerId={tool.toolId} size="sm" className="w-full h-full object-contain" />
           </div>
 
-          <div className="text-right shrink-0">
-            <div className="flex items-baseline justify-end gap-0.5">
-              <span className="text-xs font-bold text-slate-500 mr-0.5">$</span>
-              <span className="text-2xl font-black font-mono text-slate-900 tracking-tight leading-none">
-                {tool.monthlyCostPerSeat}
-              </span>
-              <span className="text-xs font-semibold text-slate-500">/seat/mo</span>
-            </div>
-            <span className="text-xs font-medium text-slate-400 block mt-1 font-mono">
-              ${tool.estimatedMonthlyCostPerTeam.toLocaleString()}/mo ({teamSize} seats)
-            </span>
+          <div className="min-w-0 flex-1">
+            <ProviderRoleBadge role={role} />
+            <h3 className="font-bold text-lg sm:text-[1.35rem] tracking-tight text-slate-950 leading-tight mt-1">
+              {tool.toolName}
+            </h3>
+            <p className="text-xs font-semibold text-slate-500 mt-0.5">
+              {tool.recommendedPlan} Plan
+            </p>
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/60 space-y-1.5">
-          <span className="font-bold text-sm text-slate-900 tracking-tight block">
-            Reasoning &amp; Architectural Companion
+        {/* Compact Structured pricing block */}
+        <div className="text-right shrink-0 bg-slate-50 border border-slate-200/90 rounded-lg px-3.5 py-2 shadow-2xs">
+          <div className="flex items-baseline justify-end gap-1">
+            <span className="text-xl sm:text-2xl font-black text-slate-950 leading-none tabular-nums font-sans">
+              ${tool.monthlyCostPerSeat}
+            </span>
+            <span className="text-[11px] font-bold text-slate-500">/user/mo</span>
+          </div>
+          <span className="text-[11px] font-medium text-slate-600 block mt-0.5 tabular-nums">
+            ${(tool.estimatedMonthlyCostPerTeam || tool.monthlyCostPerSeat * teamSize).toLocaleString()}/mo ({teamSize} {teamSize === 1 ? 'seat' : 'seats'})
           </span>
-          <p className="text-xs text-slate-600 leading-relaxed font-medium">
-            {tool.whyRecommended}
-          </p>
-          {tool.whatItComplements && (
-            <p className="text-xs text-slate-500 leading-relaxed pt-1 border-t border-slate-200/50">
-              <strong className="text-slate-700">Complements:</strong> {tool.whatItComplements}
-            </p>
-          )}
         </div>
       </div>
 
-      <div className="mt-3.5 flex items-center justify-between flex-wrap gap-3">
+      {/* Compact Grey Information Panel */}
+      {(tool.whyRecommended || (tool.featuresCovered && tool.featuresCovered.length > 0)) && (
+        <div className="mt-3 p-3.5 sm:p-4 rounded-xl bg-slate-50 border border-slate-200/90 shadow-2xs space-y-2.5">
+          <div className="flex items-center justify-between gap-2 flex-wrap border-b border-slate-200/60 pb-2">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+              <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-700">
+                Companion Synergy & Capability Role
+              </h4>
+            </div>
+
+            {/* Compact Inline Domain Fit Block */}
+            <div className="flex items-center gap-2 bg-white border border-slate-200/90 rounded-md px-2.5 py-1 shadow-2xs">
+              <span className="text-xs font-black text-slate-950 tabular-nums">
+                {fitScore}%
+              </span>
+              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">
+                Domain Fit
+              </span>
+              <div className="w-10 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${fitScore >= 80 ? 'bg-emerald-500' : fitScore >= 65 ? 'bg-[#1E3A5F]' : 'bg-amber-500'
+                    }`}
+                  style={{ width: `${fitScore}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-bold text-slate-600">
+                {qualitativeFit}
+              </span>
+            </div>
+          </div>
+
+          {tool.whyRecommended && (
+            <p className="text-[13.5px] text-slate-800 leading-snug font-normal">
+              {tool.whyRecommended}
+            </p>
+          )}
+
+          {tool.featuresCovered && tool.featuresCovered.length > 0 && (
+            <div className="pt-2 border-t border-slate-200/60 space-y-1.5">
+              <span className="text-[10.5px] font-black uppercase tracking-wider text-slate-500 block">
+                Fulfills Requirements
+              </span>
+              <ul className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
+                {tool.featuresCovered.map(f => (
+                  <li key={f} className="flex items-center gap-1.5 text-[13px] text-slate-900 font-medium leading-tight">
+                    <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span className="capitalize">{f.replace(/-/g, ' ')}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Compact Card Footer */}
+      <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2">
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onViewAnalysis();
-          }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white transition-all shadow-xs cursor-pointer"
+          onClick={onViewAnalysis}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${isActive
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-slate-100 hover:bg-slate-200/80 text-slate-800 hover:text-slate-950 border border-slate-200/90'
+            }`}
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <path d="M7 15v-4M12 15V9M17 15v-2" />
+          <span>{isActive ? 'Close Analysis Drawer' : 'View Full Architecture Analysis'}</span>
+          <svg
+            className={`w-3.5 h-3.5 transition-transform duration-150 ${isActive ? 'rotate-180' : 'group-hover:translate-x-0.5'}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
           </svg>
-          <span>{isActive ? 'Close Analysis' : 'Open Tool Analysis'}</span>
-          <span className="transition-transform duration-150 group-hover:translate-x-0.5">→</span>
         </button>
-
-        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-          <span>Domain Fit:</span>
-          <span className="font-bold font-mono text-slate-800">{tool.workflowFitScore}%</span>
-          <span className="text-slate-300">·</span>
-          <span className="text-emerald-700 font-semibold">Verified ✓</span>
-        </div>
+        <span className="text-xs font-bold text-slate-600 tabular-nums">
+          Domain Suitability: <strong className="text-slate-950 font-black">{fitScore}%</strong>
+        </span>
       </div>
     </m.div>
   );
@@ -1237,55 +1399,105 @@ function SecondaryRecommendationCard({
 function SupportingToolCard({
   tool,
   teamSize,
+  roleIndex,
   isActive,
   onViewAnalysis,
+  animationDelay = 0,
 }: {
   tool: ToolInStack;
   teamSize: number;
+  roleIndex: number;
   isActive: boolean;
   onViewAnalysis: () => void;
+  animationDelay?: number;
 }) {
-  const isApi = tool.buyingPriority === '04 API LAYER' || tool.category === 'api';
+  const role = getProviderRole(tool.buyingPriority, roleIndex);
+  const fitScore = tool.workflowFitScore ?? 80;
 
   return (
-    <div
-      onClick={onViewAnalysis}
-      className={`p-4 sm:p-5 bg-white border rounded-xl transition-all duration-200 cursor-pointer flex flex-col justify-between ${
-        isActive
-          ? 'border-slate-800 ring-2 ring-slate-800/10 shadow-sm'
-          : 'border-slate-200 shadow-2xs hover:border-slate-300'
-      }`}
+    <m.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, delay: animationDelay, ease: [0.22, 1, 0.36, 1] }}
+      className={`p-4 sm:p-4.5 bg-white border rounded-xl transition-all duration-200 flex flex-col ${isActive
+          ? 'border-slate-700 ring-1 ring-slate-700/15 shadow-sm'
+          : 'border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-sm'
+        }`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 p-1.5 flex items-center justify-center shrink-0">
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-slate-50 border border-slate-200/80 p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
             <ProviderLogo providerId={tool.toolId} size="sm" />
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${
-                isApi ? 'bg-indigo-50 text-indigo-800 border border-indigo-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-              }`}>
-                {isApi ? '04 API LAYER' : '03 OPTIONAL'}
-              </span>
-              <h4 className="font-bold text-slate-900 text-sm">{tool.toolName}</h4>
-              <span className="text-xs text-slate-400">({tool.recommendedPlan})</span>
-            </div>
-            <p className="text-xs text-slate-500 truncate mt-0.5">{tool.whyRecommended}</p>
+
+          <div className="min-w-0 flex-1">
+            <ProviderRoleBadge role={role} />
+            <h4 className="font-bold text-base sm:text-lg text-slate-950 leading-tight mt-1">
+              {tool.toolName}
+            </h4>
+            <p className="text-xs font-semibold text-slate-500 mt-0.5">
+              {tool.recommendedPlan} Plan
+            </p>
           </div>
         </div>
 
-        <div className="text-right shrink-0">
-          <span className="font-mono font-bold text-xs text-slate-900 block">${tool.monthlyCostPerSeat}/seat</span>
-          <span className="font-mono text-[10px] text-slate-400 block">${(tool.estimatedMonthlyCostPerTeam || tool.monthlyCostPerSeat * teamSize).toLocaleString()}/mo</span>
-          <button
-            type="button"
-            className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 mt-0.5 cursor-pointer"
-          >
-            Inspect →
-          </button>
+        {/* Compact Structured pricing block */}
+        <div className="text-right shrink-0 bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 shadow-2xs">
+          <div className="flex items-baseline justify-end gap-1">
+            <span className="text-base sm:text-lg font-black text-slate-950 tabular-nums">${tool.monthlyCostPerSeat}</span>
+            <span className="text-[10.5px] font-bold text-slate-500">/user/mo</span>
+          </div>
+          <span className="text-[10.5px] font-medium text-slate-600 block mt-0.5 tabular-nums">
+            ${(tool.estimatedMonthlyCostPerTeam || tool.monthlyCostPerSeat * teamSize).toLocaleString()}/mo total
+          </span>
         </div>
       </div>
-    </div>
+
+      {/* Compact Grey Information Panel */}
+      {(tool.whyRecommended || (tool.featuresCovered && tool.featuresCovered.length > 0)) && (
+        <div className="mt-2.5 p-3 sm:p-3.5 rounded-lg bg-slate-50 border border-slate-200/90 shadow-2xs space-y-2">
+          {tool.whyRecommended && (
+            <p className="text-xs sm:text-[13px] text-slate-800 leading-snug font-normal">
+              {tool.whyRecommended}
+            </p>
+          )}
+
+          {tool.featuresCovered && tool.featuresCovered.length > 0 && (
+            <div className="pt-1.5 border-t border-slate-200/60 space-y-1">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">
+                Fulfills Requirements
+              </span>
+              <ul className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                {tool.featuresCovered.map(f => (
+                  <li key={f} className="flex items-center gap-1.5 text-xs text-slate-900 font-medium leading-tight">
+                    <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span className="capitalize">{f.replace(/-/g, ' ')}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={onViewAnalysis}
+          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 hover:text-slate-950 transition-all cursor-pointer"
+        >
+          <span>View Full Architecture Analysis</span>
+          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </button>
+        <span className="text-xs font-bold text-slate-600 tabular-nums">
+          Domain Fit: <strong className="text-slate-950 font-black">{fitScore}%</strong>
+        </span>
+      </div>
+    </m.div>
   );
 }
+

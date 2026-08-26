@@ -1,0 +1,204 @@
+
+==============================================================================
+P1 — PREFERENCE MODIFIER INPUT DATA (is the predicate ever true/false-varying?)
+==============================================================================
+id              lockInRisk    vendStab  portability  govVerified  zdrFlag
+anthropic-api   Low           83        78 (BONUS)   false        true
+chatgpt         Low           98        66 (BONUS)   false        true
+claude          Low           98        53 (none)    false        true
+codex           Low           83        6 (none)     false        true
+cursor          Low           90        60 (BONUS)   false        true
+deepseek        Low           45        65 (BONUS)   false        true
+gemini          Low           98        40 (none)    false        true
+github-copilot  Low           98        33 (none)    false        true
+github-models   Low           83        78 (BONUS)   false        true
+kimi            Low           60        85 (BONUS)   false        true
+openai-api      Low           83        91 (BONUS)   false        true
+perplexity      Low           90        100 (BONUS)  false        true
+windsurf        Low           90        40 (none)    false        true
+
+==============================================================================
+P2 — WHICH PROVIDERS CAN FULLY COVER EACH UI REQUIREMENT (this is the primary gate)
+==============================================================================
+
+editor-code-generation
+  FULL   (3): cursor(ide), github-copilot(ide), windsurf(ide)
+  PARTIAL(1): codex
+
+deep-reasoning-analysis
+  FULL   (11): anthropic-api(api), chatgpt(chat), claude(chat), cursor(ide), deepseek(chat), gemini(chat), github-models(api), kimi(chat), openai-api(api), perplexity(chat), windsurf(ide)
+  PARTIAL(1): github-copilot
+
+large-document-processing
+  FULL   (10): anthropic-api(api), chatgpt(chat), claude(chat), cursor(ide), deepseek(chat), gemini(chat), github-models(api), kimi(chat), openai-api(api), windsurf(ide)
+  PARTIAL(2): github-copilot, perplexity
+
+live-web-research
+  FULL   (8): anthropic-api(api), chatgpt(chat), claude(chat), deepseek(chat), gemini(chat), kimi(chat), openai-api(api), perplexity(chat)
+  PARTIAL(4): cursor, github-copilot, github-models, windsurf
+
+visual-diagram-understanding
+  FULL   (11): anthropic-api(api), chatgpt(chat), claude(chat), cursor(ide), deepseek(chat), gemini(chat), github-models(api), kimi(chat), openai-api(api), perplexity(chat), windsurf(ide)
+  PARTIAL(1): github-copilot
+
+automated-task-execution
+  FULL   (11): anthropic-api(api), chatgpt(chat), claude(chat), cursor(ide), deepseek(chat), gemini(chat), github-models(api), kimi(chat), openai-api(api), perplexity(chat), windsurf(ide)
+  PARTIAL(1): github-copilot
+
+developer-api-access
+  FULL   (5): anthropic-api(api), deepseek(chat), github-models(api), kimi(chat), openai-api(api)
+  PARTIAL(1): codex
+
+enterprise-governance
+  FULL   (9): anthropic-api(api), chatgpt(chat), claude(chat), cursor(ide), gemini(chat), github-copilot(ide), github-models(api), openai-api(api), perplexity(chat)
+  PARTIAL(3): codex, deepseek, windsurf
+
+==============================================================================
+P3 — WorkflowEngine.calculateSuitability(provider, domain) MATRIX
+==============================================================================
+id              softwar  ai-data  researc  product  busines  content  enterpr  general  
+anthropic-api   47       92       88       82       90       91       76       87       
+chatgpt         44       73       90       80       85       82       69       90       
+claude          53       80       89       85       86       94       69       92       
+codex           35       31       19       16       33       24       37       25       
+cursor          98       78       79       80       80       74       65       74       
+deepseek        38       86       79       72       73       78       54       78       
+gemini          46       71       83       71       78       79       68       78       
+github-copilot  68       52       56       52       70       50       78       56       
+github-models   48       80       71       69       78       71       73       70       
+kimi            45       81       82       72       61       81       32       78       
+openai-api      37       86       80       80       86       77       74       80       
+perplexity      33       68       78       71       78       73       69       81       
+windsurf        90       72       72       76       75       70       58       68       
+
+==============================================================================
+P4 — getCompositeScore PER DOMAIN (balanced, no requirements, 10 seats, $1000)
+==============================================================================
+id              softwar  ai-data  researc  product  busines  content  enterpr  general  
+anthropic-api   63       80       79       77       80       80       74       78       
+chatgpt         69       78       83       80       82       81       77       83       
+claude          64       73       75       74       74       77       69       76       
+codex           25       24       19       18       25       21       26       22       
+cursor          78       72       72       73       73       71       68       71       
+deepseek        51       66       64       62       62       64       56       64       
+gemini          68       76       80       76       78       79       75       78       
+github-copilot  70       65       66       65       71       64       73       66       
+github-models   65       77       74       73       77       74       75       74       
+kimi            55       63       63       61       57       63       51       62       
+openai-api      60       79       76       76       79       75       74       76       
+perplexity      52       63       66       64       66       64       63       67       
+windsurf        73       68       68       69       69       67       63       67       
+
+==============================================================================
+P4b — getCompositeScore PER STRATEGY (software-engineering, reqs=[editor-code-generation], $2000)
+==============================================================================
+id              balanced    best-value  max-perfor  enterprise  
+anthropic-api   49          54          58          62          
+chatgpt         57          69          56          64          
+claude          55          60          61          64          
+codex           33          37          41          53          
+cursor          88          81          93          83          
+deepseek        44          52          53          42          
+gemini          57          68          53          64          
+github-copilot  77          76          73          83          
+github-models   51          53          50          62          
+kimi            49          54          60          38          
+openai-api      46          50          51          60          
+perplexity      44          51          50          57          
+windsurf        82          76          88          77          
+
+==============================================================================
+P5 — PLAN-TIER BLINDNESS: same provider, free vs paid plan, same claimed coverage?
+==============================================================================
+$0      cursor plan="Hobby" $0/seat  coverage=100%  covered=["editor-code-generation","automated-task-execution"]
+$100    cursor plan="Hobby" $0/seat  coverage=100%  covered=["editor-code-generation","automated-task-execution"]
+$2000   cursor plan="Pro" $20/seat  coverage=100%  covered=["editor-code-generation","automated-task-execution"]
+
+Cursor plan catalogue:
+  hobby          Hobby                  $0/seat payPerUse=undefined
+  pro            Pro                    $20/seat payPerUse=undefined
+  teams          Teams                  $40/seat payPerUse=undefined
+  pro-plus       Pro+                   $60/seat payPerUse=undefined
+  ultra          Ultra                  $200/seat payPerUse=undefined
+  enterprise     Enterprise             $0/seat payPerUse=undefined
+
+==============================================================================
+P6 — DOES A BIGGER BUDGET GET SPENT? (max-performance plan selection)
+==============================================================================
+budget=$100    → cursor "Hobby" $0/mo  utilisation=0%  conf=80
+budget=$250    → cursor "Pro" $200/mo  utilisation=80%  conf=79
+budget=$500    → cursor "Teams" $400/mo  utilisation=80%  conf=79
+budget=$1000   → cursor "Pro+" $600/mo  utilisation=60%  conf=79
+budget=$2000   → cursor "Ultra" $2000/mo  utilisation=100%  conf=79
+budget=$3000   → cursor "Ultra" $2000/mo  utilisation=67%  conf=79
+budget=$5000   → cursor "Ultra" $2000/mo  utilisation=40%  conf=79
+budget=$none   → cursor "Ultra" $2000/mo  utilisation=n/a  conf=79
+
+==============================================================================
+P7 — KNOWLEDGE FRESHNESS METADATA AS RETURNED TO THE FRONTEND
+==============================================================================
+{
+  "providerCount": 13,
+  "schemaVersions": {
+    "anthropic-api": "2.0.0",
+    "chatgpt": "2.0.0",
+    "claude": "2.0.0",
+    "codex": "2.0.0",
+    "cursor": "2.0.0",
+    "deepseek": "2.0.0",
+    "gemini": "2.0.0",
+    "github-copilot": "2.0.0",
+    "github-models": "2.0.0",
+    "kimi": "2.0.0",
+    "openai-api": "2.0.0",
+    "perplexity": "2.0.0",
+    "windsurf": "2.0.0"
+  },
+  "knowledgeVersions": {
+    "anthropic-api": "1.0.0",
+    "chatgpt": "1.0.0",
+    "claude": "1.0.0",
+    "codex": "1.0.0",
+    "cursor": "1.0.0",
+    "deepseek": "1.0.0",
+    "gemini": "1.0.0",
+    "github-copilot": "1.0.0",
+    "github-models": "1.0.0",
+    "kimi": "1.0.0",
+    "openai-api": "1.0.0",
+    "perplexity": "1.0.0",
+    "windsurf": "1.0.0"
+  },
+  "lastVerifiedDates": {
+    "anthropic-api": "2026-05-07",
+    "chatgpt": "2026-05-07",
+    "claude": "2026-05-07",
+    "codex": "2026-05-07",
+    "cursor": "2026-05-07",
+    "deepseek": "2026-05-07",
+    "gemini": "2026-05-07",
+    "github-copilot": "2026-05-07",
+    "github-models": "2026-05-07",
+    "kimi": "2026-07-01",
+    "openai-api": "2026-05-07",
+    "perplexity": "2026-05-07",
+    "windsurf": "2026-05-07"
+  },
+  "featureMapVersion": "2.0.0",
+  "workflowWeightsVersion": "1.0.0",
+  "recommendationWeightsVersion": "2.0.0",
+  "generatedAt": "2026-08-25T07:52:38.320Z"
+}
+
+trace.domainResolution: {"rawDomain":"software-engineering","resolvedDomain":"software-engineering","usedNeutralFallback":false}
+trace.inputs        : {"domain":"software-engineering","domainLabel":"Software Engineering","teamSize":10,"monthlyBudget":1000,"requirements":["editor-code-generation"],"strategy":"balanced","preferences":{"preferOpenSource":false,"avoidLockIn":false,"maximizeSavings":false,"preferEstablishedVendors":false,"requireZeroRetention":false}}
+
+scoreAll() identity stability (cache):
+  same object identity for cursor across two calls: true
+
+==============================================================================
+P8 — DYNAMIC-DATA PROPAGATION: patch a plan price, re-score WITHOUT clearCache()
+==============================================================================
+cursor BEFORE: meaningfulPaidPlanPrice=20 costEfficiencyScore=70
+cursor AFTER patch, no clearCache: meaningfulPaidPlanPrice=20 costEfficiencyScore=70
+cursor AFTER clearCache()        : meaningfulPaidPlanPrice=40 costEfficiencyScore=55

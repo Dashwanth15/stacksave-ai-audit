@@ -1,0 +1,29 @@
+id              cat   ideInt vscode jetbra autoco multiF coding termin api    aiAgen functi embedd enterp sso    resear reason vision 
+anthropic-api   api   1      0      0      1      1      9      1      10     9      10     8      9      9      7      10     9      
+chatgpt         chat  2      0      0      1      1      8      1      2      7      9      7      8      8      10     9      10     
+claude          chat  3      0      0      1      2      10     1      2      8      9      8      8      8      8      10     9      
+codex           ide   6      6      0      6      1      5      1      5      2      2      2      5      0      2      4      0      
+cursor          ide   10     10     0      10     10     10     10     2      10     9      9      7      8      6      9      8      
+deepseek        chat  1      0      0      1      1      9      1      10     8      9      8      6      6      7      9      8      
+gemini          chat  2      0      0      1      1      8      1      2      6      8      8      8      8      8      8      9      
+github-copilot  ide   9      10     10     10     3      8      5      1      4      6      6      10     10     5      7      6      
+github-models   api   1      0      0      1      1      8      1      10     7      8      8      9      9      6      8      8      
+kimi            chat  1      0      0      1      1      9      1      9      7      8      3      3      0      9      10     7      
+openai-api      api   1      0      0      1      1      8      1      10     7      10     10     9      9      7      9      10     
+perplexity      chat  1      0      0      1      1      7      1      4      6      7      6      8      8      10     9      8      
+windsurf        ide   10     10     0      9      9      9      8      2      9      9      8      6      6      5      9      7      
+
+--- raw provider.json editor-surface fields ---
+anthropic-api   cat=api   deliveryModel=MISSING        surfaces=null
+chatgpt         cat=chat  deliveryModel=MISSING        surfaces=null
+claude          cat=chat  deliveryModel=MISSING        surfaces=null
+codex           cat=ide   deliveryModel=MISSING        surfaces=null
+cursor          cat=ide   deliveryModel=MISSING        surfaces=null
+deepseek        cat=chat  deliveryModel=MISSING        surfaces=null
+gemini          cat=chat  deliveryModel=MISSING        surfaces=null
+github-copilot  cat=ide   deliveryModel=MISSING        surfaces=null
+github-models   cat=api   deliveryModel=MISSING        surfaces=null
+kimi            cat=chat  deliveryModel=MISSING        surfaces=null
+openai-api      cat=api   deliveryModel=MISSING        surfaces=null
+perplexity      cat=chat  deliveryModel=MISSING        surfaces=null
+windsurf        cat=ide   deliveryModel=MISSING        surfaces=null

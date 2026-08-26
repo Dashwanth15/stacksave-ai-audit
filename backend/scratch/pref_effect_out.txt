@@ -1,0 +1,108 @@
+=== PREFERENCE MODIFIER SPREAD (raw modifier per provider, one toggle on) ===
+provider        preferOpen  avoidLockI  requireZer  preferEsta  
+anthropic-api   6.08        -2.73       -2.50       -3.20       
+chatgpt         4.48        -5.18       -5.00       -1.80       
+claude          3.52        -4.97       -5.00       -2.60       
+codex           2.56        -6.86       -12.50      -2.40       
+cursor          3.52        -3.92       -7.50       -3.00       
+deepseek        5.12        -2.52       -10.00      -6.10       
+gemini          2.56        -4.76       -5.00       -0.10       
+github-copilot  2.24        -6.09       0.00        -0.10       
+github-models   6.08        -2.73       -2.50       -0.70       
+kimi            5.76        -1.96       -17.50      -5.50       
+openai-api      7.04        -2.94       -2.50       -2.40       
+perplexity      5.12        -2.52       -5.00       -3.00       
+windsurf        2.56        -4.76       -10.00      -2.90       
+preferOpenSource           min=2.24 max=7.04 spread=4.80
+avoidLockIn                min=-6.86 max=-1.96 spread=4.90
+requireZeroRetention       min=-17.50 max=0.00 spread=17.50
+preferEstablishedVendors   min=-6.10 max=-0.10 spread=6.00
+
+=== SELECTION EFFECT (per domain x requirement set) ===
+
+-- software-engineering / no reqs --
+  BASE                       P=cursor S=chatgpt O=- API=- $250 plan=Pro
+  preferOpenSource           P=cursor S=chatgpt O=- API=- $250 plan=Pro → no-change
+  avoidLockIn                P=cursor S=chatgpt O=- API=- $250 plan=Pro → no-change
+  requireZeroRetention       P=cursor S=chatgpt O=- API=- $250 plan=Pro → no-change
+  preferEstablishedVendors   P=cursor S=gemini O=- API=- $249.9 plan=Pro → SECONDARY,COST
+
+-- software-engineering / editor+reason --
+  BASE                       P=cursor S=- O=- API=- $200 plan=Pro
+  preferOpenSource           P=cursor S=- O=- API=- $200 plan=Pro → no-change
+  avoidLockIn                P=cursor S=- O=- API=- $200 plan=Pro → no-change
+  requireZeroRetention       P=cursor S=- O=- API=- $200 plan=Pro → no-change
+  preferEstablishedVendors   P=cursor S=- O=- API=- $200 plan=Pro → no-change
+
+-- software-engineering / gov+longdoc --
+  BASE                       P=cursor S=- O=- API=- $200 plan=Pro
+  preferOpenSource           P=cursor S=- O=- API=- $200 plan=Pro → no-change
+  avoidLockIn                P=cursor S=- O=- API=- $200 plan=Pro → no-change
+  requireZeroRetention       P=github-copilot S=cursor O=- API=- $300 plan=Individual → PRIMARY,SECONDARY,COST,PLAN
+  preferEstablishedVendors   P=cursor S=- O=- API=- $200 plan=Pro → no-change
+
+-- research-knowledge / no reqs --
+  BASE                       P=chatgpt S=cursor O=- API=- $250 plan=Go
+  preferOpenSource           P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  avoidLockIn                P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  requireZeroRetention       P=chatgpt S=github-copilot O=- API=- $150 plan=Go → SECONDARY,COST
+  preferEstablishedVendors   P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+
+-- research-knowledge / editor+reason --
+  BASE                       P=chatgpt S=cursor O=- API=- $250 plan=Go
+  preferOpenSource           P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  avoidLockIn                P=cursor S=- O=- API=- $200 plan=Pro → PRIMARY,SECONDARY,COST,PLAN
+  requireZeroRetention       P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  preferEstablishedVendors   P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+
+-- research-knowledge / gov+longdoc --
+  BASE                       P=gemini S=- O=- API=- $49.9 plan=Google AI Plus
+  preferOpenSource           P=gemini S=- O=- API=- $49.9 plan=Google AI Plus → no-change
+  avoidLockIn                P=gemini S=- O=- API=- $49.9 plan=Google AI Plus → no-change
+  requireZeroRetention       P=gemini S=- O=- API=- $49.9 plan=Google AI Plus → no-change
+  preferEstablishedVendors   P=gemini S=- O=- API=- $49.9 plan=Google AI Plus → no-change
+
+-- data-analytics / no reqs --
+  BASE                       P=chatgpt S=cursor O=- API=- $250 plan=Go
+  preferOpenSource           P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  avoidLockIn                P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  requireZeroRetention       P=chatgpt S=github-copilot O=- API=- $150 plan=Go → SECONDARY,COST
+  preferEstablishedVendors   P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+
+-- data-analytics / editor+reason --
+  BASE                       P=chatgpt S=cursor O=- API=- $250 plan=Go
+  preferOpenSource           P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  avoidLockIn                P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  requireZeroRetention       P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  preferEstablishedVendors   P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+
+-- data-analytics / gov+longdoc --
+  BASE                       P=gemini S=- O=- API=- $49.9 plan=Google AI Plus
+  preferOpenSource           P=gemini S=- O=- API=- $49.9 plan=Google AI Plus → no-change
+  avoidLockIn                P=gemini S=- O=- API=- $49.9 plan=Google AI Plus → no-change
+  requireZeroRetention       P=gemini S=- O=- API=- $49.9 plan=Google AI Plus → no-change
+  preferEstablishedVendors   P=gemini S=- O=- API=- $49.9 plan=Google AI Plus → no-change
+
+-- enterprise-operations / no reqs --
+  BASE                       P=chatgpt S=cursor O=- API=- $250 plan=Go
+  preferOpenSource           P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  avoidLockIn                P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  requireZeroRetention       P=chatgpt S=github-copilot O=- API=- $150 plan=Go → SECONDARY,COST
+  preferEstablishedVendors   P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+
+-- enterprise-operations / editor+reason --
+  BASE                       P=chatgpt S=cursor O=- API=- $250 plan=Go
+  preferOpenSource           P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  avoidLockIn                P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  requireZeroRetention       P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+  preferEstablishedVendors   P=chatgpt S=cursor O=- API=- $250 plan=Go → no-change
+
+-- enterprise-operations / gov+longdoc --
+  BASE                       P=gemini S=- O=- API=- $49.9 plan=Google AI Plus
+  preferOpenSource           P=gemini S=- O=- API=- $49.9 plan=Google AI Plus → no-change
+  avoidLockIn                P=gemini S=- O=- API=- $49.9 plan=Google AI Plus → no-change
+  requireZeroRetention       P=gemini S=- O=- API=- $49.9 plan=Google AI Plus → no-change
+  preferEstablishedVendors   P=gemini S=- O=- API=- $49.9 plan=Google AI Plus → no-change
+
+SELECTION-CHANGING CELLS: 6/48
+by toggle: {"preferEstablishedVendors":1,"requireZeroRetention":4,"avoidLockIn":1}

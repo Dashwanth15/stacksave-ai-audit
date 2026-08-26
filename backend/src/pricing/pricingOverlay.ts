@@ -25,6 +25,7 @@
 
 import { PricingSourceModel } from '../services/dbService';
 import { KnowledgeLoader } from '../audit-engine/services/KnowledgeLoader';
+import { KnowledgeScoringEngine } from '../audit-engine/services/KnowledgeScoringEngine';
 import { NormalizedPlan } from './types';
 
 export interface OverlayResult {
@@ -134,6 +135,19 @@ export class PricingOverlayService {
     const appliedCount = results.filter((r) => r.status === 'APPLIED').length;
     const skippedCount = results.filter((r) => r.status === 'SKIPPED').length;
     const notInRegistry = results.filter((r) => r.status === 'NOT_IN_REGISTRY').length;
+
+    // Scored profiles derive costEfficiencyScore / valueScore / costDataAvailable from the
+    // plan prices read at score time, and KnowledgeScoringEngine memoises one profile per
+    // provider id for the process lifetime. Without this invalidation the overlay patched
+    // KnowledgeLoader's plans while every recommendation kept scoring the pre-sync prices,
+    // so a verified price change reached the audit's financial display and never reached
+    // provider selection. Only invalidate when something actually changed.
+    if (appliedCount > 0) {
+      KnowledgeScoringEngine.clearCache();
+      console.log(
+        `[PricingOverlay] Scored-profile cache invalidated — ${appliedCount} provider(s) will be rescored against verified prices`
+      );
+    }
 
     console.log(
       `[PricingOverlay] Complete: ${appliedCount} providers patched, ` +

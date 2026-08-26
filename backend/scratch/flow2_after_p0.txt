@@ -1,0 +1,399 @@
+
+==============================================================================
+SECTION 1a — DOMAIN SWEEP (only domain varies; reqs=[deep-reasoning-analysis], balanced, 10 seats, $1000)
+==============================================================================
+software-engineering     P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=76 alts=9 [within]
+                         top5: undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined
+ai-data-ml               P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=73 alts=9 [within]
+                         top5: undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined
+research-knowledge       P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=80 alts=9 [within]
+                         top5: undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined
+product-design           P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=75 alts=9 [within]
+                         top5: undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined
+business-operations      P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=78 alts=9 [within]
+                         top5: undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined
+content-communication    P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=74 alts=9 [within]
+                         top5: undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined
+enterprise-compliance    P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=73 alts=9 [within]
+                         top5: undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined
+general-productivity     P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=80 alts=9 [within]
+                         top5: undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined  undefined:undefined
+
+==============================================================================
+SECTION 1a2 — DOMAIN SWEEP WITH NO REQUIREMENTS (isolates pure domain influence)
+==============================================================================
+software-engineering     P=cursor S=chatgpt O=- API=- plan=Pro $250/mo perSeat=$25 cov=100% conf=73 alts=10 [within]
+ai-data-ml               P=chatgpt S=cursor O=- API=- plan=Go $250/mo perSeat=$25 cov=100% conf=71 alts=8 [within]
+research-knowledge       P=chatgpt S=cursor O=- API=- plan=Go $250/mo perSeat=$25 cov=100% conf=75 alts=8 [within]
+product-design           P=chatgpt S=cursor O=- API=- plan=Go $250/mo perSeat=$25 cov=100% conf=74 alts=8 [within]
+business-operations      P=chatgpt S=cursor O=- API=- plan=Go $250/mo perSeat=$25 cov=100% conf=75 alts=8 [within]
+content-communication    P=chatgpt S=cursor O=- API=- plan=Go $250/mo perSeat=$25 cov=100% conf=72 alts=8 [within]
+enterprise-compliance    P=chatgpt S=github-copilot O=- API=- plan=Go $150/mo perSeat=$15 cov=100% conf=71 alts=9 [within]
+general-productivity     P=chatgpt S=cursor O=- API=- plan=Go $250/mo perSeat=$25 cov=100% conf=76 alts=8 [within]
+
+==============================================================================
+SECTION 1a3 — DOMAIN SWEEP WITH THE IDE REQUIREMENT SELECTED (editor-code-generation)
+==============================================================================
+software-engineering     P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=80 alts=10 [within]
+ai-data-ml               P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=74 alts=10 [within]
+research-knowledge       P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=75 alts=10 [within]
+product-design           P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=73 alts=10 [within]
+business-operations      P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=74 alts=10 [within]
+content-communication    P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=72 alts=10 [within]
+enterprise-compliance    P=github-copilot S=- O=- API=- plan=Individual $100/mo perSeat=$10 cov=100% conf=72 alts=10 [within]
+general-productivity     P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=73 alts=10 [within]
+
+==============================================================================
+SECTION 3 — BUDGET SWEEP (software-engineering, [editor-code-generation,deep-reasoning-analysis], balanced, 10 seats)
+==============================================================================
+$0      P=cursor S=- O=- API=- plan=Hobby $0/mo perSeat=$0 cov=100% conf=78 alts=10 [within]
+$50     P=cursor S=- O=- API=- plan=Hobby $0/mo perSeat=$0 cov=100% conf=78 alts=10 [within]
+$100    P=cursor S=- O=- API=- plan=Hobby $0/mo perSeat=$0 cov=100% conf=78 alts=10 [within]
+$250    P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=78 alts=10 [within]
+$500    P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=78 alts=10 [within]
+$1000   P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=78 alts=10 [within]
+$2000   P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=78 alts=10 [within]
+$5000   P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=78 alts=10 [within]
+$none   P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=78 alts=10 [no-limit]
+
+==============================================================================
+SECTION 3b — BUDGET SWEEP, research domain (no IDE requirement)
+==============================================================================
+$0      P=chatgpt S=- O=- API=- plan=Free $0/mo perSeat=$0 cov=100% conf=81 alts=9 [within]
+$50     P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=81 alts=9 [within]
+$100    P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=81 alts=9 [within]
+$250    P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=81 alts=9 [within]
+$500    P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=81 alts=9 [within]
+$1000   P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=81 alts=9 [within]
+$2000   P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=81 alts=9 [within]
+$5000   P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=81 alts=9 [within]
+$none   P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=81 alts=9 [no-limit]
+
+==============================================================================
+SECTION 1b — TEAM SIZE SWEEP (no budget ceiling, so size cannot be masked by budget)
+==============================================================================
+seats=1     P=cursor S=- O=- API=- plan=Pro $20/mo perSeat=$20 cov=100% conf=78 alts=10 [no-limit]
+seats=5     P=cursor S=- O=- API=- plan=Pro $100/mo perSeat=$20 cov=100% conf=78 alts=10 [no-limit]
+seats=15    P=cursor S=- O=- API=- plan=Pro $300/mo perSeat=$20 cov=100% conf=78 alts=10 [no-limit]
+seats=20    P=cursor S=- O=- API=- plan=Teams $800/mo perSeat=$40 cov=100% conf=78 alts=10 [no-limit]
+seats=50    P=cursor S=- O=- API=- plan=Teams $2000/mo perSeat=$40 cov=100% conf=78 alts=10 [no-limit]
+seats=100   P=cursor S=- O=- API=- plan=Teams $4000/mo perSeat=$40 cov=100% conf=78 alts=10 [no-limit]
+seats=250   P=cursor S=- O=- API=- plan=Teams $10000/mo perSeat=$40 cov=100% conf=78 alts=10 [no-limit]
+
+==============================================================================
+SECTION 1b2 — TEAM SIZE SWEEP AT A FIXED $500 CEILING (per-seat allowance shrinks)
+==============================================================================
+seats=1     P=cursor S=- O=- API=- plan=Pro $20/mo perSeat=$20 cov=100% conf=78 alts=10 [within]
+seats=5     P=cursor S=- O=- API=- plan=Pro $100/mo perSeat=$20 cov=100% conf=78 alts=10 [within]
+seats=15    P=cursor S=- O=- API=- plan=Pro $300/mo perSeat=$20 cov=100% conf=77 alts=10 [within]
+seats=20    P=cursor S=- O=- API=- plan=Pro $400/mo perSeat=$20 cov=100% conf=78 alts=10 [within]
+seats=50    P=cursor S=- O=- API=- plan=Hobby $0/mo perSeat=$0 cov=100% conf=78 alts=10 [within]
+seats=100   P=cursor S=- O=- API=- plan=Hobby $0/mo perSeat=$0 cov=100% conf=78 alts=10 [within]
+seats=250   P=cursor S=- O=- API=- plan=Hobby $0/mo perSeat=$0 cov=100% conf=78 alts=10 [within]
+
+==============================================================================
+SECTION 1c — REQUIREMENT ABLATION (WITHOUT vs WITH, one requirement at a time)
+==============================================================================
+
+--- domain=software-engineering ---
+  BASE (no reqs)                        P=cursor S=chatgpt O=- API=- plan=Pro $250/mo perSeat=$25 cov=100% conf=73 alts=10 [within]
+  +editor-code-generation             P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=80 alts=10 [within]
+                                      delta: SECONDARY,COST
+  +deep-reasoning-analysis            P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=76 alts=9 [within]
+                                      delta: SECONDARY,COST
+  +large-document-processing          P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=79 alts=9 [within]
+                                      delta: SECONDARY,COST
+  +live-web-research                  P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=67 alts=9 [within]
+                                      delta: PRIMARY,SECONDARY,COST
+  +visual-diagram-understanding       P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=75 alts=9 [within]
+                                      delta: SECONDARY,COST
+  +automated-task-execution           P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=80 alts=9 [within]
+                                      delta: SECONDARY,COST
+  +developer-api-access               P=deepseek S=cursor O=- API=anthropic-api plan=Pro $350/mo perSeat=$35 cov=100% conf=66 alts=7 [within]
+                                      delta: PRIMARY,SECONDARY,API,COST
+  +enterprise-governance              P=github-copilot S=- O=- API=- plan=Individual $100/mo perSeat=$10 cov=100% conf=61 alts=9 [within]
+                                      delta: PRIMARY,SECONDARY,COST
+
+--- domain=research-knowledge ---
+  BASE (no reqs)                        P=chatgpt S=cursor O=- API=- plan=Go $250/mo perSeat=$25 cov=100% conf=75 alts=8 [within]
+  +editor-code-generation             P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=75 alts=10 [within]
+                                      delta: PRIMARY,SECONDARY,COST
+  +deep-reasoning-analysis            P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=80 alts=9 [within]
+                                      delta: SECONDARY,COST
+  +large-document-processing          P=gemini S=- O=- API=- plan=Google AI Plus $49.9/mo perSeat=$4.99 cov=100% conf=79 alts=9 [within]
+                                      delta: PRIMARY,SECONDARY,COST
+  +live-web-research                  P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=83 alts=9 [within]
+                                      delta: SECONDARY,COST
+  +visual-diagram-understanding       P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=80 alts=9 [within]
+                                      delta: SECONDARY,COST
+  +automated-task-execution           P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=75 alts=9 [within]
+                                      delta: SECONDARY,COST
+  +developer-api-access               P=deepseek S=cursor O=- API=anthropic-api plan=Pro $350/mo perSeat=$35 cov=100% conf=74 alts=7 [within]
+                                      delta: PRIMARY,API,COST
+  +enterprise-governance              P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=66 alts=9 [within]
+                                      delta: SECONDARY,COST
+
+--- domain=general-productivity ---
+  BASE (no reqs)                        P=chatgpt S=cursor O=- API=- plan=Go $250/mo perSeat=$25 cov=100% conf=76 alts=8 [within]
+  +editor-code-generation             P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=73 alts=10 [within]
+                                      delta: PRIMARY,SECONDARY,COST
+  +deep-reasoning-analysis            P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=80 alts=9 [within]
+                                      delta: SECONDARY,COST
+  +large-document-processing          P=gemini S=- O=- API=- plan=Google AI Plus $49.9/mo perSeat=$4.99 cov=100% conf=75 alts=9 [within]
+                                      delta: PRIMARY,SECONDARY,COST
+  +live-web-research                  P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=84 alts=9 [within]
+                                      delta: SECONDARY,COST
+  +visual-diagram-understanding       P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=81 alts=9 [within]
+                                      delta: SECONDARY,COST
+  +automated-task-execution           P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=77 alts=9 [within]
+                                      delta: SECONDARY,COST
+  +developer-api-access               P=deepseek S=cursor O=- API=anthropic-api plan=Pro $350/mo perSeat=$35 cov=100% conf=75 alts=7 [within]
+                                      delta: PRIMARY,API,COST
+  +enterprise-governance              P=chatgpt S=- O=- API=- plan=Go $50/mo perSeat=$5 cov=100% conf=67 alts=9 [within]
+                                      delta: SECONDARY,COST
+
+==============================================================================
+SECTION 4 — API REQUIREMENT OFF vs ON, and does the API pick vary with the request?
+==============================================================================
+api only / se / balanced       P=deepseek S=cursor O=- API=anthropic-api plan=Pro $350/mo perSeat=$35 cov=100% conf=66 alts=7 [within]
+api+longdoc / ai-data-ml       P=gemini S=- O=- API=anthropic-api plan=Google AI Plus $49.9/mo perSeat=$4.99 cov=100% conf=72 alts=10 [within]
+api+vision / product-design    P=chatgpt S=- O=- API=openai-api plan=Go $50/mo perSeat=$5 cov=100% conf=76 alts=10 [within]
+api+research / research        P=chatgpt S=- O=- API=anthropic-api plan=Go $50/mo perSeat=$5 cov=100% conf=79 alts=10 [within]
+api+gov / enterprise           P=github-copilot S=- O=- API=anthropic-api plan=Individual $100/mo perSeat=$10 cov=100% conf=61 alts=10 [within]
+api best-value                 P=deepseek S=- O=- API=anthropic-api plan=Pro $150/mo perSeat=$15 cov=100% conf=61 alts=10 [within]
+api max-performance            P=deepseek S=cursor O=- API=anthropic-api plan=Pro $350/mo perSeat=$35 cov=100% conf=69 alts=7 [within]
+api enterprise-security        P=github-copilot S=gemini O=- API=anthropic-api plan=Business $390/mo perSeat=$39 cov=100% conf=58 alts=9 [within]
+api zdr pref                   P=deepseek S=cursor O=- API=anthropic-api plan=Pro $350/mo perSeat=$35 cov=100% conf=66 alts=7 [within]
+api tiny budget $100           P=deepseek S=cursor O=- API=anthropic-api plan=Free $0/mo perSeat=$0 cov=100% conf=65 alts=9 [within]
+api no ceiling                 P=deepseek S=cursor O=- API=anthropic-api plan=Pro $350/mo perSeat=$35 cov=100% conf=66 alts=7 [no-limit]
+API OFF (control)              P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=76 alts=9 [within]
+
+==============================================================================
+SECTION 5 — SECONDARY PROVIDER CONTRIBUTION (does it add measurable capability?)
+==============================================================================
+
+single-shape reqs (IDE only)
+  tools: primary=cursor
+  primary covers   : ["editor-code-generation"]
+  secondary covers : null
+  optional covers  : null
+  remaining gaps   : [] partial=[]
+
+cross-shape reqs (IDE+research)
+  tools: primary=cursor | secondary=chatgpt
+  primary covers   : ["editor-code-generation","live-web-research"]
+  secondary covers : ["live-web-research"]
+  optional covers  : null
+  remaining gaps   : [] partial=[]
+
+cross-shape (IDE+vision+gov)
+  tools: primary=cursor
+  primary covers   : ["editor-code-generation","visual-diagram-understanding","enterprise-governance"]
+  secondary covers : null
+  optional covers  : null
+  remaining gaps   : [] partial=[]
+
+no reqs at all
+  tools: primary=cursor | secondary=chatgpt
+  primary covers   : []
+  secondary covers : []
+  optional covers  : null
+  remaining gaps   : [] partial=[]
+
+no reqs, best-value
+  tools: primary=chatgpt
+  primary covers   : []
+  secondary covers : null
+  optional covers  : null
+  remaining gaps   : [] partial=[]
+
+all 8 reqs
+  tools: primary=cursor | secondary=chatgpt | api=anthropic-api
+  primary covers   : ["editor-code-generation","deep-reasoning-analysis","large-document-processing","live-web-research","visual-diagram-understanding","automated-task-execution","enterprise-governance"]
+  secondary covers : ["live-web-research"]
+  optional covers  : null
+  remaining gaps   : [] partial=[]
+
+==============================================================================
+SECTION 1d — STRATEGY SWEEP (only strategy varies)
+==============================================================================
+balanced               P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=78 alts=10 [within]
+best-value             P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=78 alts=10 [within]
+max-performance        P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=78 alts=10 [within]
+enterprise-security    P=cursor S=- O=- API=- plan=Teams $400/mo perSeat=$40 cov=100% conf=64 alts=10 [within]
+
+==============================================================================
+SECTION 1d2 — PREFERENCE SWEEP (only one boolean flips at a time)
+==============================================================================
+ALL FALSE (base)             P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=78 alts=10 [within]
+preferOpenSource             P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=86 alts=10 [within]  → no-change
+avoidLockIn                  P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=78 alts=10 [within]  → no-change
+requireZeroRetention         P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=78 alts=10 [within]  → no-change
+preferEstablishedVendors     P=cursor S=- O=- API=- plan=Pro $200/mo perSeat=$20 cov=100% conf=78 alts=10 [within]  → no-change
+
+==============================================================================
+SECTION 2 — RAW PROVIDER SCORE TABLE (id, category, key dimensions, cost signals)
+==============================================================================
+id              cat   comp  code  reas  rsch  lctx  sec   cost  seat$   costOK  bench  govOK
+anthropic-api   api   88    90    100   70    100   83    50    null    false   false  false
+chatgpt         chat  88    80    90    100   70    75    85    5       true    false  false
+claude          chat  92    100   100   80    100   75    70    20      true    false  false
+codex           ide   44    50    40    20    20    53    50    null    false   false  false
+cursor          ide   76    100   90    60    80    68    70    20      true    false  false
+deepseek        chat  76    90    90    70    80    45    70    15      true    false  false
+gemini          chat  80    80    80    80    100   75    85    4.99    true    false  false
+github-copilot  ide   66    80    70    50    50    90    85    10      true    false  false
+github-models   api   76    80    80    60    80    83    50    null    false   false  false
+kimi            chat  82    90    100   90    100   23    70    15      true    true   false
+openai-api      api   82    80    90    70    70    83    50    null    false   false  false
+perplexity      chat  86    70    90    100   60    75    70    20      true    false  false
+windsurf        ide   72    90    90    50    70    60    70    20      true    false  false
+
+==============================================================================
+SECTION 2b — capabilityVector keys used by the 8 UI requirements, per provider
+==============================================================================
+id              autoco coding multiF reason planni longCo largeC resear vision imageU aiAgen functi termin api    enterp sso    
+anthropic-api   1      9      1      10     8      10     10     7      9      9      9      10     1      10     9      9      
+chatgpt         1      8      1      9      8      7      5      10     10     10     7      9      1      2      8      8      
+claude          1      10     2      10     8      10     7      8      9      9      8      9      1      2      8      8      
+codex           6      5      1      4      2      2      2      2      0      0      2      2      1      5      5      0      
+cursor          10     10     10     9      9      8      10     6      8      8      10     9      10     2      7      8      
+deepseek        1      9      1      9      8      8      4      7      8      8      8      9      1      10     6      6      
+gemini          1      8      1      8      7      10     9      8      9      9      6      8      1      2      8      8      
+github-copilot  10     8      3      7      5      5      6      5      6      6      4      6      5      1      10     10     
+github-models   1      8      1      8      7      8      8      6      8      8      7      8      1      10     9      9      
+kimi            1      9      1      10     9      10     10     9      7      7      7      8      1      9      3      0      
+openai-api      1      8      1      9      8      7      5      7      10     10     7      10     1      10     9      9      
+perplexity      1      7      1      9      7      6      3      10     8      8      6      7      1      4      8      8      
+windsurf        9      9      9      9      9      7      9      5      7      7      9      9      8      2      6      6      
+
+==============================================================================
+SECTION 6 — ALTERNATIVE ARCHITECTURES for two very different requests
+==============================================================================
+
+### software-engineering / IDE+reasoning / balanced / $2000
+RECOMMENDED: cursor
+  [#2 Best Value Architecture] windsurf $200/mo cov=100% match=72 budget=within
+      purposeLabel     : Best Value Architecture / cost-efficient-pro
+      whyChooseInstead : Substantially reduces monthly software spend while maintaining daily operational velocity.
+      mainAdvantage    : Highest measured capability-per-seat-dollar ratio in the evaluated catalogue.
+      mainTradeoff     : Uses entry-level subscription tiers which may have tighter burst quotas during peak hours.
+  [#3 High-Performance Flagship Suite] claude+cursor $400/mo cov=100% match=70 budget=within
+      purposeLabel     : Maximum Performance Suite / performance-flagship
+      whyChooseInstead : Unlocks frontier intelligence for complex, ambiguous, or multi-step engineering tasks.
+      mainAdvantage    : Strongest available reasoning and benchmark evidence for this domain.
+      mainTradeoff     : Higher per-seat license cost across the team.
+  [#4 Developer Productivity Architecture] github-copilot+cursor $300/mo cov=100% match=70 budget=within
+      purposeLabel     : Developer Productivity Suite / developer-productivity
+      whyChooseInstead : Puts the strongest measured coding assistant at the centre of the stack.
+      mainAdvantage    : Strongest inline completion and multi-file edit capability scores in the catalogue.
+      mainTradeoff     : Editor-centric tooling covers non-coding team workflows less broadly.
+  [#5 Fast Autonomous Agentic Suite] deepseek+cursor $350/mo cov=100% match=66 budget=within
+      purposeLabel     : Autonomous Agentic Suite / agentic-development
+      whyChooseInstead : Superior autonomous multi-file refactoring and agentic terminal execution.
+      mainAdvantage    : Strongest agentic execution and terminal integration capability evidence in the catalogue.
+      mainTradeoff     : Autonomous execution needs closer review of generated changes.
+  [#6 Research & Web Intelligence Suite] chatgpt+cursor $250/mo cov=100% match=68 budget=within
+      purposeLabel     : Research & Live Intelligence / research-enhanced
+      whyChooseInstead : Directly grounds daily analysis in real-time internet search and source citations.
+      mainAdvantage    : Strongest real-time research and citation capability evidence in the catalogue.
+      mainTradeoff     : Research-first tooling is weaker on in-editor code generation.
+  [#7 Long-Context Analysis Suite] kimi+cursor $510/mo cov=100% match=68 budget=within
+      purposeLabel     : Long-Context Analysis Suite / long-context
+      whyChooseInstead : Processes complete multi-megabyte documentation and repositories in a single prompt.
+      mainAdvantage    : Largest usable context window for whole-codebase and full-corpus ingestion.
+      mainTradeoff     : Specialized deep-context focus requires managing cross-ecosystem workflows.
+  [#8 Enterprise Security Architecture] gemini+cursor $600/mo cov=100% match=58 budget=within
+      purposeLabel     : Enterprise Security & Governance / enterprise-governance
+      whyChooseInstead : Meets rigorous InfoSec mandates and corporate compliance standards without exception.
+      mainAdvantage    : Highest verified identity, admin-control, and enterprise-security evidence in the catalogue.
+      mainTradeoff     : Requires team-wide subscription commitments on higher commercial tiers.
+  [#9 Open Ecosystem Architecture] perplexity+cursor $400/mo cov=100% match=67 budget=within
+      purposeLabel     : Open Ecosystem Architecture / open-ecosystem
+      whyChooseInstead : Avoids closed-ecosystem pricing lock-in and keeps model choice open.
+      mainAdvantage    : Broadest multi-model support with public API access, reducing single-lab dependency.
+      mainTradeoff     : Fewer built-in enterprise management controls and turnkey integrations.
+  [#10 Single-Vendor Architecture] chatgpt+codex $50/mo cov=50% match=49 budget=within
+      purposeLabel     : Single-Vendor Consolidation / single-vendor
+      whyChooseInstead : Removes multi-vendor procurement and identity overhead entirely.
+      mainAdvantage    : Single contract, unified billing, and consistent administrative controls across the stack.
+      mainTradeoff     : Concentrates vendor risk: an outage or price change affects the whole stack at once.
+  [#12 General Team Workspace] codex+cursor $200/mo cov=100% match=64 budget=within
+      purposeLabel     : General Team AI Workspace / general-ai
+      whyChooseInstead : Provides a unified assistant that serves non-technical and technical team members alike.
+      mainAdvantage    : Highest average capability across all evaluated requirement dimensions.
+      mainTradeoff     : Generalist coverage rather than a category-leading score in any single dimension.
+
+### research-knowledge / research+longdoc / best-value / $300
+RECOMMENDED: chatgpt
+  [#2 Best Value Architecture] gemini $49.9/mo cov=100% match=72 budget=within
+      purposeLabel     : Best Value Architecture / cost-efficient-pro
+      whyChooseInstead : Substantially reduces monthly software spend while maintaining daily operational velocity.
+      mainAdvantage    : Highest measured capability-per-seat-dollar ratio in the evaluated catalogue.
+      mainTradeoff     : Uses entry-level subscription tiers which may have tighter burst quotas during peak hours.
+  [#3 High-Performance Flagship Suite] claude $200/mo cov=100% match=75 budget=within
+      purposeLabel     : Maximum Performance Suite / performance-flagship
+      whyChooseInstead : Unlocks frontier intelligence for complex, ambiguous, or multi-step engineering tasks.
+      mainAdvantage    : Strongest available reasoning and benchmark evidence for this domain.
+      mainTradeoff     : Higher per-seat license cost across the team.
+  [#4 Developer Productivity Architecture] cursor+gemini $249.9/mo cov=100% match=70 budget=within
+      purposeLabel     : Developer Productivity Suite / developer-productivity
+      whyChooseInstead : Puts the strongest measured coding assistant at the centre of the stack.
+      mainAdvantage    : Strongest inline completion and multi-file edit capability scores in the catalogue.
+      mainTradeoff     : Editor-centric tooling covers non-coding team workflows less broadly.
+  [#5 Fast Autonomous Agentic Suite] windsurf+gemini $249.9/mo cov=100% match=70 budget=within
+      purposeLabel     : Autonomous Agentic Suite / agentic-development
+      whyChooseInstead : Superior autonomous multi-file refactoring and agentic terminal execution.
+      mainAdvantage    : Strongest agentic execution and terminal integration capability evidence in the catalogue.
+      mainTradeoff     : Autonomous execution needs closer review of generated changes.
+  [#6 Research & Web Intelligence Suite] perplexity+gemini $249.9/mo cov=100% match=71 budget=within
+      purposeLabel     : Research & Live Intelligence / research-enhanced
+      whyChooseInstead : Directly grounds daily analysis in real-time internet search and source citations.
+      mainAdvantage    : Strongest real-time research and citation capability evidence in the catalogue.
+      mainTradeoff     : Research-first tooling is weaker on in-editor code generation.
+  [#7 Long-Context Analysis Suite] kimi $150/mo cov=100% match=71 budget=within
+      purposeLabel     : Long-Context Analysis Suite / long-context
+      whyChooseInstead : Processes complete multi-megabyte documentation and repositories in a single prompt.
+      mainAdvantage    : Largest usable context window for whole-codebase and full-corpus ingestion.
+      mainTradeoff     : Specialized deep-context focus requires managing cross-ecosystem workflows.
+  [#8 Enterprise Security Architecture] github-copilot+gemini $239.9/mo cov=100% match=59 budget=within
+      purposeLabel     : Enterprise Security & Governance / enterprise-governance
+      whyChooseInstead : Meets rigorous InfoSec mandates and corporate compliance standards without exception.
+      mainAdvantage    : Highest verified identity, admin-control, and enterprise-security evidence in the catalogue.
+      mainTradeoff     : Requires team-wide subscription commitments on higher commercial tiers.
+  [#9 Open Ecosystem Architecture] deepseek $150/mo cov=100% match=67 budget=within
+      purposeLabel     : Open Ecosystem Architecture / open-ecosystem
+      whyChooseInstead : Avoids closed-ecosystem pricing lock-in and keeps model choice open.
+      mainAdvantage    : Broadest multi-model support with public API access, reducing single-lab dependency.
+      mainTradeoff     : Fewer built-in enterprise management controls and turnkey integrations.
+  [#12 General Team Workspace] codex+gemini $49.9/mo cov=100% match=61 budget=within
+      purposeLabel     : General Team AI Workspace / general-ai
+      whyChooseInstead : Provides a unified assistant that serves non-technical and technical team members alike.
+      mainAdvantage    : Highest average capability across all evaluated requirement dimensions.
+      mainTradeoff     : Generalist coverage rather than a category-leading score in any single dimension.
+
+==============================================================================
+SECTION 9 — PRIMARY-WINNER DISTRIBUTION over the FULL UI-reachable space
+==============================================================================
+scenarios: 1664
+
+PRIMARY:
+  chatgpt              795  47.8%
+  cursor               303  18.2%
+  gemini               191  11.5%
+  claude               132  7.9%
+  deepseek             126  7.6%
+  github-copilot       113  6.8%
+  perplexity             4  0.2%
+
+SECONDARY (none in 1483/1664 = 89.1%):
+  -                   1483  89.1%
+  cursor               123  7.4%
+  github-copilot        33  2.0%
+  chatgpt               19  1.1%
+  gemini                 3  0.2%
+  perplexity             3  0.2%
+
+API LAYER:
+  -                   1408  84.6%
+  anthropic-api        256  15.4%

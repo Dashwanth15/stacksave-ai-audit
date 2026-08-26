@@ -188,8 +188,11 @@ export class StackOptimizer {
       workflowFitScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
     }
 
+    // `benchmarkScore` is null for providers with no published benchmarks, so this
+    // capability metric uses the capability-evidence composite instead of
+    // substituting a synthetic benchmark number.
     const capabilityCoverageScore = pStack.length > 0
-      ? Math.round(pStack.reduce((sum, p) => sum + p.benchmarkScore, 0) / pStack.length)
+      ? Math.round(pStack.reduce((sum, p) => sum + p.capabilityCompositeScore, 0) / pStack.length)
       : 0;
 
     // Determine budget status

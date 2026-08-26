@@ -1,12 +1,37 @@
 {
   "schemaVersion": "2.0.0",
   "description": "Maps human-readable business requirements to provider capability keys and enterprise configurations.",
+  "planAdminEvidenceTerms": [
+    "admin",
+    "audit log",
+    "centralized",
+    "centralised",
+    "compliance",
+    "domain",
+    "enterprise data protection",
+    "organization",
+    "organisation",
+    "policy",
+    "policies",
+    "rbac",
+    "role-based",
+    "saml",
+    "scim",
+    "sso",
+    "team billing",
+    "usage analytics",
+    "user management",
+    "workspace"
+  ],
+  "_planAdminEvidenceNote": "Shared evidence terms for an ORGANIZATION-SCOPED delivery surface. A requirement marked `requiresOrgAdministration` cannot be entitled by a tier whose published copy describes no organizational surface at all: a single-seat consumer tier has no directory to federate and no administrator to enforce a policy, whatever the product is capable of at company level. Matched against each provider's own plan copy, so the floor is the vendor's published tier position and no provider is special-cased. A ladder that publishes no organizational surface on any tier yields NO gate from this rule.",
   "features": {
     "editor-code-generation": {
       "label": "In-Editor Code Generation & Refactoring",
       "capabilityKeys": ["autocomplete", "coding", "multiFileEditing"],
       "minimumScore": 7,
-      "description": "Write, refactor, and auto-complete code inline across multiple files"
+      "description": "Write, refactor, and auto-complete code inline across multiple files",
+      "requiresCapability": { "key": "ideIntegration", "minimumScore": 5 },
+      "_note": "The prerequisite replaces a hardcoded `provider.category !== 'ide' -> skip` branch in StackCoverageAnalyzer. Inline generation genuinely needs an editor surface, but the evidence for that is the researched `ideIntegration` score (cursor 10, windsurf 10, github-copilot 9, codex 6 vs claude 3, chatgpt 2, api providers 1), not a hand-assigned category label. A new product that ships an editor plugin now qualifies from its own data, and a product labelled `ide` no longer qualifies automatically."
     },
     "deep-reasoning-analysis": {
       "label": "Deep Reasoning & Problem Solving",
@@ -40,69 +65,84 @@
     },
     "developer-api-access": {
       "label": "Programmatic API & Model Integration",
-      "capabilityKeys": ["api", "functionCalling", "embeddings"],
+      "capabilityKeys": ["api"],
       "minimumScore": 7,
       "description": "Integrate AI models directly into software stacks via developer APIs",
-      "derivedFrom": "apiSupport === true"
+      "satisfiedByRole": "api-layer",
+      "_note": "Scored from the researched `api` capability only. The previous `derivedFrom: apiSupport === true` short-circuited these keys entirely, so Cursor/Windsurf/Codex were credited with full API coverage while their own model files score api: 2/2/5. `functionCalling` and `embeddings` were also removed: coverage takes Math.max over capabilityKeys, so Cursor's embeddings: 8 satisfied a 7 threshold on its own. Neither is required to consume a developer API. `satisfiedByRole: api-layer` stops this requirement from gating the 01 PRIMARY: the 04 API LAYER slot exists to fulfil it, and while it gated the primary, selecting it forced the workspace tool to be whichever chat product happened to score api >= 7 (deepseek in 15.4% of the measured input space, kimi elsewhere) regardless of the user's domain."
     },
     "enterprise-governance": {
       "label": "Enterprise Governance & Security",
       "capabilityKeys": ["enterpriseSecurity", "sso"],
       "minimumScore": 7,
       "description": "Enforce zero data retention, SOC 2 / HIPAA compliance, and SAML SSO",
-      "derivedFrom": "enterprise.compliance.soc2 || enterprise.identity.sso"
+      "planEvidenceTerms": ["audit log", "policy", "policies", "role-based", "rbac", "admin", "governance", "privacy mode", "content exclusion", "compliance"],
+      "requiresOrgAdministration": true,
+      "_note": "`derivedFrom: enterprise.compliance.soc2 || enterprise.identity.sso` removed. Those flags are catalogue-wide boilerplate (identical block in all 13 plans.json files, so KnowledgeLoader marks them unverified), which made all 13 providers fully covered — including Codex at enterpriseSecurity 5 / sso 0. The declared capability keys are researched per provider and now actually decide the outcome.",
+      "_planEvidenceNote": "Governance controls are a paid-tier entitlement in every ladder that publishes them (Cursor Teams rank 2, Copilot Business rank 2, Claude Team rank 2, ChatGPT Team rank 3, Gemini Workspace Business rank 3, Perplexity Enterprise Pro rank 2, Windsurf Teams rank 2). The terms below are matched against each provider's own published plan copy to locate the lowest tier that entitles the capability; a provider whose ladder never mentions any term yields NO gate rather than an assumed one."
     },
 
     "code-completion": {
       "label": "Code Completion",
       "capabilityKeys": ["autocomplete", "coding"],
       "minimumScore": 6,
-      "description": "In-editor AI code completion and inline suggestions"
+      "description": "In-editor AI code completion and inline suggestions",
+      "requiresCapability": { "key": "ideIntegration", "minimumScore": 5 }
     },
     "chat-interface": {
       "label": "Chat Interface",
       "capabilityKeys": ["reasoning", "planning"],
       "minimumScore": 6,
-      "description": "Conversational AI assistant for interactive queries"
+      "description": "Conversational AI assistant for interactive queries",
+      "excludesCategories": ["api"]
     },
     "code-review": {
       "label": "Code Review",
       "capabilityKeys": ["coding", "multiFileEditing", "largeCodebaseUnderstanding"],
       "minimumScore": 6,
-      "description": "AI-assisted code review and diff analysis"
+      "description": "AI-assisted code review and diff analysis",
+      "_note": "Deliberately carries NO editor prerequisite. The removed hardcoded branch grouped this key with `editor-code-generation` and excluded every non-`ide` provider, which is factually wrong: reviewing a diff or a pull request does not require an inline editor surface, and the strongest reviewers in the catalogue by researched `coding` score are chat products (claude 10, deepseek 9). Inline completion needs an editor; reading code does not."
     },
     "api-access": {
       "label": "API Access",
-      "capabilityKeys": ["api", "functionCalling"],
+      "capabilityKeys": ["api"],
       "minimumScore": 6,
-      "description": "Programmatic API access and function calling support"
+      "description": "Programmatic API access and function calling support",
+      "satisfiedByRole": "api-layer",
+      "_note": "`functionCalling` removed for the same reason as developer-api-access: coverage takes Math.max, so a high functionCalling score alone satisfied the threshold for providers whose own `api` score is 1-2."
     },
     "multi-model": {
       "label": "Multi-Model",
       "capabilityKeys": [],
-      "minimumScore": 0,
+      "minimumScore": 6,
       "description": "Supports multiple underlying AI models",
-      "derivedFrom": "supportedModels.length >= 3"
+      "_note": "`minimumScore: 0` made this feature unconditionally covered by every provider (0 >= 0), including single-model products. `derivedFrom: supportedModels.length >= 3` was also redundant with the graded model-count branch in StackCoverageAnalyzer, which it short-circuited. Now the graded branch is live: >=3 models -> 10 (covered), 2 models -> 6 (covered at the threshold), 1 model -> 0 (missing)."
     },
     "enterprise-sso": {
       "label": "Enterprise SSO",
       "capabilityKeys": ["sso", "saml"],
       "minimumScore": 7,
-      "description": "SAML/SCIM enterprise single sign-on support"
+      "description": "SAML/SCIM enterprise single sign-on support",
+      "planEvidenceTerms": ["sso", "saml", "oidc", "scim", "single sign-on"],
+      "requiresOrgAdministration": true,
+      "_planEvidenceNote": "No provider ships SSO on a free tier. Published entitlement tiers: Claude Team rank 2, Cursor Teams rank 2, Perplexity Enterprise Pro rank 2, ChatGPT Enterprise rank 5, Copilot Enterprise rank 3, Windsurf Enterprise rank 4. Providers whose plan copy never mentions any term (codex, deepseek, gemini, kimi, api-category) yield no gate from the terms alone — the absence of published copy is not evidence of a restriction. `requiresOrgAdministration` supplies the weaker, still-published floor for those ladders: Gemini's SSO arrives through Google Workspace, so it cannot be credited to the consumer Free tier that publishes no organizational surface, and the floor becomes Workspace Business rank 3. A ladder with no organizational tier at all (e.g. api-category products bought per token) stays ungated."
     },
     "private-deployment": {
       "label": "Private Deployment",
       "capabilityKeys": [],
       "minimumScore": 1,
       "description": "On-premise or VPC private deployment option",
-      "derivedFrom": "enterprise.security.privateDeployment === true"
+      "derivedFrom": "enterprise.security.privateDeployment === true",
+      "requiresVerifiedGovernanceData": true,
+      "availability": "unsupported",
+      "_note": "No provider in the knowledge base declares privateDeployment, and the flag it reads lives in the unverified boilerplate enterprise block, so this requirement is unsatisfiable by construction. `availability: unsupported` makes the engine report it as an unsupported capability (still listed in `missing`) instead of scoring it as a coverage failure the stack could have avoided. Remove this flag as soon as a provider has verified private-deployment data."
     },
     "hipaa-soc2": {
       "label": "HIPAA / SOC 2",
       "capabilityKeys": ["enterpriseSecurity"],
       "minimumScore": 8,
       "description": "HIPAA and SOC 2 compliance certifications",
-      "derivedFrom": "enterprise.compliance.hipaa || enterprise.compliance.soc2"
+      "_note": "`derivedFrom: enterprise.compliance.hipaa || enterprise.compliance.soc2` removed. Those two flags are identical in all 13 plans.json files (unverified boilerplate), so the short-circuit marked every provider — Kimi at enterpriseSecurity 3 included — as fully compliant. The researched `enterpriseSecurity` capability now decides, at the stricter 8 threshold this entry already declared."
     },
     "long-context": {
       "label": "Long Context",
@@ -115,12 +155,6 @@
       "capabilityKeys": ["offlineSupport"],
       "minimumScore": 6,
       "description": "Operates without internet connection"
-    },
-    "image-understanding": {
-      "label": "Image / Vision",
-      "capabilityKeys": ["imageUnderstanding", "vision"],
-      "minimumScore": 7,
-      "description": "Image analysis, diagram parsing, and visual understanding"
     },
     "voice": {
       "label": "Voice Mode",

@@ -24,7 +24,7 @@
   "enterpriseAvailability": true,
   "knownStrengths": [
     "Cascade agent workflow",
-    "Highly cost-effective Pro tier ($15/mo)",
+    "Cost-effective Pro tier at $20/mo per seat ($15/mo equivalent when billed annually)",
     "Strong terminal action loops"
   ],
   "knownWeaknesses": [
@@ -45,7 +45,7 @@
   "supportedPlatforms": [
     "Windsurf Editor"
   ],
-  "apiSupport": true,
+  "apiSupport": false,
   "knowledgeVersion": "1.0.0",
   "schemaVersion": "2.0.0",
   "lastUpdated": "2026-05-07",

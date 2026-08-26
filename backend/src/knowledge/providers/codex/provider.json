@@ -42,7 +42,8 @@
   "supportedPlatforms": [
     "VS Code"
   ],
-  "apiSupport": true,
+  "apiSupport": false,
+  "lifecycleStatus": "deprecated",
   "knowledgeVersion": "1.0.0",
   "schemaVersion": "2.0.0",
   "lastUpdated": "2026-05-07",

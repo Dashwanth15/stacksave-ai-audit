@@ -167,7 +167,7 @@ export default function OfferNotificationBell() {
             exit={{ opacity: 0, y: -4, scale: 0.96 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
             onClick={handleHintClick}
-            className="absolute right-0 top-full mt-2.5 w-[220px] p-3 rounded-xl bg-white border border-slate-200/90 shadow-xl z-40 cursor-pointer text-left select-none group transition-all hover:border-slate-300"
+            className="absolute right-0 top-full mt-2 w-[220px] p-3 rounded-xl bg-white border border-slate-200/90 shadow-xl z-50 cursor-pointer text-left select-none group transition-all hover:border-slate-300"
             style={{
               boxShadow: '0 12px 30px -6px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(15, 23, 42, 0.04)',
             }}
@@ -175,14 +175,27 @@ export default function OfferNotificationBell() {
             {/* Triangular pointer / caret directed toward the bell */}
             <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white border-t border-l border-slate-200/90 rotate-45" />
 
-            <div className="relative z-10">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 leading-none">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                <span>{offerCountLabel}</span>
+            <div className="relative z-10 flex items-start justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 leading-none">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span>{offerCountLabel}</span>
+                </div>
+                <p className="text-[11px] font-medium text-slate-500 mt-1 leading-snug">
+                  New AI pricing updates
+                </p>
               </div>
-              <p className="text-[11px] font-medium text-slate-500 mt-1.5 leading-snug">
-                New AI pricing updates
-              </p>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowHint(false);
+                  sessionStorage.setItem('stacksave_hint_dismissed', 'true');
+                }}
+                className="text-slate-400 hover:text-slate-700 text-xs p-0.5 rounded cursor-pointer"
+                title="Dismiss hint"
+              >
+                ✕
+              </button>
             </div>
           </m.div>
         )}

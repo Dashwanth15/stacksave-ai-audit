@@ -1,0 +1,50 @@
+id              cat   lockIn  stab  govOK  zdr   models  api  exitCost  switchDiff  founded  funding   
+anthropic-api   api   Low     83    false  true  3       10   -         -           -        Private   
+chatgpt         chat  Low     98    false  true  4       2    -         -           -        Private   
+claude          chat  Low     98    false  true  3       2    -         -           -        Private   
+codex           ide   Low     83    false  true  1       5    -         -           -        Private   
+cursor          ide   Low     90    false  true  3       2    -         -           -        Private   
+deepseek        chat  Low     45    false  true  2       10   -         -           -        Private   
+gemini          chat  Low     98    false  true  2       2    -         -           -        Public    
+github-copilot  ide   Low     98    false  true  2       1    -         -           -        Public    
+github-models   api   Low     83    false  true  3       10   -         -           -        Public    
+kimi            chat  Low     60    false  true  3       9    -         -           -        Private   
+openai-api      api   Low     83    false  true  4       10   -         -           -        Private   
+perplexity      chat  Low     90    false  true  4       4    -         -           -        Private   
+windsurf        ide   Low     90    false  true  2       2    -         -           -        Private   
+
+--- financialProfile keys union ---
+vendorLockInRisk, scalingCost, upgradeFlexibility, subscriptionFlexibility, maintenanceCost, enterpriseROI, typicalCustomerSize, industryFit
+
+--- vendorProfile keys union ---
+vendorId, vendorName, establishedYear, headquarters, fundingStage, productFamily, stabilityRating, enterprisePresence
+
+--- full vendorProfile + financialProfile per provider ---
+anthropic-api {"vendorProfile":{"vendorId":"anthropic","vendorName":"Anthropic","establishedYear":2021,"headquarters":"San Francisco, CA","fundingStage":"Private","productFamily":["claude","anthropic-api"],"stabilityRating":"Very High","enterprisePresence":true},"financialProfile":{"vendorLockInRisk":"Low","scalingCost":50,"upgradeFlexibility":"High","subscriptionFlexibility":"High","maintenanceCost":"Low","enterpriseROI":"High","typicalCustomerSize":"1-500","industryFit":["Software","Technology","Financial Services","Healthcare"]}}
+chatgpt {"vendorProfile":{"vendorId":"openai","vendorName":"OpenAI","establishedYear":2015,"headquarters":"San Francisco, CA","fundingStage":"Private","productFamily":["chatgpt","openai-api","codex"],"stabilityRating":"Very High","enterprisePresence":true},"financialProfile":{"vendorLockInRisk":"Low","scalingCost":50,"upgradeFlexibility":"High","subscriptionFlexibility":"High","maintenanceCost":"Low","enterpriseROI":"High","typicalCustomerSize":"1-500","industryFit":["Software","Technology","Financial Services","Healthcare"]}}
+claude {"vendorProfile":{"vendorId":"anthropic","vendorName":"Anthropic","establishedYear":2021,"headquarters":"San Francisco, CA","fundingStage":"Private","productFamily":["claude","anthropic-api"],"stabilityRating":"Very High","enterprisePresence":true},"financialProfile":{"vendorLockInRisk":"Low","scalingCost":50,"upgradeFlexibility":"High","subscriptionFlexibility":"High","maintenanceCost":"Low","enterpriseROI":"High","typicalCustomerSize":"1-500","industryFit":["Software","Technology","Financial Services","Healthcare"]}}
+codex {"vendorProfile":{"vendorId":"openai","vendorName":"OpenAI","establishedYear":2015,"headquarters":"San Francisco, CA","fundingStage":"Private","productFamily":["chatgpt","openai-api","codex"],"stabilityRating":"Very High","enterprisePresence":true},"financialProfile":{"vendorLockInRisk":"Low","scalingCost":50,"upgradeFlexibility":"High","subscriptionFlexibility":"High","maintenanceCost":"Low","enterpriseROI":"High","typicalCustomerSize":"1-500","industryFit":["Software","Technology","Financial Services","Healthcare"]}}
+cursor {"vendorProfile":{"vendorId":"anysphere","vendorName":"Anysphere","establishedYear":2022,"headquarters":"San Francisco, CA","fundingStage":"Private","productFamily":["cursor"],"stabilityRating":"High","enterprisePresence":true},"financialProfile":{"vendorLockInRisk":"Low","scalingCost":50,"upgradeFlexibility":"High","subscriptionFlexibility":"High","maintenanceCost":"Low","enterpriseROI":"High","typicalCustomerSize":"1-500","industryFit":["Software","Technology","Financial Services","Healthcare"]}}
+deepseek {"vendorProfile":{"vendorId":"deepseek","vendorName":"DeepSeek","establishedYear":2023,"headquarters":"Hangzhou, China","fundingStage":"Private","productFamily":["deepseek"],"stabilityRating":"Medium","enterprisePresence":false},"financialProfile":{"vendorLockInRisk":"Low","scalingCost":50,"upgradeFlexibility":"High","subscriptionFlexibility":"High","maintenanceCost":"Low","enterpriseROI":"High","typicalCustomerSize":"1-500","industryFit":["Software","Technology","Financial Services","Healthcare"]}}
+gemini {"vendorProfile":{"vendorId":"google","vendorName":"Google DeepMind","establishedYear":1998,"headquarters":"Mountain View, CA","fundingStage":"Public","productFamily":["gemini"],"stabilityRating":"Very High","enterprisePresence":true},"financialProfile":{"vendorLockInRisk":"Low","scalingCost":50,"upgradeFlexibility":"High","subscriptionFlexibility":"High","maintenanceCost":"Low","enterpriseROI":"High","typicalCustomerSize":"1-500","industryFit":["Software","Technology","Financial Services","Healthcare"]}}
+github-copilot {"vendorProfile":{"vendorId":"microsoft","vendorName":"Microsoft","establishedYear":1975,"headquarters":"Redmond, WA","fundingStage":"Public","productFamily":["github-copilot","github-models"],"stabilityRating":"Very High","enterprisePresence":true},"financialProfile":{"vendorLockInRisk":"Low","scalingCost":50,"upgradeFlexibility":"High","subscriptionFlexibility":"High","maintenanceCost":"Low","enterpriseROI":"High","typicalCustomerSize":"1-500","industryFit":["Software","Technology","Financial Services","Healthcare"]}}
+github-models {"vendorProfile":{"vendorId":"microsoft","vendorName":"Microsoft","establishedYear":1975,"headquarters":"Redmond, WA","fundingStage":"Public","productFamily":["github-copilot","github-models"],"stabilityRating":"Very High","enterprisePresence":true},"financialProfile":{"vendorLockInRisk":"Low","scalingCost":50,"upgradeFlexibility":"High","subscriptionFlexibility":"High","maintenanceCost":"Low","enterpriseROI":"High","typicalCustomerSize":"1-500","industryFit":["Software","Technology","Financial Services","Healthcare"]}}
+kimi {"vendorProfile":{"vendorId":"moonshot-ai","vendorName":"Moonshot AI","establishedYear":2023,"headquarters":"Beijing, China","fundingStage":"Private","productFamily":["kimi"],"stabilityRating":"Medium","enterprisePresence":false},"financialProfile":{"vendorLockInRisk":"Low","scalingCost":50,"upgradeFlexibility":"High","subscriptionFlexibility":"High","maintenanceCost":"Low","enterpriseROI":"High","typicalCustomerSize":"1-500","industryFit":["Software","Technology","Financial Services","Healthcare"]}}
+openai-api {"vendorProfile":{"vendorId":"openai","vendorName":"OpenAI","establishedYear":2015,"headquarters":"San Francisco, CA","fundingStage":"Private","productFamily":["chatgpt","openai-api","codex"],"stabilityRating":"Very High","enterprisePresence":true},"financialProfile":{"vendorLockInRisk":"Low","scalingCost":50,"upgradeFlexibility":"High","subscriptionFlexibility":"High","maintenanceCost":"Low","enterpriseROI":"High","typicalCustomerSize":"1-500","industryFit":["Software","Technology","Financial Services","Healthcare"]}}
+perplexity {"vendorProfile":{"vendorId":"perplexity","vendorName":"Perplexity AI","establishedYear":2022,"headquarters":"San Francisco, CA","fundingStage":"Private","productFamily":["perplexity"],"stabilityRating":"High","enterprisePresence":true},"financialProfile":{"vendorLockInRisk":"Low","scalingCost":50,"upgradeFlexibility":"High","subscriptionFlexibility":"High","maintenanceCost":"Low","enterpriseROI":"High","typicalCustomerSize":"1-500","industryFit":["Software","Technology","Financial Services","Healthcare"]}}
+windsurf {"vendorProfile":{"vendorId":"codeium","vendorName":"Codeium","establishedYear":2021,"headquarters":"Mountain View, CA","fundingStage":"Private","productFamily":["windsurf"],"stabilityRating":"High","enterprisePresence":true},"financialProfile":{"vendorLockInRisk":"Low","scalingCost":50,"upgradeFlexibility":"High","subscriptionFlexibility":"High","maintenanceCost":"Low","enterpriseROI":"High","typicalCustomerSize":"1-500","industryFit":["Software","Technology","Financial Services","Healthcare"]}}
+
+--- enterprise.security per provider ---
+anthropic-api govOK=false {"encryption":true,"privateDeployment":false,"zeroDataRetention":true}
+chatgpt govOK=false {"encryption":true,"privateDeployment":false,"zeroDataRetention":true}
+claude govOK=false {"encryption":true,"privateDeployment":false,"zeroDataRetention":true}
+codex govOK=false {"encryption":true,"privateDeployment":false,"zeroDataRetention":true}
+cursor govOK=false {"encryption":true,"privateDeployment":false,"zeroDataRetention":true}
+deepseek govOK=false {"encryption":true,"privateDeployment":false,"zeroDataRetention":true}
+gemini govOK=false {"encryption":true,"privateDeployment":false,"zeroDataRetention":true}
+github-copilot govOK=false {"encryption":true,"privateDeployment":false,"zeroDataRetention":true}
+github-models govOK=false {"encryption":true,"privateDeployment":false,"zeroDataRetention":true}
+kimi govOK=false {"encryption":true,"privateDeployment":false,"zeroDataRetention":true}
+openai-api govOK=false {"encryption":true,"privateDeployment":false,"zeroDataRetention":true}
+perplexity govOK=false {"encryption":true,"privateDeployment":false,"zeroDataRetention":true}
+windsurf govOK=false {"encryption":true,"privateDeployment":false,"zeroDataRetention":true}

@@ -1,0 +1,131 @@
+
+===== A lean coder, no reqs =====
+alts=8 archetypes=cost-efficient-pro, performance-flagship, developer-productivity, agentic-development, long-context, single-vendor, minimal-core, general-ai
+  [cost-efficient-pro] ChatGPT (Go) + Gemini (Google AI Plus) $29.97
+    ADV : Highest measured capability-per-seat-dollar ratio in the evaluated catalogue. Measured against the recommended stack for this request: $45/mo cheaper ($15/seat less).
+    TRD : Uses entry-level subscription tiers which may have tighter burst quotas during peak hours. Costs you: 26 points lower domain fit.
+    WHY : Substantially reduces monthly software spend while maintaining daily operational velocity. Choose this if $45/mo cheaper ($15/seat less) matters more to you than the recommended stack's lead.
+    NOT : Optimises cost ahead of the requirement coverage and domain fit the #1 stack leads on. Ranked below the recommended stack because it 26 points lower domain fit.
+  [performance-flagship] Windsurf (Pro) + Cursor (Pro) $120
+    ADV : Strongest available reasoning and benchmark evidence for this domain. Measured against the recommended stack for this request: +23 points of domain fit.
+    TRD : Higher per-seat license cost across the team. Costs you: $45/mo more ($15/seat more).
+    WHY : Unlocks frontier intelligence for complex, ambiguous, or multi-step engineering tasks. Choose this if +23 points of domain fit matters more to you than the recommended stack's lead.
+    NOT : Higher total monthly spend than the primary balanced baseline. Ranked below the recommended stack because it $45/mo more ($15/seat more).
+  [developer-productivity] GitHub Copilot (Individual) + Cursor (Pro) $90
+    ADV : Strongest inline completion and multi-file edit capability scores in the catalogue. Measured against the recommended stack for this request: +12 points of domain fit.
+    TRD : Editor-centric tooling covers non-coding team workflows less broadly. Costs you: $15/mo more ($5/seat more).
+    WHY : Puts the strongest measured coding assistant at the centre of the stack. Choose this if +12 points of domain fit matters more to you than the recommended stack's lead.
+    NOT : Narrower coverage outside the editor than a general workspace assistant. Ranked below the recommended stack because it $15/mo more ($5/seat more).
+
+===== B coder + editor req =====
+alts=7 archetypes=cost-efficient-pro, performance-flagship, developer-productivity, agentic-development, long-context, single-vendor, general-ai
+  [cost-efficient-pro] Windsurf (Pro) $100
+    ADV : Highest measured capability-per-seat-dollar ratio in the evaluated catalogue. Measured against the recommended stack for this request, this architecture leads on no cost, coverage, or domain-fit dimension — it is shown as a structural alternative only.
+    TRD : Uses entry-level subscription tiers which may have tighter burst quotas during peak hours. Costs you: 8 points lower domain fit.
+    WHY : Substantially reduces monthly software spend while maintaining daily operational velocity. Choose this only if its procurement shape suits you; the measured scores do not favour it.
+    NOT : Optimises cost ahead of the requirement coverage and domain fit the #1 stack leads on. Ranked below the recommended stack because it 8 points lower domain fit.
+  [performance-flagship] GitHub Copilot (Individual) $50
+    ADV : Strongest available reasoning and benchmark evidence for this domain. Measured against the recommended stack for this request: $50/mo cheaper ($10/seat less).
+    TRD : Higher per-seat license cost across the team. Costs you: 30 points lower domain fit.
+    WHY : Unlocks frontier intelligence for complex, ambiguous, or multi-step engineering tasks. Choose this if $50/mo cheaper ($10/seat less) matters more to you than the recommended stack's lead.
+    NOT : Higher total monthly spend than the primary balanced baseline. Ranked below the recommended stack because it 30 points lower domain fit.
+  [developer-productivity] Codex (Free) + Cursor (Pro) $100
+    ADV : Strongest inline completion and multi-file edit capability scores in the catalogue. Measured against the recommended stack for this request, this architecture leads on no cost, coverage, or domain-fit dimension — it is shown as a structural alternative only.
+    TRD : Editor-centric tooling covers non-coding team workflows less broadly. Costs you: 31 points lower domain fit.
+    WHY : Puts the strongest measured coding assistant at the centre of the stack. Choose this only if its procurement shape suits you; the measured scores do not favour it.
+    NOT : Narrower coverage outside the editor than a general workspace assistant. Ranked below the recommended stack because it 31 points lower domain fit.
+
+===== C research, research req =====
+alts=5 archetypes=cost-efficient-pro, performance-flagship, research-enhanced, long-context, general-ai
+  [cost-efficient-pro] ChatGPT (Go) $40
+    ADV : Highest measured capability-per-seat-dollar ratio in the evaluated catalogue. Measured against the recommended stack for this request: +7 points of domain fit.
+    TRD : Uses entry-level subscription tiers which may have tighter burst quotas during peak hours. Costs you: $0/mo more ($0/seat more).
+    WHY : Substantially reduces monthly software spend while maintaining daily operational velocity. Choose this if +7 points of domain fit matters more to you than the recommended stack's lead.
+    NOT : Optimises cost ahead of the requirement coverage and domain fit the #1 stack leads on. Ranked below the recommended stack because it $0/mo more ($0/seat more).
+  [performance-flagship] Claude (Pro) $160
+    ADV : Strongest available reasoning and benchmark evidence for this domain. Measured against the recommended stack for this request: +6 points of domain fit.
+    TRD : Higher per-seat license cost across the team. Costs you: $120/mo more ($15/seat more).
+    WHY : Unlocks frontier intelligence for complex, ambiguous, or multi-step engineering tasks. Choose this if +6 points of domain fit matters more to you than the recommended stack's lead.
+    NOT : Higher total monthly spend than the primary balanced baseline. Ranked below the recommended stack because it $120/mo more ($15/seat more).
+  [research-enhanced] Perplexity (Pro) + Gemini (Google AI Plus) $199.92
+    ADV : Strongest real-time research and citation capability evidence in the catalogue. Measured against the recommended stack for this request, this architecture leads on no cost, coverage, or domain-fit dimension — it is shown as a structural alternative only.
+    TRD : Research-first tooling is weaker on in-editor code generation. Costs you: $160/mo more ($20/seat more); 2 points lower domain fit.
+    WHY : Directly grounds daily analysis in real-time internet search and source citations. Choose this only if its procurement shape suits you; the measured scores do not favour it.
+    NOT : Requires an extra subscription if real-time web citations are only occasionally needed. Ranked below the recommended stack because it $160/mo more ($20/seat more).
+
+===== D enterprise gov, 200 seats =====
+alts=4 archetypes=cost-efficient-pro, performance-flagship, enterprise-governance, general-ai
+  [cost-efficient-pro] ChatGPT (Go) $1000
+    ADV : Highest measured capability-per-seat-dollar ratio in the evaluated catalogue. Measured against the recommended stack for this request: $2,800/mo cheaper ($14/seat less).
+    TRD : Uses entry-level subscription tiers which may have tighter burst quotas during peak hours. Costs you: 9 points lower domain fit.
+    WHY : Substantially reduces monthly software spend while maintaining daily operational velocity. Choose this if $2,800/mo cheaper ($14/seat less) matters more to you than the recommended stack's lead.
+    NOT : Optimises cost ahead of the requirement coverage and domain fit the #1 stack leads on. Ranked below the recommended stack because it 9 points lower domain fit.
+  [performance-flagship] Claude (Team) $5000
+    ADV : Strongest available reasoning and benchmark evidence for this domain. Measured against the recommended stack for this request, this architecture leads on no cost, coverage, or domain-fit dimension — it is shown as a structural alternative only.
+    TRD : Higher per-seat license cost across the team. Costs you: $1,200/mo more ($6/seat more); 9 points lower domain fit.
+    WHY : Unlocks frontier intelligence for complex, ambiguous, or multi-step engineering tasks. Choose this only if its procurement shape suits you; the measured scores do not favour it.
+    NOT : Higher total monthly spend than the primary balanced baseline. Ranked below the recommended stack because it $1,200/mo more ($6/seat more).
+  [enterprise-governance] Gemini (Workspace Business) $4000
+    ADV : Highest verified identity, admin-control, and enterprise-security evidence in the catalogue. Measured against the recommended stack for this request, this architecture leads on no cost, coverage, or domain-fit dimension — it is shown as a structural alternative only.
+    TRD : Requires team-wide subscription commitments on higher commercial tiers. Costs you: $200/mo more ($1/seat more); 10 points lower domain fit.
+    WHY : Meets rigorous InfoSec mandates and corporate compliance standards without exception. Choose this only if its procurement shape suits you; the measured scores do not favour it.
+    NOT : Team licensing requires minimum seat thresholds and higher annual commitments. Ranked below the recommended stack because it $200/mo more ($1/seat more).
+
+===== E lockIn preference on =====
+alts=9 archetypes=cost-efficient-pro, performance-flagship, developer-productivity, agentic-development, long-context, open-ecosystem, single-vendor, minimal-core, general-ai
+  [cost-efficient-pro] ChatGPT (Go) + Gemini (Google AI Plus) $99.9
+    ADV : Highest measured capability-per-seat-dollar ratio in the evaluated catalogue. Measured against the recommended stack for this request: $150/mo cheaper ($15/seat less).
+    TRD : Uses entry-level subscription tiers which may have tighter burst quotas during peak hours. Costs you: 26 points lower domain fit.
+    WHY : Substantially reduces monthly software spend while maintaining daily operational velocity. Choose this if $150/mo cheaper ($15/seat less) matters more to you than the recommended stack's lead.
+    NOT : Optimises cost ahead of the requirement coverage and domain fit the #1 stack leads on. Ranked below the recommended stack because it 26 points lower domain fit.
+  [performance-flagship] Windsurf (Pro) + Cursor (Pro) $400
+    ADV : Strongest available reasoning and benchmark evidence for this domain. Measured against the recommended stack for this request: +23 points of domain fit.
+    TRD : Higher per-seat license cost across the team. Costs you: $150/mo more ($15/seat more).
+    WHY : Unlocks frontier intelligence for complex, ambiguous, or multi-step engineering tasks. Choose this if +23 points of domain fit matters more to you than the recommended stack's lead.
+    NOT : Higher total monthly spend than the primary balanced baseline. Ranked below the recommended stack because it $150/mo more ($15/seat more).
+  [developer-productivity] GitHub Copilot (Individual) + Cursor (Pro) $300
+    ADV : Strongest inline completion and multi-file edit capability scores in the catalogue. Measured against the recommended stack for this request: +12 points of domain fit.
+    TRD : Editor-centric tooling covers non-coding team workflows less broadly. Costs you: $50/mo more ($5/seat more).
+    WHY : Puts the strongest measured coding assistant at the centre of the stack. Choose this if +12 points of domain fit matters more to you than the recommended stack's lead.
+    NOT : Narrower coverage outside the editor than a general workspace assistant. Ranked below the recommended stack because it $50/mo more ($5/seat more).
+
+===== F product-design vision =====
+alts=4 archetypes=cost-efficient-pro, performance-flagship, developer-productivity, general-ai
+  [cost-efficient-pro] Gemini (Google AI Plus) $29.94
+    ADV : Highest measured capability-per-seat-dollar ratio in the evaluated catalogue. Measured against the recommended stack for this request: $0/mo cheaper ($0/seat less).
+    TRD : Uses entry-level subscription tiers which may have tighter burst quotas during peak hours. Costs you: 9 points lower domain fit.
+    WHY : Substantially reduces monthly software spend while maintaining daily operational velocity. Choose this if $0/mo cheaper ($0/seat less) matters more to you than the recommended stack's lead.
+    NOT : Optimises cost ahead of the requirement coverage and domain fit the #1 stack leads on. Ranked below the recommended stack because it 9 points lower domain fit.
+  [performance-flagship] Claude (Pro) $120
+    ADV : Strongest available reasoning and benchmark evidence for this domain. Measured against the recommended stack for this request: +5 points of domain fit.
+    TRD : Higher per-seat license cost across the team. Costs you: $90/mo more ($15/seat more).
+    WHY : Unlocks frontier intelligence for complex, ambiguous, or multi-step engineering tasks. Choose this if +5 points of domain fit matters more to you than the recommended stack's lead.
+    NOT : Higher total monthly spend than the primary balanced baseline. Ranked below the recommended stack because it $90/mo more ($15/seat more).
+  [developer-productivity] Cursor (Pro) $120
+    ADV : Strongest inline completion and multi-file edit capability scores in the catalogue. Measured against the recommended stack for this request, this architecture leads on no cost, coverage, or domain-fit dimension — it is shown as a structural alternative only.
+    TRD : Editor-centric tooling covers non-coding team workflows less broadly. Costs you: $90/mo more ($15/seat more).
+    WHY : Puts the strongest measured coding assistant at the centre of the stack. Choose this only if its procurement shape suits you; the measured scores do not favour it.
+    NOT : Narrower coverage outside the editor than a general workspace assistant. Ranked below the recommended stack because it $90/mo more ($15/seat more).
+
+===== ARCHETYPE RELEVANCE (does the ladder differ per request?) =====
+  A lean coder, no reqs        8 → cost-efficient-pro, performance-flagship, developer-productivity, agentic-development, long-context, single-vendor, minimal-core, general-ai
+  B coder + editor req         7 → cost-efficient-pro, performance-flagship, developer-productivity, agentic-development, long-context, single-vendor, general-ai
+  C research, research req     5 → cost-efficient-pro, performance-flagship, research-enhanced, long-context, general-ai
+  D enterprise gov, 200 seats  4 → cost-efficient-pro, performance-flagship, enterprise-governance, general-ai
+  E lockIn preference on       9 → cost-efficient-pro, performance-flagship, developer-productivity, agentic-development, long-context, open-ecosystem, single-vendor, minimal-core, general-ai
+  F product-design vision      4 → cost-efficient-pro, performance-flagship, developer-productivity, general-ai
+distinct ladders: 6 / 6
+
+===== PROSE UNIQUENESS =====
+  mainAdvantage        27 distinct strings across 37 alternative entries
+  mainTradeoff         32 distinct strings across 37 alternative entries
+  whyChooseInstead     27 distinct strings across 37 alternative entries
+  whyNotRecommended    32 distinct strings across 37 alternative entries
+
+===== IRRELEVANT-ARCHETYPE CHECK =====
+  A lean coder, no reqs        enterprise-governance=false open-ecosystem=false
+  B coder + editor req         enterprise-governance=false open-ecosystem=false
+  C research, research req     enterprise-governance=false open-ecosystem=false
+  D enterprise gov, 200 seats  enterprise-governance=true open-ecosystem=false
+  E lockIn preference on       enterprise-governance=false open-ecosystem=true
+  F product-design vision      enterprise-governance=false open-ecosystem=false

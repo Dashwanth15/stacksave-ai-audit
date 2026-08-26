@@ -175,8 +175,12 @@ button:disabled { cursor: not-allowed; }
 
 /* Monospace — for all financial data, dollar amounts, IDs */
 .font-mono-financial {
-  font-family: 'JetBrains Mono', 'IBM Plex Mono', 'Courier New', monospace;
-  font-variant-numeric: tabular-nums;
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, Monaco, 'Liberation Mono', monospace;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* Tabular nums utility for all financial figures */
@@ -1055,5 +1059,21 @@ button:disabled { cursor: not-allowed; }
     width: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
+  }
+}
+
+/* ============================================================
+   Reduced motion — honor the OS preference globally. Additive.
+   Transitions/animations collapse to near-instant so hover,
+   selected, and step changes still apply without movement.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
