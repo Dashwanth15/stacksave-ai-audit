@@ -83,10 +83,21 @@ export function sanitizeAssistantReply(raw: string): string {
   text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
   text = text.replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '').trim();
 
+  // If there's an unclosed <think> tag at the beginning, strip it or take the content after </think>
+  if (text.startsWith('<think>')) {
+    const closeIndex = text.indexOf('</think>');
+    if (closeIndex !== -1) {
+      text = text.substring(closeIndex + 8).trim();
+    } else {
+      // If unclosed, strip the opening tag
+      text = text.replace(/^<think>\s*/i, '').trim();
+    }
+  }
+
   // 2. Remove "Here's a thinking process:" or "Thinking Process:" blocks
   if (/^(?:Here's a thinking process|Thinking Process|Thought Process):/i.test(text)) {
     // Check if there is an explicit Draft/Final Answer separator
-    const draftMatch = text.match(/(?:Draft\s*[-–:]\s*(?:Short\s*&\s*Simple)?|Final Answer|Response|Direct Answer):\s*([\s\S]+)$/i);
+    const draftMatch = text.match(/(?:Draft(?:\s*[-–:]\s*(?:Short\s*&\s*Simple)?)?|Final Answer|Response|Direct Answer):\s*([\s\S]+)$/i);
     if (draftMatch && draftMatch[1].trim()) {
       text = draftMatch[1].trim();
     } else {
@@ -100,14 +111,14 @@ export function sanitizeAssistantReply(raw: string): string {
           continue;
         }
         if (
-          /^(?:[•\-\*]|\d+\.)?\s*(?:Analyze User Input|User says|Context|Goal|Identify Core Concept|Core Concept|Key Takeaway|Approach|Step \d):/i.test(
+          /^(?:[•\-\*]|\d+\.)?\s*(?:Analyze User Input|User says|Context|Goal|Identify Core Concept|Core Concept|Key Takeaway|Approach|Step \d)\b:?/i.test(
             trimmed
           )
         ) {
           continue;
         }
-        if (/^(?:[•\-\*]|\d+\.)?\s*(?:Draft|Draft\s*[-–:]\s*Short\s*&\s*Simple):/i.test(trimmed)) {
-          const afterDraft = trimmed.replace(/^(?:[•\-\*]|\d+\.)?\s*(?:Draft|Draft\s*[-–:]\s*Short\s*&\s*Simple):\s*/i, '');
+        if (/^(?:[•\-\*]|\d+\.)?\s*Draft(?:\s*[-–:]\s*Short\s*&\s*Simple)?:\s*/i.test(trimmed)) {
+          const afterDraft = trimmed.replace(/^(?:[•\-\*]|\d+\.)?\s*Draft(?:\s*[-–:]\s*Short\s*&\s*Simple)?:\s*/i, '');
           if (afterDraft) cleanLines.push(afterDraft);
           continue;
         }
@@ -230,19 +241,19 @@ router.post('/', async (req: Request, res: Response) => {
     ];
 
     let reply = '';
-    // Priority order: pure instruction-tuned models without reasoning preamble
+    // Priority order: high-capacity active models on Groq
     const modelsToTry = [
-      'llama-3.3-70b-versatile',
-      'llama-3.1-8b-instant',
-      'qwen/qwen3.8-27b',
       'openai/gpt-oss-120b',
+      'qwen/qwen3.8-27b',
+      'openai/gpt-oss-20b',
+      'qwen/qwen3.6-27b',
     ];
 
     let lastError: Error | null = null;
 
     for (const model of modelsToTry) {
       try {
-        const rawOutput = await callGroqChat(apiKey, model, fullMessages, 600, 0.2);
+        const rawOutput = await callGroqChat(apiKey, model, fullMessages, 700, 0.2);
         const cleaned = sanitizeAssistantReply(rawOutput);
         if (cleaned.trim()) {
           reply = cleaned;
@@ -250,7 +261,7 @@ router.post('/', async (req: Request, res: Response) => {
         }
       } catch (err: any) {
         lastError = err;
-        console.warn(`Model ${model} attempt failed:`, err?.message || err);
+        console.warn(`[Chat] Model ${model} attempt failed:`, err?.message || err);
       }
     }
 
