@@ -18,21 +18,10 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { m, AnimatePresence } from 'framer-motion';
 import Logo from './Logo';
 import { useChatContext } from '../hooks/useChatContext';
+import { getBaseUrl } from '../services/api';
 
-// ── API Base Detection ───────────────────────────────────────
-const getApiBase = (): string => {
-  const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
-  if (envUrl) return envUrl.replace('/api', '');
-  if (typeof window !== 'undefined' && window.location) {
-    const h = window.location.hostname;
-    if (h.includes('stacksave-round2-frontend.onrender.com'))
-      return 'https://stacksave-round2-backend.onrender.com';
-    if (h.includes('onrender.com'))
-      return window.location.origin.replace('-frontend', '-backend');
-  }
-  return 'http://localhost:5000';
-};
-const API_BASE = getApiBase();
+// Derive the raw backend origin from the shared base URL (strips the /api suffix)
+const API_BASE = getBaseUrl().replace(/\/api$/, '');
 
 // ── Types ─────────────────────────────────────────────────────
 interface Message {
@@ -725,6 +714,7 @@ export default function ChatBot() {
       {/* ── Floating Launcher Button ────────────────────── */}
       <m.button
         onClick={handleToggle}
+        className="chatbot-launcher-btn"
         style={{
           position: 'fixed',
           bottom: '24px',
@@ -791,6 +781,7 @@ export default function ChatBot() {
       {/* Notification Pulse Dot */}
       {!isOpen && !hasGreeted && (
         <span
+          className="chatbot-pulse-dot"
           style={{
             position: 'fixed',
             bottom: '52px',
@@ -815,6 +806,7 @@ export default function ChatBot() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 320 }}
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            className="chatbot-panel"
             style={{
               position: 'fixed',
               top: 0,
@@ -1225,7 +1217,7 @@ export default function ChatBot() {
                         </div>
                       ) : (
                         // User Message Bubble
-                        <div style={{ maxWidth: '78%' }}>
+                        <div className="chatbot-user-bubble" style={{ maxWidth: '78%' }}>
                           <div
                             style={{
                               background: NAVY,
@@ -1286,6 +1278,7 @@ export default function ChatBot() {
             {/* ── CONVERSATION MODE QUICK CHIPS TRAY ──────────── */}
             {!isConversationEmpty && !loading && (
               <div
+                className="chatbot-suggestions-row"
                 style={{
                   borderTop: DIVIDER,
                   background: SURFACE_WHITE,
@@ -1340,6 +1333,7 @@ export default function ChatBot() {
 
             {/* ── BOTTOM COMPOSER: Fixed Command Bar ─────────── */}
             <div
+              className="chatbot-composer"
               style={{
                 borderTop: isConversationEmpty ? DIVIDER : 'none',
                 background: SURFACE_WHITE,

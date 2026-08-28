@@ -334,7 +334,7 @@ export default function BuildStackResultsPage() {
                 return (
                   <div className="mt-3.5 space-y-2.5">
                     {/* ── Compact config grid ── */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-slate-200/90 border border-slate-200/90 rounded-xl overflow-hidden shadow-2xs">
+                    <div className="config-summary-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-slate-200/90 border border-slate-200/90 rounded-xl overflow-hidden shadow-2xs">
                       {/* Operating Domain */}
                       <div className="flex items-start gap-2.5 px-3.5 sm:px-4 py-3 bg-white">
                         <div className="mt-0.5 shrink-0 text-slate-500">
@@ -432,10 +432,10 @@ export default function BuildStackResultsPage() {
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.35, delay: 0.08, ease: 'easeOut' }}
-              className="flex items-stretch gap-0 divide-x divide-slate-200/90 rounded-2xl overflow-hidden shrink-0 shadow-2xs border border-slate-200/90 bg-white"
+              className="metrics-flex-row flex items-stretch gap-0 divide-x divide-slate-200/90 rounded-2xl overflow-hidden shrink-0 shadow-2xs border border-slate-200/90 bg-white"
             >
               {/* Total Team Spend */}
-              <div className="px-5 sm:px-6 py-4 flex flex-col justify-between min-w-[170px]">
+              <div className="px-5 sm:px-6 py-4 flex flex-col justify-between min-w-[150px] sm:min-w-[170px]">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block leading-none mb-2">
                   Total Team Spend
                 </span>
@@ -461,7 +461,7 @@ export default function BuildStackResultsPage() {
               </div>
 
               {/* Stack Fit */}
-              <div className="px-5 sm:px-6 py-4 flex flex-col justify-between min-w-[160px]">
+              <div className="px-5 sm:px-6 py-4 flex flex-col justify-between min-w-[140px] sm:min-w-[160px]">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block leading-none mb-2">
                   Stack Fit
                 </span>
@@ -528,7 +528,7 @@ export default function BuildStackResultsPage() {
           </div>
 
           {/* Distinct Segmented Strategy Tab Rail */}
-          <div className="bg-slate-200/70 p-1.5 rounded-2xl border border-slate-300/80 grid grid-cols-2 md:grid-cols-4 gap-1.5 shadow-2xs">
+          <div className="strategy-tab-rail bg-slate-200/70 p-1.5 rounded-2xl border border-slate-300/80 grid grid-cols-2 md:grid-cols-4 gap-1.5 shadow-2xs">
             {STRATEGY_CONFIGS.map((tab, idx) => {
               const isSelected = selectedStrategyKey === tab.key && !customActiveStack;
               const catData = rec.categories?.[tab.key];
@@ -717,7 +717,7 @@ export default function BuildStackResultsPage() {
 
             <div
               ref={altScrollRef}
-              className="flex gap-4 overflow-x-auto pb-4 pt-1 -mx-1 px-1"
+              className="alt-stack-scroll-area flex gap-4 overflow-x-auto pb-4 pt-1 -mx-1 px-1"
               style={{ scrollbarWidth: 'thin', scrollSnapType: 'x mandatory' }}
             >
               {comparisons.map((alt, idx) => {
@@ -734,8 +734,8 @@ export default function BuildStackResultsPage() {
                   <div
                     key={alt.rank || idx}
                     onClick={() => openStackDrawer(alt, matchedStack)}
-                    style={{ scrollSnapAlign: 'start', minWidth: '330px', maxWidth: '370px' }}
-                    className={`shrink-0 p-5 rounded-2xl border transition-all duration-200 group flex flex-col justify-between space-y-4 cursor-pointer ${isCurrentActive
+                    style={{ scrollSnapAlign: 'start' }}
+                    className={`alt-stack-card shrink-0 p-5 rounded-2xl border transition-all duration-200 group flex flex-col justify-between space-y-4 cursor-pointer min-w-[290px] sm:min-w-[330px] max-w-[370px] ${isCurrentActive
                         ? 'bg-white border-2 border-[#1E3A5F] ring-1 ring-[#1E3A5F]/15 shadow-sm'
                         : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-md shadow-xs'
                       }`}
@@ -1250,7 +1250,7 @@ function PrimaryRecommendationCard({
           : 'border-slate-300 shadow-xs hover:border-slate-400 hover:shadow-sm'
         }`}
     >
-      <div className="flex items-start justify-between gap-3 sm:gap-4">
+      <div className="tool-card-main flex items-start justify-between gap-3 sm:gap-4">
         <div className="flex items-start gap-3 min-w-0 flex-1">
           <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-slate-50 border border-slate-200/90 p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
             <ProviderLogo providerId={tool.toolId} size="md" className="w-full h-full object-contain" />
@@ -1343,7 +1343,7 @@ function PrimaryRecommendationCard({
       )}
 
       {/* Compact Card Footer */}
-      <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2">
+      <div className="tool-card-actions mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2">
         <button
           type="button"
           onClick={onViewAnalysis}
@@ -1398,7 +1398,7 @@ function SecondaryRecommendationCard({
           : 'border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-sm'
         }`}
     >
-      <div className="flex items-start justify-between gap-3 sm:gap-4">
+      <div className="tool-card-main flex items-start justify-between gap-3 sm:gap-4">
         <div className="flex items-start gap-3 min-w-0 flex-1">
           <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-slate-50 border border-slate-200/90 p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
             <ProviderLogo providerId={tool.toolId} size="sm" className="w-full h-full object-contain" />
@@ -1431,15 +1431,12 @@ function SecondaryRecommendationCard({
 
       {/* Compact Grey Information Panel */}
       {(tool.whyRecommended || (tool.featuresCovered && tool.featuresCovered.length > 0)) && (
-        <div className="mt-3 p-3.5 sm:p-4 rounded-xl border-l-4 border-l-slate-400 space-y-2.5" style={{
-          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-          boxShadow: '0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 6px -2px rgba(15, 23, 42, 0.08)'
-        }}>
+        <div className="mt-3 p-3.5 sm:p-4 rounded-xl border-l-4 border-l-slate-400 space-y-2.5 bg-slate-50 border border-slate-200/80 shadow-2xs">
           <div className="flex items-center justify-between gap-2 flex-wrap border-b border-slate-200/60 pb-2">
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
               <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-700">
-                Companion Synergy & Capability Role
+                Architectural Rationale
               </h4>
             </div>
 
@@ -1465,7 +1462,7 @@ function SecondaryRecommendationCard({
           </div>
 
           {tool.whyRecommended && (
-            <p className="text-[13.5px] text-slate-800 leading-snug font-normal">
+            <p className="text-[13px] sm:text-[13.5px] text-slate-800 leading-snug font-normal">
               {tool.whyRecommended}
             </p>
           )}
@@ -1491,7 +1488,7 @@ function SecondaryRecommendationCard({
       )}
 
       {/* Compact Card Footer */}
-      <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2">
+      <div className="tool-card-actions mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2">
         <button
           type="button"
           onClick={onViewAnalysis}
@@ -1547,7 +1544,7 @@ function SupportingToolCard({
           : 'border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-sm'
         }`}
     >
-      <div className="flex items-start justify-between gap-3 sm:gap-4">
+      <div className="tool-card-main flex items-start justify-between gap-3 sm:gap-4">
         <div className="flex items-start gap-3 min-w-0 flex-1">
           <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-slate-50 border border-slate-200/80 p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
             <ProviderLogo providerId={tool.toolId} size="sm" />

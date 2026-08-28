@@ -31,13 +31,14 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 app.set('trust proxy', 1);
 
 // ── CORS (Must be mounted first to handle all preflights & error responses) ──
-const cleanFrontendUrl = FRONTEND_URL.replace(/\/$/, '');
-const ROUND2_FRONTEND = 'https://stacksave-round2-frontend.onrender.com';
+const cleanFrontendUrl = FRONTEND_URL.replace(/\/+$/, '');
 const allowedOrigins = [
   cleanFrontendUrl,
-  `${cleanFrontendUrl}/`,
-  ROUND2_FRONTEND,
-  `${ROUND2_FRONTEND}/`,
+  'https://stacksaveai.com',
+  'https://www.stacksaveai.com',
+  'https://stacksave-ai-audit.onrender.com',
+  'https://stacksave-frontend.onrender.com',
+  'https://stacksave-round2-frontend.onrender.com',
 ];
 
 app.use(
@@ -53,8 +54,16 @@ app.use(
         }
       }
 
-      // Check explicit allowed origins list
-      if (allowedOrigins.includes(origin) || allowedOrigins.includes(`${origin}/`)) {
+      const normalizedOrigin = origin.replace(/\/+$/, '');
+
+      // Check explicit allowed origins list and domain wildcards
+      if (
+        allowedOrigins.map((o) => o.replace(/\/+$/, '')).includes(normalizedOrigin) ||
+        normalizedOrigin === 'https://stacksaveai.com' ||
+        normalizedOrigin === 'https://www.stacksaveai.com' ||
+        normalizedOrigin.endsWith('.stacksaveai.com') ||
+        normalizedOrigin.endsWith('.onrender.com')
+      ) {
         return callback(null, true);
       }
 
@@ -62,7 +71,7 @@ app.use(
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-Audit-Token'],
     optionsSuccessStatus: 200,
   })
 );
@@ -111,7 +120,7 @@ async function start() {
 
   const PORT = await findAvailablePort(preferredPort);
   app.listen(PORT, () => {
-    const serverUrl = NODE_ENV === 'production' ? `https://stacksave-backend.onrender.com` : `http://localhost:${PORT}`;
+    const serverUrl = NODE_ENV === 'production' ? `https://api.stacksaveai.com` : `http://localhost:${PORT}`;
     console.log(`🚀 StackSave API running at ${serverUrl}`);
 
     console.log(`   Health: ${serverUrl}/api/health`);

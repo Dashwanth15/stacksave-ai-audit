@@ -212,9 +212,10 @@ export default function OffersPage() {
             <OfferNotificationBell />
             <button
               onClick={() => navigate('/audit')}
-              className="h-9 px-4 rounded-xl font-bold text-xs text-white bg-slate-950 hover:bg-slate-800 transition-all shadow-sm cursor-pointer"
+              className="h-9 px-3 sm:px-4 rounded-xl font-bold text-xs text-white bg-slate-950 hover:bg-slate-800 transition-all shadow-sm cursor-pointer whitespace-nowrap"
             >
-              Audit My Existing Stack
+              <span className="hidden sm:inline">Audit My Existing Stack</span>
+              <span className="inline sm:hidden">Audit Stack</span>
             </button>
           </div>
         </div>
@@ -288,8 +289,8 @@ export default function OffersPage() {
               </svg>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="w-48 sm:w-56 shrink-0">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3">
+              <div className="flex-1 sm:w-56 sm:flex-initial min-w-[140px]">
                 <select
                   value={selectedProvider}
                   onChange={(e) => setSelectedProvider(e.target.value)}

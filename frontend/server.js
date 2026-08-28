@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 10000;
 // Forward /api/* requests to the backend service.
 // This is a server-side safety net: even if VITE_API_BASE_URL is
 // misconfigured at build time, relative /api calls still reach the backend.
-const BACKEND_URL = process.env.BACKEND_URL || 'https://stacksave-round2-backend.onrender.com';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://api.stacksaveai.com';
 const backendUrl = new URL(BACKEND_URL);
 const isHttps = backendUrl.protocol === 'https:';
 const transport = isHttps ? https : http;

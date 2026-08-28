@@ -70,12 +70,12 @@ export default function StrategicGuidanceSection({
   return (
     <div className="space-y-6 pt-4 border-t border-slate-200/60">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
         <div>
           <span className="text-overline block">AI Decision Intelligence Platform</span>
           <h3 className="text-xl font-black text-slate-900 tracking-tight">Strategic Decision Guidance</h3>
         </div>
-        <span className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200 tracking-widest">
+        <span className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200 tracking-widest shrink-0">
           Strategy Engine
         </span>
       </div>

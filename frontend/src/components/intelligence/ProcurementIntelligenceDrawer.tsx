@@ -426,7 +426,7 @@ function DrawerHeader({
           </div>
           <div className="min-w-0">
             <div className="flex items-baseline gap-2 flex-wrap">
-              <h2 className="text-[18px] sm:text-[22px] font-black tracking-tight text-white leading-tight truncate max-w-[220px]">
+              <h2 className="text-[18px] sm:text-[22px] font-black tracking-tight text-white leading-tight truncate max-w-[200px] sm:max-w-md">
                 {toolName}
               </h2>
               {planLabel && (

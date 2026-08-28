@@ -160,8 +160,8 @@ export default function SpendConfigurator({
                 <span className="block text-xs font-black uppercase tracking-[0.08em] text-slate-700 mb-1.5">
                   Total Monthly Team Ceiling
                 </span>
-                <label className="flex items-baseline gap-1.5">
-                  <span className="text-4xl font-extrabold text-slate-500">$</span>
+                <label className="flex flex-wrap items-baseline gap-1.5">
+                  <span className="text-3xl sm:text-4xl font-extrabold text-slate-500">$</span>
                   <input
                     type="number"
                     min={0}
@@ -170,14 +170,14 @@ export default function SpendConfigurator({
                     value={budget}
                     onChange={(e) => setBudget(Math.max(0, Number(e.target.value) || 0))}
                     aria-label="Monthly budget in dollars"
-                    className="w-44 bg-transparent text-4xl sm:text-5xl font-black font-mono-financial tracking-tight text-slate-950 focus:outline-none border-b-2 border-slate-400 focus:border-[#1E3A5F] transition-colors pb-0.5"
+                    className="w-32 sm:w-44 bg-transparent text-3xl sm:text-5xl font-black font-mono-financial tracking-tight text-slate-950 focus:outline-none border-b-2 border-slate-400 focus:border-[#1E3A5F] transition-colors pb-0.5"
                   />
                   <span className="text-xs font-black uppercase tracking-wider text-slate-700">/mo team total</span>
                 </label>
               </div>
 
               {perSeat !== null && (
-                <div className="sm:text-right bg-slate-100 border-2 border-slate-300 rounded-xl px-5 py-4 shadow-xs min-w-[220px]">
+                <div className="sm:text-right bg-slate-100 border-2 border-slate-300 rounded-xl px-5 py-4 shadow-xs min-w-0 sm:min-w-[220px] w-full sm:w-auto">
                   <span className="block text-[11px] font-black uppercase tracking-[0.08em] text-slate-700">
                     Target per person
                   </span>

@@ -17,23 +17,36 @@ import type {
 import { getUserScopedKey } from '../utils/userSession';
 
 
-const getBaseUrl = (): string => {
+export const getBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
   if (envUrl) {
-    return envUrl;
+    const trimmed = envUrl.replace(/\/+$/, '');
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+    }
+    return trimmed;
   }
-  // Auto-detect production environment to avoid build-time env configuration issues
+
+  // Auto-detect production browser hostname
   if (typeof window !== 'undefined' && window.location) {
     const hostname = window.location.hostname;
-    if (hostname.includes('stacksave-frontend.onrender.com') || hostname.includes('stacksave-round2-frontend.onrender.com')) {
-      return 'https://stacksave-backend.onrender.com/api';
-    }
-    if (hostname.includes('onrender.com')) {
-      return window.location.origin.replace('-frontend', '-backend') + '/api';
+    if (
+      hostname === 'stacksaveai.com' ||
+      hostname === 'www.stacksaveai.com' ||
+      hostname.includes('stacksaveai.com') ||
+      hostname.includes('onrender.com')
+    ) {
+      return 'https://api.stacksaveai.com/api';
     }
   }
 
-  return '/api';
+  // Production build fallback
+  if (import.meta.env.PROD) {
+    return 'https://api.stacksaveai.com/api';
+  }
+
+  // Local development fallback
+  return 'http://localhost:5000/api';
 };
 
 const api = axios.create({

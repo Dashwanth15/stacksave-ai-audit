@@ -428,7 +428,7 @@ function CleanModelDropdown({
       {/* Downwards Dropdown Menu */}
       {isOpen && (
         <div
-          className="absolute right-0 top-full mt-1 z-50 w-[275px] bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 max-h-[260px] overflow-y-auto space-y-1.5"
+          className="absolute right-0 top-full mt-1 z-50 w-[275px] max-w-[calc(100vw-32px)] bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 max-h-[260px] overflow-y-auto space-y-1.5"
           style={{ scrollbarWidth: 'thin' }}
         >
           {sameProviderModels.length > 0 && (

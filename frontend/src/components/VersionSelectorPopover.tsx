@@ -76,7 +76,7 @@ export default function VersionSelectorPopover({
 
       {open && (
         <div
-          className="absolute left-0 mt-1.5 z-50 min-w-[190px] py-1.5 rounded-lg shadow-xl border bg-white animate-fade-in"
+          className="absolute left-0 mt-1.5 z-50 min-w-[190px] max-w-[calc(100vw-32px)] py-1.5 rounded-lg shadow-xl border bg-white animate-fade-in"
           style={{ borderColor: 'var(--color-border)' }}
         >
           <div className="px-3 py-1 text-[9px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100">

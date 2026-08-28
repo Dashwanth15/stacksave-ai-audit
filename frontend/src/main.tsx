@@ -2,6 +2,7 @@ import { StrictMode, Component } from 'react'
 import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './responsive.css'
 import App from './App.tsx'
 
 // ── ErrorBoundary — catches runtime crashes, shows error instead of blank page ──

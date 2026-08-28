@@ -573,10 +573,11 @@ export default function ReAuditDiffPage({
             {isOwner && (
               <button
                 onClick={() => navigate(`/audit?reAuditOf=${newAudit?.auditId}`)}
-                className="h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-[12px] font-bold transition-colors cursor-pointer shadow-sm flex items-center gap-1.5 whitespace-nowrap"
+                className="h-9 px-3 sm:px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-[12px] font-bold transition-colors cursor-pointer shadow-sm flex items-center gap-1.5 whitespace-nowrap"
                 aria-label="Edit Stack"
               >
-                Edit Stack
+                <span>Edit</span>
+                <span className="hidden sm:inline">Stack</span>
                 <span className="text-indigo-300 text-[11px]">v{(newAudit?.auditVersion ?? 1) + 1}</span>
                 <span className="text-indigo-200">→</span>
               </button>
@@ -587,7 +588,7 @@ export default function ReAuditDiffPage({
               <button
                 onClick={handleRunReAudit}
                 disabled={reAuditing}
-                className="h-9 px-3 rounded-lg bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 hover:text-slate-900 text-[12px] font-semibold transition-colors disabled:opacity-50 cursor-pointer flex items-center gap-2 whitespace-nowrap shadow-sm"
+                className="hidden md:flex h-9 px-3 rounded-lg bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 hover:text-slate-900 text-[12px] font-semibold transition-colors disabled:opacity-50 cursor-pointer items-center gap-2 whitespace-nowrap shadow-sm"
                 aria-label="Refresh Pricing"
               >
                 <span className="relative flex h-2 w-2 shrink-0">
@@ -601,7 +602,7 @@ export default function ReAuditDiffPage({
             {/* Export PDF */}
             <button
               onClick={() => generateReAuditDiffPDF(oldAudit, newAudit, diff)}
-              className="h-9 px-3 rounded-lg bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 hover:text-slate-900 text-[12px] font-semibold transition-colors cursor-pointer shadow-sm whitespace-nowrap"
+              className="hidden sm:flex h-9 px-3 rounded-lg bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 hover:text-slate-900 text-[12px] font-semibold transition-colors cursor-pointer shadow-sm whitespace-nowrap"
               aria-label="Export PDF"
             >
               Export PDF
@@ -614,10 +615,11 @@ export default function ReAuditDiffPage({
                   state: { isOwner },
                 })
               }
-              className="h-9 px-4 rounded-lg bg-slate-900 hover:bg-slate-700 active:bg-slate-800 text-white text-[12px] font-bold transition-colors cursor-pointer shadow-sm flex items-center gap-1.5 whitespace-nowrap"
+              className="h-9 px-3 sm:px-4 rounded-lg bg-slate-900 hover:bg-slate-700 active:bg-slate-800 text-white text-[12px] font-bold transition-colors cursor-pointer shadow-sm flex items-center gap-1.5 whitespace-nowrap"
               aria-label="Full Audit"
             >
-              Full Audit →
+              <span className="hidden sm:inline">Full Audit →</span>
+              <span className="inline sm:hidden">Full →</span>
             </button>
           </div>
         </div>
@@ -1250,7 +1252,7 @@ export default function ReAuditDiffPage({
                 {sd.removed.map((tool) => (
                   <div
                     key={`rem-${tool.toolId}`}
-                    className="p-5 flex items-center justify-between gap-4 hover:bg-slate-50/60 transition-colors"
+                    className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 hover:bg-slate-50/60 transition-colors"
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
                       <ToolLogoBadge
@@ -1274,7 +1276,7 @@ export default function ReAuditDiffPage({
                         </p>
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
+                    <div className="self-start sm:self-auto sm:text-right shrink-0">
                       <span className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-800 block">
                         Spend Eliminated
                       </span>
@@ -1289,7 +1291,7 @@ export default function ReAuditDiffPage({
                 {sd.added.map((tool) => (
                   <div
                     key={`add-${tool.toolId}`}
-                    className="p-5 flex items-center justify-between gap-4 hover:bg-slate-50/60 transition-colors"
+                    className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 hover:bg-slate-50/60 transition-colors"
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
                       <ToolLogoBadge
@@ -1313,7 +1315,7 @@ export default function ReAuditDiffPage({
                         </p>
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
+                    <div className="self-start sm:self-auto sm:text-right shrink-0">
                       <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400 block">
                         New Outlay
                       </span>
@@ -1328,7 +1330,7 @@ export default function ReAuditDiffPage({
                 {sd.changed.map((tool) => (
                   <div
                     key={`chg-${tool.toolId}`}
-                    className="p-5 flex items-center justify-between gap-4 hover:bg-slate-50/60 transition-colors"
+                    className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 hover:bg-slate-50/60 transition-colors"
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
                       <ToolLogoBadge
@@ -1374,7 +1376,7 @@ export default function ReAuditDiffPage({
                         </div>
                       </div>
                     </div>
-                    <div className="text-right shrink-0 font-mono text-xs">
+                    <div className="self-start sm:self-auto sm:text-right shrink-0 font-mono text-xs">
                       <span className="text-slate-400 line-through">
                         ${tool.oldSpend.toFixed(0)}
                       </span>

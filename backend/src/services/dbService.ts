@@ -9,7 +9,7 @@ import { PricingSnapshot } from '../types';
 dns.setDefaultResultOrder('ipv4first');
 
 export function getFrontendUrl(): string {
-  let url = 'https://stacksave-round2-frontend.onrender.com';
+  let url = 'https://stacksaveai.com';
   if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
     const envUrl = process.env.FRONTEND_URL;
     if (envUrl && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {

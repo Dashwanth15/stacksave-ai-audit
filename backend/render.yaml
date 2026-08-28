@@ -10,7 +10,7 @@
 #                   2. GitHub repo → Settings → Secrets → ADMIN_SECRET
 #
 # BACKEND_URL   — public URL of this backend service (GitHub Actions only).
-#                 Value: https://stacksave-backend.onrender.com
+#                 Value: https://api.stacksaveai.com
 #                 Set this in:
 #                   GitHub repo → Settings → Secrets → BACKEND_URL
 #
@@ -35,7 +35,7 @@ services:
       - key: ADMIN_SECRET
         sync: false   # Set manually in Render Dashboard — never committed to Git
       - key: FRONTEND_URL
-        value: https://stacksave-round2-frontend.onrender.com
+        value: https://stacksaveai.com
       - key: PORT
         value: 10000
       - key: NODE_ENV

@@ -67,9 +67,10 @@ export default function ReplacementsDashboardPage() {
                 if (id) navigate(`/audit/${id}`);
                 else navigate(-1);
               }}
-              className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
             >
-              ← Back to Audit Results
+              <span className="hidden sm:inline">← Back to Audit Results</span>
+              <span className="inline sm:hidden">← Back</span>
             </button>
           </div>
         </div>
@@ -161,9 +162,9 @@ export default function ReplacementsDashboardPage() {
                 className="rounded-2xl border border-slate-200 bg-white shadow-2xs overflow-hidden transition-all hover:border-slate-300"
               >
                 {/* ── SECTION 1: TOP ROW (CURRENT -> RECOMMENDED + OPP SCORE & FINANCIAL IMPACT) ── */}
-                <div className="px-6 py-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="p-4 sm:px-6 sm:py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
                   {/* Left: Real platform comparison identity (NO PILL, NO BORDER, CLEAN TYPOGRAPHY) */}
-                  <div className="flex items-center gap-6 sm:gap-8">
+                  <div className="flex items-center gap-4 sm:gap-8 flex-wrap">
                     {/* Current Platform */}
                     <div>
                       <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5">
@@ -197,7 +198,7 @@ export default function ReplacementsDashboardPage() {
                   </div>
 
                   {/* Right: Opportunity Score & Financial Impact */}
-                  <div className="flex items-center gap-8 self-end md:self-auto border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                  <div className="flex flex-wrap items-center justify-between sm:justify-end gap-4 sm:gap-8 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
                     {/* Opportunity Score */}
                     <div className="text-right">
                       <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">

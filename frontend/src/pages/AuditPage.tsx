@@ -406,7 +406,7 @@ export default function AuditPage() {
       </header>
 
 
-      <div className="w-full max-w-[1600px] xl:max-w-[1720px] px-4 sm:px-8 xl:px-12 py-12 mx-auto">
+      <div className="audit-page-container w-full max-w-[1600px] xl:max-w-[1720px] px-4 sm:px-8 xl:px-12 py-8 sm:py-12 mx-auto">
 
         {/* ── Page Header ─────────────────────────────────── */}
         <div className="mb-12 text-left">
@@ -455,16 +455,16 @@ export default function AuditPage() {
         )}
 
         {/* ── Progress Indicators ──────────────────────────── */}
-        <div className="flex items-center gap-6 mb-8 border-b pb-6" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="audit-progress-steps flex items-center gap-4 sm:gap-6 mb-8 border-b pb-6 overflow-x-auto" style={{ borderColor: 'var(--color-border)' }}>
           {[
             { label: 'Metadata', done: true },
             { label: 'Select Tools', done: form.tools.length > 0 },
             { label: 'Invoice Info', done: form.tools.length > 0 && form.tools.every(t => t.monthlySpend > 0) },
           ].map((step, i) => (
-            <div key={i} className="flex items-center gap-2">
+            <div key={i} className="flex items-center gap-2 shrink-0">
               <StepBadge n={i + 1} done={step.done} />
               <span
-                className="text-xs font-semibold uppercase tracking-wider"
+                className="step-label text-xs font-semibold uppercase tracking-wider"
                 style={{ color: step.done ? 'var(--color-text-heading)' : 'var(--color-text-muted)' }}
               >
                 {step.label}
@@ -490,7 +490,7 @@ export default function AuditPage() {
                 <StepBadge n={1} done={true} />
                 Team Metadata
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+              <div className="audit-metadata-grid grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                 <div>
                   <label
                     className="block text-[10.5px] font-bold uppercase tracking-wider mb-1"
@@ -647,8 +647,7 @@ export default function AuditPage() {
                 >
                   {showFloatingHint && (
                     <div
-                      className="absolute left-1/2 -translate-x-1/2 -top-[70px] z-50 bg-[#2563eb] text-white px-5 py-3 rounded-xl shadow-lg text-xs font-semibold flex flex-col items-center pointer-events-none animate-tooltip-entry"
-                      style={{ whiteSpace: 'nowrap' }}
+                      className="absolute left-1/2 -translate-x-1/2 -top-[70px] z-50 bg-[#2563eb] text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl shadow-lg text-xs font-semibold flex flex-col items-center pointer-events-none animate-tooltip-entry max-w-[calc(100vw-32px)] w-max sm:whitespace-nowrap whitespace-normal text-center"
                     >
                       <div className="flex items-center gap-1.5 font-bold">
                         <span>👇</span>
@@ -672,7 +671,7 @@ export default function AuditPage() {
                     Provide exact seat numbers to ensure calculation precision.
                   </p>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="tier-plan-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                     {form.tools.map((entry) => {
                       const tool = TOOLS.find((t) => t.id === entry.toolId)!;
                       const isNewTool = parentToolIds !== null && parentToolIds !== undefined && !parentToolIds.includes(entry.toolId);

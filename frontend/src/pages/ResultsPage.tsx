@@ -697,23 +697,29 @@ export default function ResultsPage() {
             <Logo asDiv />
           </button>
 
-          <div className="flex items-center gap-2.5">
+          <div className="results-nav-actions flex items-center gap-2 sm:gap-2.5">
             <OfferNotificationBell />
             <button
               onClick={handleDownloadPDF}
               disabled={generatingPDF}
-              className="px-3 py-1.5 rounded border text-xs font-semibold transition-all flex items-center gap-1.5"
+              className="px-2.5 sm:px-3 py-1.5 rounded border text-xs font-semibold transition-all flex items-center gap-1.5"
               style={{
                 background: 'var(--color-success-bg)',
                 color: 'var(--color-success-t)',
                 borderColor: 'rgba(16,185,129,0.25)',
               }}
             >
-              {generatingPDF ? 'Exporting…' : 'Export PDF'}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="shrink-0">
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+              <span>{generatingPDF ? 'Exporting…' : 'PDF'}</span>
+              <span className="hidden sm:inline">{generatingPDF ? '' : ' Export'}</span>
             </button>
             <button
               onClick={copyShareUrl}
-              className="px-3 py-1.5 rounded border text-xs font-semibold transition-all"
+              className="px-2.5 sm:px-3 py-1.5 rounded border text-xs font-semibold transition-all"
               style={{
                 background: 'var(--color-bg-surface)',
                 borderColor: 'var(--color-border)',

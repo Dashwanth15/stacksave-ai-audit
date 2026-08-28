@@ -163,14 +163,14 @@ export default function DashboardOfferGlimpse() {
       </div>
 
       {/* ── Section Footer Status Bar ──────────────────────── */}
-      <div className="px-5 py-2.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+      <div className="px-5 py-2.5 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-[11px] text-slate-500">
         <span className="font-medium">
           Checked from official vendor markup · Updated {latestTime}
         </span>
 
         <button
           onClick={() => navigate('/offers')}
-          className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+          className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline self-start sm:self-auto"
         >
           Explore All Verified Offers →
         </button>

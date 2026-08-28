@@ -6,18 +6,18 @@
 
 services:
   - type: web
-    name: stacksave-round2-frontend
+    name: stacksave-frontend
     runtime: node
     buildCommand: npm install && npm run build
     startCommand: node server.js
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://stacksave-round2-backend.onrender.com/api
+        value: https://api.stacksaveai.com/api
       - key: VITE_API_URL
-        value: https://stacksave-round2-backend.onrender.com/api
+        value: https://api.stacksaveai.com/api
       - key: BACKEND_URL
-        value: https://stacksave-round2-backend.onrender.com
-    # Auto-deploy from round-2-reaudit branch
-    branch: round-2-reaudit
+        value: https://api.stacksaveai.com
+    # Auto-deploy from main branch
+    branch: main
     # Build from the frontend directory
     rootDirectory: frontend

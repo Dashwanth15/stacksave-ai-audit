@@ -65,18 +65,18 @@ export default function InteractiveDecisionExplorer({
         {/* ──────────────────────────────────────────────────────────────────
             TOP HEADER: The Decision at a Glance
             ────────────────────────────────────────────────────────────────── */}
-        <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
-          <div className="flex-1">
+        <div className="p-4 sm:px-6 sm:py-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
             <h2 className="text-lg font-bold text-slate-900 mb-1">
               {opportunity.sourceToolName} → {opportunity.targetToolName}
             </h2>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-600 leading-relaxed">
               {report.proposedAction || 'Replacement opportunity analysis'}
             </p>
           </div>
 
           {/* Right side: Financial impact + Score */}
-          <div className="flex-shrink-0 text-right ml-4">
+          <div className="flex-shrink-0 text-left sm:text-right">
             <div className="mb-2">
               {isSavings ? (
                 <div>

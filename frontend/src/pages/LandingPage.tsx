@@ -1,5 +1,5 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { m, animate, useReducedMotion } from 'framer-motion';
+import { type ReactNode, useEffect, useRef, useState, useCallback } from 'react';
+import { m, animate, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import LogoLoop from '../components/LogoLoop';
 import Logo from '../components/Logo';
@@ -334,6 +334,26 @@ export default function LandingPage() {
   const shouldReduceMotion = useReducedMotion();
   const [activeSection, setActiveSection] = useState('features');
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), []);
+
+  // Close mobile menu on route change or Escape key
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeMobileMenu(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [closeMobileMenu]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
     const onScroll = () => setHasScrolled(window.scrollY > 8);
@@ -381,15 +401,17 @@ export default function LandingPage() {
         className={`sticky top-0 z-50 border-b transition duration-300 ${hasScrolled ? 'border-slate-200 bg-white/95 shadow-sm backdrop-blur-xl' : 'border-transparent bg-white/90 shadow-none'}`}
         style={{ WebkitBackdropFilter: 'blur(18px)' }}
       >
-        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-16 xl:px-20 h-[84px] flex items-center">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-16 xl:px-20 h-[72px] md:h-[84px] flex items-center">
+          {/* Logo */}
           <button
             onClick={() => navigate('/')}
-            className="focus:outline-none"
+            className="focus:outline-none shrink-0"
             aria-label="StackSave home"
           >
             <Logo size="lg" asDiv />
           </button>
 
+          {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-[36px] lg:gap-[40px] ml-[40px] lg:ml-[80px]" aria-label="Main navigation">
             {navItems.map((item) => (
               <a
@@ -403,20 +425,107 @@ export default function LandingPage() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-3.5 ml-[32px]">
+          {/* Right actions */}
+          <div className="ml-auto flex items-center gap-2 sm:gap-3.5">
             <OfferNotificationBell />
 
+            {/* Desktop CTA — hidden on small mobile, shown from sm up */}
             <button
               onClick={() => navigate('/audit')}
-              className="h-[44px] px-5 flex items-center justify-center rounded-xl font-medium text-[14px] transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5"
+              className="hidden sm:flex h-[44px] px-4 md:px-5 items-center justify-center rounded-xl font-medium text-[13px] md:text-[14px] transition-all duration-300 shadow-sm hover:shadow-md"
               style={{ background: 'var(--color-primary)', color: '#ffffff' }}
               aria-label="Audit my existing stack"
             >
-              Audit My Existing Stack <span className="ml-2 font-normal opacity-70">→</span>
+              <span className="hidden md:inline">Audit My Existing Stack</span>
+              <span className="inline md:hidden">Audit Stack</span>
+              <span className="ml-2 font-normal opacity-70">→</span>
+            </button>
+
+            {/* Hamburger — visible on mobile only */}
+            <button
+              className="hamburger-btn"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open navigation menu"
+              aria-expanded={mobileMenuOpen}
+            >
+              <span className="hamburger-line" />
+              <span className="hamburger-line" />
+              <span className="hamburger-line" />
             </button>
           </div>
         </div>
       </header>
+
+      {/* ── Mobile Navigation Drawer ─────────────────────── */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <m.div
+              className="mobile-nav-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={closeMobileMenu}
+              aria-hidden="true"
+            />
+            {/* Drawer */}
+            <m.div
+              className="mobile-nav-drawer"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navigation menu"
+            >
+              <div className="mobile-nav-drawer-header">
+                <Logo size="md" asDiv />
+                <button
+                  onClick={closeMobileMenu}
+                  className="w-[44px] h-[44px] flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+                  aria-label="Close navigation menu"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+
+              <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 0' }}>
+                {navItems.map((item) => (
+                  <a
+                    key={item.id}
+                    href={`#${item.id}`}
+                    className={`mobile-nav-item ${activeSection === item.id ? 'active' : ''}`}
+                    onClick={closeMobileMenu}
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </div>
+
+              {/* Mobile CTA */}
+              <button
+                className="mobile-nav-cta"
+                onClick={() => { closeMobileMenu(); navigate('/audit'); }}
+              >
+                Audit My Existing Stack →
+              </button>
+              <button
+                className="mobile-nav-cta"
+                style={{ background: 'transparent', color: 'var(--color-primary)', border: '1px solid var(--color-border-strong)', marginTop: 0 }}
+                onClick={() => { closeMobileMenu(); navigate('/build-stack'); }}
+              >
+                Build My AI Stack
+              </button>
+            </m.div>
+          </>
+        )}
+      </AnimatePresence>
 
 
       {/* ── 1. Hero with compact preview teaser ─────────── */}
@@ -458,7 +567,7 @@ export default function LandingPage() {
               </div>
 
               {/* ── 3 Action Cards (Audit, Build, Offers) ────────────────── */}
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <div className="mt-4 action-cards-grid">
 
                 {/* 1. Audit Existing Stack (Dark Luxury Card — Primary Action) */}
                 <m.div
