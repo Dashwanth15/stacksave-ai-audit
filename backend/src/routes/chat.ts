@@ -240,44 +240,58 @@ router.post('/', async (req: Request, res: Response) => {
       })),
     ];
 
+    console.log(`[CHAT_ROUTE_RECEIVED] page=${context?.page || 'unknown'} messages=${messages.length}`);
+
     let reply = '';
-    // Priority order: high-capacity active models on Groq
+    // Priority order: verified Groq-available models (confirmed via GET /openai/v1/models)
+    // openai/gpt-oss-120b and qwen variants confirmed active August 2026
+    // groq/compound added as authoritative Groq-native fallback
     const modelsToTry = [
       'openai/gpt-oss-120b',
-      'qwen/qwen3.8-27b',
-      'openai/gpt-oss-20b',
       'qwen/qwen3.6-27b',
+      'openai/gpt-oss-20b',
+      'groq/compound',
+      'qwen/qwen3.8-27b',
     ];
 
     let lastError: Error | null = null;
 
     for (const model of modelsToTry) {
       try {
+        console.log(`[AI_PROVIDER_REQUEST_STARTED] model=${model}`);
         const rawOutput = await callGroqChat(apiKey, model, fullMessages, 700, 0.2);
         const cleaned = sanitizeAssistantReply(rawOutput);
         if (cleaned.trim()) {
           reply = cleaned;
+          console.log(`[AI_PROVIDER_SUCCESS] model=${model} replyLen=${reply.length}`);
           break;
+        } else {
+          console.warn(`[AI_PROVIDER_EMPTY_REPLY] model=${model} — empty after sanitization, trying next`);
         }
-      } catch (err: any) {
-        lastError = err;
-        console.warn(`[Chat] Model ${model} attempt failed:`, err?.message || err);
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        lastError = err instanceof Error ? err : new Error(errMsg);
+        console.warn(`[AI_PROVIDER_HTTP_ERROR] model=${model} error=${errMsg}`);
       }
     }
 
     if (!reply.trim()) {
-      if (lastError) {
-        console.error('All Groq models failed. Last error:', lastError.message);
-      }
-      reply = 'I am StackSave AI. How can I help you analyze your AI tool stack, pricing plans, or optimization opportunities?';
+      const errDetails = lastError ? lastError.message : 'All models returned empty';
+      console.error(`[AI_PROVIDER_TIMEOUT] All Groq models exhausted. lastError=${errDetails}`);
+      // Return 502 so the frontend can show a user-friendly retry instead of the silent fallback
+      return res.status(502).json({
+        error: 'AI provider unavailable',
+        reply: "I'm temporarily unable to reach the AI service. Please try again in a moment.",
+      });
     }
 
     return res.json({ reply });
-  } catch (err: any) {
-    console.error('Chat API error:', err?.message || err);
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error('[Chat] Unexpected error:', errMsg);
     return res.status(500).json({
       error: 'Failed to process AI request',
-      reply: 'I’m temporarily unable to retrieve data. Please ask your question again or check your active audit details directly on screen.',
+      reply: "I'm temporarily unable to retrieve data. Please ask your question again or check your active audit details directly on screen.",
     });
   }
 });

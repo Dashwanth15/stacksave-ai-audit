@@ -80,7 +80,7 @@ app.use(
 app.use(helmet());
 
 // ── Body Parsing ─────────────────────────────────────────────
-app.use(express.json({ limit: '10kb' })); // 10kb max — audits are small
+app.use(express.json({ limit: '50kb' })); // 50kb — chat context + history can be large
 app.use(express.urlencoded({ extended: true }));
 
 // ── Request Logging ──────────────────────────────────────────

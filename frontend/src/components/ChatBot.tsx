@@ -28,6 +28,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   ts: Date;
+  isError?: boolean;   // true when the backend returned a non-2xx or network failed
 }
 
 const GREETING_TIME = new Date();
@@ -589,6 +590,7 @@ export default function ChatBot() {
   const [loading, setLoading] = useState(false);
   const [hasGreeted, setHasGreeted] = useState(false);
   const [showAllSuggestions, setShowAllSuggestions] = useState(false);
+  const [lastFailedMsg, setLastFailedMsg] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const composerWrapRef = useRef<HTMLDivElement>(null);
@@ -657,6 +659,9 @@ export default function ChatBot() {
     setMessages(history);
     setInput('');
     setLoading(true);
+    setLastFailedMsg(null);
+
+    console.log('[CHAT_REQUEST_STARTED]', { url: `${API_BASE}/api/chat`, msgLen: msg.length });
 
     try {
       const res = await fetch(`${API_BASE}/api/chat`, {
@@ -671,22 +676,47 @@ export default function ChatBot() {
           },
         }),
       });
-      const data = await res.json();
+
+      let data: { reply?: string; error?: string } = {};
+      try {
+        data = await res.json();
+      } catch {
+        console.error('[CHAT_RESPONSE_PARSE_ERROR] Failed to parse JSON from backend');
+      }
+
+      if (!res.ok) {
+        console.error(`[CHAT_REQUEST_HTTP_ERROR] status=${res.status} error=${data.error || 'unknown'}`);
+        setLastFailedMsg(msg);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: data.reply || "Sorry, I couldn't reach the StackSave AI service right now. Please try again in a moment.",
+            ts: new Date(),
+            isError: true,
+          },
+        ]);
+      } else {
+        console.log('[CHAT_REQUEST_SUCCESS]', { replyLen: (data.reply || '').length });
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: data.reply || 'I was unable to process that query. Please ask again.',
+            ts: new Date(),
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error('[CHAT_REQUEST_NETWORK_ERROR]', err);
+      setLastFailedMsg(msg);
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: data.reply || 'I was unable to process that query. Please ask again.',
+          content: "Sorry, I couldn't reach the StackSave AI service right now. Please check your connection and try again.",
           ts: new Date(),
-        },
-      ]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: 'Unable to connect to StackSave intelligence service. Please check connection and try again.',
-          ts: new Date(),
+          isError: true,
         },
       ]);
     } finally {
@@ -1204,8 +1234,8 @@ export default function ChatBot() {
                           <div style={{ paddingLeft: '27px' }}>
                             <div
                               style={{
-                                background: CARD_BG,
-                                border: CARD_BORDER,
+                                background: msg.isError ? '#fef9f0' : CARD_BG,
+                                border: msg.isError ? '1px solid #fed7aa' : CARD_BORDER,
                                 borderRadius: '3px 14px 14px 14px',
                                 padding: '12px 14px',
                                 boxShadow: CARD_SHADOW,
@@ -1213,6 +1243,40 @@ export default function ChatBot() {
                             >
                               <div dangerouslySetInnerHTML={{ __html: formatAssistantResponse(msg.content) }} />
                             </div>
+                            {msg.isError && lastFailedMsg && (
+                              <button
+                                onClick={() => {
+                                  const retryMsg = lastFailedMsg;
+                                  setLastFailedMsg(null);
+                                  // Remove the error message from history before retrying
+                                  setMessages((prev) => prev.filter((_, idx) => idx !== i));
+                                  sendMessage(retryMsg);
+                                }}
+                                style={{
+                                  marginTop: '6px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  color: '#92400e',
+                                  background: '#fef3c7',
+                                  border: '1px solid #fcd34d',
+                                  borderRadius: '6px',
+                                  padding: '4px 10px',
+                                  cursor: 'pointer',
+                                  transition: 'background 0.12s ease',
+                                }}
+                                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#fde68a'; }}
+                                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#fef3c7'; }}
+                              >
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="1 4 1 10 7 10" />
+                                  <path d="M3.51 15a9 9 0 1 0 .49-3.67" />
+                                </svg>
+                                Retry
+                              </button>
+                            )}
                           </div>
                         </div>
                       ) : (
