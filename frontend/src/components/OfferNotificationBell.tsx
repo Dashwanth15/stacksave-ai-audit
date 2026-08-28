@@ -229,6 +229,21 @@ export default function OfferNotificationBell() {
         )}
       </AnimatePresence>
 
+      {/* ── Mobile Backdrop Overlay ────────────────────────── */}
+      <AnimatePresence>
+        {isOpen && (
+          <m.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 bg-slate-900/30 backdrop-blur-[2px] z-40 sm:hidden"
+            onClick={() => setIsOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
+
       {/* ── Full Premium Notification Popover ──────────────── */}
       <AnimatePresence>
         {isOpen && (
@@ -237,35 +252,44 @@ export default function OfferNotificationBell() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.98 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute right-0 top-full mt-2.5 w-[400px] sm:w-[460px] max-w-[calc(100vw-20px)] bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden flex flex-col text-slate-800"
+            className="fixed left-3 right-3 top-[68px] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2.5 sm:w-[440px] sm:max-w-[calc(100vw-32px)] bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden flex flex-col text-slate-800 box-border"
             style={{
               boxShadow: '0 20px 48px -12px rgba(15, 23, 42, 0.22), 0 0 0 1px rgba(15, 23, 42, 0.06)',
-              maxHeight: 'min(640px, calc(100vh - 90px))',
+              maxHeight: 'min(580px, calc(100dvh - 84px))',
             }}
           >
             {/* ── 1. Popover Header ─────────────────────────── */}
-            <div className="px-5 py-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
-              <div>
-                <h4 className="text-sm font-extrabold text-slate-950 tracking-tight">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
+              <div className="min-w-0 pr-2">
+                <h4 className="text-sm font-extrabold text-slate-950 tracking-tight truncate">
                   AI Offers & Promotions
                 </h4>
-                <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                <p className="text-[11.5px] sm:text-xs text-slate-500 mt-0.5 font-medium line-clamp-1">
                   Live pricing opportunities from monitored AI providers
                 </p>
               </div>
 
-              {unreadCount > 0 && (
+              <div className="flex items-center gap-2 shrink-0">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-[11px] sm:text-xs font-semibold text-slate-500 hover:text-slate-950 transition-colors focus:outline-none cursor-pointer"
+                  >
+                    Mark all read
+                  </button>
+                )}
                 <button
-                  onClick={markAllAsRead}
-                  className="text-xs font-semibold text-slate-500 hover:text-slate-950 transition-colors focus:outline-none cursor-pointer shrink-0"
+                  onClick={() => setIsOpen(false)}
+                  className="sm:hidden text-slate-400 hover:text-slate-700 p-1 rounded-md text-xs"
+                  aria-label="Close offers"
                 >
-                  Mark all as read
+                  ✕
                 </button>
-              )}
+              </div>
             </div>
 
             {/* ── 2. Scrollable Offers List (High-Contrast, Spacious Rows) ── */}
-            <div className="overflow-y-auto flex-1 divide-y divide-slate-100/90 max-h-[440px]">
+            <div className="overflow-y-auto flex-1 divide-y divide-slate-100 overscroll-contain">
               {formattedOffers.length === 0 ? (
                 <div className="py-12 px-6 text-center">
                   <p className="text-xs font-bold text-slate-800">No new public offers detected</p>
@@ -275,81 +299,75 @@ export default function OfferNotificationBell() {
                 </div>
               ) : (
                 formattedOffers.map((offer) => (
-                  <a
+                  <div
                     key={offer.id}
-                    href={offer.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group block p-4 sm:p-4.5 bg-white hover:bg-slate-50/90 transition-all duration-150 cursor-pointer"
+                    className="group relative p-3.5 sm:p-4 bg-white hover:bg-slate-50/90 transition-all duration-150"
                   >
-                    {/* Line 1: [ProviderLogo] Provider Name */}
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <ProviderLogo providerId={offer.providerId} providerName={offer.providerName} size="sm" />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-extrabold text-slate-950 truncate">
-                            {offer.providerName}
-                          </span>
-                          {offer.isUnread && (
-                            <span
-                              className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"
-                              title="Unread offer"
-                            />
-                          )}
-                        </div>
+                    {/* Top Row: Provider Header */}
+                    <div className="flex items-center justify-between gap-2 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <ProviderLogo providerId={offer.providerId} providerName={offer.providerName} size="sm" />
+                        <span className="text-xs font-extrabold text-slate-950 truncate">
+                          {offer.providerName}
+                        </span>
+                        {offer.isUnread && (
+                          <span
+                            className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"
+                            title="Unread offer"
+                          />
+                        )}
                       </div>
+
+                      <button
+                        onClick={(e) => toggleReadStatus(offer.id, e)}
+                        className="text-[10.5px] font-medium text-slate-400 hover:text-slate-700 px-1.5 py-0.5 rounded hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+                        title={offer.isUnread ? 'Mark as read' : 'Mark as unread'}
+                      >
+                        {offer.isUnread ? 'Mark read' : 'Unread'}
+                      </button>
                     </div>
 
-                    {/* Line 2: Offer Title */}
-                    <h5 className="text-sm font-bold text-slate-950 mt-2 leading-snug group-hover:text-slate-900 transition-colors">
+                    {/* Offer Title */}
+                    <h5 className="text-[13px] sm:text-sm font-bold text-slate-950 mt-1.5 leading-snug">
                       {offer.title}
                     </h5>
 
-
-                    {/* Line 3: Concise Business Benefit */}
+                    {/* Concise Summary */}
                     <p className="text-xs text-slate-600 mt-1 leading-relaxed line-clamp-2">
                       {offer.summary}
                     </p>
 
-                    {/* Line 4: Metadata & Action CTA */}
-                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100/70 text-[11px]">
+                    {/* Footer Row: Metadata & View Deal CTA */}
+                    <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100/80 text-[11px]">
                       <span className="text-slate-400 font-medium flex items-center gap-1">
                         <span>{formatCompactTime(offer.detectedAt)}</span>
                         <span>·</span>
                         <span className="text-slate-500 font-medium">Official Source</span>
                       </span>
 
-
-                      <div className="flex items-center gap-2.5">
-                        <button
-                          onClick={(e) => toggleReadStatus(offer.id, e)}
-                          className="text-[11px] font-medium text-slate-400 hover:text-slate-700 px-1.5 py-0.5 rounded hover:bg-slate-100 transition-colors cursor-pointer"
-                          title={offer.isUnread ? 'Mark as read' : 'Mark as unread'}
-                        >
-                          {offer.isUnread ? 'Mark read' : 'Unread'}
-                        </button>
-
-                        <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-900 group-hover:text-slate-950">
-                          <span>View offer</span>
-                          <span className="text-slate-400 group-hover:text-slate-950 group-hover:translate-x-0.5 transition-all">
-                            →
-                          </span>
-                        </span>
-                      </div>
+                      <a
+                        href={offer.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-slate-900 hover:text-emerald-700 transition-colors"
+                      >
+                        <span>View offer</span>
+                        <span className="text-slate-400 hover:text-emerald-700">→</span>
+                      </a>
                     </div>
-                  </a>
+                  </div>
                 ))
               )}
             </div>
 
             {/* ── 3. Sticky / Fixed Popover Footer (Black Button Style) ──── */}
-            <div className="px-5 py-3.5 bg-slate-50/95 border-t border-slate-200/80 shrink-0">
+            <div className="px-4 sm:px-5 py-3 sm:py-3.5 bg-slate-50/95 border-t border-slate-200/80 shrink-0">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
+                <span className="text-[10.5px] sm:text-[11px] text-slate-400 font-medium flex items-center gap-1">
                   <span>✓</span>
                   <span>Verified official vendor sources</span>
                 </span>
-                <span className="text-[11px] text-slate-600 font-bold">
+                <span className="text-[10.5px] sm:text-[11px] text-slate-600 font-bold">
                   {availableCount} active offers
                 </span>
               </div>
