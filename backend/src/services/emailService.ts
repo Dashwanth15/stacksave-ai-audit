@@ -1,16 +1,36 @@
 // ============================================================
 // Email Service — StackSave AI Audit
-// Uses Resend to send transactional confirmation emails.
-// Free tier: 3,000 emails/month — more than enough for MVP.
+// Production Transactional Email Delivery via Resend SDK
 // ============================================================
 
 import { Resend } from 'resend';
 
-function getResendClient(): Resend {
-  return new Resend(process.env.RESEND_API_KEY || '');
+function getResendClient(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || apiKey.trim() === '') {
+    return null;
+  }
+  return new Resend(apiKey.trim());
 }
 
-interface SendAuditConfirmationParams {
+/**
+ * Resolve the sender email address.
+ * Precedence:
+ * 1. process.env.EMAIL_FROM (e.g. "StackSave AI Audit <notifications@stacksaveai.com>")
+ * 2. process.env.RESEND_FROM
+ * 3. Default: "StackSave AI Audit <notifications@stacksaveai.com>"
+ */
+export function getSenderAddress(): string {
+  if (process.env.EMAIL_FROM && process.env.EMAIL_FROM.trim()) {
+    return process.env.EMAIL_FROM.trim();
+  }
+  if (process.env.RESEND_FROM && process.env.RESEND_FROM.trim()) {
+    return process.env.RESEND_FROM.trim();
+  }
+  return 'StackSave AI Audit <notifications@stacksaveai.com>';
+}
+
+export interface SendAuditConfirmationParams {
   email: string;
   auditId: string;
   publicUrl: string;
@@ -18,86 +38,250 @@ interface SendAuditConfirmationParams {
   annualSavings: number;
   isHighSavings: boolean;
   companyName?: string;
+  totalMonthlySpend?: number;
+  optimizedMonthlySpend?: number;
+  savingsPercentage?: number;
+  teamSize?: number;
+  toolCount?: number;
 }
 
-export async function sendAuditConfirmation(params: SendAuditConfirmationParams): Promise<void> {
+/**
+ * Send an ultra-premium Audit Confirmation & Report email.
+ */
+export async function sendAuditConfirmation(params: SendAuditConfirmationParams): Promise<{ success: boolean; id?: string; error?: string }> {
   const {
     email,
+    auditId,
     publicUrl,
     monthlySavings,
     annualSavings,
     isHighSavings,
     companyName,
+    totalMonthlySpend,
+    optimizedMonthlySpend,
+    savingsPercentage,
+    teamSize,
+    toolCount,
   } = params;
 
-  const resend = getResendClient();
-
-
-
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f1a; color: #f8fafc; margin: 0; padding: 40px 20px;">
-      <div style="max-width: 560px; margin: 0 auto;">
-        
-        <!-- Header -->
-        <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="font-size: 24px; font-weight: 700; color: #818cf8; margin: 0;">StackSave</h1>
-          <p style="color: #94a3b8; margin: 4px 0 0;">AI Spend Audit</p>
-        </div>
-
-        <!-- Main card -->
-        <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 32px;">
-          <h2 style="font-size: 20px; font-weight: 600; margin: 0 0 8px;">Your audit is ready${companyName ? `, ${companyName}` : ''} 🎉</h2>
-          <p style="color: #94a3b8; margin: 0 0 24px; font-size: 15px;">Here's what we found in your AI stack:</p>
-
-          <!-- Savings highlight -->
-          <div style="background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center;">
-            <p style="color: #94a3b8; font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.05em;">Potential Monthly Savings</p>
-            <p style="font-size: 40px; font-weight: 800; color: #34d399; margin: 0;">${monthlySavings > 0 ? `$${monthlySavings.toLocaleString()}` : 'You\'re Optimal'}</p>
-            ${monthlySavings > 0 ? `<p style="color: #94a3b8; font-size: 14px; margin: 4px 0 0;">$${annualSavings.toLocaleString()}/year</p>` : ''}
-          </div>
-
-
-
-          <!-- CTA -->
-          <div style="text-align: center; margin-top: 24px;">
-            <a href="${publicUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 15px;">View Full Audit Report →</a>
-          </div>
-          
-          <p style="color: #64748b; font-size: 12px; text-align: center; margin: 20px 0 0;">
-            Share your audit: <a href="${publicUrl}" style="color: #818cf8;">${publicUrl}</a>
-          </p>
-        </div>
-
-        <!-- Footer -->
-        <p style="color: #475569; font-size: 12px; text-align: center; margin-top: 24px;">
-          StackSave · AI Spend Intelligence & Optimization Platform
-        </p>
-      </div>
-    </body>
-    </html>
-  `;
-
-  const { data, error } = await resend.emails.send({
-    from: 'StackSave <onboarding@resend.dev>',
-    to: email,
-    subject: monthlySavings > 0
-      ? `Your audit found $${monthlySavings.toLocaleString()}/mo in AI savings`
-      : 'Your StackSave audit is ready',
-    html,
-  });
-
-  if (error) {
-    console.error('❌ Resend API error:', JSON.stringify(error));
-    throw new Error(error.message);
+  if (!email || !email.includes('@')) {
+    console.warn(`[EmailService] Invalid or missing recipient email: "${email}". Skipping.`);
+    return { success: false, error: 'Invalid recipient email' };
   }
 
-  console.log('✅ Email sent to', email, '— Resend ID:', data?.id);
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn('[EmailService] RESEND_API_KEY is not configured in environment. Skipping email dispatch.');
+    return { success: false, error: 'RESEND_API_KEY not configured' };
+  }
+
+  const from = getSenderAddress();
+  const formattedMonthly = monthlySavings > 0 ? `$${Math.round(monthlySavings).toLocaleString()}` : '$0';
+  const formattedAnnual = annualSavings > 0 ? `$${Math.round(annualSavings).toLocaleString()}` : '$0';
+  const formattedTotal = totalMonthlySpend && totalMonthlySpend > 0 ? `$${Math.round(totalMonthlySpend).toLocaleString()}/mo` : null;
+  const formattedOptimized = optimizedMonthlySpend && optimizedMonthlySpend > 0 ? `$${Math.round(optimizedMonthlySpend).toLocaleString()}/mo` : null;
+  const pct = savingsPercentage ? Math.round(savingsPercentage) : (totalMonthlySpend && monthlySavings ? Math.round((monthlySavings / totalMonthlySpend) * 100) : 0);
+
+  const subject = monthlySavings > 0
+    ? `Your StackSave AI Audit: ${formattedMonthly}/mo in Potential Savings Detected`
+    : 'Your StackSave AI Audit Report is Ready';
+
+  const textContent = `
+StackSave AI Audit Report
+==================================================
+${companyName ? `Prepared for: ${companyName}\n` : ''}Audit ID: ${auditId}
+
+EXECUTIVE FINANCIAL SUMMARY
+--------------------------------------------------
+Potential Monthly Savings: ${formattedMonthly}/mo
+Projected Annual Value:   ${formattedAnnual}/yr
+${formattedTotal ? `Current Monthly Spend:    ${formattedTotal}\n` : ''}${formattedOptimized ? `Optimized Monthly Spend:  ${formattedOptimized}\n` : ''}${pct > 0 ? `Spend Reduction:          ${pct}%\n` : ''}${teamSize ? `Team Seats:               ${teamSize}\n` : ''}${toolCount ? `Tools Evaluated:          ${toolCount}\n` : ''}
+VIEW YOUR INTERACTIVE AUDIT REPORT
+--------------------------------------------------
+${publicUrl}
+
+This audit was generated by StackSave (https://stacksaveai.com).
+Your data is private, isolated, and encrypted.
+`.trim();
+
+  const htmlContent = `
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>${subject}</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif !important; }
+  </style>
+  <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; background-color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; color: #0F172A;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; padding: 32px 12px;">
+    <tr>
+      <td align="center">
+        <!-- Main Email Container (580px max) -->
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);">
+          
+          <!-- Top Brand Header Bar -->
+          <tr>
+            <td style="background-color: #0F172A; padding: 24px 32px; border-bottom: 1px solid #1E293B;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td>
+                    <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="background-color: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 6px 12px;">
+                          <span style="font-size: 13px; font-weight: 800; color: #FFFFFF; letter-spacing: 0.06em; text-transform: uppercase;">
+                            <span style="color: #10B981;">●</span> STACKSAVE
+                          </span>
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <span style="font-size: 11px; font-weight: 600; color: #94A3B8; letter-spacing: 0.04em; text-transform: uppercase;">
+                            AI Spend Intelligence
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 11px; font-weight: 700; color: #64748B; background-color: #1E293B; padding: 4px 8px; border-radius: 6px;">
+                      AUDIT #${auditId.slice(0, 8).toUpperCase()}
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Body Content -->
+          <tr>
+            <td style="padding: 36px 32px 28px 32px;">
+              <!-- Greeting & Headline -->
+              <h1 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 800; color: #0F172A; line-height: 1.25; letter-spacing: -0.02em;">
+                Your AI Stack Audit is Complete${companyName ? `, ${companyName}` : ''}
+              </h1>
+              <p style="margin: 0 0 24px 0; font-size: 14px; color: #64748B; line-height: 1.55;">
+                We evaluated your AI subscriptions against official vendor pricing models, workflow overlap benchmarks, and optimization candidates.
+              </p>
+
+              <!-- Hero Highlight Card -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 12px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 24px 20px; text-align: center;">
+                    <span style="font-size: 11px; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">
+                      ${monthlySavings > 0 ? 'Potential Monthly Spend Recovery' : 'Stack Efficiency Status'}
+                    </span>
+                    <div style="font-size: 38px; font-weight: 900; color: #047857; line-height: 1; letter-spacing: -0.03em; margin: 0 0 6px 0;">
+                      ${monthlySavings > 0 ? `${formattedMonthly}<span style="font-size: 18px; font-weight: 700; color: #059669;">/mo</span>` : 'Optimally Configured'}
+                    </div>
+                    ${monthlySavings > 0 ? `
+                    <div style="font-size: 13px; font-weight: 600; color: #065F46;">
+                      ≈ ${formattedAnnual} / year projected savings${pct > 0 ? ` (${pct}% spend reduction)` : ''}
+                    </div>` : `
+                    <div style="font-size: 13px; font-weight: 600; color: #065F46;">
+                      Zero redundant subscriptions detected in your evaluated stack.
+                    </div>`}
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Multi-metric Overview Table -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; margin-bottom: 28px;">
+                <tr>
+                  ${formattedTotal ? `
+                  <td style="padding: 14px 16px; border-right: 1px solid #E2E8F0; text-align: center; width: 33%;">
+                    <div style="font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Current Spend</div>
+                    <div style="font-size: 15px; font-weight: 800; color: #0F172A;">${formattedTotal}</div>
+                  </td>` : ''}
+                  ${formattedOptimized ? `
+                  <td style="padding: 14px 16px; ${toolCount ? 'border-right: 1px solid #E2E8F0;' : ''} text-align: center; width: 33%;">
+                    <div style="font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Optimized Spend</div>
+                    <div style="font-size: 15px; font-weight: 800; color: #047857;">${formattedOptimized}</div>
+                  </td>` : ''}
+                  <td style="padding: 14px 16px; text-align: center; width: 33%;">
+                    <div style="font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Audit Scope</div>
+                    <div style="font-size: 15px; font-weight: 800; color: #0F172A;">
+                      ${toolCount ? `${toolCount} Tool${toolCount !== 1 ? 's' : ''}` : `${teamSize || 1} Seat${teamSize !== 1 ? 's' : ''}`}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Primary CTA Button -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td align="center">
+                    <a href="${publicUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0F172A; color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 10px; letter-spacing: -0.01em; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);">
+                      View Full Interactive Audit Report &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Direct Link Fallback -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="border-top: 1px solid #F1F5F9; padding-top: 20px;">
+                <tr>
+                  <td>
+                    <p style="margin: 0; font-size: 12px; color: #94A3B8; line-height: 1.5;">
+                      Direct report link:<br />
+                      <a href="${publicUrl}" target="_blank" rel="noopener noreferrer" style="color: #4F46E5; word-break: break-all; text-decoration: underline; font-weight: 500;">
+                        ${publicUrl}
+                      </a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 24px 32px; text-align: center;">
+              <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: #475569;">
+                StackSave &middot; AI Spend Intelligence &amp; Optimization
+              </p>
+              <p style="margin: 0 0 10px 0; font-size: 11px; color: #94A3B8; line-height: 1.4;">
+                Continuous monitoring across official vendor pricing feeds and subscription tiers.
+              </p>
+              <p style="margin: 0; font-size: 11px; color: #CBD5E1;">
+                &copy; ${new Date().getFullYear()} StackSave. All rights reserved. &middot; <a href="https://stacksaveai.com" target="_blank" rel="noopener noreferrer" style="color: #94A3B8; text-decoration: underline;">stacksaveai.com</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`.trim();
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from,
+      to: email,
+      subject,
+      text: textContent,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error('[EmailService] Resend API error sending audit confirmation:', JSON.stringify(error));
+      return { success: false, error: error.message };
+    }
+
+    console.log(`[EmailService] ✅ Audit confirmation email sent to ${email} (Resend ID: ${data?.id})`);
+    return { success: true, id: data?.id };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[EmailService] Unexpected error sending audit confirmation:', msg);
+    return { success: false, error: msg };
+  }
 }
 
 export interface SendReAuditNotificationParams {
@@ -111,9 +295,13 @@ export interface SendReAuditNotificationParams {
   newSavings: number;
 }
 
-export async function sendReAuditNotification(params: SendReAuditNotificationParams): Promise<void> {
+/**
+ * Send an ultra-premium Re-Audit & Pricing Change Alert email.
+ */
+export async function sendReAuditNotification(params: SendReAuditNotificationParams): Promise<{ success: boolean; id?: string; error?: string }> {
   const {
     email,
+    auditId,
     comparisonUrl,
     companyName,
     changedToolsSummary,
@@ -122,96 +310,218 @@ export async function sendReAuditNotification(params: SendReAuditNotificationPar
     newSavings,
   } = params;
 
-  const resend = getResendClient();
-
-  const deltaText = savingsDelta > 0 
-    ? `increased by $${savingsDelta.toLocaleString()}/mo`
-    : savingsDelta < 0
-      ? `decreased by $${Math.abs(savingsDelta).toLocaleString()}/mo`
-      : 'remained unchanged';
-
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f1a; color: #f8fafc; margin: 0; padding: 40px 20px;">
-      <div style="max-width: 560px; margin: 0 auto;">
-        
-        <!-- Header -->
-        <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="font-size: 24px; font-weight: 700; color: #818cf8; margin: 0;">StackSave</h1>
-          <p style="color: #94a3b8; margin: 4px 0 0;">AI Spend Audit Updates</p>
-        </div>
-
-        <!-- Main card -->
-        <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 32px;">
-          <h2 style="font-size: 20px; font-weight: 600; margin: 0 0 16px;">Provider pricing updates affected your AI stack${companyName ? `, ${companyName}` : ''}</h2>
-          <p style="color: #94a3b8; margin: 0 0 24px; font-size: 15px; line-height: 1.6;">
-            We detected pricing changes from your AI tooling providers. Your potential monthly savings have <strong>${deltaText}</strong>.
-          </p>
-
-          <!-- Metrics Comparison Box -->
-          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="width: 50%; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                  <span style="color: #6b7b93; font-size: 12px; text-transform: uppercase;">Previous Savings</span>
-                  <div style="font-size: 20px; font-weight: 700; color: #94a3b8; margin-top: 4px;">$${oldSavings.toLocaleString()}/mo</div>
-                </td>
-                <td style="width: 50%; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-left: 16px;">
-                  <span style="color: #6b7b93; font-size: 12px; text-transform: uppercase;">Current Savings</span>
-                  <div style="font-size: 20px; font-weight: 700; color: #34d399; margin-top: 4px;">$${newSavings.toLocaleString()}/mo</div>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2" style="padding-top: 12px;">
-                  <span style="color: #6b7b93; font-size: 12px; text-transform: uppercase;">Savings Delta</span>
-                  <div style="font-size: 18px; font-weight: 700; color: ${savingsDelta >= 0 ? '#34d399' : '#fbbf24'}; margin-top: 4px;">
-                    ${savingsDelta >= 0 ? '+' : ''}$${savingsDelta.toLocaleString()}/mo
-                  </div>
-                </td>
-              </tr>
-            </table>
-          </div>
-
-          <!-- Changed Tools List -->
-          <div style="margin-bottom: 24px;">
-            <h3 style="font-size: 14px; color: #818cf8; text-transform: uppercase; margin: 0 0 8px;">Changed Tool Pricing Models</h3>
-            <p style="color: #d4deea; font-size: 14px; line-height: 1.5; margin: 0; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px 16px; font-family: monospace;">
-              ${changedToolsSummary}
-            </p>
-          </div>
-
-          <!-- CTA -->
-          <div style="text-align: center; margin-top: 28px;">
-            <a href="${comparisonUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 15px;">View Detailed Re-Audit Comparison →</a>
-          </div>
-          
-        </div>
-
-        <!-- Footer -->
-        <p style="color: #475569; font-size: 12px; text-align: center; margin-top: 24px;">
-          StackSave · AI Spend Intelligence & Optimization Platform
-        </p>
-      </div>
-    </body>
-    </html>
-  `;
-
-  const { data, error } = await resend.emails.send({
-    from: 'StackSave <onboarding@resend.dev>',
-    to: email,
-    subject: `⚠️ StackSave Re-Audit Alert: Your potential savings ${deltaText}`,
-    html,
-  });
-
-  if (error) {
-    console.error('❌ Resend API error sending re-audit alert:', JSON.stringify(error));
-    throw new Error(error.message);
+  if (!email || !email.includes('@')) {
+    console.warn(`[EmailService] Invalid or missing recipient email: "${email}". Skipping re-audit alert.`);
+    return { success: false, error: 'Invalid recipient email' };
   }
 
-  console.log('✅ Re-audit notification email sent to', email, '— Resend ID:', data?.id);
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn('[EmailService] RESEND_API_KEY is not configured in environment. Skipping re-audit alert.');
+    return { success: false, error: 'RESEND_API_KEY not configured' };
+  }
+
+  const from = getSenderAddress();
+  const deltaText = savingsDelta > 0
+    ? `increased by $${Math.round(savingsDelta).toLocaleString()}/mo`
+    : savingsDelta < 0
+      ? `decreased by $${Math.round(Math.abs(savingsDelta)).toLocaleString()}/mo`
+      : 'remained unchanged';
+
+  const deltaFormatted = savingsDelta >= 0
+    ? `+$${Math.round(savingsDelta).toLocaleString()}/mo`
+    : `-$${Math.round(Math.abs(savingsDelta)).toLocaleString()}/mo`;
+
+  const subject = `⚠️ AI Pricing Update Alert: Your Stack Savings ${deltaText}`;
+
+  const textContent = `
+StackSave AI Pricing Alert
+==================================================
+${companyName ? `Prepared for: ${companyName}\n` : ''}Audit ID: ${auditId}
+
+AI PROVIDER PRICING CHANGES DETECTED
+--------------------------------------------------
+Our continuous pricing monitor detected plan updates from your AI tooling providers.
+Your potential monthly savings have ${deltaText}.
+
+FINANCIAL DELTA SUMMARY
+--------------------------------------------------
+Previous Savings: $${Math.round(oldSavings).toLocaleString()}/mo
+Updated Savings:  $${Math.round(newSavings).toLocaleString()}/mo
+Net Savings Delta: ${deltaFormatted}
+
+CHANGED PROVIDER PLANS
+--------------------------------------------------
+${changedToolsSummary}
+
+VIEW FULL RE-AUDIT COMPARISON DIFF
+--------------------------------------------------
+${comparisonUrl}
+
+This notification was triggered automatically by StackSave Continuous Intelligence (https://stacksaveai.com).
+`.trim();
+
+  const htmlContent = `
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #0F172A;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; padding: 32px 12px;">
+    <tr>
+      <td align="center">
+        <!-- Main Container (580px max) -->
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);">
+          
+          <!-- Top Alert Header Bar -->
+          <tr>
+            <td style="background-color: #0F172A; padding: 24px 32px; border-bottom: 1px solid #1E293B;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td>
+                    <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="background-color: #FEF3C7; border: 1px solid #FDE68A; border-radius: 6px; padding: 4px 10px;">
+                          <span style="font-size: 11px; font-weight: 800; color: #92400E; letter-spacing: 0.06em; text-transform: uppercase;">
+                            PRICING ALERT
+                          </span>
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <span style="font-size: 12px; font-weight: 700; color: #F1F5F9; letter-spacing: 0.04em;">
+                            StackSave Continuous Intelligence
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 11px; font-weight: 700; color: #94A3B8;">
+                      RE-AUDIT
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 36px 32px 28px 32px;">
+              <h1 style="margin: 0 0 10px 0; font-size: 21px; font-weight: 800; color: #0F172A; line-height: 1.3; letter-spacing: -0.02em;">
+                Provider Pricing Updates Detected for Your Stack${companyName ? `, ${companyName}` : ''}
+              </h1>
+              <p style="margin: 0 0 24px 0; font-size: 14px; color: #64748B; line-height: 1.55;">
+                We detected official pricing modifications from your configured AI providers. Your potential monthly savings have <strong>${deltaText}</strong>.
+              </p>
+
+              <!-- Comparison Delta Box -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 18px 20px; border-bottom: 1px solid #E2E8F0;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="width: 50%;">
+                          <span style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">Previous Savings</span>
+                          <span style="font-size: 18px; font-weight: 800; color: #475569;">$${Math.round(oldSavings).toLocaleString()}/mo</span>
+                        </td>
+                        <td style="width: 50%; padding-left: 16px;">
+                          <span style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">Updated Savings</span>
+                          <span style="font-size: 18px; font-weight: 800; color: #047857;">$${Math.round(newSavings).toLocaleString()}/mo</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 14px 20px; background-color: #FFFFFF; border-radius: 0 0 12px 12px;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td>
+                          <span style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Net Financial Impact</span>
+                        </td>
+                        <td align="right">
+                          <span style="font-size: 16px; font-weight: 900; color: ${savingsDelta >= 0 ? '#047857' : '#D97706'};">
+                            ${deltaFormatted}
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Changed Vendor Plans -->
+              <div style="margin-bottom: 28px;">
+                <span style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 8px;">
+                  Modified Vendor Plan Details
+                </span>
+                <div style="background-color: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #334155; font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; line-height: 1.45;">
+                  ${changedToolsSummary}
+                </div>
+              </div>
+
+              <!-- Primary CTA Button -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td align="center">
+                    <a href="${comparisonUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0F172A; color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 10px; letter-spacing: -0.01em; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);">
+                      View Detailed Re-Audit Comparison Diff &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Direct Link Fallback -->
+              <p style="margin: 0; font-size: 12px; color: #94A3B8; line-height: 1.5; border-top: 1px solid #F1F5F9; padding-top: 16px;">
+                Direct link: <a href="${comparisonUrl}" target="_blank" rel="noopener noreferrer" style="color: #4F46E5; word-break: break-all; text-decoration: underline;">${comparisonUrl}</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 24px 32px; text-align: center;">
+              <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: #475569;">
+                StackSave &middot; Continuous AI Spend Intelligence
+              </p>
+              <p style="margin: 0; font-size: 11px; color: #94A3B8;">
+                &copy; ${new Date().getFullYear()} StackSave &middot; <a href="https://stacksaveai.com" target="_blank" rel="noopener noreferrer" style="color: #94A3B8; text-decoration: underline;">stacksaveai.com</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`.trim();
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from,
+      to: email,
+      subject,
+      text: textContent,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error('[EmailService] Resend API error sending re-audit alert:', JSON.stringify(error));
+      return { success: false, error: error.message };
+    }
+
+    console.log(`[EmailService] ✅ Re-audit notification sent to ${email} (Resend ID: ${data?.id})`);
+    return { success: true, id: data?.id };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[EmailService] Unexpected error sending re-audit alert:', msg);
+    return { success: false, error: msg };
+  }
 }

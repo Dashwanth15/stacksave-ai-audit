@@ -64,7 +64,12 @@ router.post('/', honeypotCheck, async (req: Request, res: Response) => {
         monthlySavings: audit.estimatedMonthlySavings,
         annualSavings: audit.estimatedAnnualSavings,
         isHighSavings: audit.isHighSavings,
-        companyName: body.companyName,
+        companyName: body.companyName || audit.companyName,
+        totalMonthlySpend: audit.totalMonthlySpend,
+        optimizedMonthlySpend: audit.optimizedMonthlySpend,
+        savingsPercentage: audit.savingsPercentage,
+        teamSize: body.teamSize || audit.teamSize,
+        toolCount: (audit.tools as any[])?.length || (audit.inputStack as any[])?.length || 0,
       });
     } catch (emailErr) {
       // Email failure doesn't block the response — lead is already saved

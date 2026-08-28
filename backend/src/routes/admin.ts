@@ -14,6 +14,7 @@ import {
 } from '../services/dbService';
 import { runPricingSync, ingestOfficialExtractedPricing } from '../pricing/syncOrchestrator';
 import { runOfferMonitor } from '../pricing/offerMonitor';
+import { sendAuditConfirmation, sendReAuditNotification, getSenderAddress } from '../services/emailService';
 
 const router = Router();
 
@@ -172,6 +173,69 @@ router.get('/pricing/:providerId', async (req: Request, res: Response) => {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     res.status(500).json({ success: false, error: msg });
+  }
+});
+
+// ── POST /api/admin/email/test ─────────────────────────────────
+// Send a test transactional email to verify Resend credentials and domain
+router.post('/email/test', async (req: Request, res: Response) => {
+  try {
+    const { to, type = 'audit', companyName } = req.body;
+    if (!to || typeof to !== 'string' || !to.includes('@')) {
+      res.status(400).json({ success: false, error: 'Recipient email "to" is required' });
+      return;
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL || 'https://stacksaveai.com';
+    const sender = getSenderAddress();
+
+    if (type === 're-audit') {
+      const result = await sendReAuditNotification({
+        email: to,
+        auditId: 'test-audit-' + Date.now().toString(36),
+        comparisonUrl: `${frontendUrl}/audit/sample-audit-id/diff`,
+        companyName: companyName || 'Acme Engineering',
+        changedToolsSummary: 'Claude Pro (+$2/mo), Cursor Business (-$5/mo)',
+        savingsDelta: 420,
+        oldSavings: 1200,
+        newSavings: 1620,
+      });
+      res.json({
+        success: result.success,
+        type: 're-audit',
+        sender,
+        recipient: to,
+        resendId: result.id,
+        error: result.error,
+      });
+    } else {
+      const result = await sendAuditConfirmation({
+        email: to,
+        auditId: 'test-audit-' + Date.now().toString(36),
+        publicUrl: `${frontendUrl}/results/sample-audit-id`,
+        monthlySavings: 850,
+        annualSavings: 10200,
+        isHighSavings: true,
+        companyName: companyName || 'Acme Engineering',
+        totalMonthlySpend: 2800,
+        optimizedMonthlySpend: 1950,
+        savingsPercentage: 30,
+        teamSize: 15,
+        toolCount: 6,
+      });
+      res.json({
+        success: result.success,
+        type: 'audit-confirmation',
+        sender,
+        recipient: to,
+        resendId: result.id,
+        error: result.error,
+      });
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[Admin] Test email failed:', err);
+    res.status(500).json({ success: false, error: `Test email failed: ${msg}` });
   }
 });
 
