@@ -455,7 +455,7 @@ export default function AuditPage() {
         )}
 
         {/* ── Progress Indicators ──────────────────────────── */}
-        <div className="audit-progress-steps flex items-center gap-3 sm:gap-6 mb-6 sm:mb-8 border-b pb-5 sm:pb-6 overflow-x-auto no-scrollbar w-full max-w-full touch-pan-x overscroll-x-contain" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="audit-progress-steps flex items-center gap-3 sm:gap-6 mb-6 sm:mb-8 border-b pb-5 sm:pb-6 overflow-x-auto no-scrollbar w-full max-w-full touch-auto overscroll-x-contain" style={{ borderColor: 'var(--color-border)' }}>
           {[
             { label: 'Metadata', done: true },
             { label: 'Select Tools', done: form.tools.length > 0 },

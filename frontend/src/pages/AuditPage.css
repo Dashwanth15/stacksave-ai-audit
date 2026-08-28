@@ -180,7 +180,7 @@
   grid-auto-flow: column;
   overflow-x: auto;
   overflow-y: hidden;
-  touch-action: pan-x;
+  touch-action: pan-x pan-y;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x mandatory;
   overscroll-behavior-x: contain;
@@ -224,7 +224,7 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xs);
   cursor: pointer;
-  touch-action: pan-x;
+  touch-action: pan-x pan-y;
   scroll-snap-align: start;
   flex-shrink: 0;
   box-sizing: border-box;
