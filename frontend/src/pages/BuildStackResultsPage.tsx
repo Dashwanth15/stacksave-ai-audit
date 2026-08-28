@@ -31,7 +31,8 @@ import ProviderLogo from '../components/ProviderLogo';
 import OfferNotificationBell from '../components/OfferNotificationBell';
 import ProcurementIntelligenceDrawer from '../components/intelligence/ProcurementIntelligenceDrawer';
 import type { DrawerSelection } from '../components/intelligence/ProcurementIntelligenceDrawer';
-import RecommendationReveal, { getProviderRole } from '../components/build-stack/RecommendationReveal';
+import RecommendationReveal from '../components/build-stack/RecommendationReveal';
+import { getProviderRole } from '../components/build-stack/wizardData';
 
 import ConfigurationReveal from '../components/build-stack/ConfigurationReveal';
 
@@ -112,7 +113,53 @@ export default function BuildStackResultsPage() {
     setTimeout(() => setToastMessage(null), 3200);
   };
 
-  if (!rec) {
+  const context = rec?.userContextSummary;
+  const currentCategory: CategoryResult | undefined = rec?.categories?.[selectedStrategyKey] || rec?.categories?.bestOverall;
+  const activeStack: StructuredStack | undefined = customActiveStack || currentCategory?.recommendedStack || currentCategory?.rank1 || rec?.stacks?.bestOverall;
+
+  const stackTools: ToolInStack[] = activeStack?.tools || [];
+  const primaryTool = activeStack?.primary || stackTools.find(t => t.buyingPriority === '01 PRIMARY') || stackTools[0];
+  const secondaryTool = activeStack?.secondary || stackTools.find(t => t.buyingPriority === '02 SECONDARY' && t.toolId !== primaryTool?.toolId);
+  const optionalTools = stackTools.filter(t => t.buyingPriority === '03 OPTIONAL' && t.toolId !== primaryTool?.toolId && t.toolId !== secondaryTool?.toolId);
+  const apiTools = stackTools.filter(t => t.buyingPriority === '04 API LAYER' && t.toolId !== primaryTool?.toolId && t.toolId !== secondaryTool?.toolId);
+
+  const comparisons: AlternativeStackComparison[] = currentCategory?.alternativeComparisons || [];
+  const growthSim = activeStack?.growthSimulation || rec?.stacks?.bestOverall?.growthSimulation;
+
+  const teamSize = context?.teamSize || 1;
+  const monthlyBudget = rec?.trace && typeof rec.trace === 'object' && 'inputs' in rec.trace
+    ? (rec.trace as { inputs?: { monthlyBudget?: number } }).inputs?.monthlyBudget
+    : (context?.budgetFormatted && context.budgetFormatted !== 'No Hard Limit' ? parseInt(context.budgetFormatted.replace(/\D/g, ''), 10) : null);
+
+  const isOverBudget = activeStack?.budgetStatus === 'over';
+  const budgetOverrun = isOverBudget && monthlyBudget !== null && monthlyBudget !== undefined && activeStack ? activeStack.estimatedMonthlyCost - monthlyBudget : 0;
+
+  const stackToolNames = useMemo(() => {
+    const names: string[] = [];
+    if (primaryTool) names.push(primaryTool.toolName);
+    if (secondaryTool) names.push(secondaryTool.toolName);
+    optionalTools.forEach(t => names.push(t.toolName));
+    apiTools.forEach(t => names.push(t.toolName));
+    return names;
+  }, [primaryTool, secondaryTool, optionalTools, apiTools]);
+
+  const filteredAlternatives = useMemo(() => {
+    if (!rec?.alternatives) return [];
+    if (evaluatedFilter === 'ALL') return rec.alternatives;
+    return rec.alternatives.filter(a => a.rejectionCategory === evaluatedFilter);
+  }, [rec, evaluatedFilter]);
+
+  const rejectionCategories = useMemo(() => {
+    const cats = new Set<string>();
+    if (rec?.alternatives) {
+      rec.alternatives.forEach(a => {
+        if (a.rejectionCategory) cats.add(a.rejectionCategory);
+      });
+    }
+    return Array.from(cats);
+  }, [rec]);
+
+  if (!rec || !activeStack) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] text-slate-500 gap-3">
         <div className="w-8 h-8 border-3 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
@@ -120,27 +167,6 @@ export default function BuildStackResultsPage() {
       </div>
     );
   }
-
-  const context = rec.userContextSummary;
-  const currentCategory: CategoryResult | undefined = rec.categories?.[selectedStrategyKey] || rec.categories?.bestOverall;
-  const activeStack: StructuredStack = customActiveStack || currentCategory?.recommendedStack || currentCategory?.rank1 || rec.stacks.bestOverall;
-
-  const stackTools: ToolInStack[] = activeStack.tools || [];
-  const primaryTool = activeStack.primary || stackTools.find(t => t.buyingPriority === '01 PRIMARY') || stackTools[0];
-  const secondaryTool = activeStack.secondary || stackTools.find(t => t.buyingPriority === '02 SECONDARY' && t.toolId !== primaryTool?.toolId);
-  const optionalTools = stackTools.filter(t => t.buyingPriority === '03 OPTIONAL' && t.toolId !== primaryTool?.toolId && t.toolId !== secondaryTool?.toolId);
-  const apiTools = stackTools.filter(t => t.buyingPriority === '04 API LAYER' && t.toolId !== primaryTool?.toolId && t.toolId !== secondaryTool?.toolId);
-
-  const comparisons: AlternativeStackComparison[] = currentCategory?.alternativeComparisons || [];
-  const growthSim = activeStack.growthSimulation || rec.stacks.bestOverall.growthSimulation;
-
-  const teamSize = context?.teamSize || 1;
-  const monthlyBudget = rec.trace && typeof rec.trace === 'object' && 'inputs' in rec.trace
-    ? (rec.trace as any).inputs?.monthlyBudget
-    : (context?.budgetFormatted && context.budgetFormatted !== 'No Hard Limit' ? parseInt(context.budgetFormatted.replace(/\D/g, ''), 10) : null);
-
-  const isOverBudget = activeStack.budgetStatus === 'over';
-  const budgetOverrun = isOverBudget && monthlyBudget !== null ? activeStack.estimatedMonthlyCost - monthlyBudget : 0;
 
   const scrollAlts = (direction: 'left' | 'right') => {
     if (!altScrollRef.current) return;
@@ -170,7 +196,7 @@ export default function BuildStackResultsPage() {
       purposeLabel: alt.purposeLabel,
       recommendedStack: currentCategory?.recommendedStack,
       teamSize,
-      onApplyStack: (applied) => {
+      onApplyStack: (applied: StructuredStack) => {
         setCustomActiveStack(applied);
         showToast(`Applied "${alt.rankTitle}" as active architecture.`);
       }
@@ -206,29 +232,7 @@ export default function BuildStackResultsPage() {
     showToast('Executive procurement brief copied to clipboard!');
   };
 
-  const stackToolNames = useMemo(() => {
-    const names: string[] = [];
-    if (primaryTool) names.push(primaryTool.toolName);
-    if (secondaryTool) names.push(secondaryTool.toolName);
-    optionalTools.forEach(t => names.push(t.toolName));
-    apiTools.forEach(t => names.push(t.toolName));
-    return names;
-  }, [primaryTool, secondaryTool, optionalTools, apiTools]);
-
   const recommendationRevealKey = `${selectedStrategyKey}-${customActiveStack?.canonicalSignature ?? 'default'}-${activeStack.estimatedMonthlyCost}-${activeStack.confidenceScore}-${activeStack.coverageResult.coverageScore}`;
-
-  const filteredAlternatives = useMemo(() => {
-    if (evaluatedFilter === 'ALL') return rec.alternatives;
-    return rec.alternatives.filter(a => a.rejectionCategory === evaluatedFilter);
-  }, [rec.alternatives, evaluatedFilter]);
-
-  const rejectionCategories = useMemo(() => {
-    const cats = new Set<string>();
-    rec.alternatives.forEach(a => {
-      if (a.rejectionCategory) cats.add(a.rejectionCategory);
-    });
-    return Array.from(cats);
-  }, [rec.alternatives]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F4F6F9] text-slate-800 antialiased font-sans">
@@ -327,7 +331,7 @@ export default function BuildStackResultsPage() {
 
               {context && (() => {
                 const traceInputs = rec.trace && typeof rec.trace === 'object' && 'inputs' in rec.trace
-                  ? (rec.trace as any).inputs
+                  ? (rec.trace as { inputs?: { requirements?: string[] } }).inputs
                   : null;
                 const selectedReqs: string[] = traceInputs?.requirements ?? [];
 

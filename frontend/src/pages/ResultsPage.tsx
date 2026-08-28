@@ -574,7 +574,7 @@ export default function ResultsPage() {
         // Store in user-scoped sessionStorage key so it doesn't leak to other users
         const auditKey = getUserScopedKey('currentAudit');
         sessionStorage.setItem(auditKey, JSON.stringify(audit));
-      } catch (err) {
+      } catch {
         // ignore storage errors
       }
     }

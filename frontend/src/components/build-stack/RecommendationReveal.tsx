@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { m, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 interface RecommendationRevealProps {
@@ -128,10 +128,12 @@ export default function RecommendationReveal({
 }: RecommendationRevealProps) {
   const reduceMotion = useReducedMotion();
   const [showDetails, setShowDetails] = useState(false);
+  const [prevRevealKey, setPrevRevealKey] = useState(revealKey);
 
-  useEffect(() => {
+  if (prevRevealKey !== revealKey) {
+    setPrevRevealKey(revealKey);
     setShowDetails(false);
-  }, [revealKey]);
+  }
 
   const phrases = useMemo(
     () => buildPhrases(strategyTitle, strategyDescription, domainLabel, toolNames, monthlyCost, alignmentScore, coverageScore),
@@ -210,25 +212,4 @@ export default function RecommendationReveal({
       <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mx-5 sm:mx-6" />
     </div>
   );
-}
-
-export function getProviderRole(buyingPriority?: string, fallbackIndex = 3) {
-  switch (buyingPriority) {
-    case '01 PRIMARY':
-      return { index: '01', label: 'PRIMARY', variant: 'primary' as const };
-    case '02 SECONDARY':
-      return { index: '02', label: 'SECONDARY', variant: 'secondary' as const };
-    case '03 OPTIONAL':
-      return { index: '03', label: 'OPTIONAL', variant: 'optional' as const };
-    case '04 API LAYER':
-      return { index: '04', label: 'API LAYER', variant: 'api' as const };
-    default: {
-      const idx = String(fallbackIndex).padStart(2, '0');
-      return {
-        index: idx,
-        label: fallbackIndex === 3 ? 'OPTIONAL' : `ROLE ${idx}`,
-        variant: 'optional' as const,
-      };
-    }
-  }
 }

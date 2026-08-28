@@ -46,10 +46,7 @@ export default function GeneratingOverlay({ domain, strategy }: GeneratingOverla
   const [activeStep, setActiveStep] = useState(reduce ? steps.length : 0);
 
   useEffect(() => {
-    if (reduce) {
-      setActiveStep(steps.length);
-      return;
-    }
+    if (reduce) return;
     const id = setInterval(() => {
       setActiveStep(i => (i < steps.length ? i + 1 : i));
     }, STEP_DURATION_MS);

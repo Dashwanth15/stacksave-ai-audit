@@ -30,6 +30,48 @@ export function getSenderAddress(): string {
   return 'StackSave AI Audit <notifications@stacksaveai.com>';
 }
 
+/**
+ * Wrapper around resend.emails.send that auto-retries with the Resend sandbox
+ * sender (onboarding@resend.dev) when the custom domain is not yet verified
+ * (HTTP 403 / validation_error from Resend).
+ *
+ * DNS setup instructions are printed to the console to help the operator
+ * complete domain verification.
+ */
+async function sendWithDomainFallback(
+  resend: Resend,
+  payload: { from: string; to: string; subject: string; text: string; html: string }
+): Promise<{ data: { id?: string } | null; error: { message: string } | null }> {
+  let result = await resend.emails.send(payload);
+
+  // Detect unverified domain error from Resend (403 or message contains 'not verified')
+  const isUnverified =
+    result.error &&
+    (result.error.message?.toLowerCase().includes('not verified') ||
+      result.error.message?.toLowerCase().includes('domain'));
+
+  if (isUnverified) {
+    console.warn(
+      '[EmailService] ⚠️  Domain not verified in Resend. Retrying with onboarding@resend.dev sandbox sender.'
+    );
+    console.warn(
+      '[EmailService] 📋 To fix this permanently, add these DNS records for stacksaveai.com in GoDaddy/Cloudflare:\n' +
+        '  1. Go to https://resend.com/domains and click "Add Domain"\n' +
+        '  2. Enter: stacksaveai.com\n' +
+        '  3. Add the TXT record (SPF) shown — usually: v=spf1 include:amazonses.com ~all\n' +
+        '  4. Add the CNAME record (DKIM) shown\n' +
+        '  5. DNS propagation takes 15–60 minutes; then click "Verify" in Resend.'
+    );
+
+    result = await resend.emails.send({
+      ...payload,
+      from: 'StackSave AI <onboarding@resend.dev>',
+    });
+  }
+
+  return result as { data: { id?: string } | null; error: { message: string } | null };
+}
+
 export interface SendAuditConfirmationParams {
   email: string;
   auditId: string;
@@ -262,7 +304,7 @@ Your data is private, isolated, and encrypted.
 `.trim();
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await sendWithDomainFallback(resend, {
       from,
       to: email,
       subject,
@@ -504,7 +546,7 @@ This notification was triggered automatically by StackSave Continuous Intelligen
 `.trim();
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await sendWithDomainFallback(resend, {
       from,
       to: email,
       subject,

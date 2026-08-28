@@ -266,4 +266,25 @@ export const strategyFocus = (id: StackStrategy): string =>
 export const optimizationGoalTitle = (id: OptimizationGoal): string =>
   OPTIMIZATION_GOAL_OPTIONS.find((g) => g.id === id)?.title ?? '';
 
+export function getProviderRole(buyingPriority?: string, fallbackIndex = 3) {
+  switch (buyingPriority) {
+    case '01 PRIMARY':
+      return { index: '01', label: 'PRIMARY', variant: 'primary' as const };
+    case '02 SECONDARY':
+      return { index: '02', label: 'SECONDARY', variant: 'secondary' as const };
+    case '03 OPTIONAL':
+      return { index: '03', label: 'OPTIONAL', variant: 'optional' as const };
+    case '04 API LAYER':
+      return { index: '04', label: 'API LAYER', variant: 'api' as const };
+    default: {
+      const idx = String(fallbackIndex).padStart(2, '0');
+      return {
+        index: idx,
+        label: fallbackIndex === 3 ? 'OPTIONAL' : `ROLE ${idx}`,
+        variant: 'optional' as const,
+      };
+    }
+  }
+}
+
 

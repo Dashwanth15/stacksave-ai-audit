@@ -182,7 +182,7 @@ function decorateInlineText(text: string): string {
 
   // Auto-bold pricing values like $20/seat/month, $5/month, $100/seat/month, $22/month, $264/year
   res = res.replace(
-    /(?<!\>)\$([0-9]+(?:\.[0-9]+)?(?:\/[a-zA-Z]+)*)/g,
+    /(?<!>)\$([0-9]+(?:\.[0-9]+)?(?:\/[a-zA-Z]+)*)/g,
     '<strong style="font-weight:600;color:#0f172a;font-variant-numeric:tabular-nums;font-family:Inter,sans-serif">$$$1</strong>'
   );
 
@@ -275,7 +275,7 @@ function renderMarkdownTable(tableLines: string[]): string {
 
     // Format bare pricing e.g. "$20/seat/month", "$5/seat/month", "$100/seat/month"
     text = text.replace(
-      /(?<!\>)\$([0-9]+(?:\.[0-9]+)?(?:\/[a-zA-Z]+)*)/g,
+      /(?<!>)\$([0-9]+(?:\.[0-9]+)?(?:\/[a-zA-Z]+)*)/g,
       '<span style="font-weight:600;color:#0f172a;font-variant-numeric:tabular-nums">$$$1</span>'
     );
 
@@ -353,14 +353,14 @@ function cleanReasoningPreamble(raw: string): string {
         const trimmed = line.trim();
         if (/^(?:Here's a thinking process|Thinking Process|Thought Process):/i.test(trimmed)) continue;
         if (
-          /^(?:[•\-\*]|\d+\.)?\s*(?:Analyze User Input|User says|Context|Goal|Identify Core Concept|Core Concept|Key Takeaway|Approach|Step \d):/i.test(
+          /^(?:[•\-*]|\d+\.)?\s*(?:Analyze User Input|User says|Context|Goal|Identify Core Concept|Core Concept|Key Takeaway|Approach|Step \d):/i.test(
             trimmed
           )
         )
           continue;
-        if (/^(?:[•\-\*]|\d+\.)?\s*(?:Draft|Draft\s*[-–:]\s*Short\s*&\s*Simple):/i.test(trimmed)) {
+        if (/^(?:[•\-*]|\d+\.)?\s*(?:Draft|Draft\s*[-–:]\s*Short\s*&\s*Simple):/i.test(trimmed)) {
           const afterDraft = trimmed.replace(
-            /^(?:[•\-\*]|\d+\.)?\s*(?:Draft|Draft\s*[-–:]\s*Short\s*&\s*Simple):\s*/i,
+            /^(?:[•\-*]|\d+\.)?\s*(?:Draft|Draft\s*[-–:]\s*Short\s*&\s*Simple):\s*/i,
             ''
           );
           if (afterDraft) cleanLines.push(afterDraft);
@@ -459,7 +459,7 @@ function formatAssistantResponse(raw: string): string {
     }
 
     // Bullet List Item
-    const bulletMatch = t.match(/^([•\-\*]|\d+\.)\s+(.*)/);
+    const bulletMatch = t.match(/^([•\-*]|\d+\.)\s+(.*)/);
     if (bulletMatch) {
       if (!inList) {
         elements.push('<ul style="margin:4px 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3.5px">');
@@ -486,7 +486,7 @@ function formatAssistantResponse(raw: string): string {
         elements.push(
           `<li style="display:flex;gap:7px;align-items:flex-start">` +
           `<svg style="width:13px;height:13px;color:#10b981;flex-shrink:0;margin-top:2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` +
-          `<span style="font-size:12px;line-height:1.55;color:#334155;font-family:Inter,sans-serif">${decorated.replace(/^[✓\+]\s*/, '')}</span>` +
+          `<span style="font-size:12px;line-height:1.55;color:#334155;font-family:Inter,sans-serif">${decorated.replace(/^[✓+]\s*/, '')}</span>` +
           `</li>`
         );
       } else {

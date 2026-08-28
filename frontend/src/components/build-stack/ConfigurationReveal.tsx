@@ -19,7 +19,7 @@ interface ConfigurationRevealProps {
  */
 export default function ConfigurationReveal({ trace }: ConfigurationRevealProps) {
   const segments = useMemo(() => {
-    const inputs = (trace as any)?.inputs;
+    const inputs = (trace as { inputs?: { domain?: string; domainLabel?: string; optimizationGoal?: string; teamSize?: number; monthlyBudget?: number; requirements?: string[]; workflowStage?: string } } | undefined)?.inputs;
     if (!inputs) return [];
 
     const result: { text: string; highlight?: boolean }[] = [];

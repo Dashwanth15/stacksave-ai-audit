@@ -8,6 +8,16 @@
 import { m } from 'framer-motion';
 import { DOMAIN_OPTIONS, OPTIMIZATION_GOAL_OPTIONS } from './wizardData';
 
+interface TraceInputs {
+  domain?: string;
+  domainLabel?: string;
+  optimizationGoal?: string;
+  teamSize?: number;
+  monthlyBudget?: number;
+  requirements?: string[];
+  workflowStage?: string;
+}
+
 interface AuditedConfigurationProps {
   trace?: unknown;
 }
@@ -15,13 +25,13 @@ interface AuditedConfigurationProps {
 export default function AuditedConfiguration({
   trace
 }: AuditedConfigurationProps) {
-  const inputs = (trace as any)?.inputs;
+  const inputs = (trace as { inputs?: TraceInputs } | undefined)?.inputs;
   if (!inputs) return null;
 
   // Find friendly labels
-  const domainLabel = inputs.domainLabel || DOMAIN_OPTIONS.find((d: any) => d.id === inputs.domain)?.title || inputs.domain;
+  const domainLabel = inputs.domainLabel || DOMAIN_OPTIONS.find((d) => d.id === inputs.domain)?.title || inputs.domain;
   const optimizationLabel = OPTIMIZATION_GOAL_OPTIONS.find(
-    (opt: any) => opt.id === inputs.optimizationGoal
+    (opt) => opt.id === inputs.optimizationGoal
   )?.title || inputs.optimizationGoal || 'Balanced Approach';
 
   const budgetDisplay = inputs.monthlyBudget 
@@ -83,7 +93,7 @@ export default function AuditedConfiguration({
         </svg>
       ),
       label: 'Selected Requirements',
-      value: `${inputs.requirements.length} ${inputs.requirements.length === 1 ? 'requirement' : 'requirements'}`,
+      value: `${inputs.requirements?.length ?? 0} ${(inputs.requirements?.length ?? 0) === 1 ? 'requirement' : 'requirements'}`,
       key: 'reqs'
     }
   ];
@@ -134,13 +144,13 @@ export default function AuditedConfiguration({
         </div>
 
         {/* Requirements Details */}
-        {inputs.requirements.length > 0 && (
+        {(inputs.requirements?.length ?? 0) > 0 && (
           <div className="mt-2 pt-3 border-t border-slate-200/60 space-y-2">
             <p className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">
               Selected Requirements:
             </p>
             <div className="flex flex-wrap gap-2">
-              {inputs.requirements.map((req: any, idx: number) => (
+              {(inputs.requirements ?? []).map((req: string, idx: number) => (
                 <m.span
                   key={req}
                   initial={{ opacity: 0, scale: 0.95 }}

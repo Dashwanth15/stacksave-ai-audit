@@ -339,17 +339,17 @@ function DrawerHeader({
   onClose: () => void;
 }) {
   // Determine breadcrumb and metrics
-  let breadcrumb2 = '';
-  let breadcrumb3 = '';
-  let toolName = '';
-  let planLabel = '';
-  let seatCost = 0;
-  let teamCost = 0;
-  let fitScore = 0;
-  let teamSize = 1;
-  let logoId = '';
-  let valueLabel = '';
-  let valueCls = '';
+  let breadcrumb2: string;
+  let breadcrumb3: string;
+  let toolName: string;
+  let planLabel: string;
+  let seatCost: number;
+  let teamCost: number;
+  let fitScore: number;
+  let teamSize: number;
+  let logoId: string;
+  let valueLabel: string;
+  let valueCls: string;
 
   if (selection.type === 'tool') {
     const t = selection.tool;
