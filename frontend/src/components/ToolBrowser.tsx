@@ -132,7 +132,7 @@ export default function ToolBrowser({
         </div>
 
         {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs w-full max-w-full touch-pan-x overscroll-x-contain">
           {categories.map((cat) => {
             const isActive = activeCategory === cat;
             return (
@@ -140,7 +140,7 @@ export default function ToolBrowser({
                 key={cat}
                 type="button"
                 onClick={() => setActiveCategory(cat)}
-                className="px-3 py-1.5 rounded-md font-semibold text-[11px] whitespace-nowrap transition-all cursor-pointer"
+                className="px-3 py-1.5 rounded-md font-semibold text-[11px] whitespace-nowrap transition-all cursor-pointer shrink-0"
                 style={
                   isActive
                     ? {
@@ -163,39 +163,51 @@ export default function ToolBrowser({
       </div>
 
       {/* ── Carousel Header & Navigation Controls ───────────────── */}
-      <div className="relative group">
+      <div className="relative group w-full max-w-full min-w-0">
         {filteredTools.length > 0 ? (
           <>
-            {/* Desktop Navigation Arrows */}
-            <div className="absolute right-0 -top-11 hidden sm:flex items-center gap-1.5 z-10">
-              <button
-                type="button"
-                onClick={() => handleScroll('left')}
-                disabled={!canScrollLeft}
-                aria-label="Scroll left"
-                className="p-1.5 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M15 18l-6-6 6-6" />
+            {/* Header / Mobile & Desktop Navigation Arrows & Swipe Hint */}
+            <div className="flex items-center justify-between text-xs text-slate-400 font-medium mb-2 px-0.5 w-full">
+              <div className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-500 font-medium select-none">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 shrink-0">
+                  <polyline points="15 18 9 12 15 6" />
                 </svg>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleScroll('right')}
-                disabled={!canScrollRight}
-                aria-label="Scroll right"
-                className="p-1.5 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M9 18l6-6-6-6" />
+                <span>Swipe to browse {filteredTools.length} tools</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 shrink-0">
+                  <polyline points="9 18 15 12 9 6" />
                 </svg>
-              </button>
+              </div>
+
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => handleScroll('left')}
+                  disabled={!canScrollLeft}
+                  aria-label="Scroll tools left"
+                  className="p-1 sm:p-1.5 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-25 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer flex items-center justify-center min-h-[28px] min-w-[28px] sm:min-h-[32px] sm:min-w-[32px]"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleScroll('right')}
+                  disabled={!canScrollRight}
+                  aria-label="Scroll tools right"
+                  className="p-1 sm:p-1.5 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-25 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer flex items-center justify-center min-h-[28px] min-w-[28px] sm:min-h-[32px] sm:min-w-[32px]"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
-            {/* Scrollable Container (2 Rows Horizontal Carousel) */}
+            {/* Scrollable Container (2 Rows Horizontal Carousel with adaptive column sizing) */}
             <div
               ref={scrollContainerRef}
-              className="tool-browser-carousel grid grid-rows-2 grid-flow-col auto-cols-[220px] sm:auto-cols-[240px] gap-3 overflow-x-auto py-1 px-0.5 snap-x snap-mandatory scroll-smooth"
+              className="tool-browser-carousel auto-cols-[180px] min-[360px]:auto-cols-[195px] min-[400px]:auto-cols-[215px] sm:auto-cols-[240px] gap-2.5 sm:gap-3 py-1 px-0.5"
             >
               {filteredTools.map((tool) => {
                 const isSelected = selectedToolIds.includes(tool.id);
@@ -219,10 +231,10 @@ export default function ToolBrowser({
                         : ''
                     }`}
                   >
-                    <div className="flex flex-col justify-between h-full p-4 text-left">
+                    <div className="flex flex-col justify-between h-full p-3 sm:p-4 text-left">
                       <div>
                         {/* Card Header: Logo, Name, Check */}
-                        <div className="flex items-start justify-between gap-2.5 mb-3">
+                        <div className="flex items-start justify-between gap-2 mb-2 sm:mb-3">
                           <div
                             className={`tool-card-premium__logo-container ${
                               isNew
@@ -266,7 +278,7 @@ export default function ToolBrowser({
                         </div>
 
                         {/* Title & Category */}
-                        <div className="mb-2">
+                        <div className="mb-1.5 sm:mb-2">
                           <div className="flex items-center gap-1.5 min-w-0">
                             <span className="font-bold text-xs tracking-tight block text-[var(--color-text-heading)] truncate">
                               {tool.name}
@@ -290,7 +302,7 @@ export default function ToolBrowser({
                         </div>
 
                         {/* Description (2-line clamp) */}
-                        <p className="text-[11px] text-[var(--color-text-body)] leading-relaxed line-clamp-2">
+                        <p className="text-[10.5px] sm:text-[11px] text-[var(--color-text-body)] leading-relaxed line-clamp-2">
                           {tool.description}
                         </p>
                       </div>

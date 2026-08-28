@@ -406,18 +406,18 @@ export default function AuditPage() {
       </header>
 
 
-      <div className="audit-page-container w-full max-w-[1600px] xl:max-w-[1720px] px-4 sm:px-8 xl:px-12 py-8 sm:py-12 mx-auto">
+      <div className="audit-page-container w-full max-w-[1600px] xl:max-w-[1720px] px-3.5 sm:px-8 xl:px-12 py-6 sm:py-10 xl:py-12 mx-auto box-border min-w-0">
 
         {/* ── Page Header ─────────────────────────────────── */}
-        <div className="mb-12 text-left">
-          <span className="text-overline mb-2 block">Zero-Integration Audit</span>
+        <div className="mb-8 sm:mb-12 text-left">
+          <span className="text-overline mb-1.5 sm:mb-2 block">Zero-Integration Audit</span>
           <h1
-            className="text-3xl font-extrabold tracking-tight mb-2"
+            className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2"
             style={{ color: 'var(--color-text-heading)', letterSpacing: '-0.02em' }}
           >
             {reAuditOf ? 'Evolve Your AI Stack' : 'Audit Your AI Stack'}
           </h1>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-body)' }}>
+          <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--color-text-body)' }}>
             {reAuditOf
               ? 'Modify your tools and settings below to append a new version to this timeline.'
               : 'Choose the plans your team pays for. We do not require account access or financial credentials.'}
@@ -427,7 +427,7 @@ export default function AuditPage() {
         {/* ── Evolution Banner ─────────────────────────────── */}
         {reAuditOf && (
           <div
-            className="mb-8 p-4 rounded border flex items-start gap-3"
+            className="mb-6 sm:mb-8 p-3.5 sm:p-4 rounded-xl border flex items-start gap-3 w-full max-w-full box-border"
             style={{
               background: 'var(--color-warning-bg)',
               borderColor: 'rgba(217,119,6,0.2)',
@@ -455,7 +455,7 @@ export default function AuditPage() {
         )}
 
         {/* ── Progress Indicators ──────────────────────────── */}
-        <div className="audit-progress-steps flex items-center gap-4 sm:gap-6 mb-8 border-b pb-6 overflow-x-auto" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="audit-progress-steps flex items-center gap-3 sm:gap-6 mb-6 sm:mb-8 border-b pb-5 sm:pb-6 overflow-x-auto no-scrollbar w-full max-w-full touch-pan-x overscroll-x-contain" style={{ borderColor: 'var(--color-border)' }}>
           {[
             { label: 'Metadata', done: true },
             { label: 'Select Tools', done: form.tools.length > 0 },
@@ -464,7 +464,7 @@ export default function AuditPage() {
             <div key={i} className="flex items-center gap-2 shrink-0">
               <StepBadge n={i + 1} done={step.done} />
               <span
-                className="step-label text-xs font-semibold uppercase tracking-wider"
+                className="step-label text-xs font-semibold uppercase tracking-wider whitespace-nowrap"
                 style={{ color: step.done ? 'var(--color-text-heading)' : 'var(--color-text-muted)' }}
               >
                 {step.label}
@@ -473,14 +473,14 @@ export default function AuditPage() {
           ))}
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col xl:flex-row gap-8 xl:gap-12 items-start">
-          <div className="flex-1 min-w-0 space-y-8">
+        <form onSubmit={handleSubmit} className="flex flex-col xl:flex-row gap-6 sm:gap-8 xl:gap-12 items-stretch xl:items-start w-full max-w-full min-w-0">
+          <div className="flex-1 min-w-0 max-w-full w-full space-y-6 sm:space-y-8">
 
             {/* ── Step 1: Team info ─────────────────────────── */}
             <m.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 sm:p-5 border rounded-xl bg-[var(--color-bg-surface)]"
+              className="p-3.5 sm:p-5 border rounded-xl bg-[var(--color-bg-surface)] w-full max-w-full box-border"
               style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-xs)' }}
             >
               <h2
@@ -490,8 +490,8 @@ export default function AuditPage() {
                 <StepBadge n={1} done={true} />
                 Team Metadata
               </h2>
-              <div className="audit-metadata-grid grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-                <div>
+              <div className="audit-metadata-grid grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 w-full max-w-full">
+                <div className="w-full min-w-0">
                   <label
                     className="block text-[10.5px] font-bold uppercase tracking-wider mb-1"
                     style={{ color: 'var(--color-text-muted)' }}
@@ -505,14 +505,14 @@ export default function AuditPage() {
                     placeholder="e.g. Acme Corp"
                     value={form.companyName}
                     onChange={(e) => setForm((p) => ({ ...p, companyName: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-md text-xs sm:text-sm transition-all focus:outline-none placeholder:text-[#94A3B8] font-medium"
+                    className="w-full max-w-full box-border px-3 py-2 rounded-md text-xs sm:text-sm transition-all focus:outline-none placeholder:text-[#94A3B8] font-medium"
                     style={inputStyle}
                     {...inputFocusHandlers}
                     aria-label="Company name"
                     autoComplete="off"
                   />
                 </div>
-                <div>
+                <div className="w-full min-w-0">
                   <label
                     className="block text-[10.5px] font-bold uppercase tracking-wider mb-1"
                     style={{ color: 'var(--color-text-muted)' }}
@@ -524,7 +524,7 @@ export default function AuditPage() {
                     id="useCase"
                     value={form.useCase}
                     onChange={(e) => setForm((p) => ({ ...p, useCase: e.target.value as UseCase }))}
-                    className="w-full px-3 py-2 rounded-md text-xs sm:text-sm transition-all focus:outline-none font-medium cursor-pointer"
+                    className="w-full max-w-full box-border px-3 py-2 rounded-md text-xs sm:text-sm transition-all focus:outline-none font-medium cursor-pointer"
                     style={inputStyle}
                     {...inputFocusHandlers}
                     aria-label="Primary use case"
@@ -534,7 +534,7 @@ export default function AuditPage() {
                     ))}
                   </select>
                 </div>
-                <div>
+                <div className="w-full min-w-0">
                   <label
                     className="block text-[10.5px] font-bold uppercase tracking-wider mb-1"
                     style={{ color: 'var(--color-text-muted)' }}
@@ -546,7 +546,7 @@ export default function AuditPage() {
                     id="optimizationGoal"
                     value={form.optimizationGoal}
                     onChange={(e) => setForm((p) => ({ ...p, optimizationGoal: e.target.value as FormState['optimizationGoal'] }))}
-                    className="w-full px-3 py-2 rounded-md text-xs sm:text-sm transition-all focus:outline-none font-medium cursor-pointer"
+                    className="w-full max-w-full box-border px-3 py-2 rounded-md text-xs sm:text-sm transition-all focus:outline-none font-medium cursor-pointer"
                     style={inputStyle}
                     {...inputFocusHandlers}
                     aria-label="Optimization goal"
@@ -565,21 +565,21 @@ export default function AuditPage() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="p-6 border rounded-lg bg-[var(--color-bg-surface)]"
+              className="p-3.5 sm:p-5 md:p-6 border rounded-xl bg-[var(--color-bg-surface)] w-full max-w-full box-border overflow-hidden"
               style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-xs)' }}
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 w-full max-w-full">
                 <div>
-                  <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
                     <h2
-                      className="text-base font-bold flex items-center gap-3"
+                      className="text-sm sm:text-base font-bold flex items-center gap-2.5 sm:gap-3"
                       style={{ color: 'var(--color-text-heading)' }}
                     >
                       <StepBadge n={2} done={form.tools.length > 0} />
                       Choose AI Tools
                     </h2>
                     <span
-                      className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider"
+                      className="px-2.5 py-0.5 rounded-full text-[10.5px] sm:text-[11px] font-semibold uppercase tracking-wider"
                       style={{
                         background: form.tools.length > 0 ? 'var(--color-success-bg)' : 'rgba(30,58,95,0.05)',
                         color: form.tools.length > 0 ? 'var(--color-success-t)' : 'var(--color-text-muted)',
@@ -596,7 +596,7 @@ export default function AuditPage() {
 
                 {/* Billing Toggle */}
                 <div
-                  className="flex items-center gap-1 p-1 rounded"
+                  className="flex items-center gap-1 p-1 rounded self-start sm:self-auto shrink-0"
                   style={{ background: 'var(--color-bg-base)', border: '1px solid var(--color-border)' }}
                 >
                   <button
@@ -642,7 +642,7 @@ export default function AuditPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className={`p-6 border rounded-lg bg-[var(--color-bg-surface)] relative ${showHighlight ? 'onboarding-highlight' : ''}`}
+                  className={`p-3.5 sm:p-5 md:p-6 border rounded-xl bg-[var(--color-bg-surface)] relative w-full max-w-full box-border overflow-hidden ${showHighlight ? 'onboarding-highlight' : ''}`}
                   style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-xs)' }}
                 >
                   {showFloatingHint && (
@@ -661,17 +661,17 @@ export default function AuditPage() {
                     </div>
                   )}
                   <h2
-                    className="text-base font-bold mb-2 flex items-center gap-3"
+                    className="text-sm sm:text-base font-bold mb-1.5 sm:mb-2 flex items-center gap-2.5 sm:gap-3"
                     style={{ color: 'var(--color-text-heading)' }}
                   >
                     <StepBadge n={3} done={form.tools.length > 0 && form.tools.every(t => t.monthlySpend > 0)} />
                     Specify Seat Counts & Tier Plans
                   </h2>
-                  <p className="text-xs mb-6" style={{ color: 'var(--color-text-muted)' }}>
+                  <p className="text-xs mb-4 sm:mb-6" style={{ color: 'var(--color-text-muted)' }}>
                     Provide exact seat numbers to ensure calculation precision.
                   </p>
 
-                  <div className="tier-plan-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="tier-plan-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 w-full max-w-full">
                     {form.tools.map((entry) => {
                       const tool = TOOLS.find((t) => t.id === entry.toolId)!;
                       const isNewTool = parentToolIds !== null && parentToolIds !== undefined && !parentToolIds.includes(entry.toolId);
@@ -838,24 +838,24 @@ export default function AuditPage() {
           </div>
 
           {/* Right Column Area (Sticky Live Summary Card) */}
-          <div className="w-full xl:w-[420px] shrink-0 sticky-panel">
-            <div className="summary-sidebar-container bg-white border border-slate-100 rounded-3xl p-8 space-y-7 shadow-sm">
+          <div className="w-full xl:w-[420px] shrink-0 sticky-panel max-w-full box-border">
+            <div className="summary-sidebar-container bg-white border border-slate-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 xl:p-8 space-y-5 sm:space-y-7 shadow-sm w-full max-w-full box-border">
               
               {/* Top: Header & Estimated Spend */}
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                  <span className="text-[10.5px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                     Audit Summary
                   </span>
                 </div>
                 
                 <div className="space-y-1">
-                  <span className="text-[12px] font-semibold text-slate-400 block">
+                  <span className="text-[11.5px] sm:text-[12px] font-semibold text-slate-400 block">
                     Estimated Spend
                   </span>
-                  <div className="text-[48px] font-black tracking-tight leading-none text-slate-900 font-mono-financial py-2">
+                  <div className="text-[32px] sm:text-[40px] xl:text-[48px] font-black tracking-tight leading-none text-slate-900 font-mono-financial py-1.5 sm:py-2">
                     ${estimatedSpend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    <span className="text-lg font-sans font-medium text-slate-400">/mo</span>
+                    <span className="text-base sm:text-lg font-sans font-medium text-slate-400">/mo</span>
                   </div>
                 </div>
 
