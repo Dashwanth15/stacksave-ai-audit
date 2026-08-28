@@ -7,7 +7,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { fetchPublicOffers } from '../services/api';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useUserScopedStorage } from '../hooks/useUserScopedStorage';
+import { getUserScopedKey } from '../utils/userSession';
 import ProviderLogo from './ProviderLogo';
 import { formatOfferForDisplay, formatCompactTime } from '../utils/offerFormatter';
 import type { PublicOffer } from '../types';
@@ -18,7 +19,8 @@ export default function OfferNotificationBell() {
   const [offers, setOffers] = useState<PublicOffer[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [showHint, setShowHint] = useState(false);
-  const [readOfferIds, setReadOfferIds] = useLocalStorage<string[]>('stacksave_read_offer_ids', []);
+  // USER-SCOPED: read offer IDs are stored per user session, not shared globally
+  const [readOfferIds, setReadOfferIds] = useUserScopedStorage<string[]>('read_offer_ids', []);
   const popoverRef = useRef<HTMLDivElement>(null);
 
   // Load public offers from official backend API on mount
@@ -29,10 +31,17 @@ export default function OfferNotificationBell() {
         if (isMounted && res && Array.isArray(res.offers)) {
           setOffers(res.offers);
 
-          // Show floating hint persistently until user clicks the bell
-          const count = res.offers.length;
-          const alreadyDismissed = sessionStorage.getItem('stacksave_hint_dismissed');
-          if (count > 0 && !alreadyDismissed) {
+          // Show floating hint if there are unread offers for THIS user session
+          // hint_dismissed is scoped to the browser tab (sessionStorage) — per-tab only
+          const hintDismissedKey = getUserScopedKey('hint_dismissed');
+          const alreadyDismissed = sessionStorage.getItem(hintDismissedKey);
+          // Read current user-scoped read IDs directly from localStorage to avoid stale closure
+          const scopedReadKey = getUserScopedKey('read_offer_ids');
+          const savedReadIdsStr = window.localStorage.getItem(scopedReadKey);
+          const savedReadIds: string[] = savedReadIdsStr ? JSON.parse(savedReadIdsStr) : [];
+          const hasUnread = res.offers.some((o: PublicOffer) => !savedReadIds.includes(o.id));
+
+          if (hasUnread && !alreadyDismissed) {
             setShowHint(true);
           }
         }
@@ -70,6 +79,16 @@ export default function OfferNotificationBell() {
     return formattedOffers.filter((o) => o.isUnread).length;
   }, [formattedOffers]);
 
+  // Mark all current visible offers as read / seen in persistent storage
+  const markCurrentOffersAsSeen = () => {
+    if (formattedOffers.length > 0) {
+      const currentIds = formattedOffers.map((o) => o.id);
+      setReadOfferIds((prev) => {
+        const existing = Array.isArray(prev) ? prev : [];
+        return Array.from(new Set([...existing, ...currentIds]));
+      });
+    }
+  };
 
   // Close popover when clicking outside or pressing Escape
   useEffect(() => {
@@ -96,20 +115,28 @@ export default function OfferNotificationBell() {
 
   const handleBellClick = () => {
     setShowHint(false);
-    sessionStorage.setItem('stacksave_hint_dismissed', 'true');
-    setIsOpen((prev) => !prev);
+    const hintDismissedKey = getUserScopedKey('hint_dismissed');
+    sessionStorage.setItem(hintDismissedKey, 'true');
+    setIsOpen((prev) => {
+      const willOpen = !prev;
+      if (willOpen) {
+        markCurrentOffersAsSeen();
+      }
+      return willOpen;
+    });
   };
 
   const handleHintClick = () => {
     setShowHint(false);
-    sessionStorage.setItem('stacksave_hint_dismissed', 'true');
+    const hintDismissedKey = getUserScopedKey('hint_dismissed');
+    sessionStorage.setItem(hintDismissedKey, 'true');
     setIsOpen(true);
+    markCurrentOffersAsSeen();
   };
 
   const markAllAsRead = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const allIds = formattedOffers.map((o) => o.id);
-    setReadOfferIds(allIds);
+    markCurrentOffersAsSeen();
   };
 
   const toggleReadStatus = (offerId: string, event: React.MouseEvent) => {
@@ -189,7 +216,8 @@ export default function OfferNotificationBell() {
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowHint(false);
-                  sessionStorage.setItem('stacksave_hint_dismissed', 'true');
+                  const hintDismissedKey = getUserScopedKey('hint_dismissed');
+                  sessionStorage.setItem(hintDismissedKey, 'true');
                 }}
                 className="text-slate-400 hover:text-slate-700 text-xs p-0.5 rounded cursor-pointer"
                 title="Dismiss hint"

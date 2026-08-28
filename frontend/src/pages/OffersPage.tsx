@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence, useReducedMotion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import { fetchPublicOffers, fetchPricingStatus } from '../services/api';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useUserScopedStorage } from '../hooks/useUserScopedStorage';
 import Logo from '../components/Logo';
 import ProviderLogo from '../components/ProviderLogo';
 import OfferNotificationBell from '../components/OfferNotificationBell';
@@ -66,7 +66,8 @@ export default function OffersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<string>('all');
   const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
-  const [readOfferIds, setReadOfferIds] = useLocalStorage<string[]>('stacksave_read_offer_ids', []);
+  // USER-SCOPED: read offer IDs are stored per user session, not shared globally
+  const [readOfferIds, setReadOfferIds] = useUserScopedStorage<string[]>('read_offer_ids', []);
 
   useEffect(() => {
     let isMounted = true;
@@ -213,7 +214,7 @@ export default function OffersPage() {
               onClick={() => navigate('/audit')}
               className="h-9 px-4 rounded-xl font-bold text-xs text-white bg-slate-950 hover:bg-slate-800 transition-all shadow-sm cursor-pointer"
             >
-              Start Free Audit
+              Audit My Existing Stack
             </button>
           </div>
         </div>

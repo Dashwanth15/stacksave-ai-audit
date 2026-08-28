@@ -14,6 +14,7 @@ import type {
   StackRecommendation,
   PublicOffer,
 } from '../types';
+import { getUserScopedKey } from '../utils/userSession';
 
 
 const getBaseUrl = (): string => {
@@ -97,7 +98,15 @@ export async function submitAudit(request: AuditRequest): Promise<AuditResult> {
   if (!response.data.data) {
     throw new Error('Server returned success, but the audit data payload is missing.');
   }
-  return response.data.data;
+  const data = response.data.data;
+  if (data.ownerToken && typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(getUserScopedKey(`audit_token_${data.auditId}`), data.ownerToken);
+    } catch {
+      // ignore storage failure
+    }
+  }
+  return data;
 }
 
 export async function fetchAudit(auditId: string): Promise<AuditResult> {
@@ -139,13 +148,28 @@ export async function fetchAuditDiff(auditId: string, compareWith?: 'previous' |
 }
 
 export async function triggerReAudit(
-  auditId: string
-): Promise<{ newAuditId: string; newAudit: AuditResult; diff: AuditDiff }> {
+  auditId: string,
+  token?: string
+): Promise<{ newAuditId: string; newAudit: AuditResult; diff: AuditDiff; ownerToken?: string }> {
+  let effectiveToken = token;
+  if (!effectiveToken && typeof window !== 'undefined') {
+    try {
+      effectiveToken = localStorage.getItem(getUserScopedKey(`audit_token_${auditId}`)) || undefined;
+    } catch {
+      // ignore
+    }
+  }
+
+  const headers: Record<string, string> = {};
+  if (effectiveToken) {
+    headers['X-Audit-Token'] = effectiveToken;
+  }
+
   const response = await api.post<{
     success: boolean;
-    data: { newAuditId: string; newAudit: AuditResult; diff: AuditDiff };
+    data: { newAuditId: string; newAudit: AuditResult; diff: AuditDiff; ownerToken?: string };
     error?: string;
-  }>(`/audits/${auditId}/re-audit`);
+  }>(`/audits/${auditId}/re-audit`, {}, { headers });
   if (!response || !response.data) {
     throw new Error('No response received from the server.');
   }
@@ -155,7 +179,15 @@ export async function triggerReAudit(
   if (!response.data.data) {
     throw new Error('Server returned success, but re-audit data payload is missing.');
   }
-  return response.data.data;
+  const data = response.data.data;
+  if (data.ownerToken && typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(getUserScopedKey(`audit_token_${data.newAuditId}`), data.ownerToken);
+    } catch {
+      // ignore
+    }
+  }
+  return data;
 }
 
 export async function submitStackBuilder(request: StackBuilderRequest): Promise<StackRecommendation> {

@@ -5,10 +5,13 @@ import { submitStackBuilder } from '../services/api';
 import type { StackBuilderRequest, StackStrategy } from '../types';
 import Logo from '../components/Logo';
 import OfferNotificationBell from '../components/OfferNotificationBell';
+import { setUserSessionItem } from '../utils/userSession';
 import {
   DOMAIN_OPTIONS,
   REQUIREMENT_OPTIONS,
   STRATEGY_OPTIONS,
+  OPTIMIZATION_GOAL_OPTIONS,
+  type OptimizationGoal,
   STEPS,
 } from '../components/build-stack/wizardData';
 import SelectableCard from '../components/build-stack/SelectableCard';
@@ -61,6 +64,7 @@ export default function BuildStackPage() {
   const [budget, setBudget] = useState(0);
   const [requirements, setRequirements] = useState<string[]>([]);
   const [strategy, setStrategy] = useState<StackStrategy>('balanced');
+  const [optimizationGoal, setOptimizationGoal] = useState<OptimizationGoal>('balanced');
   const [prefs, setPrefs] = useState({
     preferOpenSource: false,
     avoidLockIn: false,
@@ -106,18 +110,20 @@ export default function BuildStackPage() {
         domain,
         requirements,
         strategy,
+        optimizationGoal,
         teamSize,
         monthlyBudget: noBudget ? null : budget,
         preferences: {
           ...prefs,
-          maximizeSavings: strategy === 'best-value',
-          requireZeroRetention: prefs.requireZeroRetention || strategy === 'enterprise-security'
+          maximizeSavings: strategy === 'best-value' || optimizationGoal === 'savings',
+          requireZeroRetention: prefs.requireZeroRetention || strategy === 'enterprise-security' || optimizationGoal === 'governance'
         },
         debug: true
       };
 
       const result = await submitStackBuilder(req);
-      sessionStorage.setItem('stackRecommendation', JSON.stringify(result));
+      // Store recommendation scoped to this user session — not shared across users
+      setUserSessionItem('stackRecommendation', JSON.stringify(result));
 
       // Let the "assembling" moment land, then hand off. (Skipped under reduced motion.)
       const minMs = reduce ? 0 : 1600;
@@ -323,7 +329,55 @@ export default function BuildStackPage() {
                 {/* ── Step 4: Strategy & Governance ── */}
                 {step === 4 && (
                   <div className="space-y-6">
+                    {/* Optimization Goal Selection */}
                     <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="block text-xs font-bold uppercase tracking-[0.1em] text-[#1E3A5F]">
+                          Primary Optimization Goal
+                        </span>
+                        <span className="text-xs text-slate-500 font-medium">Fine-tunes scoring weights for your team</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        {OPTIMIZATION_GOAL_OPTIONS.map((g) => {
+                          const isSelected = optimizationGoal === g.id;
+                          return (
+                            <button
+                              key={g.id}
+                              type="button"
+                              onClick={() => setOptimizationGoal(g.id)}
+                              className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                                isSelected
+                                  ? 'border-[#1E3A5F] bg-[#1E3A5F]/5 shadow-xs ring-1 ring-[#1E3A5F]/20'
+                                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className={`text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                                  isSelected ? 'bg-[#1E3A5F] text-white' : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {g.badge}
+                                </span>
+                                <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                                  isSelected ? 'border-[#1E3A5F] bg-[#1E3A5F]' : 'border-slate-300'
+                                }`}>
+                                  {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="block text-xs font-black text-slate-900 leading-tight">
+                                  {g.title}
+                                </span>
+                                <span className="block text-[11px] text-slate-600 font-medium leading-snug mt-1 line-clamp-2">
+                                  {g.subtitle}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-6 border-t border-slate-200/80">
                       <span className="block text-xs font-bold uppercase tracking-[0.1em] text-[#1E3A5F]">
                         Procurement stance
                       </span>

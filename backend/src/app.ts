@@ -1,5 +1,5 @@
 // ============================================================
-// Express App — StackSave AI Audit Backend
+// Express App — StackSave AI Audit & Stack Builder Backend
 // ============================================================
 
 import 'dotenv/config';

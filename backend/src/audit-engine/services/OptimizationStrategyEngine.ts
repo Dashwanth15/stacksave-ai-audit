@@ -75,7 +75,8 @@ export class OptimizationStrategyEngine {
     const { decommissionedTools, decisionLog } = ProposalEngine.evaluateStack(
       stackProfile.tools,
       stackProfile.useCase,
-      strategy
+      strategy,
+      stackProfile.optimizationGoal
     );
 
     const groupMap: Record<string, string[]> = {};

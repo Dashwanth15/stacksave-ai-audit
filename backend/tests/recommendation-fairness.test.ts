@@ -97,10 +97,10 @@ describe('Recommendation fairness regressions', () => {
     const strictStack = strict.categories.bestEnterprise.recommendedStack;
 
     // Governance certainty must be reflected: with zero-retention demanded and the
-    // catalogue's governance data mostly unverified, confidence cannot be higher than
+    // catalogue's governance data mostly unverified, certainty multiplier cannot be higher than
     // the same request made without the governance demand.
     expect(strictStack.confidenceBreakdown.securityMatch).toBeGreaterThan(0);
-    expect(strictStack.confidenceScore).toBeLessThanOrEqual(laxStack.confidenceScore + 1);
+    expect(strictStack.confidenceBreakdown.certaintyMultiplier).toBeLessThanOrEqual(laxStack.confidenceBreakdown.certaintyMultiplier!);
   });
 
   it('REG 4: absent benchmark data creates no synthetic score', () => {

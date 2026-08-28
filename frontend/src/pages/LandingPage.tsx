@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { m, animate } from 'framer-motion';
+import { m, animate, useReducedMotion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import LogoLoop from '../components/LogoLoop';
 import Logo from '../components/Logo';
@@ -330,8 +330,8 @@ function AuditDemoCard() {
 }
 
 export default function LandingPage() {
-
   const navigate = useNavigate();
+  const shouldReduceMotion = useReducedMotion();
   const [activeSection, setActiveSection] = useState('features');
   const [hasScrolled, setHasScrolled] = useState(false);
 
@@ -407,13 +407,12 @@ export default function LandingPage() {
             <OfferNotificationBell />
 
             <button
-
               onClick={() => navigate('/audit')}
               className="h-[44px] px-5 flex items-center justify-center rounded-xl font-medium text-[14px] transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5"
               style={{ background: 'var(--color-primary)', color: '#ffffff' }}
-              aria-label="Start free audit"
+              aria-label="Audit my existing stack"
             >
-              Start Free Audit <span className="ml-2 font-normal opacity-70">→</span>
+              Audit My Existing Stack <span className="ml-2 font-normal opacity-70">→</span>
             </button>
           </div>
         </div>
@@ -461,10 +460,24 @@ export default function LandingPage() {
               {/* ── 3 Action Cards (Audit, Build, Offers) ────────────────── */}
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
 
-                {/* 1. Audit Existing Stack (Dark Luxury Card) */}
-                <div
+                {/* 1. Audit Existing Stack (Dark Luxury Card — Primary Action) */}
+                <m.div
+                  initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: shouldReduceMotion ? 0 : 0.05, ease: [0.16, 1, 0.3, 1] }}
+                  whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.008 }}
+                  whileTap={shouldReduceMotion ? {} : { scale: 0.985, y: 0 }}
                   onClick={() => navigate('/audit')}
-                  className="group relative cursor-pointer rounded-2xl bg-slate-950 p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-800 shadow-sm hover:border-slate-700 transition-colors duration-150"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      navigate('/audit');
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Audit My Existing Stack"
+                  className="group relative cursor-pointer rounded-2xl bg-slate-950 p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-800 shadow-sm hover:border-slate-700 hover:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 transition-colors transition-shadow duration-200"
                 >
                   {/* Subtle top-light gradient sheen */}
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-transparent pointer-events-none" />
@@ -510,18 +523,32 @@ export default function LandingPage() {
                   {/* Bottom Action Footer — Clean Matte Highlighted Button */}
                   <div className="mt-6 pt-3.5 border-t border-white/10">
                     <div className="w-full py-2.5 px-3.5 rounded-xl bg-white text-slate-950 text-xs font-bold flex items-center justify-between shadow-2xs group-hover:bg-slate-100 transition-colors duration-150">
-                      <span className="tracking-tight">Start Free Audit</span>
-                      <span className="w-6 h-6 rounded-full bg-slate-950 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-0.5 transition-transform duration-150">
+                      <span className="tracking-tight">Audit My Existing Stack</span>
+                      <span className="w-6 h-6 rounded-full bg-slate-950 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-1 transition-transform duration-200 ease-out">
                         →
                       </span>
                     </div>
                   </div>
-                </div>
+                </m.div>
 
                 {/* 2. Build AI Stack (Light Glass Card) */}
-                <div
+                <m.div
+                  initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: shouldReduceMotion ? 0 : 0.16, ease: [0.16, 1, 0.3, 1] }}
+                  whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.008 }}
+                  whileTap={shouldReduceMotion ? {} : { scale: 0.985, y: 0 }}
                   onClick={() => navigate('/build-stack')}
-                  className="group relative cursor-pointer rounded-2xl p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-200/90 bg-white/95 backdrop-blur-md shadow-2xs hover:border-slate-300 transition-colors duration-150"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      navigate('/build-stack');
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Build My AI Stack"
+                  className="group relative cursor-pointer rounded-2xl p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-200/90 bg-white/95 backdrop-blur-md shadow-2xs hover:border-slate-300 hover:shadow-[0_14px_28px_-8px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white transition-colors transition-shadow duration-200"
                 >
                   <div>
                     {/* Top Icon */}
@@ -563,17 +590,31 @@ export default function LandingPage() {
                   <div className="mt-6 pt-3.5 border-t border-slate-100">
                     <div className="w-full py-2.5 px-3.5 rounded-xl bg-slate-950 text-white text-xs font-bold flex items-center justify-between shadow-2xs group-hover:bg-slate-800 transition-colors duration-150">
                       <span className="tracking-tight">Build My AI Stack</span>
-                      <span className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-0.5 transition-transform duration-150">
+                      <span className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-1 transition-transform duration-200 ease-out">
                         →
                       </span>
                     </div>
                   </div>
-                </div>
+                </m.div>
 
                 {/* 3. AI Offers & Pricing (Emerald Accent Glass Card) */}
-                <div
+                <m.div
+                  initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: shouldReduceMotion ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.008 }}
+                  whileTap={shouldReduceMotion ? {} : { scale: 0.985, y: 0 }}
                   onClick={() => navigate('/offers')}
-                  className="group relative cursor-pointer rounded-2xl p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-200/90 bg-white/95 backdrop-blur-md shadow-2xs hover:border-emerald-300 transition-colors duration-150"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      navigate('/offers');
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="View AI Offers"
+                  className="group relative cursor-pointer rounded-2xl p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-200/90 bg-white/95 backdrop-blur-md shadow-2xs hover:border-emerald-300 hover:shadow-[0_14px_28px_-8px_rgba(5,150,105,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white transition-colors transition-shadow duration-200"
                 >
                   <div>
                     {/* Top Icon */}
@@ -615,14 +656,12 @@ export default function LandingPage() {
                   <div className="mt-6 pt-3.5 border-t border-slate-100">
                     <div className="w-full py-2.5 px-3.5 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center justify-between shadow-2xs group-hover:bg-emerald-700 transition-colors duration-150">
                       <span className="tracking-tight">View AI Offers</span>
-                      <span className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-0.5 transition-transform duration-150">
+                      <span className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-1 transition-transform duration-200 ease-out">
                         →
                       </span>
                     </div>
                   </div>
-                </div>
-
-
+                </m.div>
 
               </div>
             </div>
@@ -1169,17 +1208,7 @@ export default function LandingPage() {
             </span>
           </div>
           <div style={{ color: 'rgba(255,255,255,0.4)' }}>
-            Powered by{' '}
-            <a
-              href="https://credex.rocks"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:underline font-semibold"
-              style={{ color: 'rgba(255,255,255,0.7)' }}
-            >
-              Credex
-            </a>
-            {' '}· Discounted AI infrastructure credits
+            StackSave · AI Spend Intelligence Platform
           </div>
         </div>
       </footer>

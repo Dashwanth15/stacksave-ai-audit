@@ -18,7 +18,8 @@ export class ProposalEngine {
   public static evaluateStack(
     tools: ToolEntry[],
     useCase: UseCase,
-    strategy: 'performance' | 'savings'
+    strategy: 'performance' | 'savings',
+    optimizationGoal: 'savings' | 'balanced' | 'productivity' | 'governance' = 'balanced'
   ): { decommissionedTools: string[]; decisionLog: DecisionLog } {
     KnowledgeLoader.initialize();
 
@@ -54,7 +55,8 @@ export class ProposalEngine {
       useCase,
       strategy,
       'keep-current',
-      'Keep Current Stack'
+      'Keep Current Stack',
+      optimizationGoal
     );
     proposalsEvaluated.push(baselineEvaluation);
 
@@ -82,7 +84,8 @@ export class ProposalEngine {
           useCase,
           strategy,
           candidate.id,
-          candidate.name
+          candidate.name,
+          optimizationGoal
         );
         proposalsEvaluated.push(evaluation);
 
@@ -207,11 +210,27 @@ export class ProposalEngine {
     useCase: UseCase,
     strategy: 'performance' | 'savings',
     id: string,
-    name: string
+    name: string,
+    optimizationGoal: 'savings' | 'balanced' | 'productivity' | 'governance' = 'balanced'
   ): ProposalEvaluation {
     const config = KnowledgeLoader.getStrategyConfig();
     const settings = config[strategy] || config['performance'];
-    const w = settings.weights;
+    const baseW = settings.weights;
+    const w = { ...baseW };
+
+    if (optimizationGoal === 'savings') {
+      w.monthlyCost = Math.min(0.60, w.monthlyCost + 0.10);
+      w.workflowCapability = Math.max(0.15, w.workflowCapability - 0.05);
+      w.productivityImpact = Math.max(0.05, w.productivityImpact - 0.05);
+    } else if (optimizationGoal === 'productivity') {
+      w.workflowCapability += 0.08;
+      w.productivityImpact += 0.08;
+      w.monthlyCost = Math.max(0.02, w.monthlyCost - 0.16);
+    } else if (optimizationGoal === 'governance') {
+      w.capabilityRetention += 0.08;
+      w.migrationRisk += 0.08;
+      w.monthlyCost = Math.max(0.02, w.monthlyCost - 0.16);
+    }
 
     const useCaseWeights = KnowledgeLoader.getWorkflowWeights()[useCase] || KnowledgeLoader.getWorkflowWeights()['general'] || {};
 

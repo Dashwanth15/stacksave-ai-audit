@@ -32,19 +32,7 @@ export async function sendAuditConfirmation(params: SendAuditConfirmationParams)
 
   const resend = getResendClient();
 
-  const credexCTA = isHighSavings
-    ? `
-      <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; padding: 24px; margin: 24px 0;">
-        <h3 style="color: white; margin: 0 0 8px 0; font-size: 18px;">💡 Unlock Even More Savings with Credex</h3>
-        <p style="color: rgba(255,255,255,0.9); margin: 0 0 16px 0; font-size: 14px;">
-          Your audit shows $${monthlySavings.toLocaleString()}/month in savings opportunity. 
-          Credex sources discounted AI credits (Cursor, Claude, ChatGPT Enterprise) from companies 
-          that overforecast — the same infrastructure at 20–40% below retail.
-        </p>
-        <a href="https://credex.rocks" style="background: white; color: #6366f1; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">Book a Free Consultation →</a>
-      </div>
-    `
-    : '';
+
 
   const html = `
     <!DOCTYPE html>
@@ -74,7 +62,7 @@ export async function sendAuditConfirmation(params: SendAuditConfirmationParams)
             ${monthlySavings > 0 ? `<p style="color: #94a3b8; font-size: 14px; margin: 4px 0 0;">$${annualSavings.toLocaleString()}/year</p>` : ''}
           </div>
 
-          ${credexCTA}
+
 
           <!-- CTA -->
           <div style="text-align: center; margin-top: 24px;">
@@ -88,8 +76,7 @@ export async function sendAuditConfirmation(params: SendAuditConfirmationParams)
 
         <!-- Footer -->
         <p style="color: #475569; font-size: 12px; text-align: center; margin-top: 24px;">
-          StackSave · Free AI spend optimization for startups<br>
-          <a href="https://credex.rocks" style="color: #6366f1;">Powered by Credex</a>
+          StackSave · AI Spend Intelligence & Optimization Platform
         </p>
       </div>
     </body>
@@ -207,8 +194,7 @@ export async function sendReAuditNotification(params: SendReAuditNotificationPar
 
         <!-- Footer -->
         <p style="color: #475569; font-size: 12px; text-align: center; margin-top: 24px;">
-          StackSave · Free AI spend optimization for startups<br>
-          <a href="https://credex.rocks" style="color: #6366f1;">Powered by Credex</a>
+          StackSave · AI Spend Intelligence & Optimization Platform
         </p>
       </div>
     </body>

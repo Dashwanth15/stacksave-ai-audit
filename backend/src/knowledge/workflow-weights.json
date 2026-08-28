@@ -133,6 +133,14 @@
     "coding": 8,
     "longContext": 8
   },
+  "data": {
+    "reasoning": 10,
+    "research": 9,
+    "functionCalling": 9,
+    "embeddings": 8,
+    "coding": 8,
+    "longContext": 8
+  },
   "research": {
     "research": 10,
     "longContext": 9,

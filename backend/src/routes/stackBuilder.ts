@@ -45,21 +45,33 @@ router.post('/', auditLimiter, (req: Request, res: Response) => {
       requireZeroRetention: strategy === 'enterprise-security'
     };
 
+    const optimizationGoal = body.optimizationGoal || (
+      strategy === 'best-value' ? 'savings' :
+      strategy === 'max-performance' ? 'productivity' :
+      strategy === 'enterprise-security' ? 'governance' :
+      'balanced'
+    );
+
+    const engineeringFocus = Array.isArray(body.engineeringFocus) && body.engineeringFocus.length > 0
+      ? body.engineeringFocus
+      : [domain];
+
     const normalizedReq: StackBuilderRequest = {
       domain,
       requirements,
       strategy,
+      optimizationGoal,
       teamSize,
       monthlyBudget,
-      engineeringFocus: [domain],
+      engineeringFocus,
       primaryWorkflow: domain,
       mustHaveFeatures: requirements,
       preferences: {
         preferOpenSource: Boolean(prefs.preferOpenSource),
         avoidLockIn: Boolean(prefs.avoidLockIn),
-        maximizeSavings: Boolean(prefs.maximizeSavings || strategy === 'best-value'),
+        maximizeSavings: Boolean(prefs.maximizeSavings || strategy === 'best-value' || optimizationGoal === 'savings'),
         preferEstablishedVendors: Boolean(prefs.preferEstablishedVendors),
-        requireZeroRetention: Boolean(prefs.requireZeroRetention || strategy === 'enterprise-security')
+        requireZeroRetention: Boolean(prefs.requireZeroRetention || strategy === 'enterprise-security' || optimizationGoal === 'governance')
       },
       constraints: body.constraints || {},
       debug: body.debug === true

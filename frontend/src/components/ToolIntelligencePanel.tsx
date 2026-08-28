@@ -28,6 +28,105 @@ interface PanelProps {
 }
 
 
+// ─── Professional Section Icons (Consistent 15x15 SaaS icon family) ───────────
+
+const SectionIcons = {
+  verdict: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  ),
+  features: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  ),
+  usage: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    </svg>
+  ),
+  specs: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" x2="12" y1="16" y2="12" />
+      <line x1="12" x2="12.01" y1="8" y2="8" />
+    </svg>
+  ),
+  usecases: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+    </svg>
+  ),
+  alternatives: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 3 21 3 21 8" />
+      <line x1="4" x2="21" y1="20" y2="3" />
+      <polyline points="21 16 21 21 16 21" />
+      <line x1="15" x2="21" y1="15" y2="21" />
+      <line x1="4" x2="9" y1="4" y2="9" />
+    </svg>
+  ),
+  models: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="16" height="16" x="4" y="4" rx="2" />
+      <rect width="6" height="6" x="9" y="9" rx="1" />
+      <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3" />
+    </svg>
+  ),
+  overview: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" x2="8" y1="13" y2="13" />
+      <line x1="16" x2="8" y1="17" y2="17" />
+    </svg>
+  ),
+  billing: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="20" height="14" x="2" y="5" rx="2" />
+      <line x1="2" x2="22" y1="10" y2="10" />
+    </svg>
+  ),
+  ecosystemSummary: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="7" />
+      <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+    </svg>
+  ),
+  ecosystemCaps: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  ),
+  ecosystemInventory: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m7.5 4.27 9 5.15" />
+      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+      <path d="m3.3 7 8.7 5 8.7-5" />
+      <path d="M12 22V12" />
+    </svg>
+  ),
+  ecosystemAnalytics: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" x2="12" y1="20" y2="10" />
+      <line x1="18" x2="18" y1="20" y2="4" />
+      <line x1="6" x2="6" y1="20" y2="16" />
+    </svg>
+  ),
+  ecosystemWorkload: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+      <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+      <path d="M7 21h10" />
+      <path d="M12 3v18" />
+      <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
+    </svg>
+  ),
+};
+
 // ─── Premium Active Accordion Section ─────────────────────────────────────────
 
 function AccordionSection({
@@ -147,7 +246,7 @@ function formatHighlightedExecutiveText(text: string) {
           return (
             <strong
               key={i}
-              className="font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200/60 px-1 py-0.5 rounded font-mono text-[11.5px]"
+              className="font-extrabold text-emerald-700"
             >
               {part}
             </strong>
@@ -157,7 +256,7 @@ function formatHighlightedExecutiveText(text: string) {
           return (
             <strong
               key={i}
-              className="font-bold text-amber-900 bg-amber-50 border border-amber-200/50 px-1 py-0.5 rounded"
+              className="font-bold text-amber-800"
             >
               {part}
             </strong>
@@ -489,7 +588,6 @@ function ModelComparisonSection({
   const primVisionScore = primCaps.vision?.score ?? primCaps.imageUnderstanding?.score ?? 0;
   const compVisionScore = compCaps.vision?.score ?? compCaps.imageUnderstanding?.score ?? 0;
 
-  const primVision = formatVisionCapability(primVisionScore);
   const compVision = formatVisionCapability(compVisionScore);
 
   const primLatencyScore = primCaps.latency?.score ?? 8;
@@ -588,151 +686,217 @@ function ModelComparisonSection({
     }
   }
 
-  const costNote = comparedModel.isCurrentProvider
-    ? 'Included in plan — no extra subscription cost'
-    : `Cross-provider model — accessible via ${comparedModel.providerName}`;
-
   return (
-    <div className="space-y-3">
-      {/* Model Selection Header */}
-      <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-semibold text-slate-500">Current Default Model:</span>
-          <span className="font-extrabold text-slate-900">{primaryModel.name}</span>
-        </div>
-        <div className="flex items-center justify-between gap-3 text-xs pt-2 border-t border-slate-100">
-          <label htmlFor={`compare-model-${toolId}`} className="font-semibold text-slate-700 shrink-0">
-            Compare With Model:
-          </label>
-          <CleanModelDropdown
-            value={selectedComparedId}
-            onChange={(val) => setSelectedComparedId(val)}
-            sameProviderModels={sameProviderModels}
-            stackModels={stackModels}
-            otherModels={otherModels}
-            primaryModelId={primaryModel.modelId}
-          />
+    <div className="space-y-4">
+      {/* MODEL COMPARISON HEADER - STRONG HIERARCHY */}
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-6">
+          {/* CURRENT MODEL */}
+          <div className="space-y-2">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-600 block">
+              Current
+            </span>
+            <span className="text-[18px] font-black text-slate-900 block leading-tight">
+              {primaryModel.name}
+            </span>
+          </div>
+
+          {/* COMPARE SELECTOR - PREMIUM INTERACTIVE */}
+          <div className="space-y-2">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-600 block">
+              Compare With
+            </span>
+            <div className="relative">
+              <CleanModelDropdown
+                value={selectedComparedId}
+                onChange={(val) => setSelectedComparedId(val)}
+                sameProviderModels={sameProviderModels}
+                stackModels={stackModels}
+                otherModels={otherModels}
+                primaryModelId={primaryModel.modelId}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Categorized Capability Badges */}
+      {/* VERDICT - STRONG EMPHASIS */}
       {(betterCurrent.length > 0 || betterCompared.length > 0) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-          {betterCurrent.length > 0 && (
-            <div className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-200 shadow-2xs space-y-1">
-              <span className="font-extrabold text-emerald-800 uppercase tracking-wider text-[9px] block">
-                Better with {primaryModel.shortName} (Current)
-              </span>
-              <ul className="space-y-0.5 text-emerald-950 font-medium">
-                {betterCurrent.map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-1.5">
-                    <span className="text-emerald-600 font-bold">✓</span> {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {betterCompared.length > 0 && (
-            <div className="p-2.5 rounded-xl bg-indigo-50/60 border border-indigo-200 shadow-2xs space-y-1">
-              <span className="font-extrabold text-indigo-800 uppercase tracking-wider text-[9px] block">
-                Better with {comparedModel.shortName}
-              </span>
-              <ul className="space-y-0.5 text-indigo-950 font-medium">
-                {betterCompared.map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-1.5">
-                    <span className="text-indigo-600 font-bold">⚡</span> {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        <div className="space-y-2.5 pt-1">
+          <span className="text-[14px] font-bold text-slate-900 block">
+            <span className="text-emerald-600 mr-1.5">✓</span>Better fit: <span className="font-black">{primaryModel.shortName}</span>
+          </span>
+          <ul className="space-y-1.5 pl-4">
+            {betterCurrent.map((item, idx) => (
+              <li key={idx} className="text-[12px] text-slate-800 leading-relaxed font-medium">
+                <span className="text-slate-400 mr-1.5">•</span> {item}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
-      {/* Comparison Grid */}
-      <div className="rounded-xl border border-slate-200 overflow-hidden text-xs bg-white shadow-sm">
-        <div className="grid grid-cols-3 bg-slate-50 p-2.5 font-extrabold text-slate-700 border-b border-slate-200 text-[10.5px]">
-          <div>Capability</div>
-          <div className="text-center">{primaryModel.shortName} (Current)</div>
-          <div className="text-center">{comparedModel.shortName}</div>
+      {/* COMPARISON TABLE - PREMIUM DESIGN */}
+      <div className="space-y-0 rounded-lg border border-slate-200 overflow-hidden bg-white">
+        {/* Header Row */}
+        <div className="grid grid-cols-3 bg-slate-100 px-4 py-3.5 border-b border-slate-300">
+          <div className="text-[12px] font-bold uppercase tracking-wide text-slate-900">
+            Capability
+          </div>
+          <div className="text-center text-[12px] font-bold uppercase tracking-wide text-slate-900">
+            {primaryModel.shortName}
+          </div>
+          <div className="text-center text-[12px] font-bold uppercase tracking-wide text-slate-700">
+            {comparedModel.shortName}
+          </div>
         </div>
-        <div className="divide-y divide-slate-100">
-          <div className="grid grid-cols-3 p-2.5 items-center hover:bg-slate-50/50 transition-colors">
-            <span className="font-semibold text-slate-600">Reasoning</span>
-            <span className="text-center font-bold text-slate-900">{primReasoning}/10</span>
-            <span
-              className={`text-center font-bold ${compReasoning > primReasoning ? 'text-emerald-600' : compReasoning < primReasoning ? 'text-rose-600' : 'text-slate-900'
-                }`}
-            >
-              {compReasoning}/10 {compReasoning > primReasoning ? '↑' : compReasoning < primReasoning ? '↓' : ''}
+
+        {/* Table Rows */}
+        <div className="divide-y divide-slate-200">
+          {/* Reasoning */}
+          <div className="grid grid-cols-3 px-4 py-3.5 hover:bg-slate-50 transition-colors">
+            <span className="text-[12px] font-semibold text-slate-800">Reasoning</span>
+            <span className="text-center text-[13px] font-black text-slate-900">{primReasoning}/10</span>
+            <span className={`text-center text-[13px] font-bold ${primReasoning > compReasoning ? 'text-slate-400' : primReasoning < compReasoning ? 'text-emerald-600 font-black' : 'text-slate-900'}`}>
+              {compReasoning}/10
             </span>
           </div>
-          <div className="grid grid-cols-3 p-2.5 items-center hover:bg-slate-50/50 transition-colors">
-            <span className="font-semibold text-slate-600">Coding</span>
-            <span className="text-center font-bold text-slate-900">{primCoding}/10</span>
-            <span
-              className={`text-center font-bold ${compCoding > primCoding ? 'text-emerald-600' : compCoding < primCoding ? 'text-rose-600' : 'text-slate-900'
-                }`}
-            >
-              {compCoding}/10 {compCoding > primCoding ? '↑' : compCoding < primCoding ? '↓' : ''}
+
+          {/* Coding */}
+          <div className="grid grid-cols-3 px-4 py-3.5 hover:bg-slate-50 transition-colors">
+            <span className="text-[12px] font-semibold text-slate-800">Coding</span>
+            <span className="text-center text-[13px] font-black text-slate-900">{primCoding}/10</span>
+            <span className={`text-center text-[13px] font-bold ${primCoding > compCoding ? 'text-slate-400' : primCoding < compCoding ? 'text-emerald-600 font-black' : 'text-slate-900'}`}>
+              {compCoding}/10
             </span>
           </div>
-          <div className="grid grid-cols-3 p-2.5 items-center hover:bg-slate-50/50 transition-colors">
-            <span className="font-semibold text-slate-600">Research & Synthesis</span>
-            <span className="text-center font-bold text-slate-900">{primResearch}/10</span>
-            <span
-              className={`text-center font-bold ${compResearch > primResearch ? 'text-emerald-600' : compResearch < primResearch ? 'text-rose-600' : 'text-slate-900'
-                }`}
-            >
-              {compResearch}/10 {compResearch > primResearch ? '↑' : compResearch < primResearch ? '↓' : ''}
+
+          {/* Research & Synthesis */}
+          <div className="grid grid-cols-3 px-4 py-3.5 hover:bg-slate-50 transition-colors">
+            <span className="text-[12px] font-semibold text-slate-800">Research & Synthesis</span>
+            <span className="text-center text-[13px] font-black text-slate-900">{primResearch}/10</span>
+            <span className={`text-center text-[13px] font-bold ${primResearch > compResearch ? 'text-slate-400' : primResearch < compResearch ? 'text-emerald-600 font-black' : 'text-slate-900'}`}>
+              {compResearch}/10
             </span>
           </div>
-          <div className="grid grid-cols-3 p-2.5 items-center hover:bg-slate-50/50 transition-colors">
-            <span className="font-semibold text-slate-600">Context Window</span>
-            <span className="text-center font-mono font-semibold text-slate-800">{primContext}</span>
-            <span className={`text-center font-mono font-semibold ${compContext !== primContext ? 'text-indigo-600 font-bold' : 'text-slate-800'}`}>
+
+          {/* Context Window */}
+          <div className="grid grid-cols-3 px-4 py-3.5 hover:bg-slate-50 transition-colors">
+            <span className="text-[12px] font-semibold text-slate-800">Context Window</span>
+            <span className="text-center text-[13px] font-bold text-slate-900">{primContext}</span>
+            <span className={`text-center text-[13px] font-bold ${compContext !== primContext ? 'text-indigo-600 font-black' : 'text-slate-900'}`}>
               {compContext}
             </span>
           </div>
-          <div className="grid grid-cols-3 p-2.5 items-center hover:bg-slate-50/50 transition-colors">
-            <span className="font-semibold text-slate-600">Vision Support</span>
-            <span className="text-center text-slate-800 font-medium">{primVision}</span>
-            <span
-              className={`text-center font-medium ${compVisionScore > primVisionScore ? 'text-emerald-600' : compVisionScore < primVisionScore ? 'text-slate-400' : 'text-slate-800'
-                }`}
-            >
-              {compVision}
+
+          {/* Vision Support - Emphasized */}
+          <div className="grid grid-cols-3 px-4 py-3.5 hover:bg-blue-50/40 transition-colors bg-blue-50/30">
+            <span className="text-[12px] font-semibold text-slate-800">Vision Support</span>
+            <span className="text-center text-[13px] font-bold text-slate-900">
+              {primVisionScore > 0 ? '✓ Supported' : '✗ No Vision'}
+            </span>
+            <span className={`text-center text-[13px] font-bold ${compVisionScore > primVisionScore ? 'text-emerald-600 font-black' : compVisionScore < primVisionScore ? 'text-slate-500' : 'text-slate-900'}`}>
+              {compVisionScore > 0 ? '✓ Supported' : '✗ No Vision'}
             </span>
           </div>
-          <div className="grid grid-cols-3 p-2.5 items-center hover:bg-slate-50/50 transition-colors">
-            <span className="font-semibold text-slate-600">Output Speed</span>
-            <span className="text-center text-slate-800 font-medium">{primLatency}</span>
-            <span
-              className={`text-center font-medium ${compLatencyScore > primLatencyScore ? 'text-emerald-600 font-bold' : compLatencyScore < primLatencyScore ? 'text-amber-700 font-medium' : 'text-slate-800'
-                }`}
-            >
+
+          {/* Output Speed */}
+          <div className="grid grid-cols-3 px-4 py-3.5 hover:bg-slate-50 transition-colors">
+            <span className="text-[12px] font-semibold text-slate-800">Output Speed</span>
+            <span className="text-center text-[13px] font-bold text-slate-900">{primLatency}</span>
+            <span className={`text-center text-[13px] font-bold ${compLatencyScore > primLatencyScore ? 'text-emerald-600 font-black' : compLatencyScore < primLatencyScore ? 'text-slate-500' : 'text-slate-900'}`}>
               {compLatency}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Human Insights & Commercial Clarification */}
-      <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 shadow-2xs space-y-2 text-xs">
-        <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-slate-500 block">
-          Workflow Evaluation ({formattedUseCase.toUpperCase()})
-        </span>
-        <p className="text-[11.5px] text-slate-700 leading-relaxed font-medium">{diffAnalysis}</p>
-
-        <div className="pt-2 border-t border-slate-200/80 flex flex-col gap-1.5 text-[11px]">
+      {/* WORKFLOW FIT - PREMIUM DECISION PRESENTATION */}
+      <div className="space-y-4 pt-4">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="font-medium text-slate-500">Subscription Cost Impact:</span>
-            <span className="font-bold text-emerald-700">{costNote}</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-600">
+              Workflow Fit
+            </span>
+            <span className="text-[11px] font-semibold text-slate-700 capitalize">
+              {formattedUseCase}
+            </span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="font-medium text-slate-500">Model Recommendation:</span>
-            <span className="font-bold text-indigo-900">{recommendationVerdict}</span>
+          
+          {/* Main Verdict - VERY PROMINENT */}
+          <span className="text-[16px] font-black text-slate-900 block leading-tight">
+            {primaryModel.shortName} is the stronger fit.
+          </span>
+        </div>
+
+        {/* Capability Strengths - CHECKMARK ROWS */}
+        {betterCurrent.length > 0 && (
+          <div className="space-y-2">
+            {betterCurrent.map((item, idx) => (
+              <div key={idx} className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 text-[11px] font-black mt-0.5">
+                  ✓
+                </span>
+                <span className="text-[13px] font-semibold text-slate-800 leading-tight pt-0.5">
+                  {item}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Supporting Explanation - SECONDARY TEXT */}
+        <p className="text-[12px] text-slate-600 leading-relaxed font-medium border-t border-slate-200 pt-3">
+          {diffAnalysis}
+        </p>
+      </div>
+
+      {/* SUBSCRIPTION IMPACT + RECOMMENDATION - PREMIUM DECISION BLOCK */}
+      <div className="space-y-4 pt-4 border-t border-slate-200">
+        {/* SUBSCRIPTION IMPACT */}
+        <div className="space-y-2.5">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-600 block">
+            Subscription Impact
+          </span>
+          
+          <div className="space-y-2">
+            {/* Primary answer - BOLD, LARGE */}
+            <span className="text-[15px] font-black text-slate-900 block">
+              {comparedModel.isCurrentProvider 
+                ? 'No additional cost' 
+                : `Access via ${comparedModel.providerName}`}
+            </span>
+            
+            {/* Supporting detail */}
+            <span className="text-[12px] text-slate-700 font-medium">
+              {comparedModel.isCurrentProvider
+                ? 'The recommended model is already included in your current subscription.'
+                : `This model requires access to ${comparedModel.providerName}'s platform.`}
+            </span>
+          </div>
+        </div>
+
+        {/* RECOMMENDATION - FINAL DECISION */}
+        <div className="space-y-2.5 pt-2 border-t border-slate-100">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-600 block">
+            Recommendation
+          </span>
+          
+          <div className="space-y-2">
+            {/* Main recommendation - MOST PROMINENT */}
+            <div className="flex items-start gap-2.5">
+              <span className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 text-[13px] font-black mt-0.5">
+                ✓
+              </span>
+              <span className="text-[15px] font-black text-slate-900 block leading-tight pt-0.5">
+                {recommendationVerdict.replace(/^[✓•]\s*/, '').split('\n')[0]}
+              </span>
+            </div>
+            
+            {/* Supporting reason */}
+            <span className="text-[12px] text-slate-700 font-medium">
+              Best fit for this workflow{comparedModel.isCurrentProvider ? ' with no additional cost' : ''}.
+            </span>
           </div>
         </div>
       </div>
@@ -752,7 +916,6 @@ function SingleToolPanelContent({
   useCase?: UseCase;
 }) {
   const report = buildAuditAwareReport(insight, auditTools, useCase);
-  const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
 
 
   if (!report) {
@@ -789,121 +952,76 @@ function SingleToolPanelContent({
       <AccordionSection
         id="section-verdict"
         title="Consultant Verdict"
-        icon="📋"
+        icon={SectionIcons.verdict}
         subtitle="Executive decision & financial impact"
         defaultOpen={true}
-        badge={
-          savingMo > 0 ? (
-            <span className="text-[9.5px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100/80 text-emerald-800">
-              Save ${savingMo}/mo
-            </span>
-          ) : (
-            <span className="text-[9.5px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-200/70 text-slate-700">
-              Validated
-            </span>
-          )
-        }
+        badge={null}
       >
-        <div className="space-y-2.5">
-          {/* Executive Decision Card — interactive, hover-responsive */}
-          <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-3 transition-all duration-150 hover:border-slate-300 hover:shadow-md group/verdict">
-
-            {/* Header: label + confidence */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                </span>
-                <span className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-slate-400">
-                  Consultant Verdict
-                </span>
-              </div>
-              {insight.confidenceScore !== undefined && (() => {
-                const conf = insight.confidence || 'High';
-                const score = insight.confidenceScore;
-                const color = conf === 'High'
-                  ? { bar: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' }
-                  : conf === 'Low'
-                  ? { bar: 'bg-rose-500', text: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200' }
-                  : { bar: 'bg-amber-500', text: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' };
-                return (
-                  <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border ${color.bg} ${color.border}`}>
-                    <div className="flex flex-col gap-0.5">
-                      <span className={`text-[9px] font-extrabold uppercase tracking-widest leading-none ${color.text}`}>
-                        {conf} Confidence
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-16 h-1 bg-slate-200 rounded-full overflow-hidden">
-                          <div className={`h-full ${color.bar} rounded-full`} style={{ width: `${score}%` }} />
-                        </div>
-                        <span className={`text-[9px] font-bold font-mono leading-none ${color.text}`}>{score}%</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* Recommendation Title + Body */}
-            <div>
-              <span className="text-[15px] font-black text-slate-900 block leading-snug tracking-tight">
-                {insight.suggestion}
-              </span>
-              <p className="text-[12px] text-slate-600 leading-relaxed mt-1.5">
-                {formatHighlightedExecutiveText(consultantVerdict)}
-              </p>
-            </div>
-
-            {/* Financial Impact Row — 3 cells */}
-            <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
-              <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                <span className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
-                  Monthly Impact
-                </span>
-                <span className={`text-[15px] font-black font-mono leading-none block ${savingMo > 0 ? 'text-emerald-600' : 'text-slate-600'}`}>
-                  {savingMo > 0 ? `+$${savingMo}` : '$0'}
-                </span>
-                <span className="text-[9px] font-medium text-slate-400">/mo</span>
-              </div>
-
-              <div className={`p-2.5 rounded-lg border ${savingYr > 0 ? 'bg-emerald-50/40 border-emerald-200/60' : 'bg-slate-50 border-slate-100'}`}>
-                <span className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
-                  Annualized
-                </span>
-                <span className={`text-[15px] font-black font-mono leading-none block ${savingYr > 0 ? 'text-emerald-600' : 'text-slate-600'}`}>
-                  {savingYr > 0 ? `+$${savingYr}` : '$0'}
-                </span>
-                <span className="text-[9px] font-medium text-slate-400">/yr</span>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                <span className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
-                  Value Rating
-                </span>
-                <span className="text-[12px] font-black text-slate-800 block leading-tight mt-0.5">
-                  {subscriptionValue}
+        <div className="space-y-5 py-3">
+          {/* Confidence — LARGER, BOLD, HIGH CONTRAST */}
+          {insight.confidenceScore !== undefined && (() => {
+            const conf = insight.confidence || 'High';
+            const score = insight.confidenceScore;
+            const colorText = conf === 'High'
+              ? 'text-emerald-700'
+              : conf === 'Low'
+              ? 'text-rose-700'
+              : 'text-amber-700';
+            return (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[16px] font-black block">
+                  <span className={colorText}>{score}% confidence</span>
                 </span>
               </div>
-            </div>
+            );
+          })()}
 
-            {/* Rationale — why this action */}
-            {insight.confidenceExplanation && insight.confidenceExplanation.length > 0 && (
-              <div className="pt-2.5 border-t border-slate-100 space-y-1.5">
-                <span className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-slate-400 block">
-                  Why This Action Was Selected
-                </span>
-                <ul className="space-y-1">
-                  {insight.confidenceExplanation.map((e, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-[11.5px] text-slate-600 leading-relaxed">
-                      <span className="text-emerald-500 font-extrabold shrink-0 mt-0.5 text-[10px]">✓</span>
-                      <span>{e.replace(/^✓\s*/, '')}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          {/* Main Decision — VERY LARGE, BOLD, DARK */}
+          <div className="space-y-3">
+            <span className="text-[22px] font-black text-slate-900 block leading-tight">
+              {insight.suggestion}
+            </span>
+            <p className="text-[14px] text-slate-800 leading-relaxed font-medium">
+              {formatHighlightedExecutiveText(consultantVerdict)}
+            </p>
           </div>
+
+          {/* Subtle divider */}
+          <div className="border-t border-slate-200" />
+
+          {/* Financial Impact — LARGE, BOLD VALUES */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-baseline gap-2">
+              <span className="text-[18px] font-black text-emerald-700">${savingMo > 0 ? savingMo : '0'}</span>
+              <span className="text-[13px] font-semibold text-slate-700">/month saved</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-[18px] font-black text-emerald-700">${savingYr > 0 ? savingYr : '0'}</span>
+              <span className="text-[13px] font-semibold text-slate-700">/year saved</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-[16px] font-black text-slate-900">{subscriptionValue}</span>
+              <span className="text-[12px] font-semibold text-slate-600">value</span>
+            </div>
+          </div>
+
+          {/* Rationale — why this action */}
+          {insight.confidenceExplanation && insight.confidenceExplanation.length > 0 && (
+            <div className="space-y-3">
+              <div className="border-t border-slate-200" />
+              <span className="text-[13px] font-bold uppercase tracking-wider text-slate-900 block">
+                Why This Action Was Selected
+              </span>
+              <ul className="space-y-2">
+                {insight.confidenceExplanation.map((e, idx) => (
+                  <li key={idx} className="flex items-start gap-2.5 text-[13px] text-slate-800 leading-relaxed font-medium">
+                    <span className="text-slate-500 shrink-0 mt-0.5 font-black">•</span>
+                    <span>{e.replace(/^[✓•]\s*/, '')}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </AccordionSection>
 
@@ -911,7 +1029,7 @@ function SingleToolPanelContent({
       <AccordionSection
         id="section-features"
         title="Premium Features"
-        icon="✦"
+        icon={SectionIcons.features}
         subtitle="What am I paying for in this tier?"
         defaultOpen={false}
         badge={
@@ -920,168 +1038,102 @@ function SingleToolPanelContent({
           </span>
         }
       >
-        <div className="rounded-xl border border-slate-200 overflow-hidden bg-white divide-y divide-slate-100 shadow-sm">
-          {premiumFeatures.map((f) => {
-            const isHovered = hoveredFeature === f.name;
-            return (
-              <div
-                key={f.name}
-                onMouseEnter={() => setHoveredFeature(f.name)}
-                onMouseLeave={() => setHoveredFeature(null)}
-                className={`flex items-center justify-between gap-3 px-3.5 py-2.5 transition-all duration-150 ${isHovered
-                  ? 'bg-slate-50 translate-x-[1px]'
-                  : ''
-                  }`}
-              >
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <span
-                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5 ${f.available
-                      ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                      : 'bg-slate-100 text-slate-400'
-                      }`}
-                  >
-                    {f.available ? '✓' : '—'}
-                  </span>
-                  <div className="min-w-0">
-                    <span
-                      className={`text-[12px] font-semibold block leading-tight ${f.available ? 'text-slate-900' : 'text-slate-400 line-through'
-                        }`}
-                    >
-                      {f.name}
-                    </span>
-                    <span className="text-[11px] text-slate-500 block leading-tight mt-0.5">
-                      {f.auditContext}
-                    </span>
-                  </div>
-                </div>
-
+        <div className="space-y-0 py-2">
+          {premiumFeatures.map((f, idx) => (
+            <div
+              key={f.name}
+              className={`flex items-start justify-between gap-4 px-0 py-2.5 ${idx < premiumFeatures.length - 1 ? 'border-b border-slate-100' : ''}`}
+            >
+              <div className="flex items-start gap-2.5 min-w-0 flex-1">
                 <span
-                  className={`shrink-0 text-[9px] font-extrabold uppercase tracking-wider ${f.available
-                    ? 'text-emerald-600'
-                    : 'text-slate-400'
+                  className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5 ${f.available
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-slate-100 text-slate-400'
                     }`}
                 >
-                  {f.available ? 'Included' : 'N/A'}
+                  {f.available ? '✓' : '—'}
                 </span>
+                <div className="min-w-0">
+                  <span
+                    className={`text-[14px] font-bold block leading-tight ${f.available ? 'text-slate-900' : 'text-slate-400 line-through'
+                      }`}
+                  >
+                    {f.name}
+                  </span>
+                  <span className="text-[12px] text-slate-600 block leading-tight mt-1">
+                    {f.auditContext}
+                  </span>
+                </div>
               </div>
-            );
-          })}
+
+              <span
+                className={`shrink-0 text-[12px] font-bold uppercase tracking-wider whitespace-nowrap mt-0.5 ${f.available
+                  ? 'text-emerald-700'
+                  : 'text-slate-400'
+                  }`}
+              >
+                {f.available ? 'Included' : 'N/A'}
+              </span>
+            </div>
+          ))}
         </div>
       </AccordionSection>
 
-      {/* ── 3. Usage & Utilization (Refined Minimalist Telemetry) ─ */}
+      {/* ── 3. Usage & Utilization (Simple Divider Rows) ─ */}
       <AccordionSection
         id="section-usage"
         title="Usage & Utilization"
-        icon="📊"
+        icon={SectionIcons.usage}
         subtitle="Team capability adoption vs. subscription tier fit"
         defaultOpen={false}
       >
-        <div className="space-y-3.5">
+        <div className="space-y-4 py-3">
           {/* Actively Contributing Workflows */}
-          <div className="space-y-1.5">
-            <div className="flex items-baseline justify-between px-0.5">
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span className="text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
+          {activelyUsedFeatures.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-baseline gap-2 px-0">
+                <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
+                <span className="text-[13px] font-bold uppercase tracking-wider text-slate-900">
                   Actively Used Capabilities
                 </span>
-              </div>
-              <span className="text-[10px] font-semibold text-emerald-700">
-                ✓ Retained in target tier
-              </span>
-            </div>
-
-            <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-              {activelyUsedFeatures.map((item, idx) => {
-                const usagePcts = [94, 86, 72, 65, 58];
-                const pct = usagePcts[idx % usagePcts.length];
-
-                return (
-                  <div
-                    key={item.name}
-                    className="p-3 hover:bg-slate-50/80 transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="min-w-0">
-                        <span className="text-[12.5px] font-bold text-slate-900 block leading-tight">
-                          {item.name}
-                        </span>
-                        <span className="text-[11px] text-slate-500 font-medium block leading-tight mt-0.5">
-                          {item.context}
-                        </span>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <span className="text-[11.5px] font-mono font-black text-slate-900">
-                          {pct}%
-                        </span>
-                        <span className="text-[9px] text-slate-400 font-semibold block uppercase tracking-wider">
-                          adoption
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Sleek Slim Telemetry Bar */}
-                    <div className="mt-2 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-emerald-500 rounded-full"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Underutilized Premium Value */}
-          {underutilizedFeatures.length > 0 && (
-            <div className="space-y-1.5">
-              <div className="flex items-baseline justify-between px-0.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  <span className="text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
-                    Underutilized Tier Capabilities
-                  </span>
-                </div>
-                <span className="text-[10px] font-semibold text-amber-700">
-                  Optimization target
+                <span className="text-[10px] font-semibold text-emerald-700 ml-auto">
+                  Retained in target tier
                 </span>
               </div>
 
-              <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                {underutilizedFeatures.map((item, idx) => {
-                  const underPcts = [12, 8, 15, 6];
-                  const pct = underPcts[idx % underPcts.length];
+              <div className="space-y-0">
+                {activelyUsedFeatures.map((item, idx) => {
+                  const usagePcts = [94, 86, 72, 65, 58];
+                  const pct = usagePcts[idx % usagePcts.length];
 
                   return (
                     <div
                       key={item.name}
-                      className="p-3 hover:bg-slate-50/80 transition-colors"
+                      className={`py-3 ${idx < activelyUsedFeatures.length - 1 ? 'border-b border-slate-100' : ''}`}
                     >
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="min-w-0">
-                          <span className="text-[12.5px] font-bold text-slate-900 block leading-tight">
+                      <div className="flex items-center justify-between gap-4 mb-2">
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[13px] font-bold text-slate-900 block leading-tight">
                             {item.name}
                           </span>
-                          <span className="text-[11px] text-slate-500 font-medium block leading-tight mt-0.5">
+                          <span className="text-[12px] text-slate-600 block leading-tight mt-1">
                             {item.context}
                           </span>
                         </div>
                         <div className="shrink-0 text-right">
-                          <span className="text-[11.5px] font-mono font-black text-amber-600">
+                          <span className="text-[13px] font-black text-slate-900">
                             {pct}%
                           </span>
-                          <span className="text-[9px] text-slate-400 font-semibold block uppercase tracking-wider">
+                          <span className="text-[10px] text-slate-500 font-semibold block uppercase tracking-wider">
                             adoption
                           </span>
                         </div>
                       </div>
 
-                      {/* Sleek Slim Telemetry Bar */}
-                      <div className="mt-2 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+                      {/* Slim Telemetry Bar */}
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-amber-400 rounded-full"
+                          className="h-full bg-emerald-600 rounded-full"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -1091,29 +1143,87 @@ function SingleToolPanelContent({
               </div>
             </div>
           )}
+
+          {/* Underutilized Premium Value */}
+          {underutilizedFeatures.length > 0 && (
+            <>
+              <div className="border-t border-slate-200" />
+              <div className="space-y-3">
+                <div className="flex items-baseline gap-2 px-0">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                  <span className="text-[13px] font-bold uppercase tracking-wider text-slate-900">
+                    Underutilized Tier Capabilities
+                  </span>
+                  <span className="text-[10px] font-semibold text-amber-700 ml-auto">
+                    Optimization target
+                  </span>
+                </div>
+
+                <div className="space-y-0">
+                  {underutilizedFeatures.map((item, idx) => {
+                    const underPcts = [12, 8, 15, 6];
+                    const pct = underPcts[idx % underPcts.length];
+
+                    return (
+                      <div
+                        key={item.name}
+                        className={`py-3 ${idx < underutilizedFeatures.length - 1 ? 'border-b border-slate-100' : ''}`}
+                      >
+                        <div className="flex items-center justify-between gap-4 mb-2">
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[13px] font-bold text-slate-900 block leading-tight">
+                              {item.name}
+                            </span>
+                            <span className="text-[12px] text-slate-600 block leading-tight mt-1">
+                              {item.context}
+                            </span>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <span className="text-[13px] font-black text-amber-700">
+                              {pct}%
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-semibold block uppercase tracking-wider">
+                              adoption
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Slim Telemetry Bar */}
+                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-amber-500 rounded-full"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </AccordionSection>
 
-      {/* ── 4. Quick Facts (Specification Grid) ─────────────── */}
+      {/* ── 4. Quick Facts (Simple Key/Value Rows) ─────────────── */}
       <AccordionSection
         id="section-specs"
         title="Quick Facts"
-        icon="⚡"
+        icon={SectionIcons.specs}
         subtitle="Platform specs & capabilities at a glance"
         defaultOpen={false}
       >
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {quickFacts.map((f) => (
+        <div className="space-y-0 py-3">
+          {quickFacts.map((f, idx) => (
             <div
               key={f.label}
-              className="p-3 rounded-xl bg-white border border-slate-200 hover:border-slate-300 shadow-sm text-center flex flex-col justify-between transition-colors"
+              className={`flex items-center justify-between gap-4 py-3 px-0 ${idx < quickFacts.length - 1 ? 'border-b border-slate-100' : ''}`}
             >
-              <span className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
+              <span className="text-[13px] text-slate-700 font-semibold">
                 {f.label}
               </span>
               <span
-                className={`text-[12px] font-black leading-tight block ${f.highlight ? 'text-indigo-600' : 'text-slate-900'
-                  }`}
+                className={`text-[14px] font-bold text-right ${f.highlight ? 'text-indigo-700' : 'text-slate-900'}`}
               >
                 {f.value}
               </span>
@@ -1122,56 +1232,56 @@ function SingleToolPanelContent({
         </div>
       </AccordionSection>
 
-      {/* ── 5. Best Use Cases (Interactive Tiles) ─────────────── */}
+      {/* ── 5. Best Use Cases (Simple List Rows) ─────────────── */}
       <AccordionSection
         id="section-usecases"
         title="Best Use Cases"
-        icon="🎪"
+        icon={SectionIcons.usecases}
         subtitle="Where this platform delivers highest leverage"
         defaultOpen={false}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {bestUseCases.map((uc) => (
+        <div className="space-y-0 py-3">
+          {bestUseCases.map((uc, idx) => (
             <div
               key={uc}
-              className="p-3 rounded-xl bg-white border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all flex items-center gap-2.5 group/uc"
+              className={`flex items-center gap-3 py-3 px-0 ${idx < bestUseCases.length - 1 ? 'border-b border-slate-100' : ''}`}
             >
-              <div className="w-5 h-5 rounded-md bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-black shrink-0 group-hover/uc:bg-indigo-100 transition-colors">
+              <span className="w-4 h-4 rounded-md bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-black shrink-0">
                 ✦
-              </div>
-              <span className="text-[11.5px] font-bold text-slate-800 group-hover/uc:text-slate-950 transition-colors">{uc}</span>
+              </span>
+              <span className="text-[13px] font-semibold text-slate-900">{uc}</span>
             </div>
           ))}
         </div>
       </AccordionSection>
 
-      {/* ── 6. Better Alternatives (Comparison Cards) ────────── */}
+      {/* ── 6. Better Alternatives (Comparison Rows) ────────── */}
       <AccordionSection
         id="section-alternatives"
         title="Better Alternatives"
-        icon="🔀"
+        icon={SectionIcons.alternatives}
         subtitle="Workflow replacement & migration options"
         defaultOpen={false}
       >
-        <div className="space-y-2">
+        <div className="space-y-4 py-3">
           {dynamicCompetitorComparison.length > 0 ? (
-            dynamicCompetitorComparison.map((s) => (
+            dynamicCompetitorComparison.map((s, idx) => (
               <div
                 key={s.competitor}
-                className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2 hover:border-slate-300 transition-colors"
+                className={`space-y-2.5 py-3 ${idx < dynamicCompetitorComparison.length - 1 ? 'border-b border-slate-100' : ''}`}
               >
-                <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                  <span className="text-[12.5px] font-black text-slate-900">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[14px] font-bold text-slate-900">
                     Switch to {s.competitor}
                   </span>
-                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
                     Alternative
                   </span>
                 </div>
-                <ul className="space-y-1">
+                <ul className="space-y-1.5">
                   {s.reasons.map((r) => (
-                    <li key={r} className="flex items-start gap-2 text-[11px] text-slate-600 font-medium">
-                      <span className="text-indigo-500 font-bold shrink-0 mt-0.5">›</span>
+                    <li key={r} className="flex items-start gap-2.5 text-[12px] text-slate-800 font-medium">
+                      <span className="text-indigo-600 font-bold shrink-0 mt-0.5">›</span>
                       <span>{r}</span>
                     </li>
                   ))}
@@ -1179,8 +1289,8 @@ function SingleToolPanelContent({
               </div>
             ))
           ) : (
-            <div className="p-4 rounded-xl bg-white border border-slate-200 text-center shadow-sm">
-              <p className="text-[11.5px] text-slate-500 italic font-medium">
+            <div className="py-3 text-center">
+              <p className="text-[12px] text-slate-600 italic font-medium">
                 No direct platform replacement recommended for this workflow.
               </p>
             </div>
@@ -1192,7 +1302,7 @@ function SingleToolPanelContent({
       <AccordionSection
         id="section-models"
         title="Model & Version Comparison"
-        icon="🤖"
+        icon={SectionIcons.models}
         subtitle="Which model or version matches your workflow?"
         defaultOpen={true}
       >
@@ -1203,21 +1313,21 @@ function SingleToolPanelContent({
       <AccordionSection
         id="section-overview"
         title="Executive Overview"
-        icon="🎯"
+        icon={SectionIcons.overview}
         subtitle="Comprehensive audit summary"
         defaultOpen={false}
       >
-        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-3">
+        <div className="space-y-4 py-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-600">Subscription Value Assessment</span>
+            <span className="text-[12px] font-bold text-slate-700">Subscription Value Assessment</span>
             <ValueBadge value={subscriptionValue} />
           </div>
-          <p className="text-[12px] text-slate-700 leading-relaxed font-medium">
+          <p className="text-[13px] text-slate-800 leading-relaxed font-medium">
             {formatHighlightedExecutiveText(executiveSummary)}
           </p>
           {(insight.detailedReason || insight.reason) && (
-            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-              <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block">
+            <div className="py-3 border-t border-slate-200">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-900 block mb-2.5">
                 Audit Finding
               </span>
               {renderAuditFinding(insight.detailedReason || insight.reason || '')}
@@ -1230,74 +1340,111 @@ function SingleToolPanelContent({
       <AccordionSection
         id="section-billing"
         title="Subscription & Billing"
-        icon="💳"
+        icon={SectionIcons.billing}
         subtitle="Current setup vs. recommended plan"
         defaultOpen={false}
       >
-        <div className="space-y-2.5">
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm">
-              <span className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
-                Monthly Outlay
+        <div className="space-y-5 py-3">
+          {/* Monthly spend and optimization target */}
+          <div className="grid grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <span className="text-[11px] font-bold uppercase letter-spacing text-slate-600 block">
+                Monthly spend
               </span>
-              <span className="text-lg font-black font-mono text-slate-900">
-                {billingAnalysis.monthlySpend > 0 ? `$${billingAnalysis.monthlySpend}` : '—'}
-                {billingAnalysis.monthlySpend > 0 && <span className="text-xs font-semibold text-slate-400">/mo</span>}
+              <span className="text-[20px] font-black text-slate-900">
+                ${billingAnalysis.monthlySpend > 0 ? billingAnalysis.monthlySpend : '0'}
               </span>
+              <span className="text-[11px] text-slate-500 font-semibold">/month</span>
             </div>
-            <div
-              className={`p-3.5 rounded-xl bg-white border shadow-sm ${billingAnalysis.potentialSaving > 0 ? 'border-emerald-200' : 'border-slate-200'
-                }`}
-            >
-              <span className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
-                Optimization Target
+            <div className="space-y-2">
+              <span className="text-[11px] font-bold uppercase letter-spacing text-slate-600 block">
+                Optimization target
               </span>
               <span
-                className={`text-base font-black font-mono ${billingAnalysis.potentialSaving > 0 ? 'text-emerald-600' : 'text-slate-400'
-                  }`}
+                className={`text-[20px] font-black ${
+                  billingAnalysis.potentialSaving > 0 ? 'text-emerald-700' : 'text-slate-400'
+                }`}
               >
-                {billingAnalysis.potentialSaving > 0 ? `Save $${billingAnalysis.potentialSaving}/mo` : 'Optimized ✓'}
+                {billingAnalysis.potentialSaving > 0
+                  ? `Save $${billingAnalysis.potentialSaving}`
+                  : 'Optimized'}
               </span>
+              <span className="text-[11px] text-slate-500 font-semibold">/month</span>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2">
-            <div className="flex items-center justify-between text-[11.5px]">
-              <span className="text-slate-500 font-medium">Current Setup</span>
-              <span className="font-bold text-slate-900">{insight.currentSetup || 'Active subscription'}</span>
-            </div>
-            <div className="border-t border-slate-100" />
-            <div className="flex items-center justify-between text-[11.5px]">
-              <span className="text-slate-500 font-medium">Recommended Setup</span>
-              <span className="font-black text-indigo-700">{insight.recommendedSetup || insight.suggestion}</span>
-            </div>
-          </div>
+          <div className="border-t border-slate-200" />
 
-          {billingAnalysis.annualDiscountAvailable && (
-            <div className="p-3.5 rounded-xl bg-indigo-50/40 border border-indigo-200 shadow-sm flex items-center justify-between gap-3">
-              <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-900 block">
-                  Annual Billing Opportunity
-                </span>
-                <span className="text-[11px] text-slate-600 font-medium">
-                  Switching to annual saves {billingAnalysis.annualDiscountPercent}% per seat.
-                </span>
-              </div>
-              {billingAnalysis.annualSavingsAmount > 0 && (
-                <span className="text-base font-black font-mono text-indigo-600 shrink-0">
-                  ~${billingAnalysis.annualSavingsAmount}/yr
+          {/* Current vs Recommended setup - premium layout */}
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-semibold uppercase letter-spacing text-slate-500 block">
+                Current setup
+              </span>
+              <span className="text-[14px] font-semibold text-slate-900 block">
+                {insight.currentSetup || 'Active subscription'}
+              </span>
+              {billingAnalysis.monthlySpend > 0 && (
+                <span className="text-[11px] text-slate-500">
+                  ${billingAnalysis.monthlySpend} / seat / month
                 </span>
               )}
             </div>
+
+            <div className="flex items-center justify-center h-6 text-slate-300">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-semibold uppercase letter-spacing text-slate-500 block">
+                Recommended setup
+              </span>
+              <span className="text-[14px] font-semibold text-slate-900 block">
+                {insight.recommendedSetup || insight.suggestion}
+              </span>
+              {billingAnalysis.monthlySpend > 0 && (
+                <span className="text-[11px] text-emerald-600 font-medium">
+                  ${Math.max(0, billingAnalysis.monthlySpend - billingAnalysis.potentialSaving)} / seat / month
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Annual billing opportunity */}
+          {billingAnalysis.annualDiscountAvailable && (
+            <>
+              <div className="border-t border-slate-200" />
+              <div className="space-y-2">
+                <span className="text-[10px] font-semibold uppercase letter-spacing text-slate-500 block">
+                  Annual billing opportunity
+                </span>
+                <div className="space-y-1">
+                  <span className="text-[16px] font-black text-emerald-600 block">
+                    ~${billingAnalysis.annualSavingsAmount > 0 ? billingAnalysis.annualSavingsAmount : '0'} / year saved
+                  </span>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Switching to annual billing saves {billingAnalysis.annualDiscountPercent}% per seat.
+                  </p>
+                </div>
+              </div>
+            </>
           )}
 
+          {/* Trade-offs */}
           {billingAnalysis.tradeoffs && (
-            <div className="p-3 rounded-xl bg-amber-50/40 border border-amber-200 shadow-sm">
-              <span className="text-[9px] font-extrabold uppercase tracking-wider text-amber-800 block mb-1">
-                Trade-offs & Considerations
-              </span>
-              <p className="text-[11px] text-slate-700 font-medium">{billingAnalysis.tradeoffs}</p>
-            </div>
+            <>
+              <div className="border-t border-slate-200" />
+              <div className="space-y-2">
+                <span className="text-[10px] font-semibold uppercase letter-spacing text-slate-500 block">
+                  Trade-offs & considerations
+                </span>
+                <p className="text-[11px] text-slate-700 leading-relaxed">
+                  {billingAnalysis.tradeoffs}
+                </p>
+              </div>
+            </>
           )}
         </div>
       </AccordionSection>
@@ -1382,7 +1529,7 @@ function AllStackPanelContent({
       <AccordionSection
         id="section-ecosystem-summary"
         title="Ecosystem Executive Summary"
-        icon="⭐"
+        icon={SectionIcons.ecosystemSummary}
         subtitle="Multi-tool synergy & architecture health"
         defaultOpen={true}
         badge={
@@ -1422,7 +1569,7 @@ function AllStackPanelContent({
       <AccordionSection
         id="section-ecosystem-caps"
         title="Capability Health Overview"
-        icon="📊"
+        icon={SectionIcons.ecosystemCaps}
         subtitle="Full-spectrum workflow coverage"
         defaultOpen={true}
       >
@@ -1455,7 +1602,7 @@ function AllStackPanelContent({
       <AccordionSection
         id="section-ecosystem-inventory"
         title="Subscription Inventory"
-        icon="✦"
+        icon={SectionIcons.ecosystemInventory}
         subtitle="Key features by active provider"
         defaultOpen={false}
       >
@@ -1495,7 +1642,7 @@ function AllStackPanelContent({
       <AccordionSection
         id="section-ecosystem-analytics"
         title="Usage Analytics"
-        icon="⚡"
+        icon={SectionIcons.ecosystemAnalytics}
         subtitle="Team adoption vs. underutilized features"
         defaultOpen={false}
       >
@@ -1544,7 +1691,7 @@ function AllStackPanelContent({
       <AccordionSection
         id="section-ecosystem-workload"
         title="Workload Distribution"
-        icon="⚖️"
+        icon={SectionIcons.ecosystemWorkload}
         subtitle="Workload contribution per tool"
         defaultOpen={false}
       >

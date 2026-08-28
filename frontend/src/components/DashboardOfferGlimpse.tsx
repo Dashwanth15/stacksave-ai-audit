@@ -7,7 +7,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { fetchPublicOffers } from '../services/api';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useUserScopedStorage } from '../hooks/useUserScopedStorage';
 import ProviderLogo from './ProviderLogo';
 import { formatOfferForDisplay, formatCompactTime } from '../utils/offerFormatter';
 import type { PublicOffer } from '../types';
@@ -16,7 +16,8 @@ export default function DashboardOfferGlimpse() {
   const navigate = useNavigate();
   const [offers, setOffers] = useState<PublicOffer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [readOfferIds] = useLocalStorage<string[]>('stacksave_read_offer_ids', []);
+  // USER-SCOPED: read offer IDs are stored per user session, not shared globally
+  const [readOfferIds] = useUserScopedStorage<string[]>('read_offer_ids', []);
 
   useEffect(() => {
     let isMounted = true;

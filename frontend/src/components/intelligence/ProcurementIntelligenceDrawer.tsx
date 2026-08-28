@@ -49,6 +49,79 @@ interface ProcurementIntelligenceDrawerProps {
   onClose: () => void;
 }
 
+// ─── Drawer Section Icons (Consistent 15x15 SaaS icon family) ─────────────────
+
+const DrawerSectionIcons = {
+  decision: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" x2="8" y1="13" y2="13" />
+      <line x1="16" x2="8" y1="17" y2="17" />
+    </svg>
+  ),
+  requirements: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 11 12 14 22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </svg>
+  ),
+  strengths: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" x2="12" y1="20" y2="10" />
+      <line x1="18" x2="18" y1="20" y2="4" />
+      <line x1="6" x2="6" y1="20" y2="16" />
+    </svg>
+  ),
+  gaps: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <line x1="12" x2="12" y1="9" y2="13" />
+      <line x1="12" x2="12.01" y1="17" y2="17" />
+    </svg>
+  ),
+  synergy: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  ),
+  pricing: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="20" height="14" x="2" y="5" rx="2" />
+      <line x1="2" x2="22" y1="10" y2="10" />
+    </svg>
+  ),
+  tradeoffs: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+      <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+      <path d="M7 21h10" />
+      <path d="M12 3v18" />
+      <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
+    </svg>
+  ),
+  target: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </svg>
+  ),
+  guidance: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  ),
+  stackOverview: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 2 7 12 12 22 7 12 2" />
+      <polyline points="2 17 12 22 22 17" />
+      <polyline points="2 12 12 17 22 12" />
+    </svg>
+  ),
+};
+
 // ─── Accordion Section (mirrors ToolIntelligencePanel's AccordionSection) ─────
 
 function AccordionSection({
@@ -435,7 +508,7 @@ function ToolProcurementContent({ tool, teamSize }: { tool: ToolInStack; teamSiz
       {/* 1. Procurement Decision */}
       <AccordionSection
         title="Procurement Decision"
-        icon="📋"
+        icon={DrawerSectionIcons.decision}
         subtitle="Why this tool was selected for your specific context"
         defaultOpen={true}
         badge={
@@ -535,7 +608,7 @@ function ToolProcurementContent({ tool, teamSize }: { tool: ToolInStack; teamSiz
       {tool.featuresCovered && tool.featuresCovered.length > 0 && (
         <AccordionSection
           title="Requirements Covered"
-          icon="✦"
+          icon={DrawerSectionIcons.requirements}
           subtitle="Exactly which requirements this tool satisfies"
           defaultOpen={false}
           badge={
@@ -568,7 +641,7 @@ function ToolProcurementContent({ tool, teamSize }: { tool: ToolInStack; teamSiz
       {tool.capabilityHighlights && tool.capabilityHighlights.length > 0 && (
         <AccordionSection
           title="Capability Strengths"
-          icon="📊"
+          icon={DrawerSectionIcons.strengths}
           subtitle="Most relevant capabilities for your workflow"
           defaultOpen={false}
         >
@@ -587,7 +660,7 @@ function ToolProcurementContent({ tool, teamSize }: { tool: ToolInStack; teamSiz
       {tool.missingCapabilities && tool.missingCapabilities.length > 0 && (
         <AccordionSection
           title="Capability Gaps"
-          icon="⚠"
+          icon={DrawerSectionIcons.gaps}
           subtitle="What this tool does NOT cover — handled by other stack tools"
           defaultOpen={false}
         >
@@ -606,7 +679,7 @@ function ToolProcurementContent({ tool, teamSize }: { tool: ToolInStack; teamSiz
       {tool.whatItComplements && (
         <AccordionSection
           title="Stack Synergy"
-          icon="⚡"
+          icon={DrawerSectionIcons.synergy}
           subtitle="How it works with the rest of your stack"
           defaultOpen={false}
         >
@@ -621,7 +694,7 @@ function ToolProcurementContent({ tool, teamSize }: { tool: ToolInStack; teamSiz
       {/* 6. Plan Intelligence */}
       <AccordionSection
         title="Plan Intelligence"
-        icon="💰"
+        icon={DrawerSectionIcons.pricing}
         subtitle="Pricing, plan rationale, and seat model"
         defaultOpen={false}
       >
@@ -646,7 +719,7 @@ function ToolProcurementContent({ tool, teamSize }: { tool: ToolInStack; teamSiz
       {(tool.mainTradeoff || (tool.procurementRisks && tool.procurementRisks.length > 0)) && (
         <AccordionSection
           title="Tradeoffs & Risks"
-          icon="⚖"
+          icon={DrawerSectionIcons.tradeoffs}
           subtitle="What you give up and risks to consider"
           defaultOpen={false}
         >
@@ -674,7 +747,7 @@ function ToolProcurementContent({ tool, teamSize }: { tool: ToolInStack; teamSiz
       {(tool.bestFor || tool.notIdealFor) && (
         <AccordionSection
           title="Who Should Choose This"
-          icon="🎯"
+          icon={DrawerSectionIcons.target}
           subtitle="Best for and when to look elsewhere"
           defaultOpen={false}
         >
@@ -698,7 +771,7 @@ function ToolProcurementContent({ tool, teamSize }: { tool: ToolInStack; teamSiz
       {/* 9. Purchase Guidance */}
       <AccordionSection
         title="Purchase Guidance"
-        icon="✅"
+        icon={DrawerSectionIcons.guidance}
         subtitle="Clear final recommendation for your team"
         defaultOpen={false}
       >
@@ -737,7 +810,7 @@ function EvaluatedProviderContent({
       {/* 1. Evaluation Decision */}
       <AccordionSection
         title="Evaluation Decision"
-        icon="📋"
+        icon={DrawerSectionIcons.decision}
         subtitle="Why it was considered and why it wasn't selected"
         defaultOpen={true}
         badge={
@@ -784,7 +857,7 @@ function EvaluatedProviderContent({
       {/* 2. Head-to-Head */}
       <AccordionSection
         title={`Head-to-Head vs ${primaryToolName || 'Recommended Stack'}`}
-        icon="⚖"
+        icon={DrawerSectionIcons.tradeoffs}
         subtitle="Where each tool wins and the deciding factor"
         defaultOpen={false}
       >
@@ -812,7 +885,7 @@ function EvaluatedProviderContent({
       {item.wouldHaveCovered && item.wouldHaveCovered.length > 0 && (
         <AccordionSection
           title="Requirements It Covers"
-          icon="✦"
+          icon={DrawerSectionIcons.requirements}
           subtitle="Features this tool would have satisfied"
           defaultOpen={false}
         >
@@ -831,7 +904,7 @@ function EvaluatedProviderContent({
       {(item.bestFor || item.notIdealFor) && (
         <AccordionSection
           title="When To Choose This Instead"
-          icon="🎯"
+          icon={DrawerSectionIcons.target}
           subtitle="Scenarios where this tool is the better choice"
           defaultOpen={false}
         >
@@ -855,7 +928,7 @@ function EvaluatedProviderContent({
       {/* 5. Pricing Reference */}
       <AccordionSection
         title="Pricing Reference"
-        icon="💰"
+        icon={DrawerSectionIcons.pricing}
         subtitle="Cost comparison with the recommended stack"
         defaultOpen={false}
       >
@@ -906,7 +979,7 @@ function StackIntelligenceContent({
       {/* 1. Stack Overview */}
       <AccordionSection
         title="Stack Overview"
-        icon="📋"
+        icon={DrawerSectionIcons.stackOverview}
         subtitle={`${rankTitle} · ${purposeLabel || 'Alternative Architecture'}`}
         defaultOpen={true}
         badge={
@@ -973,7 +1046,7 @@ function StackIntelligenceContent({
       {/* 2. Architecture Composition */}
       <AccordionSection
         title="Architecture Composition"
-        icon="⚡"
+        icon={DrawerSectionIcons.synergy}
         subtitle="Tool roles and division of responsibility"
         defaultOpen={true}
       >
@@ -1009,7 +1082,7 @@ function StackIntelligenceContent({
       {((stack.advantages?.length || 0) > 0 || (stack.tradeoffs?.length || 0) > 0) && (
         <AccordionSection
           title="Advantages & Tradeoffs"
-          icon="⚖"
+          icon={DrawerSectionIcons.tradeoffs}
           subtitle="What you gain and what you give up"
           defaultOpen={false}
         >
@@ -1047,7 +1120,7 @@ function StackIntelligenceContent({
       {/* 4. Financial Summary */}
       <AccordionSection
         title="Financial Summary"
-        icon="💰"
+        icon={DrawerSectionIcons.pricing}
         subtitle="Full cost breakdown and annual run-rate"
         defaultOpen={false}
       >
@@ -1073,7 +1146,7 @@ function StackIntelligenceContent({
       {stack.bestFor && (
         <AccordionSection
           title="Who Should Choose This"
-          icon="🎯"
+          icon={DrawerSectionIcons.target}
           subtitle="The ideal buyer for this architecture"
           defaultOpen={false}
         >

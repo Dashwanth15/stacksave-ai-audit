@@ -12,9 +12,9 @@ import ReAuditDiffPage from './ReAuditDiffPage';
 import Logo from '../components/Logo';
 import StrategicGuidanceSection from '../components/intelligence/StrategicGuidanceSection';
 import ToolIntelligencePanel from '../components/ToolIntelligencePanel';
-import PricingIntelligencePanel from '../components/PricingIntelligencePanel';
 import OfferNotificationBell from '../components/OfferNotificationBell';
-import DashboardOfferGlimpse from '../components/DashboardOfferGlimpse';
+import AuditedConfigurationBadge from '../components/audit/AuditedConfigurationBadge';
+import { getUserScopedKey } from '../utils/userSession';
 
 
 
@@ -504,7 +504,7 @@ export default function ResultsPage() {
 
   const isOwner = !!(
     (location.state as { isOwner?: boolean })?.isOwner ||
-    (id && localStorage.getItem(`owned_${id}`) === 'true')
+    (id && localStorage.getItem(getUserScopedKey(`owned_${id}`)) === 'true')
   );
 
   const queryParams = new URLSearchParams(location.search);
@@ -545,7 +545,11 @@ export default function ResultsPage() {
     setReAuditing(true);
     try {
       const result = await triggerReAudit(audit.auditId);
-      localStorage.setItem(`owned_${result.newAuditId}`, 'true');
+      // Mark re-audit as owned by this user session (user-scoped, not global)
+      localStorage.setItem(getUserScopedKey(`owned_${result.newAuditId}`), 'true');
+      if (result.ownerToken) {
+        localStorage.setItem(getUserScopedKey(`audit_token_${result.newAuditId}`), result.ownerToken);
+      }
       navigate(`/audit/${result.newAuditId}/diff`, { state: { isOwner: true } });
     } catch (err) {
       console.error(err);
@@ -565,6 +569,15 @@ export default function ResultsPage() {
   }, [id, audit]);
 
   useEffect(() => {
+    if (audit) {
+      try {
+        // Store in user-scoped sessionStorage key so it doesn't leak to other users
+        const auditKey = getUserScopedKey('currentAudit');
+        sessionStorage.setItem(auditKey, JSON.stringify(audit));
+      } catch (err) {
+        // ignore storage errors
+      }
+    }
     if (audit && audit.tools && audit.tools.length > 0) {
       fetchStackIntelligence(audit.tools, audit.useCase || 'coding')
         .then(setIntelligence)
@@ -797,6 +810,9 @@ export default function ResultsPage() {
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10">
+        {/* ── Audited Configuration Badge ──────────────────────────── */}
+        {audit && <AuditedConfigurationBadge audit={audit} filteredInsights={filteredInsights} />}
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
           {/* Left Column Area: Savings Chart & Recommendations List */}
@@ -875,13 +891,7 @@ export default function ResultsPage() {
               />
             )}
 
-            {/* ── AI Marketplace Insights (Live Offers Glimpse) ───────── */}
-            <DashboardOfferGlimpse />
 
-            {/* ── Pricing Intelligence Panel ─────────────────────── */}
-            {/* Shows live pricing sync status + new public offers   */}
-            {/* Visible only on the Results page (post-audit)        */}
-            <PricingIntelligencePanel />
 
 
           </div>
@@ -929,28 +939,50 @@ export default function ResultsPage() {
                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Audited Configuration</span>
                     <div className="flex flex-wrap gap-1.5">
                       {/* Billing cycle badge */}
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold border ${
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
                         audit.billingCycle === 'annual'
                           ? 'bg-indigo-50 text-indigo-700 border-indigo-200/80'
                           : 'bg-slate-50 text-slate-600 border-slate-200/80'
                       }`}>
-                        {audit.billingCycle === 'annual' ? '📅 Annual Billing' : '🗓️ Monthly Billing'}
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                          <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                          <line x1="16" x2="16" y1="2" y2="6" />
+                          <line x1="8" x2="8" y1="2" y2="6" />
+                          <line x1="3" x2="21" y1="10" y2="10" />
+                        </svg>
+                        <span>{audit.billingCycle === 'annual' ? 'Annual Billing' : 'Monthly Billing'}</span>
                       </span>
                       {/* Optimization goal badge */}
                       {audit.optimizationGoal && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold border bg-slate-50 text-slate-600 border-slate-200/80 capitalize">
-                          🎯 {audit.optimizationGoal}
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border bg-slate-50 text-slate-600 border-slate-200/80 capitalize">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-rose-500">
+                            <circle cx="12" cy="12" r="10" />
+                            <circle cx="12" cy="12" r="6" />
+                            <circle cx="12" cy="12" r="2" />
+                          </svg>
+                          <span>{audit.optimizationGoal}</span>
                         </span>
                       )}
                       {/* Use case badge */}
                       {audit.useCase && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold border bg-slate-50 text-slate-600 border-slate-200/80 capitalize">
-                          🔬 {audit.useCase}
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border bg-slate-50 text-slate-600 border-slate-200/80 capitalize">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-indigo-500">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                            <polyline points="2 17 12 22 22 17" />
+                            <polyline points="2 12 12 17 22 12" />
+                          </svg>
+                          <span>{audit.useCase}</span>
                         </span>
                       )}
                       {/* Tools count */}
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold border bg-slate-50 text-slate-600 border-slate-200/80">
-                        🛠️ {audit.tools?.length ?? 0} tool{(audit.tools?.length ?? 0) !== 1 ? 's' : ''}
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border bg-slate-50 text-slate-600 border-slate-200/80">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-slate-500">
+                          <rect width="7" height="7" x="3" y="3" rx="1" />
+                          <rect width="7" height="7" x="14" y="3" rx="1" />
+                          <rect width="7" height="7" x="14" y="14" rx="1" />
+                          <rect width="7" height="7" x="3" y="14" rx="1" />
+                        </svg>
+                        <span>{audit.tools?.length ?? 0} tool{(audit.tools?.length ?? 0) !== 1 ? 's' : ''}</span>
                       </span>
                     </div>
                   </div>

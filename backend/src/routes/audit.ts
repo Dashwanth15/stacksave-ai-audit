@@ -3,6 +3,7 @@
 // ============================================================
 
 import { Router, Request, Response } from 'express';
+import crypto from 'crypto';
 import { AuditRequest } from '../types';
 import { runAudit } from '../audit-engine/engine';
 import { generateAuditSummary } from '../services/aiService';
@@ -14,6 +15,40 @@ import { runReAudit, generateAuditDiff } from '../services/reAuditService';
 import { auditLimiter } from '../middleware/rateLimit';
 
 const router = Router();
+
+// ── Ownership token helper ─────────────────────────────────────
+// Generates a 32-byte (64 hex char) random token for audit creator identification.
+function generateOwnerToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+/**
+ * Verifies that the X-Audit-Token header in the request matches the
+ * ownerToken stored in the DB for this audit.
+ *
+ * Returns true if the token matches (caller is the owner).
+ * Returns false if missing, wrong, or the audit has no token stored.
+ *
+ * NOTE: Constant-time comparison via timingSafeEqual prevents timing attacks.
+ */
+async function verifyOwnerToken(auditId: string, req: Request): Promise<boolean> {
+  const provided = req.headers['x-audit-token'];
+  if (!provided || typeof provided !== 'string') return false;
+
+  // Explicitly select the ownerToken field (excluded from queries by default via select:false)
+  const audit = await AuditModel.findOne({ auditId }).select('+ownerToken').lean();
+  if (!audit || !audit.ownerToken) return false;
+
+  try {
+    const a = Buffer.from(audit.ownerToken, 'utf8');
+    const b = Buffer.from(provided, 'utf8');
+    // Buffers must be the same length for timingSafeEqual
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
 
 // ── POST /api/audits ─────────────────────────────────────────
 // Main audit endpoint. Runs the engine, generates AI summary,
@@ -74,7 +109,12 @@ router.post('/', auditLimiter, async (req: Request, res: Response) => {
     auditResult.aiSummary = aiSummary;
     auditResult.aiSummarySavings = aiSummarySavings;
 
-    // ── Batch 1: Capture Pricing Snapshot ────────────────────
+    // ── Generate a one-time ownership token ───────────────────
+    // Returned ONCE to the creator. Used to authorize owner-only
+    // operations (re-audit, private data retrieval) without requiring auth.
+    const ownerToken = generateOwnerToken();
+
+    // ── Batch 1: Capture Pricing Snapshot ────────────────────────
     const pricingSnapshot = capturePricingSnapshot();
 
     // Persist to MongoDB with Batch 1 fields
@@ -105,9 +145,13 @@ router.post('/', auditLimiter, async (req: Request, res: Response) => {
       auditVersion,                         // Version in the chain
       reAuditOf,                            // Parent audit link
       billingCycle: body.billingCycle || 'monthly', // Billing period selected by user
+      ownerToken,                           // One-time creation token (select:false in schema)
     });
 
-    return res.status(201).json({ success: true, data: auditResult });
+    // Return the audit result plus the ownerToken (returned ONLY once at creation).
+    // The frontend stores this token in user-scoped localStorage and sends it
+    // as X-Audit-Token on subsequent owner-only requests.
+    return res.status(201).json({ success: true, data: { ...auditResult, ownerToken } });
   } catch (err) {
     console.error('POST /api/audits error:', err);
     return res.status(500).json({ success: false, error: 'Failed to process audit' });
@@ -232,13 +276,25 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 
-// ── GET /api/audits/:id/full ────────────────────────────────
-// Batch 1: Internal endpoint for retrieving full audit details
-// including pricing snapshot (used for re-audits in Batch 2)
-// Note: Should add auth/permission checks in production
+// ── GET /api/audits/:id/full ──────────────────────────────
+// Internal endpoint for retrieving private audit details including
+// email, companyName, inputStack, and pricingSnapshot.
+// SECURITY: Requires X-Audit-Token matching the owner's stored token.
+// Without it, returns 403 — does NOT fall back to a partial response.
 router.get('/:id/full', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+
+    // ── Server-side ownership enforcement ─────────────────────
+    // Private fields (email, companyName, inputStack, pricingSnapshot)
+    // are ONLY returned when the correct ownerToken is provided.
+    const isOwner = await verifyOwnerToken(id, req);
+    if (!isOwner) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: owner token required to access private audit data.',
+      });
+    }
     const audit = await AuditModel.findOne({ auditId: id });
 
     if (!audit) {
@@ -299,11 +355,26 @@ router.get('/:id/full', async (req: Request, res: Response) => {
   }
 });
 
-// ── POST /api/audits/:id/re-audit ───────────────────────────
-// Batch 3: Re-audit generation endpoint
+// ── POST /api/audits/:id/re-audit ──────────────────────────
+// Batch 3: Re-audit generation endpoint.
+// SECURITY: Requires X-Audit-Token header matching the ownerToken stored
+// in DB for this audit. Token was issued once at creation to the submitter.
+// Without it, any anonymous caller who knows an auditId could trigger
+// a re-audit, modifying the audit chain and wasting server/AI resources.
 router.post('/:id/re-audit', auditLimiter, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+
+    // ── Server-side ownership enforcement ─────────────────────
+    // Verify that the caller presents the correct ownerToken.
+    // This is not frontend hiding — the check happens in the DB.
+    const isOwner = await verifyOwnerToken(id, req);
+    if (!isOwner) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: you are not the owner of this audit.',
+      });
+    }
 
     // Verify original audit exists
     const originalAudit = await AuditModel.findOne({ auditId: id });
@@ -316,12 +387,18 @@ router.post('/:id/re-audit', auditLimiter, async (req: Request, res: Response) =
 
     const { newAudit, diff } = await runReAudit(id, publicUrlBase);
 
+    // The new audit inherits the same owner — generate a fresh token for the
+    // new auditId so the owner can perform future re-audits from the new version.
+    const newOwnerToken = generateOwnerToken();
+    await AuditModel.updateOne({ auditId: newAudit.auditId }, { ownerToken: newOwnerToken });
+
     return res.status(200).json({
       success: true,
       data: {
         newAuditId: newAudit.auditId,
         newAudit,
         diff,
+        ownerToken: newOwnerToken, // returned once so the client can store it
       },
     });
   } catch (err) {

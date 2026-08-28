@@ -77,6 +77,14 @@ export interface AuditDocument extends Document {
   lastNotificationSentAt?: Date;
   notificationVersion?: number;
   hasPendingNotification?: boolean;
+
+  // ── Ownership token ──────────────────────────────────────
+  // Random 32-byte hex string generated once at audit creation.
+  // Returned to the creator in the POST response and stored in their
+  // user-scoped localStorage. Required for owner-only operations
+  // (re-audit, full private data retrieval).
+  // NEVER included in public GET /api/audits/:id responses.
+  ownerToken?: string;
 }
 
 const AuditSchema = new Schema<AuditDocument>(
@@ -147,6 +155,11 @@ const AuditSchema = new Schema<AuditDocument>(
     lastNotificationSentAt: { type: Date },
     notificationVersion: { type: Number },
     hasPendingNotification: { type: Boolean, default: false },
+
+    // ── Ownership token ──────────────────────────────────────
+    // Random hex string issued once at creation, never returned on public GETs.
+    // Owner presents it via X-Audit-Token header for privileged operations.
+    ownerToken: { type: String, select: false }, // select:false = excluded from all queries by default
   },
   { 
     timestamps: false,

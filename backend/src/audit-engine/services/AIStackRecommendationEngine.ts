@@ -26,6 +26,7 @@ import {
   BudgetSimulation,
   RecommendationTrace,
   ProviderScoreTrace,
+  CandidateAuditTrace,
   StackStrategy,
   UserContextSummary,
   BudgetConstraintState
@@ -82,6 +83,13 @@ const STRATEGY_METAS: Record<StackStrategy, { title: string; badge: string; desc
   }
 };
 
+const OPTIMIZATION_GOAL_LABELS: Record<string, string> = {
+  'balanced': 'Balanced Workflow',
+  'savings': 'Cost Reduction',
+  'productivity': 'Maximum Productivity',
+  'governance': 'Strict Governance'
+};
+
 export class AIStackRecommendationEngine {
 
   /**
@@ -98,26 +106,37 @@ export class AIStackRecommendationEngine {
     const domain = this.normalizeDomain(rawReq);
     const requirements = this.normalizeRequirements(rawReq);
     const activeStrategy: StackStrategy = rawReq.strategy || (rawReq.preferences?.maximizeSavings ? 'best-value' : 'balanced');
+    const optimizationGoal = rawReq.optimizationGoal || (
+      activeStrategy === 'best-value' ? 'savings' :
+      activeStrategy === 'max-performance' ? 'productivity' :
+      activeStrategy === 'enterprise-security' ? 'governance' :
+      'balanced'
+    );
     const teamSize = Math.min(Math.max(1, Math.round(rawReq.teamSize || 1)), 10000);
     const monthlyBudget = rawReq.monthlyBudget !== undefined && rawReq.monthlyBudget !== null
       ? Math.max(0, rawReq.monthlyBudget)
       : null;
 
+    const engineeringFocus = Array.isArray(rawReq.engineeringFocus) && rawReq.engineeringFocus.length > 0
+      ? rawReq.engineeringFocus
+      : [domain];
+
     const normalizedReq: StackBuilderRequest = {
       domain,
       requirements,
       strategy: activeStrategy,
+      optimizationGoal,
       teamSize,
       monthlyBudget,
-      engineeringFocus: [domain],
+      engineeringFocus,
       primaryWorkflow: domain,
       mustHaveFeatures: requirements,
       preferences: {
         preferOpenSource: Boolean(rawReq.preferences?.preferOpenSource),
         avoidLockIn: Boolean(rawReq.preferences?.avoidLockIn),
-        maximizeSavings: Boolean(rawReq.preferences?.maximizeSavings || activeStrategy === 'best-value'),
+        maximizeSavings: Boolean(rawReq.preferences?.maximizeSavings || activeStrategy === 'best-value' || optimizationGoal === 'savings'),
         preferEstablishedVendors: Boolean(rawReq.preferences?.preferEstablishedVendors),
-        requireZeroRetention: Boolean(rawReq.preferences?.requireZeroRetention || activeStrategy === 'enterprise-security')
+        requireZeroRetention: Boolean(rawReq.preferences?.requireZeroRetention || activeStrategy === 'enterprise-security' || optimizationGoal === 'governance')
       },
       constraints: rawReq.constraints || {},
       debug: rawReq.debug === true
@@ -183,7 +202,9 @@ export class AIStackRecommendationEngine {
       budgetFormatted: monthlyBudget !== null ? `$${monthlyBudget.toLocaleString()}/mo` : 'No Hard Limit',
       strategy: activeStrategy,
       strategyLabel: STRATEGY_METAS[activeStrategy]?.title || activeStrategy,
-      requirementCount: requirements.length
+      requirementCount: requirements.length,
+      optimizationGoal,
+      optimizationGoalLabel: OPTIMIZATION_GOAL_LABELS[optimizationGoal] || optimizationGoal
     };
 
     const totalDurationMs = Date.now() - startTime;
@@ -265,6 +286,69 @@ export class AIStackRecommendationEngine {
         (rawReq.engineeringFocus && rawReq.engineeringFocus[0] && DOMAIN_LABELS[rawReq.engineeringFocus[0]])
       );
 
+      const overallRankMap = new Map<string, number>();
+      const valueRankMap = new Map<string, number>();
+      const perfRankMap = new Map<string, number>();
+      const enterpriseRankMap = new Map<string, number>();
+
+      const rankedOverall = this.rankPool(filteredScored, normalizedReq, weights, activeStrategy);
+      const rankedValue = this.rankPool(filteredScored, normalizedReq, weights, 'best-value');
+      const rankedPerf = this.rankPool(filteredScored, normalizedReq, weights, 'max-performance');
+      const rankedEnt = this.rankPool(filteredScored, normalizedReq, weights, 'enterprise-security');
+
+      rankedOverall.forEach((p, idx) => overallRankMap.set(p.id, idx + 1));
+      rankedValue.forEach((p, idx) => valueRankMap.set(p.id, idx + 1));
+      rankedPerf.forEach((p, idx) => perfRankMap.set(p.id, idx + 1));
+      rankedEnt.forEach((p, idx) => enterpriseRankMap.set(p.id, idx + 1));
+
+      const candidateAudit: CandidateAuditTrace[] = filteredScored.map(p => {
+        const elig = this.evaluateCandidateEligibility(p, normalizedReq, requirements, domain);
+        const overallScore = this.getCompositeScore(p, normalizedReq, weights, activeStrategy);
+        const valueScore = this.getCompositeScore(p, normalizedReq, weights, 'best-value');
+        const perfScore = this.getCompositeScore(p, normalizedReq, weights, 'max-performance');
+        const entScore = this.getCompositeScore(p, normalizedReq, weights, 'enterprise-security');
+        const domainSuitability = WorkflowEngine.calculateSuitability(p.raw, domain);
+
+        return {
+          providerId: p.id,
+          providerName: p.name,
+          category: p.category,
+          eligible: elig.eligible,
+          disqualificationReasons: elig.disqualificationReasons,
+          rawDimensionScores: {
+            security: p.securityScore,
+            enterprise: p.enterpriseScore,
+            compliance: p.complianceScore,
+            reasoning: p.reasoningScore,
+            coding: p.codingScore,
+            writing: p.writingScore,
+            research: p.researchScore,
+            domainSuitability,
+            vendorStability: p.vendorStabilityScore,
+            costEfficiency: p.costEfficiencyScore,
+            futureGrowth: p.futureGrowthScore
+          },
+          objectiveScores: {
+            overall: overallScore,
+            bestValue: valueScore,
+            maxPerformance: perfScore,
+            enterpriseSecurity: entScore
+          },
+          weightedContributions: {
+            domainFitContribution: Math.round(domainSuitability * 0.25),
+            requirementContribution: Math.round(this.computeRequirementCapabilityScore(p, requirements) * 0.25),
+            securityContribution: Math.round(p.securityScore * 0.35),
+            costEfficiencyContribution: Math.round(p.costEfficiencyScore * 0.15)
+          },
+          categoryRanks: {
+            overall: overallRankMap.get(p.id) ?? 99,
+            bestValue: valueRankMap.get(p.id) ?? 99,
+            maxPerformance: perfRankMap.get(p.id) ?? 99,
+            enterpriseSecurity: enterpriseRankMap.get(p.id) ?? 99
+          }
+        };
+      });
+
       response.trace = {
         requestId: recommendationId,
         timestamp: new Date().toISOString(),
@@ -280,12 +364,14 @@ export class AIStackRecommendationEngine {
           monthlyBudget,
           requirements,
           strategy: activeStrategy,
+          optimizationGoal,
           preferences: normalizedReq.preferences || {}
         },
         strategyUsed: `hierarchical-procurement-v2 (${activeStrategy})`,
         knowledgeSnapshot: knowledgeVersion,
         applicationRanking,
         apiRanking,
+        candidateAudit,
         allProviderScores,
         rejectedProviders: rejectedTrace,
         totalDurationMs
@@ -347,8 +433,7 @@ export class AIStackRecommendationEngine {
       rankedApiProviders,
       req,
       weights,
-      strategy,
-      'Optimal baseline architecture balancing domain velocity, reasoning, and seat cost.'
+      strategy
     );
 
     // 2. Generate 6-10 Distinct Alternative Architectures with Canonical Deduplication
@@ -379,10 +464,9 @@ export class AIStackRecommendationEngine {
     const byStrategy = (s: StackStrategy) => (p: ScoredProviderProfile) => this.getCompositeScore(p, req, weights, s);
 
     const governanceObjective = (p: ScoredProviderProfile): number | null => {
-      // Unknown governance is not satisfied governance: an enterprise archetype may
-      // only be seeded from verified governance data or direct capability evidence.
+      // Must have genuine security posture: verified governance data or high security capability score (>= 70)
       const evidence = p.capabilityVector['enterpriseSecurity'] ?? 0;
-      if (!p.governanceDataVerified && evidence < 5) return null;
+      if (p.securityScore < 70 || (!p.governanceDataVerified && evidence < 6)) return null;
       return this.getCompositeScore(p, req, weights, 'enterprise-security');
     };
     // Broadest baseline coverage across every deduped requirement dimension, i.e. the
@@ -561,15 +645,13 @@ export class AIStackRecommendationEngine {
         objective: governanceObjective,
         companion: 'gap',
         subStrategy: 'enterprise-security',
-        // Also relevant when the request itself is a governance request even without a
-        // governance requirement ticked: an explicit enterprise-security strategy, or a
-        // team large enough that centralised administration is a procurement question.
-        relevantIf: this.archetypeIsRelevant(['enterpriseSecurity', 'sso', 'saml'], requirements, domain)
+        relevantIf: (this.archetypeIsRelevant(['enterpriseSecurity', 'sso', 'saml'], requirements, domain)
           || strategy === 'enterprise-security'
-          || req.teamSize >= this.TEAM_ADMIN_SEAT_THRESHOLD,
-        customReason: 'Led by the strongest verified governance posture: SSO, admin controls, and enterprise security evidence.',
+          || req.teamSize >= this.TEAM_ADMIN_SEAT_THRESHOLD)
+          && topApps.some(p => p.securityScore >= 70),
+        customReason: 'Led by enterprise-grade security posture, centralized administration, and compliance readiness.',
         bestFor: 'Enterprises with strict InfoSec requirements, compliance audits, and centralized SSO.',
-        mainAdvantage: 'Highest verified identity, admin-control, and enterprise-security evidence in the catalogue.',
+        mainAdvantage: 'Enterprise identity, admin-control, and enterprise-security evidence across the stack.',
         mainTradeoff: 'Governance-grade administration is only offered on team and enterprise tiers, which changes the procurement path.',
         whyChooseInstead: 'Meets rigorous InfoSec mandates and corporate compliance standards without exception.',
         whyNotRecommended: 'Selects for administrative and identity controls ahead of the capability and cost balance the #1 stack leads on.'
@@ -907,6 +989,73 @@ export class AIStackRecommendationEngine {
   }
 
   /**
+   * Returns strategy-specific audit weights for the 7 stack evaluation factors.
+   * Every set strictly sums to 1.00 (100%), ensuring mathematical integrity.
+   */
+  public static getStrategyAuditWeights(
+    strategy: StackStrategy,
+    req: StackBuilderRequest
+  ): {
+    workflowMatch: number;
+    featureCoverage: number;
+    budgetFit: number;
+    capabilitySuperiority: number;
+    securityMatch: number;
+    vendorStability: number;
+    futureGrowth: number;
+  } {
+    const goal = req.optimizationGoal || (
+      strategy === 'best-value' ? 'savings' :
+      strategy === 'max-performance' ? 'productivity' :
+      strategy === 'enterprise-security' ? 'governance' :
+      'balanced'
+    );
+    if (strategy === 'enterprise-security' || goal === 'governance') {
+      return {
+        securityMatch: goal === 'governance' ? 0.60 : 0.50,
+        featureCoverage: 0.20,
+        workflowMatch: 0.10,
+        vendorStability: 0.10,
+        capabilitySuperiority: 0.05,
+        futureGrowth: 0.05,
+        budgetFit: 0.00,
+      };
+    }
+    if (strategy === 'best-value' || goal === 'savings') {
+      return {
+        budgetFit: goal === 'savings' ? 0.45 : 0.35,
+        featureCoverage: 0.25,
+        workflowMatch: 0.15,
+        capabilitySuperiority: 0.10,
+        futureGrowth: 0.05,
+        securityMatch: 0.05,
+        vendorStability: 0.05,
+      };
+    }
+    if (strategy === 'max-performance' || goal === 'productivity') {
+      return {
+        capabilitySuperiority: goal === 'productivity' ? 0.40 : 0.35,
+        workflowMatch: 0.25,
+        featureCoverage: 0.20,
+        futureGrowth: 0.10,
+        vendorStability: 0.05,
+        securityMatch: 0.05,
+        budgetFit: 0.00,
+      };
+    }
+    // Default: Balanced / Best Overall
+    return {
+      workflowMatch: 0.25,
+      featureCoverage: 0.25,
+      capabilitySuperiority: 0.15,
+      budgetFit: 0.15,
+      securityMatch: 0.10,
+      vendorStability: 0.05,
+      futureGrowth: 0.05,
+    };
+  }
+
+  /**
    * Assembles a multi-role HierarchicalStack:
    * 01 PRIMARY (Driver) + 02 SECONDARY (Companion) + 03 OPTIONAL (Specialized) + 04 API LAYER (Infrastructure)
    */
@@ -1046,7 +1195,7 @@ export class AIStackRecommendationEngine {
     const isPrimaryIde = effectivePrimarySeed.category === 'ide';
 
     const domainLabel = DOMAIN_LABELS[domain] || domain;
-    const whyPrimary = `Primary workhorse for ${domainLabel}. Handles core daily execution and workflow velocity.`;
+    const whyPrimary = `${effectivePrimarySeed.name} is the primary workhorse for ${domainLabel}, delivering core daily execution and workflow velocity.`;
 
     const primaryTool: StackToolAssignment = {
       toolId: effectivePrimarySeed.id,
@@ -1462,15 +1611,73 @@ export class AIStackRecommendationEngine {
     // by a seat count ($4.99 x 10 = 49.900000000000006), and that raw value was being
     // serialised straight into the API response.
     const toCents = (value: number): number => Math.round(value * 100) / 100;
-    const totalMonthlyCost = toCents(stackTools.reduce((sum, t) => sum + t.estimatedMonthlyCostPerTeam, 0));
-    const totalAnnualCost = toCents(totalMonthlyCost * 12);
-    const perSeatMonthlyCost = toCents(stackTools.reduce((sum, t) => sum + t.monthlyCostPerSeat, 0));
+    let totalMonthlyCost = toCents(stackTools.reduce((sum, t) => sum + t.estimatedMonthlyCostPerTeam, 0));
+    let totalAnnualCost = toCents(totalMonthlyCost * 12);
+    let perSeatMonthlyCost = toCents(stackTools.reduce((sum, t) => sum + t.monthlyCostPerSeat, 0));
 
     // Plan-aware: this is the coverage figure the dashboard shows, so it is answered at the
     // tiers the team is being told to buy. Every provider here has a recorded plan.
-    const coverageResult = StackCoverageAnalyzer.analyze(
+    let coverageResult = StackCoverageAnalyzer.analyze(
       activeStackProfiles, requirements, resolvePlanForCoverage
     );
+
+    // ── Intelligent Requirement Entitlement Repair ───────────────────────────
+    // If the assembled stack leaves a stated requirement uncovered because individual
+    // slot selectors picked lower tiers, attempt to upgrade a capable tool to its entitling
+    // tier if the total stack budget permits.
+    if (coverageResult.missing.length > 0) {
+      const featureMap = KnowledgeLoader.getFeatureMap();
+      let repaired = false;
+
+      for (const missingKey of coverageResult.missing) {
+        const entry = featureMap.features[missingKey];
+        if (!entry || !entry.planEvidenceTerms) continue;
+
+        // Search active stack profiles for a tool capable of fulfilling this requirement
+        for (const toolProfile of activeStackProfiles) {
+          const capFit = StackCoverageAnalyzer.capabilityFit(toolProfile, entry);
+          if (capFit === null || capFit < entry.minimumScore) continue;
+
+          const entitlingGate = StackCoverageAnalyzer.planGateTierRank(toolProfile, entry);
+          if (entitlingGate === null) continue;
+
+          const entitlingPlan = toolProfile.plans
+            .filter(pl => this.planTierRank(pl) >= entitlingGate && pl.monthlyPricePerSeat > 0 && pl.id !== 'enterprise')
+            .sort((a, b) => a.monthlyPricePerSeat - b.monthlyPricePerSeat)[0];
+
+          if (!entitlingPlan) continue;
+
+          const currentPlan = selectedPlans.get(toolProfile.id);
+          const currentPlanCost = (currentPlan?.monthlyPricePerSeat ?? 0) * teamSize;
+          const newPlanCost = entitlingPlan.monthlyPricePerSeat * teamSize;
+          const newTotalMonthlyCost = totalMonthlyCost - currentPlanCost + newPlanCost;
+
+          const wouldFitBudget = req.monthlyBudget === null || (newTotalMonthlyCost <= req.monthlyBudget);
+
+          if (wouldFitBudget) {
+            selectedPlans.set(toolProfile.id, entitlingPlan);
+            const targetTool = stackTools.find(t => t.toolId === toolProfile.id);
+            if (targetTool) {
+              targetTool.recommendedPlan = entitlingPlan.label;
+              targetTool.monthlyCostPerSeat = entitlingPlan.monthlyPricePerSeat;
+              targetTool.estimatedMonthlyCostPerTeam = Math.round(newPlanCost * 100) / 100;
+            }
+            repaired = true;
+            coverageResult = StackCoverageAnalyzer.analyze(activeStackProfiles, requirements, resolvePlanForCoverage);
+            if (!coverageResult.missing.includes(missingKey)) {
+              break;
+            }
+          }
+        }
+      }
+
+      if (repaired) {
+        // Recalculate totals after entitlement repair
+        totalMonthlyCost = toCents(stackTools.reduce((sum, t) => sum + t.estimatedMonthlyCostPerTeam, 0));
+        totalAnnualCost = toCents(totalMonthlyCost * 12);
+        perSeatMonthlyCost = toCents(stackTools.reduce((sum, t) => sum + t.monthlyCostPerSeat, 0));
+      }
+    }
     const workflowFitScore = Math.round(
       stackTools.reduce((sum, t) => sum + t.workflowFitScore, 0) / stackTools.length
     );
@@ -1522,8 +1729,8 @@ export class AIStackRecommendationEngine {
       );
     }
 
-    // 7-Factor Confidence Score
-    const cfWeights = weights.confidenceWeights || {};
+    // 7-Factor Canonical Stack Audit Score
+    const auditWeights = AIStackRecommendationEngine.getStrategyAuditWeights(strategy, req);
     const workflowMatchFactor = workflowFitScore;
     const featureCoverageFactor = coverageResult.coverageScore;
 
@@ -1538,40 +1745,28 @@ export class AIStackRecommendationEngine {
     }
 
     const capabilitySuperiorityFactor = capabilityCoverageScore;
-    const securityRequest = requirements.includes('enterprise-governance') || strategy === 'enterprise-security';
     const stackAvgSecurity = Math.round(activeStackProfiles.reduce((sum, p) => sum + p.securityScore, 0) / activeStackProfiles.length);
-    const securityMatchFactor = securityRequest ? stackAvgSecurity : 100;
+    // Security & Governance factor is ALWAYS the true measured security score of the stack
+    const securityMatchFactor = stackAvgSecurity;
     const vendorStabilityFactor = Math.round(activeStackProfiles.reduce((sum, p) => sum + p.vendorStabilityScore, 0) / activeStackProfiles.length);
     const futureGrowthFactor = Math.round(activeStackProfiles.reduce((sum, p) => sum + p.futureGrowthScore, 0) / activeStackProfiles.length);
 
-    const qualityScore =
-      workflowMatchFactor * (cfWeights.workflowMatch || 0.30) +
-      featureCoverageFactor * (cfWeights.featureCoverage || 0.25) +
-      budgetFitFactor * (cfWeights.budgetFit || 0.15) +
-      capabilitySuperiorityFactor * (cfWeights.capabilitySuperiority || 0.10) +
-      securityMatchFactor * (cfWeights.securityMatch || 0.10) +
-      vendorStabilityFactor * (cfWeights.vendorStability || 0.05) +
-      futureGrowthFactor * (cfWeights.futureGrowth || 0.05);
+    // Exact, deterministic weighted sum of the 7 audited factors (0-100)
+    const overallScore = Math.min(100, Math.max(0, Math.round(
+      workflowMatchFactor * auditWeights.workflowMatch +
+      featureCoverageFactor * auditWeights.featureCoverage +
+      budgetFitFactor * auditWeights.budgetFit +
+      capabilitySuperiorityFactor * auditWeights.capabilitySuperiority +
+      securityMatchFactor * auditWeights.securityMatch +
+      vendorStabilityFactor * auditWeights.vendorStability +
+      futureGrowthFactor * auditWeights.futureGrowth
+    )));
 
-    // ── Certainty terms (P15) ────────────────────────────────────────────────
-    // The seven factors above measure how GOOD the stack is; on their own they say
-    // nothing about how CERTAIN the choice is, so an 86-vs-86 photo finish used to
-    // report the same ~95% as an 86-vs-60 blowout. Four evidence terms scale it:
-    //
-    //  1. score margin      — the primary's composite lead over the best provider we
-    //                         did not pick, under this stack's own strategy.
-    //  2. data completeness — provenance-verified governance / financial data in the
-    //                         stack (catalogue-wide boilerplate does not count).
-    //  3. benchmark availability — real measured benchmarks behind the performance claim.
-    //  4. governance certainty  — only applied when governance was actually requested.
-    //
-    // A budget constraint that blocks required coverage caps confidence outright: we
-    // cannot be confident in a stack that provably fails a must-have.
-    // The certainty margin measures capability/fit separation only — preference modifiers
-    // are excluded. A graded preference penalty applied to rivals for *unverified* data
-    // (e.g. requireZeroRetention against providers with no published ZDR provenance) would
-    // otherwise widen this margin and raise the confidence score, letting absent evidence
-    // manufacture certainty. Selection still uses the modifier-inclusive composite.
+    const securityRequest = requirements.includes('enterprise-governance')
+      || strategy === 'enterprise-security'
+      || Boolean(req.preferences?.requireZeroRetention);
+
+    // ── Certainty terms (for audit metadata and provenance tracking) ──────────
     const CERTAINTY_MARGIN_OPTS = { includePreferenceModifiers: false } as const;
     let bestRivalComposite = 0;
     for (const cand of allAppProviders) {
@@ -1585,10 +1780,7 @@ export class AIStackRecommendationEngine {
       effectivePrimarySeed, req, weights, strategy, CERTAINTY_MARGIN_OPTS
     );
     const scoreMargin = Math.max(0, Math.round((primaryComposite - bestRivalComposite) * 10) / 10);
-    // A lead inside ±2 composite points is statistical noise given the granularity of
-    // the underlying 0–10 capability vectors; treat it as a tie, not as superiority.
     const statisticalTie = bestRivalComposite > 0 && scoreMargin <= 2;
-    // 0 points of daylight → 0.86; a decisive 12-point lead → 1.00.
     const marginCertainty = 0.86 + Math.min(scoreMargin, 12) * (0.14 / 12);
 
     const stackSize = Math.max(1, activeStackProfiles.length);
@@ -1600,7 +1792,9 @@ export class AIStackRecommendationEngine {
     const dataCertainty = 0.90 + (dataCompleteness / 100) * 0.07 + (benchmarkAvailability / 100) * 0.03;
 
     const governanceCertainty = securityRequest
-      ? 0.88 + (activeStackProfiles.filter(p => p.governanceDataVerified).length / stackSize) * 0.12
+      ? (req.preferences?.requireZeroRetention
+          ? 0.80 + (activeStackProfiles.filter(p => p.governanceDataVerified).length / stackSize) * 0.20
+          : 0.88 + (activeStackProfiles.filter(p => p.governanceDataVerified).length / stackSize) * 0.12)
       : 1;
 
     const budgetCertainty = budgetConstraint ? 0.80 : 1;
@@ -1608,7 +1802,7 @@ export class AIStackRecommendationEngine {
     const certaintyMultiplier = Math.min(1,
       marginCertainty * dataCertainty * governanceCertainty * budgetCertainty);
 
-    const confidenceScore = Math.min(100, Math.max(0, Math.round(qualityScore * certaintyMultiplier)));
+    const confidenceScore = overallScore;
 
     const advantages = this.deriveAdvantages(primaryTool, stackTools.find(t => t.role === 'secondary'), stackTools.find(t => t.role === 'optional'), stackTools.find(t => t.role === 'api'), strategy);
     const tradeoffs = this.deriveTradeoffs(stackTools, req, strategy);
@@ -2481,37 +2675,123 @@ export class AIStackRecommendationEngine {
   }
 
   /**
+   * Evaluates if a provider delivery surface (category) is compatible as the 01 PRIMARY
+   * workhorse for a given domain and requirement set.
+   * Prevents IDE editor-only extensions from becoming the primary workspace assistant
+   * for non-coding teams (Content, Marketing, Legal, Research) unless code tasks are required.
+   */
+  private static isPrimaryRoleCompatibleWithDomain(
+    category: string,
+    domain: string,
+    requirements: string[]
+  ): boolean {
+    if (category !== 'ide') return true;
+    const isCodingDomain = [
+      'software-engineering', 'coding', 'frontend', 'backend', 'fullstack',
+      'ai-engineering', 'data-science', 'ai-data-ml', 'ai-ml'
+    ].includes(domain);
+    if (isCodingDomain) return true;
+
+    // For non-coding domains, only allow IDE as primary if the user explicitly asked for code generation
+    const codingReqs = ['editor-code-generation', 'code-completion', 'code-review'];
+    return requirements.some(r => codingReqs.includes(r));
+  }
+
+  /**
+   * Evaluates hard constraints on a candidate provider.
+   * If a provider fails a mandatory hard constraint (e.g. delivery surface mismatch,
+   * mandatory feature requirement threshold, budget ceiling, or mandatory governance),
+   * it receives eligible = false with explicit disqualification reasons.
+   */
+  public static evaluateCandidateEligibility(
+    p: ScoredProviderProfile,
+    req: StackBuilderRequest,
+    requirements: string[],
+    domain: string
+  ): { eligible: boolean; disqualificationReasons: string[] } {
+    const disqualificationReasons: string[] = [];
+
+    // 1. Delivery Surface Compatibility for Workspace Primary Role
+    if (!this.isPrimaryRoleCompatibleWithDomain(p.category, domain, requirements)) {
+      disqualificationReasons.push(
+        `Delivery surface (${p.category.toUpperCase()}) incompatible with primary workflow for ${DOMAIN_LABELS[domain] || domain}.`
+      );
+    }
+
+    // 2. Hard Budget Ceiling Check (at least one purchasable plan within per-seat allowance)
+    if (!this.isProviderFitForIndividualBudget(p, req)) {
+      disqualificationReasons.push(`Exceeds monthly budget ceiling for ${req.teamSize} seats.`);
+    }
+
+    // 3. Mandatory Requirement Capability Gating (Derived directly from feature-map.json)
+    const featureMap = KnowledgeLoader.getFeatureMap();
+    for (const reqKey of requirements) {
+      const entry = featureMap.features[reqKey];
+      if (!entry || entry.availability === 'unsupported' || entry.satisfiedByRole === 'api-layer') continue;
+
+      // Delivery surface capability prerequisite check (e.g. ideIntegration >= 5)
+      if (entry.requiresCapability) {
+        const capVal = p.capabilityVector[entry.requiresCapability.key] ?? 0;
+        if (capVal < entry.requiresCapability.minimumScore) {
+          disqualificationReasons.push(
+            `Missing required capability '${entry.requiresCapability.key}' (scored ${capVal}/10 vs minimum ${entry.requiresCapability.minimumScore}/10) for ${entry.label}.`
+          );
+        }
+      }
+
+      // Explicit category exclusions (e.g. chat-interface excludes 'api')
+      if (entry.excludesCategories && entry.excludesCategories.includes(p.category)) {
+        disqualificationReasons.push(
+          `Category '${p.category}' is structurally excluded for ${entry.label}.`
+        );
+      }
+
+      // If governance requirement is mandatory, check capability threshold
+      if (reqKey === 'enterprise-governance') {
+        const fit = StackCoverageAnalyzer.capabilityFit(p, entry);
+        if (fit === null || fit < entry.minimumScore) {
+          disqualificationReasons.push(
+            `Fails enterprise governance minimum threshold (${fit ?? 0}/10 vs minimum ${entry.minimumScore}/10).`
+          );
+        }
+      }
+    }
+
+    // 4. Mandatory Zero Retention / Governance mandate check
+    if (req.preferences?.requireZeroRetention && !p.governanceDataVerified) {
+      const secEvidence = p.capabilityVector['enterpriseSecurity'] ?? 0;
+      if (secEvidence < 7) {
+        disqualificationReasons.push(
+          `Cannot satisfy mandatory Zero Data Retention due to insufficient verifiable enterprise security evidence.`
+        );
+      }
+    }
+
+    return {
+      eligible: disqualificationReasons.length === 0,
+      disqualificationReasons
+    };
+  }
+
+  /**
    * Restricts a ranked pool to the providers that can *lead a stack* reaching the maximum
    * attainable FULL coverage of the stated requirements, among those the budget can buy.
-   *
-   * Coverage is measured for the candidate plus its best single complement from the same
-   * pool, not for the candidate alone. That distinction is the whole point: what ships to
-   * the user is a stack with a 02 SECONDARY slot, so demanding that one provider solo-cover
-   * every requirement gates on something the product never promised. Measured effect of the
-   * solo form: checking the wizard's first requirement (in-editor generation) reduced the
-   * eligible primary pool to the four providers with an editor surface and decided the
-   * answer before composite scoring ran, and because the primary always solo-covered
-   * everything the companion was then suppressed as redundant — no secondary was emitted in
-   * any of 1,664 measured scenarios.
-   *
-   * Mandatory coverage remains a GATE rather than one weighted factor: a required capability
-   * no reachable stack provides is not "slightly worse", it is ineligible while a covering
-   * alternative exists. The P10 monotonicity guarantee also survives, because the affordable
-   * pool only grows as the ceiling rises, so max attainable coverage is still monotonically
-   * non-decreasing in the budget.
-   *
-   * With no requirements stated, or when nothing is affordable, the pool passes through
-   * untouched so ordinary composite ranking still applies.
+   * Enforces hard eligibility constraints and domain delivery surface affinity.
    */
   private static gateByMandatoryCoverage(
     pool: ScoredProviderProfile[],
     req: StackBuilderRequest,
     requirements: string[]
   ): ScoredProviderProfile[] {
-    if (requirements.length === 0 || pool.length === 0) return pool;
+    if (pool.length === 0) return pool;
 
-    const affordable = pool.filter(p => this.isProviderFitForIndividualBudget(p, req));
-    const considered = affordable.length > 0 ? affordable : pool;
+    const domain = req.domain || req.primaryWorkflow || 'general-productivity';
+    
+    // Evaluate hard eligibility on all candidates
+    const eligiblePool = pool.filter(p => this.evaluateCandidateEligibility(p, req, requirements, domain).eligible);
+    const considered = eligiblePool.length > 0 ? eligiblePool : pool;
+
+    if (requirements.length === 0) return considered;
 
     const soloCoverage = new Map<string, number>();
     for (const p of considered) {
@@ -2788,42 +3068,129 @@ export class AIStackRecommendationEngine {
 
     let rawScore = 0;
 
-    // REAL DIVERGENT STRATEGY SCORING OBJECTIVES
+    const goal = req.optimizationGoal;
+
+    // REAL DIVERGENT STRATEGY SCORING OBJECTIVES WITH OPTIMIZATION GOAL MODULATION
     if (strategy === 'best-value') {
       // Best Value: Cost 40%, Requirement Coverage 25%, Domain Fit 15%, Productivity 10%, Performance 10%
+      let costWeight = 0.40;
+      let reqWeight = 0.25;
+      let domainWeight = 0.15;
+      let growthWeight = 0.10;
+      let perfWeight = 0.10;
+
+      if (goal === 'savings') {
+        costWeight += 0.08;
+        perfWeight = Math.max(0.04, perfWeight - 0.04);
+        growthWeight = Math.max(0.04, growthWeight - 0.04);
+      } else if (goal === 'productivity') {
+        costWeight = Math.max(0.28, costWeight - 0.10);
+        perfWeight += 0.05;
+        growthWeight += 0.05;
+      } else if (goal === 'governance') {
+        costWeight = Math.max(0.28, costWeight - 0.10);
+        reqWeight += 0.05;
+        domainWeight += 0.05;
+      }
+
       rawScore = this.weightedScore([
-        { value: costEffScore, weight: 0.40 },
-        { value: reqCapabilityScore, weight: 0.25 },
-        { value: domainScore, weight: 0.15 },
-        { value: p.futureGrowthScore, weight: 0.10 },
-        { value: capabilityScore, weight: 0.10 }
+        { value: costEffScore, weight: costWeight },
+        { value: reqCapabilityScore, weight: reqWeight },
+        { value: domainScore, weight: domainWeight },
+        { value: p.futureGrowthScore, weight: growthWeight },
+        { value: capabilityScore, weight: perfWeight }
       ]);
     } else if (strategy === 'max-performance') {
       // Max Performance: Benchmarks 35%, Requirement Coverage 25%, Reasoning 20%, Domain Fit 15%, Cost 5%
+      let benchWeight = 0.35;
+      let reqWeight = 0.25;
+      let reasonWeight = 0.20;
+      let domainWeight = 0.15;
+      let costWeight = 0.05;
+
+      if (goal === 'savings') {
+        costWeight += 0.08;
+        benchWeight = Math.max(0.25, benchWeight - 0.04);
+        reasonWeight = Math.max(0.15, reasonWeight - 0.04);
+      } else if (goal === 'productivity') {
+        benchWeight += 0.05;
+        reasonWeight += 0.05;
+        costWeight = Math.max(0.02, costWeight - 0.03);
+      } else if (goal === 'governance') {
+        reqWeight += 0.05;
+        benchWeight = Math.max(0.25, benchWeight - 0.05);
+      }
+
       rawScore = this.weightedScore([
-        { value: benchmarkScore, weight: 0.35 },
-        { value: reqCapabilityScore, weight: 0.25 },
-        { value: p.reasoningScore, weight: 0.20 },
-        { value: domainScore, weight: 0.15 },
-        { value: costEffScore, weight: 0.05 }
+        { value: benchmarkScore, weight: benchWeight },
+        { value: reqCapabilityScore, weight: reqWeight },
+        { value: p.reasoningScore, weight: reasonWeight },
+        { value: domainScore, weight: domainWeight },
+        { value: costEffScore, weight: costWeight }
       ]);
     } else if (strategy === 'enterprise-security') {
-      // Enterprise Security: Security / Governance 35%, Requirement Coverage 25%, Vendor Stability 15%, Domain Fit 15%, Cost 10%
+      // Enterprise Security: Security / Governance 50%, Requirement Coverage 20%, Vendor Stability 15%, Domain Fit 10%, Cost 5%
+      let secWeight = 0.50;
+      let reqWeight = 0.20;
+      let stabWeight = 0.15;
+      let domainWeight = 0.10;
+      let costWeight = 0.05;
+
+      if (goal === 'savings') {
+        costWeight = 0.12;
+        secWeight = 0.42;
+        stabWeight = 0.14;
+        reqWeight = 0.20;
+        domainWeight = 0.12;
+      } else if (goal === 'productivity') {
+        domainWeight = 0.18;
+        secWeight = 0.45;
+        stabWeight = 0.15;
+        reqWeight = 0.17;
+        costWeight = 0.05;
+      } else if (goal === 'governance') {
+        secWeight = 0.60;
+        stabWeight = 0.18;
+        reqWeight = 0.12;
+        domainWeight = 0.05;
+        costWeight = 0.05;
+      }
+
       rawScore = this.weightedScore([
-        { value: p.securityScore, weight: 0.35 },
-        { value: reqCapabilityScore, weight: 0.25 },
-        { value: stabScore, weight: 0.15 },
-        { value: domainScore, weight: 0.15 },
-        { value: costEffScore, weight: 0.10 }
+        { value: p.securityScore, weight: secWeight },
+        { value: reqCapabilityScore, weight: reqWeight },
+        { value: stabScore, weight: stabWeight },
+        { value: domainScore, weight: domainWeight },
+        { value: costEffScore, weight: costWeight }
       ]);
     } else {
       // Balanced: Domain Fit 25%, Requirement Coverage 25%, Performance 20%, Productivity 15%, Cost 15%
+      let domainWeight = 0.25;
+      let reqWeight = 0.25;
+      let benchWeight = 0.20;
+      let growthWeight = 0.15;
+      let costWeight = 0.15;
+
+      if (goal === 'savings') {
+        costWeight += 0.10;
+        benchWeight = Math.max(0.12, benchWeight - 0.05);
+        growthWeight = Math.max(0.10, growthWeight - 0.05);
+      } else if (goal === 'productivity') {
+        growthWeight += 0.06;
+        domainWeight += 0.04;
+        costWeight = Math.max(0.08, costWeight - 0.07);
+      } else if (goal === 'governance') {
+        reqWeight += 0.05;
+        domainWeight += 0.05;
+        costWeight = Math.max(0.08, costWeight - 0.05);
+      }
+
       rawScore = this.weightedScore([
-        { value: domainScore, weight: 0.25 },
-        { value: reqCapabilityScore, weight: 0.25 },
-        { value: benchmarkScore, weight: 0.20 },
-        { value: p.futureGrowthScore, weight: 0.15 },
-        { value: costEffScore, weight: 0.15 }
+        { value: domainScore, weight: domainWeight },
+        { value: reqCapabilityScore, weight: reqWeight },
+        { value: benchmarkScore, weight: benchWeight },
+        { value: p.futureGrowthScore, weight: growthWeight },
+        { value: costEffScore, weight: costWeight }
       ]);
     }
 

@@ -17,6 +17,7 @@ import {
 } from '../utils/formatters';
 import Logo from '../components/Logo';
 import OfferNotificationBell from '../components/OfferNotificationBell';
+import { getUserScopedKey } from '../utils/userSession';
 
 
 interface ReAuditDiffPageProps {
@@ -224,7 +225,7 @@ export default function ReAuditDiffPage({
 
   const isOwner = !!(
     _isOwner ||
-    (id && localStorage.getItem(`owned_${id}`) === 'true')
+    (id && localStorage.getItem(getUserScopedKey(`owned_${id}`)) === 'true')
   );
   const [reAuditing, setReAuditing] = useState(false);
 
@@ -233,7 +234,11 @@ export default function ReAuditDiffPage({
     setReAuditing(true);
     try {
       const result = await triggerReAudit(id);
-      localStorage.setItem(`owned_${result.newAuditId}`, 'true');
+      // Mark re-audit as owned by this user session (user-scoped, not global)
+      localStorage.setItem(getUserScopedKey(`owned_${result.newAuditId}`), 'true');
+      if (result.ownerToken) {
+        localStorage.setItem(getUserScopedKey(`audit_token_${result.newAuditId}`), result.ownerToken);
+      }
       navigate(`/audit/${result.newAuditId}/diff`, { state: { isOwner: true } });
     } catch (err) {
       console.error(err);

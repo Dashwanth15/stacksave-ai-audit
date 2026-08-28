@@ -225,7 +225,7 @@ export function generateAuditPDF(audit: AuditResult, strategy: 'performance' | '
   addText(companyDisplay + ' · Team Size: ' + audit.teamSize, margin, yPosition, 8, mutedColor);
   yPosition += 6;
 
-  addText('Powered by Credex · Discounted AI Infrastructure Credits', margin, yPosition, 8, mutedColor);
+  addText('StackSave · AI Spend Intelligence Platform', margin, yPosition, 8, mutedColor);
 
   // ── SAVE PDF ────────────────────────────────────────────────
   const auditIdSafe = audit.auditId || 'draft';
@@ -449,7 +449,7 @@ export function generateReAuditDiffPDF(oldAudit: AuditResult, newAudit: AuditRes
   yPosition += 4;
   addText(`Company: ${newAudit.companyName || 'Your Company'}  ·  Team Size: ${newAudit.teamSize}`, margin, yPosition, 8, mutedColor);
   yPosition += 6;
-  addText('Powered by Credex · Discounted AI Infrastructure Credits', margin, yPosition, 8, mutedColor);
+  addText('StackSave · AI Spend Intelligence Platform', margin, yPosition, 8, mutedColor);
 
   // ── SAVE PDF ────────────────────────────────────────────────
   const fileName = `stacksave-reaudit-comparison-${newAudit.auditId.slice(0, 8)}.pdf`;

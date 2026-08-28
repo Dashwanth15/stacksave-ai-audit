@@ -57,7 +57,7 @@ export default function NotFoundPage() {
             className="px-6 py-3 rounded-xl font-semibold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all"
             aria-label="Start a new audit"
           >
-            Start Free Audit →
+            Audit My Existing Stack →
           </m.button>
         </div>
       </m.div>

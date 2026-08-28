@@ -114,6 +114,7 @@ export interface AuditResult {
   isLatestVersion?: boolean;
   auditVersion?: number;
   allVersions?: AuditVersionInfo[];
+  ownerToken?: string;
 }
 
 export interface LeadCaptureRequest {
@@ -298,6 +299,8 @@ export interface StackBuilderRequest {
   engineeringFocus?: string[];
   primaryWorkflow?: string;
   mustHaveFeatures?: string[];
+  /** Secondary scoring modifier that shifts weight distribution within the chosen strategy. */
+  optimizationGoal?: 'savings' | 'balanced' | 'productivity' | 'governance';
   preferences: {
     preferOpenSource: boolean;
     avoidLockIn: boolean;
@@ -528,6 +531,8 @@ export interface UserContextSummary {
   strategy: StackStrategy;
   strategyLabel: string;
   requirementCount: number;
+  optimizationGoal?: 'savings' | 'balanced' | 'productivity' | 'governance';
+  optimizationGoalLabel?: string;
 }
 
 export interface StackRecommendation {

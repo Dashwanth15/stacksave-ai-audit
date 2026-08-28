@@ -212,6 +212,47 @@ export const STEPS: WizardStep[] = [
   { n: 4, key: 'strategy', numeral: '04', eyebrow: 'Strategy & governance', title: 'Your procurement stance' },
 ];
 
+export type OptimizationGoal = 'savings' | 'balanced' | 'productivity' | 'governance';
+
+export interface OptimizationGoalOption {
+  id: OptimizationGoal;
+  title: string;
+  subtitle: string;
+  badge: string;
+  iconPath: string;
+}
+
+export const OPTIMIZATION_GOAL_OPTIONS: OptimizationGoalOption[] = [
+  {
+    id: 'balanced',
+    title: 'Balanced Workflow',
+    subtitle: 'Standard balance between daily efficiency, tool synergy, and reasonable cost.',
+    badge: 'Balanced',
+    iconPath: 'M12 3v18m-8-6l8 6 8-6M4 9l8-6 8 6',
+  },
+  {
+    id: 'savings',
+    title: 'Cost Reduction',
+    subtitle: 'Aggressively cut seat spend and prioritize high capability-to-cost ratio tools.',
+    badge: 'Max Savings',
+    iconPath: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2m0-8c1.11 0 2.08.402 2.599 1M12 16c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+  },
+  {
+    id: 'productivity',
+    title: 'Maximum Productivity',
+    subtitle: 'Prioritize throughput, frontier model reasoning, and speed over seat price.',
+    badge: 'High Velocity',
+    iconPath: 'M13 10V3L4 14h7v7l9-11h-7z',
+  },
+  {
+    id: 'governance',
+    title: 'Strict Governance',
+    subtitle: 'Enforce enterprise security posture, strict compliance, and audit readiness.',
+    badge: 'Enterprise',
+    iconPath: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+  },
+];
+
 // ── Display-only lookup helpers (never sent to the backend) ──
 export const domainTitle = (id: string): string =>
   DOMAIN_OPTIONS.find((d) => d.id === id)?.title ?? '';
@@ -221,4 +262,8 @@ export const strategyTitle = (id: StackStrategy): string =>
 
 export const strategyFocus = (id: StackStrategy): string =>
   STRATEGY_OPTIONS.find((s) => s.id === id)?.focus ?? '';
+
+export const optimizationGoalTitle = (id: OptimizationGoal): string =>
+  OPTIMIZATION_GOAL_OPTIONS.find((g) => g.id === id)?.title ?? '';
+
 

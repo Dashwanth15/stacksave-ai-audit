@@ -18,6 +18,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
+import { getUserSessionItem } from '../utils/userSession';
 import type {
   StackRecommendation,
   CategoryResult,
@@ -31,6 +32,8 @@ import OfferNotificationBell from '../components/OfferNotificationBell';
 import ProcurementIntelligenceDrawer from '../components/intelligence/ProcurementIntelligenceDrawer';
 import type { DrawerSelection } from '../components/intelligence/ProcurementIntelligenceDrawer';
 import RecommendationReveal, { getProviderRole } from '../components/build-stack/RecommendationReveal';
+
+import ConfigurationReveal from '../components/build-stack/ConfigurationReveal';
 
 type StrategyKey = 'bestOverall' | 'bestValue' | 'bestPerformance' | 'bestEnterprise';
 
@@ -77,7 +80,8 @@ const STRATEGY_CONFIGS: StrategyTabConfig[] = [
 export default function BuildStackResultsPage() {
   const navigate = useNavigate();
   const [rec] = useState<StackRecommendation | null>(() => {
-    const raw = sessionStorage.getItem('stackRecommendation');
+    // Read from user-scoped session storage so it doesn't bleed across users
+    const raw = getUserSessionItem('stackRecommendation');
     if (!raw) return null;
     try { return JSON.parse(raw) as StackRecommendation; } catch { return null; }
   });
@@ -179,6 +183,7 @@ export default function BuildStackResultsPage() {
       `STACKSAVE AI PROCUREMENT SPECIFICATION — EXECUTIVE BRIEF`,
       `============================================================`,
       `Domain Workflow : ${context?.domainLabel || 'Custom Workflow'}`,
+      ...(context?.optimizationGoalLabel ? [`Optimization Goal: ${context.optimizationGoalLabel}`] : []),
       `Team Scale      : ${teamSize} Seats`,
       `Procurement Goal: ${currentCategory?.title || selectedStrategyKey}`,
       `Monthly Spend   : $${activeStack.estimatedMonthlyCost.toLocaleString()}/mo ($${activeStack.perSeatMonthlyCost}/seat/mo)`,
@@ -320,38 +325,118 @@ export default function BuildStackResultsPage() {
                 Your Recommended AI Stack
               </h1>
 
-              {context && (
-                <div className="mt-3.5 flex items-stretch gap-0 divide-x divide-slate-200 border border-slate-200/90 rounded-xl overflow-hidden bg-white w-fit shadow-xs">
-                  <div className="px-4 py-2.5">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 block leading-none mb-1.5">Operating Domain</span>
-                    <span className="text-[14px] font-extrabold text-slate-950 leading-none">{context.domainLabel}</span>
+              {context && (() => {
+                const traceInputs = rec.trace && typeof rec.trace === 'object' && 'inputs' in rec.trace
+                  ? (rec.trace as any).inputs
+                  : null;
+                const selectedReqs: string[] = traceInputs?.requirements ?? [];
+
+                return (
+                  <div className="mt-3.5 space-y-2.5">
+                    {/* ── Compact config grid ── */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-slate-200/90 border border-slate-200/90 rounded-xl overflow-hidden shadow-2xs">
+                      {/* Operating Domain */}
+                      <div className="flex items-start gap-2.5 px-3.5 sm:px-4 py-3 bg-white">
+                        <div className="mt-0.5 shrink-0 text-slate-500">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <circle cx="12" cy="12" r="6" />
+                            <circle cx="12" cy="12" r="2" />
+                          </svg>
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block leading-none mb-1.5">Operating Domain</span>
+                          <span className="text-[14px] sm:text-[15px] font-bold text-slate-950 leading-snug block">{context.domainLabel}</span>
+                        </div>
+                      </div>
+
+                      {/* Optimization Goal */}
+                      {context.optimizationGoalLabel && (
+                        <div className="flex items-start gap-2.5 px-3.5 sm:px-4 py-3 bg-white">
+                          <div className="mt-0.5 shrink-0 text-slate-500">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                            </svg>
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block leading-none mb-1.5">Optimization Goal</span>
+                            <span className="text-[14px] sm:text-[15px] font-bold text-slate-950 leading-snug block">{context.optimizationGoalLabel}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Team Scale */}
+                      <div className="flex items-start gap-2.5 px-3.5 sm:px-4 py-3 bg-white">
+                        <div className="mt-0.5 shrink-0 text-slate-500">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                          </svg>
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block leading-none mb-1.5">Team Scale</span>
+                          <span className="text-[14px] sm:text-[15px] font-bold text-slate-950 leading-snug tabular-nums block">{teamSize} {teamSize === 1 ? 'Seat' : 'Seats'}</span>
+                        </div>
+                      </div>
+
+                      {/* Monthly Budget */}
+                      <div className="flex items-start gap-2.5 px-3.5 sm:px-4 py-3 bg-white">
+                        <div className="mt-0.5 shrink-0 text-slate-500">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect width="20" height="14" x="2" y="5" rx="2" />
+                            <line x1="2" x2="22" y1="10" y2="10" />
+                          </svg>
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block leading-none mb-1.5">Monthly Budget</span>
+                          <span className="text-[14px] sm:text-[15px] font-bold text-slate-950 leading-snug tabular-nums block">{context.budgetFormatted}</span>
+                        </div>
+                      </div>
+
+                      {/* Requirements count */}
+                      <div className="flex items-start gap-2.5 px-3.5 sm:px-4 py-3 bg-white">
+                        <div className="mt-0.5 shrink-0 text-slate-500">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 11 12 14 22 4" />
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                          </svg>
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block leading-none mb-1.5">Requirements</span>
+                          <span className="text-[14px] sm:text-[15px] font-bold text-slate-950 leading-snug tabular-nums block">{context.requirementCount} Selected</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Selected requirements inline list ── */}
+                    {selectedReqs.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 pt-0.5 px-0.5">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 shrink-0">Selected:</span>
+                        {selectedReqs.map((req: string, idx: number) => (
+                          <span key={idx} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            <span className="capitalize">{req.replace(/-/g, ' ')}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="px-4 py-2.5">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 block leading-none mb-1.5">Team Scale</span>
-                    <span className="text-[14px] font-extrabold text-slate-950 leading-none tabular-nums">{teamSize} {teamSize === 1 ? 'Seat' : 'Seats'}</span>
-                  </div>
-                  <div className="px-4 py-2.5">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 block leading-none mb-1.5">Monthly Budget</span>
-                    <span className="text-[14px] font-extrabold text-slate-950 leading-none tabular-nums">{context.budgetFormatted}</span>
-                  </div>
-                  <div className="px-4 py-2.5">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 block leading-none mb-1.5">Your Requirements</span>
-                    <span className="text-[14px] font-extrabold text-slate-950 leading-none tabular-nums">{context.requirementCount} Specified</span>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
 
-            {/* Dark hero metrics panel */}
+            {/* Light hero metrics panels */}
             <m.div
-              initial={{ opacity: 0, scale: 0.97 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: 0.08, ease: 'easeOut' }}
-              className="flex items-stretch gap-0 divide-x divide-white/10 rounded-2xl overflow-hidden shrink-0 shadow-lg border border-slate-900"
-              style={{ background: 'linear-gradient(135deg, #0A1320 0%, #152A45 50%, #1E3A5F 100%)' }}
+              transition={{ duration: 0.35, delay: 0.08, ease: 'easeOut' }}
+              className="flex items-stretch gap-0 divide-x divide-slate-200/90 rounded-2xl overflow-hidden shrink-0 shadow-2xs border border-slate-200/90 bg-white"
             >
-              <div className="px-6 py-4.5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/50 block leading-none mb-2">
+              {/* Total Team Spend */}
+              <div className="px-5 sm:px-6 py-4 flex flex-col justify-between min-w-[170px]">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block leading-none mb-2">
                   Total Team Spend
                 </span>
                 <AnimatePresence mode="wait">
@@ -361,21 +446,23 @@ export default function BuildStackResultsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.2 }}
-                    className="flex items-baseline gap-0.5"
+                    className="flex items-baseline gap-1"
                   >
-                    <span className="text-sm font-bold text-white/50 mr-0.5">$</span>
-                    <span className="text-[2rem] font-bold text-white leading-none tabular-nums font-sans">
+                    <span className="text-base font-bold text-slate-400">$</span>
+                    <span className="text-[1.85rem] sm:text-3xl font-black text-slate-950 leading-none tabular-nums font-sans">
                       {activeStack.estimatedMonthlyCost.toLocaleString()}
                     </span>
-                    <span className="text-sm text-white/40 ml-0.5">/mo</span>
+                    <span className="text-xs sm:text-sm font-semibold text-slate-500">/mo</span>
                   </m.div>
                 </AnimatePresence>
-                <span className="text-[11.5px] text-white/60 block mt-1.5 tabular-nums font-medium">
+                <span className="text-xs text-slate-500 block mt-2 tabular-nums font-medium">
                   ${activeStack.perSeatMonthlyCost}/seat/mo · ${activeStack.estimatedAnnualCost.toLocaleString()}/yr
                 </span>
               </div>
-              <div className="px-6 py-4.5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/50 block leading-none mb-2">
+
+              {/* Stack Fit */}
+              <div className="px-5 sm:px-6 py-4 flex flex-col justify-between min-w-[160px]">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block leading-none mb-2">
                   Stack Fit
                 </span>
                 <AnimatePresence mode="wait">
@@ -385,24 +472,35 @@ export default function BuildStackResultsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.2 }}
-                    className="text-[2rem] font-bold text-emerald-400 leading-none tabular-nums block font-sans"
+                    className="text-[1.85rem] sm:text-3xl font-black text-emerald-600 leading-none tabular-nums block font-sans"
                   >
                     {activeStack.confidenceScore}%
                   </m.span>
                 </AnimatePresence>
-                <span className="text-[11.5px] text-emerald-400 font-semibold block mt-1.5 tabular-nums">
-                  {activeStack.coverageResult.coverageScore}% Requirements Met
+                <span className="text-xs text-slate-600 font-medium block mt-2 tabular-nums">
+                  <span className="text-emerald-600 font-bold">{activeStack.coverageResult.coverageScore}%</span> Requirements Met
                 </span>
               </div>
             </m.div>
           </div>
         </m.div>
 
+        {/* ── Audited Configuration: Show Real User Inputs ── */}
+        <m.section
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.08, ease: 'easeOut' }}
+        >
+          <ConfigurationReveal trace={rec.trace} />
+        </m.section>
+
+
+
         {/* ── Strategy Command Hub: Segmented Navigation Rail (160ms stagger) ── */}
         <m.section
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.16, ease: 'easeOut' }}
+          transition={{ duration: 0.35, delay: 0.20, ease: 'easeOut' }}
           className="space-y-3.5"
         >
           <div className="flex items-center justify-between">
@@ -1085,13 +1183,32 @@ function ProviderRoleBadge({
   const isSecondary = role.variant === 'secondary';
   const isApi = role.variant === 'api';
 
-  const badgeBg = isPrimary
-    ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
-    : isSecondary
-      ? 'bg-slate-800 text-white border-slate-800'
-      : isApi
-        ? 'bg-indigo-900 text-white border-indigo-900'
-        : 'bg-slate-700 text-white border-slate-700';
+  // PREMIUM PICK for primary: dark emerald gradient (emerald-600 to emerald-700) + star icon
+  if (isPrimary) {
+    return (
+      <div className="flex items-center gap-2">
+        <span
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-emerald-700 text-xs font-black tracking-wider uppercase shadow-md text-white"
+          style={{
+            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)'
+          }}
+        >
+          <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+          <span className="opacity-70 text-[10px] font-mono tracking-normal">{role.index}</span>
+          <span className="w-0.5 h-0.5 rounded-full bg-white/60" />
+          <span className="text-[11px] font-bold">PREMIUM PICK</span>
+        </span>
+      </div>
+    );
+  }
+
+  const badgeBg = isSecondary
+    ? 'bg-slate-800 text-white border-slate-800'
+    : isApi
+      ? 'bg-indigo-900 text-white border-indigo-900'
+      : 'bg-slate-700 text-white border-slate-700';
 
   return (
     <div className="flex items-center gap-2">
@@ -1151,22 +1268,25 @@ function PrimaryRecommendationCard({
         </div>
 
         {/* Compact Structured pricing block */}
-        <div className="text-right shrink-0 bg-slate-50 border border-slate-200/90 rounded-lg px-3.5 py-2 shadow-2xs">
+        <div className="text-right shrink-0 bg-white border border-slate-200/90 rounded-lg px-3.5 py-2.5 shadow-xs">
           <div className="flex items-baseline justify-end gap-1">
-            <span className="text-xl sm:text-2xl font-black text-slate-950 leading-none tabular-nums font-sans">
+            <span className="text-2xl sm:text-[1.75rem] font-black text-slate-950 leading-none tabular-nums font-sans">
               ${tool.monthlyCostPerSeat}
             </span>
-            <span className="text-[11px] font-bold text-slate-500">/user/mo</span>
+            <span className="text-xs font-bold text-slate-400">/user/mo</span>
           </div>
-          <span className="text-[11px] font-medium text-slate-600 block mt-0.5 tabular-nums">
-            ${(tool.estimatedMonthlyCostPerTeam || tool.monthlyCostPerSeat * teamSize).toLocaleString()}/mo ({teamSize} {teamSize === 1 ? 'seat' : 'seats'})
+          <span className="text-[10.5px] font-medium text-slate-500 block mt-1 tabular-nums">
+            ${(tool.estimatedMonthlyCostPerTeam || tool.monthlyCostPerSeat * teamSize).toLocaleString()}/mo team
           </span>
         </div>
       </div>
 
       {/* Compact Grey Information Panel */}
       {(tool.whyRecommended || (tool.featuresCovered && tool.featuresCovered.length > 0)) && (
-        <div className="mt-3 p-3.5 sm:p-4 rounded-xl bg-slate-50 border border-slate-200/90 shadow-2xs space-y-2.5">
+        <div className="mt-3 p-3.5 sm:p-4 rounded-xl border-l-4 border-l-emerald-500 space-y-2.5" style={{
+          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          boxShadow: '0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 6px -2px rgba(15, 23, 42, 0.08)'
+        }}>
           <div className="flex items-center justify-between gap-2 flex-wrap border-b border-slate-200/60 pb-2">
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1E3A5F]" />
@@ -1296,22 +1416,25 @@ function SecondaryRecommendationCard({
         </div>
 
         {/* Compact Structured pricing block */}
-        <div className="text-right shrink-0 bg-slate-50 border border-slate-200/90 rounded-lg px-3.5 py-2 shadow-2xs">
+        <div className="text-right shrink-0 bg-white border border-slate-200/90 rounded-lg px-3.5 py-2.5 shadow-xs">
           <div className="flex items-baseline justify-end gap-1">
-            <span className="text-xl sm:text-2xl font-black text-slate-950 leading-none tabular-nums font-sans">
+            <span className="text-2xl sm:text-[1.75rem] font-black text-slate-950 leading-none tabular-nums font-sans">
               ${tool.monthlyCostPerSeat}
             </span>
-            <span className="text-[11px] font-bold text-slate-500">/user/mo</span>
+            <span className="text-xs font-bold text-slate-400">/user/mo</span>
           </div>
-          <span className="text-[11px] font-medium text-slate-600 block mt-0.5 tabular-nums">
-            ${(tool.estimatedMonthlyCostPerTeam || tool.monthlyCostPerSeat * teamSize).toLocaleString()}/mo ({teamSize} {teamSize === 1 ? 'seat' : 'seats'})
+          <span className="text-[10.5px] font-medium text-slate-500 block mt-1 tabular-nums">
+            ${(tool.estimatedMonthlyCostPerTeam || tool.monthlyCostPerSeat * teamSize).toLocaleString()}/mo team
           </span>
         </div>
       </div>
 
       {/* Compact Grey Information Panel */}
       {(tool.whyRecommended || (tool.featuresCovered && tool.featuresCovered.length > 0)) && (
-        <div className="mt-3 p-3.5 sm:p-4 rounded-xl bg-slate-50 border border-slate-200/90 shadow-2xs space-y-2.5">
+        <div className="mt-3 p-3.5 sm:p-4 rounded-xl border-l-4 border-l-slate-400 space-y-2.5" style={{
+          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          boxShadow: '0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 6px -2px rgba(15, 23, 42, 0.08)'
+        }}>
           <div className="flex items-center justify-between gap-2 flex-wrap border-b border-slate-200/60 pb-2">
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />

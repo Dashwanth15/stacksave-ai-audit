@@ -100,7 +100,7 @@ export interface AuditResult {
   estimatedAnnualSavings: number;
   savingsPercentage: number;
   isAlreadyOptimal: boolean;       // savings < $20/mo
-  isHighSavings: boolean;          // savings > $500/mo → show Credex CTA
+  isHighSavings: boolean;          // savings > $500/mo (high-tier opportunity)
   insights: Insight[];
   aiSummary: string;
   aiSummarySavings?: string;
@@ -112,6 +112,7 @@ export interface AuditResult {
   useCase?: UseCase;
   optimizationGoal?: 'savings' | 'balanced' | 'productivity' | 'governance';
   billingCycle?: 'monthly' | 'annual'; // billing period used in this audit
+  ownerToken?: string; // One-time capability token issued to audit creator
 }
 
 // --- API Response Shapes ---

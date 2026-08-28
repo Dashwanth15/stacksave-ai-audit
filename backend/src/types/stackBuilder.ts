@@ -26,6 +26,7 @@ export interface StackBuilderRequest {
   engineeringFocus?: string[];
   primaryWorkflow?: string;
   mustHaveFeatures?: string[];
+  optimizationGoal?: 'savings' | 'balanced' | 'productivity' | 'governance';
   preferences: {
     preferOpenSource: boolean;
     avoidLockIn: boolean;
@@ -312,6 +313,40 @@ export interface ProviderScoreTrace {
   statisticalTie?: boolean;
 }
 
+export interface CandidateAuditTrace {
+  providerId: string;
+  providerName: string;
+  category: 'ide' | 'chat' | 'api' | 'search';
+  eligible: boolean;
+  disqualificationReasons: string[];
+  rawDimensionScores: {
+    security: number;
+    enterprise: number;
+    compliance: number;
+    reasoning: number;
+    coding: number;
+    writing: number;
+    research: number;
+    domainSuitability: number;
+    vendorStability: number;
+    costEfficiency: number;
+    futureGrowth: number;
+  };
+  objectiveScores: {
+    overall: number;
+    bestValue: number;
+    maxPerformance: number;
+    enterpriseSecurity: number;
+  };
+  weightedContributions: Record<string, number>;
+  categoryRanks: {
+    overall: number;
+    bestValue: number;
+    maxPerformance: number;
+    enterpriseSecurity: number;
+  };
+}
+
 export interface RecommendationTrace {
   requestId: string;
   timestamp: string;
@@ -322,6 +357,7 @@ export interface RecommendationTrace {
     monthlyBudget: number | null;
     requirements: string[];
     strategy: string;
+    optimizationGoal?: string;
     preferences: Record<string, unknown>;
   };
   domainResolution?: {
@@ -347,6 +383,7 @@ export interface RecommendationTrace {
     isCandidatePoolMember: boolean;
     isEligible: boolean;
   }>;
+  candidateAudit?: CandidateAuditTrace[];
   allProviderScores: ProviderScoreTrace[];
   rejectedProviders: Array<{
     providerId: string;
@@ -368,6 +405,8 @@ export interface UserContextSummary {
   strategy: StackStrategy;
   strategyLabel: string;
   requirementCount: number;
+  optimizationGoal?: 'savings' | 'balanced' | 'productivity' | 'governance';
+  optimizationGoalLabel?: string;
 }
 
 // ── Final Recommendation Result ──────────────────────────────────────────────

@@ -2,12 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { TOOLS, USE_CASES } from '../data/tools';
-import { useLocalStorage } from '../hooks/useLocalStorage';
 import { submitAudit, fetchAudit } from '../services/api';
 import type { ToolEntry, UseCase, AuditRequest } from '../types';
 import Logo from '../components/Logo';
 import ToolBrowser from '../components/ToolBrowser';
 import OfferNotificationBell from '../components/OfferNotificationBell';
+import { getUserScopedKey } from '../utils/userSession';
 import './AuditPage.css';
 
 
@@ -109,9 +109,17 @@ export default function AuditPage() {
   const [parentVersion, setParentVersion] = useState<number | null>(null);
   const [parentToolIds, setParentToolIds] = useState<string[] | null>(null);
   const [isPrefilling, setIsPrefilling] = useState(false);
-
-  const [form, setForm, clearForm] = useLocalStorage<FormState>('stacksave-audit-form', DEFAULT_FORM);
+  const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const prefillDone = useRef<string | null>(null);
+
+  // Clean legacy shared form storage if present (removes the old global key that leaked between users)
+  useEffect(() => {
+    try {
+      window.localStorage.removeItem('stacksave-audit-form');
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const freshResetDone = useRef(false);
   useEffect(() => {
@@ -119,9 +127,9 @@ export default function AuditPage() {
       freshResetDone.current = true;
       setParentToolIds(null);
       setParentVersion(null);
-      setForm((prev) => ({ ...prev, tools: [] }));
+      setForm(DEFAULT_FORM);
     }
-  }, [reAuditOf, setForm]);
+  }, [reAuditOf]);
 
   const [showHighlight, setShowHighlight] = useState(false);
   const [showFloatingHint, setShowFloatingHint] = useState(false);
@@ -300,8 +308,12 @@ export default function AuditPage() {
         throw new Error('Audit completed but no valid audit identifier was returned.');
       }
       
-      localStorage.setItem(`owned_${result.auditId}`, 'true');
-      clearForm();
+      // Mark this audit as owned by this user session (scoped — not shared across users)
+      localStorage.setItem(getUserScopedKey(`owned_${result.auditId}`), 'true');
+      if (result.ownerToken) {
+        localStorage.setItem(getUserScopedKey(`audit_token_${result.auditId}`), result.ownerToken);
+      }
+      setForm(DEFAULT_FORM);
 
       if (reAuditOf) {
         navigate(`/audit/${result.auditId}/diff`, { state: { isOwner: true } });
@@ -468,20 +480,20 @@ export default function AuditPage() {
             <m.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-6 border rounded-lg bg-[var(--color-bg-surface)]"
+              className="p-4 sm:p-5 border rounded-xl bg-[var(--color-bg-surface)]"
               style={{ borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-xs)' }}
             >
               <h2
-                className="text-base font-bold mb-6 flex items-center gap-3"
+                className="text-sm sm:text-base font-bold mb-3 flex items-center gap-2.5"
                 style={{ color: 'var(--color-text-heading)' }}
               >
                 <StepBadge n={1} done={true} />
                 Team Metadata
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="sm:col-span-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+                <div>
                   <label
-                    className="block text-xs font-semibold uppercase tracking-wider mb-2"
+                    className="block text-[10.5px] font-bold uppercase tracking-wider mb-1"
                     style={{ color: 'var(--color-text-muted)' }}
                     htmlFor="companyName"
                   >
@@ -493,15 +505,16 @@ export default function AuditPage() {
                     placeholder="e.g. Acme Corp"
                     value={form.companyName}
                     onChange={(e) => setForm((p) => ({ ...p, companyName: e.target.value }))}
-                    className={inputClass}
+                    className="w-full px-3 py-2 rounded-md text-xs sm:text-sm transition-all focus:outline-none placeholder:text-[#94A3B8] font-medium"
                     style={inputStyle}
                     {...inputFocusHandlers}
                     aria-label="Company name"
+                    autoComplete="off"
                   />
                 </div>
-                <div className="sm:col-span-2">
+                <div>
                   <label
-                    className="block text-xs font-semibold uppercase tracking-wider mb-2"
+                    className="block text-[10.5px] font-bold uppercase tracking-wider mb-1"
                     style={{ color: 'var(--color-text-muted)' }}
                     htmlFor="useCase"
                   >
@@ -511,7 +524,7 @@ export default function AuditPage() {
                     id="useCase"
                     value={form.useCase}
                     onChange={(e) => setForm((p) => ({ ...p, useCase: e.target.value as UseCase }))}
-                    className={inputClass}
+                    className="w-full px-3 py-2 rounded-md text-xs sm:text-sm transition-all focus:outline-none font-medium cursor-pointer"
                     style={inputStyle}
                     {...inputFocusHandlers}
                     aria-label="Primary use case"
@@ -521,9 +534,9 @@ export default function AuditPage() {
                     ))}
                   </select>
                 </div>
-                <div className="sm:col-span-2">
+                <div>
                   <label
-                    className="block text-xs font-semibold uppercase tracking-wider mb-2"
+                    className="block text-[10.5px] font-bold uppercase tracking-wider mb-1"
                     style={{ color: 'var(--color-text-muted)' }}
                     htmlFor="optimizationGoal"
                   >
@@ -533,9 +546,7 @@ export default function AuditPage() {
                     id="optimizationGoal"
                     value={form.optimizationGoal}
                     onChange={(e) => setForm((p) => ({ ...p, optimizationGoal: e.target.value as FormState['optimizationGoal'] }))}
-                    className={inputClass}
-
-
+                    className="w-full px-3 py-2 rounded-md text-xs sm:text-sm transition-all focus:outline-none font-medium cursor-pointer"
                     style={inputStyle}
                     {...inputFocusHandlers}
                     aria-label="Optimization goal"

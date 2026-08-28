@@ -72,8 +72,9 @@ function buildPhrases(
   }
 
   if (title.toLowerCase().includes('enterprise') || title.toLowerCase().includes('security')) {
+    const isFullyCovered = coverageScore === 100;
     return [
-      { text: 'Hardened for' },
+      { text: isFullyCovered ? 'Hardened for' : 'Configured for' },
       { text: title, strong: true },
       { text: 'for your' },
       { text: domainLabel, strong: true },
@@ -81,10 +82,19 @@ function buildPhrases(
       { text: `${stackLabel}`, strong: true },
       { text: 'at' },
       { text: `$${monthlyCost.toLocaleString()}/month.`, strong: true },
-      { text: 'This architecture enforces strict privacy, zero data retention, and enterprise administrative controls with' },
+      {
+        text: isFullyCovered
+          ? 'This architecture enforces verified enterprise administrative controls, privacy safeguards, and compliance with'
+          : 'This architecture delivers core workflow velocity with'
+      },
       { text: `${alignmentScore}% alignment`, strong: true },
-      { text: 'and' },
-      { text: `${coverageScore}% requirement coverage.`, strong: true },
+      { text: isFullyCovered ? 'and' : 'while satisfying' },
+      {
+        text: isFullyCovered
+          ? `${coverageScore}% requirement coverage.`
+          : `${coverageScore}% of operational requirements (enterprise governance controls require an organizational plan upgrade).`,
+        strong: true
+      },
     ];
   }
 
@@ -132,8 +142,8 @@ export default function RecommendationReveal({
 
   return (
     <div className="rounded-2xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
-      <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4">
-        <span className="text-xl sm:text-2xl font-bold tracking-tight text-[#1E3A5F] block mb-4">
+      <div className="px-5 sm:px-6 pt-6 sm:pt-7 pb-5">
+        <span className="text-lg sm:text-xl font-black tracking-tight text-[#1E3A5F] block mb-4 uppercase">
           Why This Stack
         </span>
 
@@ -150,7 +160,7 @@ export default function RecommendationReveal({
                 transition: { staggerChildren: stagger, delayChildren: 0.05 },
               },
             }}
-            className="text-[15px] sm:text-[16px] text-slate-800 leading-relaxed font-normal max-w-3xl"
+            className="text-base sm:text-lg text-slate-900 leading-relaxed font-medium max-w-3xl"
           >
             {phrases.map((phrase, idx) => (
               <m.span
@@ -159,15 +169,15 @@ export default function RecommendationReveal({
                   reduceMotion
                     ? undefined
                     : {
-                        hidden: { opacity: 0, y: 6 },
+                        hidden: { opacity: 0, y: 4 },
                         visible: {
                           opacity: 1,
                           y: 0,
-                          transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+                          transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
                         },
                       }
                 }
-                className={`inline ${phrase.strong ? 'font-semibold text-slate-950' : ''}`}
+                className={`inline ${phrase.strong ? 'font-bold text-slate-950' : ''}`}
               >
                 {phrase.text}
                 {idx < phrases.length - 1 ? ' ' : ''}
@@ -177,7 +187,7 @@ export default function RecommendationReveal({
         </AnimatePresence>
 
         {deeperExplanation && (
-          <div className="mt-4 pt-1">
+          <div className="mt-5 pt-2">
             <AnimatePresence>
               {showDetails && (
                 <m.div
@@ -187,7 +197,7 @@ export default function RecommendationReveal({
                   transition={{ duration: 0.22, ease: 'easeOut' }}
                   className="overflow-hidden"
                 >
-                  <p className="mt-3 text-[14px] text-slate-700 leading-relaxed border-l-2 border-slate-200 pl-4">
+                  <p className="mt-4 text-sm text-slate-700 leading-relaxed border-l-2 border-emerald-500 pl-4">
                     {deeperExplanation}
                   </p>
                 </m.div>
