@@ -5,6 +5,7 @@ import LogoLoop from '../components/LogoLoop';
 import Logo from '../components/Logo';
 import OfferNotificationBell from '../components/OfferNotificationBell';
 import InteractiveBackground from '../components/InteractiveBackground';
+import { trackCtaClicked } from '../utils/analytics';
 
 import './LandingBackground.css';
 
@@ -460,7 +461,10 @@ export default function LandingPage() {
             <m.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigate('/audit')}
+              onClick={() => {
+                trackCtaClicked('header_audit_cta');
+                navigate('/audit');
+              }}
               className="hidden sm:flex h-[44px] px-4 md:px-5 items-center justify-center rounded-xl font-medium text-[13px] md:text-[14px] transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
               style={{ background: 'var(--color-primary)', color: '#ffffff' }}
               aria-label="Audit my existing stack"
@@ -540,14 +544,22 @@ export default function LandingPage() {
               {/* Mobile CTA */}
               <button
                 className="mobile-nav-cta"
-                onClick={() => { closeMobileMenu(); navigate('/audit'); }}
+                onClick={() => {
+                  trackCtaClicked('mobile_drawer_audit_cta');
+                  closeMobileMenu();
+                  navigate('/audit');
+                }}
               >
                 Audit My Existing Stack →
               </button>
               <button
                 className="mobile-nav-cta"
                 style={{ background: 'transparent', color: 'var(--color-primary)', border: '1px solid var(--color-border-strong)', marginTop: 0 }}
-                onClick={() => { closeMobileMenu(); navigate('/build-stack'); }}
+                onClick={() => {
+                  trackCtaClicked('mobile_drawer_build_stack_cta');
+                  closeMobileMenu();
+                  navigate('/build-stack');
+                }}
               >
                 Build My AI Stack
               </button>
@@ -634,10 +646,14 @@ export default function LandingPage() {
                   transition={{ duration: 0.35, delay: shouldReduceMotion ? 0 : 0.05, ease: [0.16, 1, 0.3, 1] }}
                   whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.008 }}
                   whileTap={shouldReduceMotion ? {} : { scale: 0.985, y: 0 }}
-                  onClick={() => navigate('/audit')}
+                  onClick={() => {
+                    trackCtaClicked('audit_existing_stack');
+                    navigate('/audit');
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
+                      trackCtaClicked('audit_existing_stack');
                       navigate('/audit');
                     }
                   }}
@@ -705,10 +721,14 @@ export default function LandingPage() {
                   transition={{ duration: 0.35, delay: shouldReduceMotion ? 0 : 0.16, ease: [0.16, 1, 0.3, 1] }}
                   whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.008 }}
                   whileTap={shouldReduceMotion ? {} : { scale: 0.985, y: 0 }}
-                  onClick={() => navigate('/build-stack')}
+                  onClick={() => {
+                    trackCtaClicked('build_my_ai_stack');
+                    navigate('/build-stack');
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
+                      trackCtaClicked('build_my_ai_stack');
                       navigate('/build-stack');
                     }
                   }}
@@ -771,10 +791,14 @@ export default function LandingPage() {
                   transition={{ duration: 0.35, delay: shouldReduceMotion ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] }}
                   whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.008 }}
                   whileTap={shouldReduceMotion ? {} : { scale: 0.985, y: 0 }}
-                  onClick={() => navigate('/offers')}
+                  onClick={() => {
+                    trackCtaClicked('view_ai_offers');
+                    navigate('/offers');
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
+                      trackCtaClicked('view_ai_offers');
                       navigate('/offers');
                     }
                   }}
@@ -1345,7 +1369,10 @@ export default function LandingPage() {
             <m.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigate('/audit')}
+              onClick={() => {
+                trackCtaClicked('bottom_start_free_audit');
+                navigate('/audit');
+              }}
               className="btn-cta px-8 py-4 text-sm font-semibold text-center"
               aria-label="Start your free AI spend audit"
               id="bottom-cta"

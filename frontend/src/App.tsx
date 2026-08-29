@@ -13,12 +13,16 @@ import ConsolidationDashboardPage from './pages/ConsolidationDashboardPage';
 import RemovalDashboardPage from './pages/RemovalDashboardPage';
 import OffersPage from './pages/OffersPage';
 import ChatBot from './components/ChatBot';
+import { initGA, trackPageView } from './utils/analytics';
 
-function ScrollToTop() {
-  const { pathname } = useLocation();
+function PageTracker() {
+  const { pathname, search } = useLocation();
+
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [pathname]);
+    trackPageView(pathname + search);
+  }, [pathname, search]);
+
   return null;
 }
 
@@ -33,10 +37,14 @@ function LegacyReauditRedirect() {
 }
 
 export default function App() {
+  useEffect(() => {
+    initGA();
+  }, []);
+
   return (
     <LazyMotion features={domAnimation} strict>
       <BrowserRouter>
-        <ScrollToTop />
+        <PageTracker />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/audit" element={<AuditPage />} />

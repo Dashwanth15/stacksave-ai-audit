@@ -12,6 +12,7 @@ import { getUserScopedKey } from '../utils/userSession';
 import ProviderLogo from './ProviderLogo';
 import { formatOfferForDisplay, formatCompactTime } from '../utils/offerFormatter';
 import type { PublicOffer } from '../types';
+import { trackNotificationOpened, trackOfferClicked } from '../utils/analytics';
 
 
 export default function OfferNotificationBell() {
@@ -120,6 +121,7 @@ export default function OfferNotificationBell() {
     setIsOpen((prev) => {
       const willOpen = !prev;
       if (willOpen) {
+        trackNotificationOpened();
         markCurrentOffersAsSeen();
       }
       return willOpen;
@@ -130,6 +132,7 @@ export default function OfferNotificationBell() {
     setShowHint(false);
     const hintDismissedKey = getUserScopedKey('hint_dismissed');
     sessionStorage.setItem(hintDismissedKey, 'true');
+    trackNotificationOpened();
     setIsOpen(true);
     markCurrentOffersAsSeen();
   };
@@ -349,6 +352,7 @@ export default function OfferNotificationBell() {
                         href={offer.sourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() => trackOfferClicked(offer.providerName)}
                         className="inline-flex items-center gap-1 text-xs font-bold text-slate-900 hover:text-emerald-700 transition-colors"
                       >
                         <span>View offer</span>

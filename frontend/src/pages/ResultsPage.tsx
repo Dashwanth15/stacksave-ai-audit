@@ -15,6 +15,7 @@ import ToolIntelligencePanel from '../components/ToolIntelligencePanel';
 import OfferNotificationBell from '../components/OfferNotificationBell';
 import AuditedConfigurationBadge from '../components/audit/AuditedConfigurationBadge';
 import { getUserScopedKey } from '../utils/userSession';
+import { trackAuditResultsViewed } from '../utils/analytics';
 
 
 
@@ -570,6 +571,7 @@ export default function ResultsPage() {
 
   useEffect(() => {
     if (audit) {
+      trackAuditResultsViewed();
       try {
         // Store in user-scoped sessionStorage key so it doesn't leak to other users
         const auditKey = getUserScopedKey('currentAudit');

@@ -19,6 +19,11 @@ import { m, AnimatePresence } from 'framer-motion';
 import Logo from './Logo';
 import { useChatContext } from '../hooks/useChatContext';
 import { getBaseUrl } from '../services/api';
+import {
+  trackAiAssistantOpened,
+  trackAiAssistantMessageSent,
+  trackAiAssistantResponseReceived,
+} from '../utils/analytics';
 
 // Derive the raw backend origin from the shared base URL (strips the /api suffix)
 const API_BASE = getBaseUrl().replace(/\/api$/, '');
@@ -643,8 +648,11 @@ export default function ChatBot() {
   const handleToggle = useCallback(() => {
     setIsOpen((prev) => {
       const willOpen = !prev;
-      if (willOpen && !hasGreeted) {
-        setHasGreeted(true);
+      if (willOpen) {
+        trackAiAssistantOpened();
+        if (!hasGreeted) {
+          setHasGreeted(true);
+        }
       }
       return willOpen;
     });
@@ -653,6 +661,8 @@ export default function ChatBot() {
   async function sendMessage(text?: string) {
     const msg = text || input.trim();
     if (!msg || loading) return;
+
+    trackAiAssistantMessageSent();
 
     const userMsg: Message = { role: 'user', content: msg, ts: new Date() };
     const history = [...messages, userMsg];
@@ -697,6 +707,7 @@ export default function ChatBot() {
           },
         ]);
       } else {
+        trackAiAssistantResponseReceived();
         console.log('[CHAT_REQUEST_SUCCESS]', { replyLen: (data.reply || '').length });
         setMessages((prev) => [
           ...prev,

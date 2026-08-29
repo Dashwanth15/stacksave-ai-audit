@@ -33,6 +33,7 @@ import ProcurementIntelligenceDrawer from '../components/intelligence/Procuremen
 import type { DrawerSelection } from '../components/intelligence/ProcurementIntelligenceDrawer';
 import RecommendationReveal from '../components/build-stack/RecommendationReveal';
 import { getProviderRole } from '../components/build-stack/wizardData';
+import { trackBuildStackCompleted } from '../utils/analytics';
 
 import ConfigurationReveal from '../components/build-stack/ConfigurationReveal';
 
@@ -142,6 +143,12 @@ export default function BuildStackResultsPage() {
     apiTools.forEach(t => names.push(t.toolName));
     return names;
   }, [primaryTool, secondaryTool, optionalTools, apiTools]);
+
+  useEffect(() => {
+    if (rec) {
+      trackBuildStackCompleted({ recommended_count: stackToolNames.length });
+    }
+  }, [rec, stackToolNames.length]);
 
   const filteredAlternatives = useMemo(() => {
     if (!rec?.alternatives) return [];

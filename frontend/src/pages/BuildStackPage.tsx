@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { submitStackBuilder } from '../services/api';
@@ -6,6 +6,7 @@ import type { StackBuilderRequest, StackStrategy } from '../types';
 import Logo from '../components/Logo';
 import OfferNotificationBell from '../components/OfferNotificationBell';
 import { setUserSessionItem } from '../utils/userSession';
+import { trackBuildStackStarted } from '../utils/analytics';
 import {
   DOMAIN_OPTIONS,
   REQUIREMENT_OPTIONS,
@@ -50,6 +51,10 @@ const GOVERNANCE = [
 export default function BuildStackPage() {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
+
+  useEffect(() => {
+    trackBuildStackStarted();
+  }, []);
 
   const [step, setStep] = useState(1);
   const [maxStepReached, setMaxStepReached] = useState(1); // UI-only: enables click-to-edit

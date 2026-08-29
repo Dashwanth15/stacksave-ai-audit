@@ -8,6 +8,7 @@ import Logo from '../components/Logo';
 import ToolBrowser from '../components/ToolBrowser';
 import OfferNotificationBell from '../components/OfferNotificationBell';
 import { getUserScopedKey } from '../utils/userSession';
+import { trackAuditStarted, trackAuditSubmitted } from '../utils/analytics';
 import './AuditPage.css';
 
 
@@ -220,6 +221,9 @@ export default function AuditPage() {
       setForm((prev) => ({ ...prev, tools: [...prev.tools, newEntry] }));
 
       // Trigger onboarding guidance on first tool selection
+      if (selectedToolIds.length === 0) {
+        trackAuditStarted({ tool_count: 1 });
+      }
       if (selectedToolIds.length === 0 && !guidanceEverTriggered) {
         setGuidanceEverTriggered(true);
 
@@ -302,6 +306,8 @@ export default function AuditPage() {
       if (reAuditOf) {
         payload.reAuditOf = reAuditOf;
       }
+
+      trackAuditSubmitted({ tool_count: form.tools.length });
 
       const result = await submitAudit(payload);
       if (!result || !result.auditId) {

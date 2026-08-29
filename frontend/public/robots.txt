@@ -1,0 +1,8 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /audit/*/
+Disallow: /results/
+
+Sitemap: https://stacksaveai.com/sitemap.xml

@@ -46,20 +46,33 @@ app.use('/api', (req, res) => {
   req.pipe(proxyReq, { end: true });
 });
 
-// ── SPA Fallback ─────────────────────────────────────────────
-// Must come AFTER the /api proxy so API routes aren't swallowed
-app.use(history());
-
-// Serve static files from dist directory with correct MIME types
-app.use(express.static(path.join(__dirname, 'dist'), {
+// ── Static Files (Direct Serving for sitemap.xml, robots.txt, assets, etc.) ──
+const staticOptions = {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.css')) {
       res.setHeader('Content-Type', 'text/css');
     } else if (filePath.endsWith('.js')) {
       res.setHeader('Content-Type', 'application/javascript');
+    } else if (filePath.endsWith('.xml')) {
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    } else if (filePath.endsWith('.txt')) {
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     }
   },
+};
+
+// 1. Serve physical static files first (bypasses SPA fallback for sitemap.xml, robots.txt, etc.)
+app.use(express.static(path.join(__dirname, 'dist'), staticOptions));
+
+// ── SPA Fallback ─────────────────────────────────────────────
+// 2. If not a static file, rewrite route to /index.html for React Router
+app.use(history({
+  disableDotRule: true,
+  htmlAcceptHeaders: ['text/html', 'application/xhtml+xml'],
 }));
+
+// 3. Serve index.html for rewritten client routes
+app.use(express.static(path.join(__dirname, 'dist'), staticOptions));
 
 app.listen(PORT, () => {
   console.log(`Frontend server running on port ${PORT}`);

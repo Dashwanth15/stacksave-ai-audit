@@ -14,6 +14,7 @@ import ProviderLogo from '../components/ProviderLogo';
 import OfferNotificationBell from '../components/OfferNotificationBell';
 import { formatOfferForDisplay, formatCompactTime } from '../utils/offerFormatter';
 import type { PublicOffer } from '../types';
+import { trackOfferClicked } from '../utils/analytics';
 
 
 const HERO_WORDS = [
@@ -359,6 +360,7 @@ export default function OffersPage() {
                   href={offer.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackOfferClicked(offer.providerName)}
                   className="group block p-6 rounded-2xl bg-white border border-slate-200/90 shadow-[0_2px_10px_-3px_rgba(15,23,42,0.05)] hover:border-slate-300 hover:shadow-[0_12px_24px_-6px_rgba(15,23,42,0.08)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col justify-between"
                 >
                   <div>
