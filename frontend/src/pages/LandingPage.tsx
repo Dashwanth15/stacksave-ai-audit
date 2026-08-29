@@ -550,13 +550,13 @@ export default function LandingPage() {
                   Deterministic Savings Analysis
                 </span>
                 <h1
-                  className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight"
+                  className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight"
                   style={{
                     color: 'var(--color-text-heading)',
                     letterSpacing: '-0.03em',
                   }}
                 >
-                  Stop overpaying for your AI stack.
+                  Optimize your AI stack for smarter spending, better performance, and greater efficiency.
                 </h1>
                 <p
                   className="max-w-xl text-base sm:text-lg leading-relaxed"
