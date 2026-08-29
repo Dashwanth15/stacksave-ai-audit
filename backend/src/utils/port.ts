@@ -1,19 +1,23 @@
 import { createServer } from 'node:net';
 
+function isPortAvailable(port: number, host?: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const server = createServer();
+    server.once('error', () => resolve(false));
+    server.listen(port, host, () => {
+      server.close(() => resolve(true));
+    });
+  });
+}
+
 export async function findAvailablePort(preferredPort: number): Promise<number> {
   let candidatePort = preferredPort;
 
   for (let attempts = 0; attempts < 20; attempts += 1) {
-    const isAvailable = await new Promise<boolean>((resolve) => {
-      const server = createServer();
+    const available127 = await isPortAvailable(candidatePort, '127.0.0.1');
+    const availableDefault = await isPortAvailable(candidatePort);
 
-      server.once('error', () => resolve(false));
-      server.listen(candidatePort, '127.0.0.1', () => {
-        server.close(() => resolve(true));
-      });
-    });
-
-    if (isAvailable) {
+    if (available127 && availableDefault) {
       return candidatePort;
     }
 
