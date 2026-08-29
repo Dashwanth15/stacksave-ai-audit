@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useRef, useState, useCallback } from 'react';
-import { m, animate, useReducedMotion, AnimatePresence } from 'framer-motion';
+import { m, animate, useReducedMotion, AnimatePresence, type Variants } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import LogoLoop from '../components/LogoLoop';
 import Logo from '../components/Logo';
@@ -87,6 +87,42 @@ const fadeUp = {
   }),
 };
 
+const HERO_HEADLINE_WORDS = [
+  'Optimize',
+  'your',
+  'AI',
+  'stack',
+  'for',
+  'smarter',
+  'spending',
+  'and',
+  'better',
+  'performance.',
+];
+
+const headlineContainerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.048,
+      delayChildren: 0.06,
+    },
+  },
+};
+
+const headlineWordVariants: Variants = {
+  hidden: { opacity: 0, y: 6 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.28,
+      ease: [0.16, 1, 0.3, 1] as const,
+    },
+  },
+};
+
 // Reusable section container
 function Section({
   children,
@@ -153,7 +189,7 @@ function SectionHeading({
   );
 }
 /* ─────────────────────────────────────────────────────────────
-   AuditDemoCard — Premium product reveal with 3D entrance
+   AuditDemoCard — Premium product reveal with elevation entrance
 ───────────────────────────────────────────────────────────── */
 
 /** Animated counting number — counts from 0 to target */
@@ -180,15 +216,17 @@ function CountUp({ to, prefix = '', suffix = '', decimals = 0, duration = 1.2, d
 }
 
 function AuditDemoCard() {
-  const [showRows, setShowRows] = useState(false);
-  const [showGlow, setShowGlow] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
+  const [showRows, setShowRows] = useState(() => Boolean(shouldReduceMotion));
+  const [showGlow, setShowGlow] = useState(() => Boolean(shouldReduceMotion));
 
-  /* Trigger rows + glow after card has fully landed */
+  /* Trigger rows + glow cleanly */
   useEffect(() => {
-    const glowT = setTimeout(() => setShowGlow(true), 1700);
-    const rowsT = setTimeout(() => setShowRows(true), 1900);
+    if (shouldReduceMotion) return;
+    const glowT = setTimeout(() => setShowGlow(true), 400);
+    const rowsT = setTimeout(() => setShowRows(true), 600);
     return () => { clearTimeout(glowT); clearTimeout(rowsT); };
-  }, []);
+  }, [shouldReduceMotion]);
 
   const recommendations = [
     'Duplicate ChatGPT subscription',
@@ -196,56 +234,39 @@ function AuditDemoCard() {
   ];
 
   return (
-    /* perspective wrapper required for rotateY to look 3D */
-    <div style={{ perspective: '1200px', width: '100%', maxWidth: '440px', margin: '0 auto' }}>
-
-      {/* Glow that fades in behind the card after it lands */}
+    <div style={{ width: '100%', maxWidth: '440px', margin: '0 auto', position: 'relative' }}>
+      {/* Glow that fades in behind the card */}
       <m.div
-        initial={{ opacity: 0, scale: 0.85 }}
-        animate={showGlow ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.85 }}
-        transition={{ duration: 1.0, ease: 'easeOut' }}
+        initial={shouldReduceMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+        animate={showGlow ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
         style={{
           position: 'absolute',
-          inset: '-32px',
-          borderRadius: '56px',
-          background: 'radial-gradient(ellipse at 50% 60%, rgba(16,185,129,0.18) 0%, rgba(30,58,95,0.08) 50%, transparent 80%)',
-          filter: 'blur(32px)',
+          inset: '-24px',
+          borderRadius: '48px',
+          background: 'radial-gradient(ellipse at 50% 60%, rgba(16,185,129,0.14) 0%, rgba(30,58,95,0.06) 50%, transparent 80%)',
+          filter: 'blur(30px)',
           zIndex: 0,
           pointerEvents: 'none',
         }}
       />
 
-      {/* The card itself — 3D spin entrance */}
+      {/* The card itself — smooth elevation entrance and subtle hover response */}
       <m.div
-        initial={{
-          opacity: 0,
-          scale: 0.75,
-          rotateY: 360,
-          rotateX: 15,
-          filter: 'blur(10px)',
-        }}
-        animate={{
-          opacity: 1,
-          scale: 1,
-          rotateY: [-5, 0],   /* overshoot then settle */
-          rotateX: 0,
-          filter: 'blur(0px)',
-        }}
+        initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{
-          opacity: { duration: 0.6, ease: 'easeOut' },
-          scale: { duration: 1.6, ease: [0.16, 1, 0.3, 1] },
-          rotateY: { duration: 1.6, ease: [0.16, 1, 0.3, 1], times: [0, 1] },
-          rotateX: { duration: 1.6, ease: [0.16, 1, 0.3, 1] },
-          filter: { duration: 0.8, ease: 'easeOut' },
+          duration: 0.65,
+          ease: [0.16, 1, 0.3, 1],
         }}
+        whileHover={shouldReduceMotion ? {} : { y: -3, transition: { duration: 0.2 } }}
         style={{
           position: 'relative',
           zIndex: 1,
-          transformStyle: 'preserve-3d',
           borderRadius: '28px',
           border: '1px solid var(--color-border)',
           background: 'var(--color-bg-card)',
-          boxShadow: '0 32px 80px -12px rgba(30,58,95,0.18), 0 4px 16px -4px rgba(30,58,95,0.10)',
+          boxShadow: '0 28px 64px -12px rgba(30,58,95,0.14), 0 4px 16px -4px rgba(30,58,95,0.06)',
           overflow: 'hidden',
           width: '100%',
         }}
@@ -262,29 +283,35 @@ function AuditDemoCard() {
         </div>
 
         <div className="p-5 space-y-4">
-          <span className="text-[10px] uppercase tracking-[0.32em] font-semibold text-slate-400">Example AI Audit</span>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-[0.32em] font-semibold text-slate-400">Example AI Audit</span>
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live Preview
+            </span>
+          </div>
 
           {/* Spend rows with counting numbers */}
           <div className="space-y-3">
-            <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
+            <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-3 transition-colors hover:border-slate-300" style={{ borderColor: 'var(--color-border)' }}>
               <div className="text-[9px] uppercase tracking-[0.28em] text-slate-400">Current AI Spend</div>
               <div className="mt-2 text-3xl font-semibold text-[var(--color-text-heading)]">
-                $<CountUp to={120} suffix="/mo" delay={1.0} duration={0.8} />
+                $<CountUp to={120} suffix="/mo" delay={0.3} duration={0.8} />
               </div>
             </div>
-            <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
+            <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-3 transition-colors hover:border-slate-300" style={{ borderColor: 'var(--color-border)' }}>
               <div className="text-[9px] uppercase tracking-[0.28em] text-slate-400">Optimized AI Spend</div>
               <div className="mt-2 text-3xl font-semibold text-[var(--color-success)]">
-                $<CountUp to={80} suffix="/mo" delay={1.1} duration={0.8} />
+                $<CountUp to={80} suffix="/mo" delay={0.45} duration={0.8} />
               </div>
             </div>
           </div>
 
           {/* Savings highlight */}
-          <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-4" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-4 transition-all hover:border-emerald-200 hover:shadow-2xs" style={{ borderColor: 'var(--color-border)' }}>
             <div className="text-[10px] uppercase tracking-[0.28em] text-slate-400">You Save</div>
             <div className="mt-2 text-4xl font-extrabold tracking-tight text-[var(--color-primary)]">
-              $<CountUp to={40} delay={1.3} duration={0.7} />
+              $<CountUp to={40} delay={0.65} duration={0.7} />
               <span className="text-base font-semibold text-slate-500">/month</span>
             </div>
           </div>
@@ -293,10 +320,10 @@ function AuditDemoCard() {
           <div className="flex items-center justify-between text-sm font-semibold text-[var(--color-text-heading)]">
             <span>Waste reduction</span>
             <m.span
-              initial={{ opacity: 0 }}
+              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1.6, duration: 0.4 }}
-              className="text-[var(--color-success)]"
+              transition={{ delay: 0.85, duration: 0.4 }}
+              className="text-[var(--color-success)] font-bold"
             >
               33%
             </m.span>
@@ -307,14 +334,14 @@ function AuditDemoCard() {
             {recommendations.map((item, index) => (
               <m.div
                 key={item}
-                initial={{ opacity: 0, x: 16 }}
-                animate={showRows ? { opacity: 1, x: 0 } : { opacity: 0, x: 16 }}
+                initial={shouldReduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 12 }}
+                animate={showRows ? { opacity: 1, x: 0 } : { opacity: 0, x: 12 }}
                 transition={{
-                  delay: index * 0.18,
-                  duration: 0.45,
+                  delay: shouldReduceMotion ? 0 : index * 0.14,
+                  duration: 0.35,
                   ease: [0.16, 1, 0.3, 1],
                 }}
-                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-slate-300"
               >
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-success-bg)] text-[var(--color-success)] font-semibold text-sm">
                   ✓
@@ -430,16 +457,18 @@ export default function LandingPage() {
             <OfferNotificationBell />
 
             {/* Desktop CTA — hidden on small mobile, shown from sm up */}
-            <button
+            <m.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => navigate('/audit')}
-              className="hidden sm:flex h-[44px] px-4 md:px-5 items-center justify-center rounded-xl font-medium text-[13px] md:text-[14px] transition-all duration-300 shadow-sm hover:shadow-md"
+              className="hidden sm:flex h-[44px] px-4 md:px-5 items-center justify-center rounded-xl font-medium text-[13px] md:text-[14px] transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
               style={{ background: 'var(--color-primary)', color: '#ffffff' }}
               aria-label="Audit my existing stack"
             >
               <span className="hidden md:inline">Audit My Existing Stack</span>
               <span className="inline md:hidden">Audit Stack</span>
               <span className="ml-2 font-normal opacity-70">→</span>
-            </button>
+            </m.button>
 
             {/* Hamburger — visible on mobile only */}
             <button
@@ -539,8 +568,11 @@ export default function LandingPage() {
             {/* Left: Headline & CTA */}
             <div className="lg:col-span-6 space-y-6 text-left">
               <div className="space-y-4">
-                <span
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase"
+                <m.span
+                  initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase select-none transition-transform duration-150 hover:scale-[1.02]"
                   style={{
                     background: 'var(--color-success-bg)',
                     color: 'var(--color-success-t)',
@@ -548,22 +580,48 @@ export default function LandingPage() {
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] animate-pulse" />
                   Deterministic Savings Analysis
-                </span>
+                </m.span>
+
                 <h1
                   className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight"
                   style={{
                     color: 'var(--color-text-heading)',
                     letterSpacing: '-0.03em',
                   }}
+                  aria-label="Optimize your AI stack for smarter spending and better performance."
                 >
-                  Optimize your AI stack for smarter spending, better performance, and greater efficiency.
+                  {shouldReduceMotion ? (
+                    "Optimize your AI stack for smarter spending and better performance."
+                  ) : (
+                    <m.span
+                      variants={headlineContainerVariants}
+                      initial="hidden"
+                      animate="visible"
+                      className="inline"
+                      aria-hidden="true"
+                    >
+                      {HERO_HEADLINE_WORDS.map((word, i) => (
+                        <m.span
+                          key={i}
+                          variants={headlineWordVariants}
+                          className="inline-block mr-[0.26em] last:mr-0"
+                        >
+                          {word}
+                        </m.span>
+                      ))}
+                    </m.span>
+                  )}
                 </h1>
-                <p
+
+                <m.p
+                  initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: shouldReduceMotion ? 0 : 0.45 }}
                   className="max-w-xl text-base sm:text-lg leading-relaxed"
                   style={{ color: 'var(--color-text-body)' }}
                 >
                   Most companies waste 30% of their software budget on wrong tiers, duplicate accounts, and idle seats.
-                </p>
+                </m.p>
               </div>
 
               {/* ── 3 Action Cards (Audit, Build, Offers) ────────────────── */}
