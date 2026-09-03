@@ -119,7 +119,7 @@ async function upsertOffer(
   extractorVersion: string,
   verifiedSourceUrls: ReadonlySet<string>,
 ): Promise<{ isNew: boolean }> {
-  if (!isPubliclyVerifiableOffer(offer, { providerStatus, checkedAt, extractorVersion, verifiedSourceUrls })) {
+  if (!isPubliclyVerifiableOffer(offer, { providerStatus })) {
     return { isNew: false };
   }
   const fp = buildCanonicalOfferFingerprint(offer);

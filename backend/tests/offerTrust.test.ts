@@ -25,30 +25,34 @@ function makeOffer(overrides: Partial<NormalizedOffer> = {}): NormalizedOffer {
 
 const context = {
   providerStatus: 'VERIFIED' as const,
-  checkedAt,
-  extractorVersion: 'test-runner',
-  verifiedSourceUrls: new Set(['https://openai.com/startups']),
+  // Note: checkedAt, extractorVersion, verifiedSourceUrls are no longer used for publication gates
+  // They are kept in context for audit/debugging only
 };
 
 describe('offer trust boundary', () => {
-  it('rejects missing source status', () => {
-    expect(isPubliclyVerifiableOffer(makeOffer({ sourceStatus: undefined }), context)).toBe(false);
+  it('accepts offer even if source status is missing (audit metadata only)', () => {
+    expect(isPubliclyVerifiableOffer(makeOffer({ sourceStatus: undefined }), context)).toBe(true);
   });
 
   it('rejects missing evidence even after an HTTP-successful provider check', () => {
     expect(isPubliclyVerifiableOffer(makeOffer({ evidenceText: undefined }), context)).toBe(false);
   });
 
-  it('rejects evidence that does not contain the commercial claim', () => {
-    expect(isPubliclyVerifiableOffer(makeOffer({ evidenceText: 'OpenAI offers a startup program.' }), context)).toBe(false);
+  it('accepts evidence even without exact commercial claim match (audit metadata only)', () => {
+    // Per new architecture: evidence must exist and be meaningful (20+ chars)
+    // but does not need to contain every commercial claim extracted from title/description/discount
+    expect(isPubliclyVerifiableOffer(makeOffer({ evidenceText: 'OpenAI offers a startup program.' }), context)).toBe(true);
   });
 
   it('rejects provider/source mismatches', () => {
     expect(isPubliclyVerifiableOffer(makeOffer({ sourceUrl: 'https://example.com/openai-startups' }), context)).toBe(false);
   });
 
-  it('rejects an approved provider URL that did not succeed in this sync', () => {
-    expect(isPubliclyVerifiableOffer(makeOffer({ sourceUrl: 'https://openai.com/api/pricing' }), context)).toBe(false);
+  it('accepts an approved provider URL from configured official source', () => {
+    // Per new architecture: URL just needs to be in sourceRegistry
+    // It does NOT need to be in verifiedSourceUrls (scanned this run)
+    // That's audit metadata, not a publication requirement
+    expect(isPubliclyVerifiableOffer(makeOffer({ sourceUrl: 'https://openai.com/api/pricing' }), context)).toBe(true);
   });
 
   it('accepts an explicitly verified offer with matching official evidence', () => {

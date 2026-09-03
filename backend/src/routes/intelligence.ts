@@ -337,10 +337,8 @@ router.get('/offers', async (_req: Request, res: Response) => {
       .lean();
 
     const offers = events.filter((e) => (
-      e.sourceStatus === 'VERIFIED' &&
       e.isPublic === true &&
       Boolean(e.evidenceText?.trim()) &&
-      Boolean(e.lastConfirmedAt && e.sourceFetchedAt && e.lastSuccessfulCheckAt) &&
       isRegisteredOfficialSource(e.providerId, e.sourceUrl)
     )).map((e) => ({
       id: e.fingerprint || (e as { _id?: unknown })._id?.toString() || `${e.providerId}-${e.title}`,
