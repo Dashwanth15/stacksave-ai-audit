@@ -277,7 +277,11 @@ async function extractClaude(browser: Browser): Promise<OfficialExtractedProvide
       lastConfirmedAt: checkedAt,
     }));
 
+    // DIAGNOSTIC: Log offer counts
+    console.log(`   [Claude] offers_extracted=${extraction.offers?.length || 0} offers_normalized=${normalizedOffers.length}`);
+
     if (extraction.plans.length < 2) {
+      console.log(`   [Claude] PARSE_FAILED: plans=${extraction.plans.length} (need >= 2)`);
       return {
         providerId: 'claude',
         displayName: 'Claude',
@@ -292,6 +296,7 @@ async function extractClaude(browser: Browser): Promise<OfficialExtractedProvide
       };
     }
 
+    console.log(`   [Claude] VERIFIED: plans=${extraction.plans.length} offers=${normalizedOffers.length}`);
     return {
       providerId: 'claude',
       displayName: 'Claude',
@@ -529,7 +534,11 @@ async function extractChatGPT(browser: Browser): Promise<OfficialExtractedProvid
       lastConfirmedAt: checkedAt,
     }));
 
+    // DIAGNOSTIC: Log offer counts
+    console.log(`   [ChatGPT] offers_extracted=${extraction.offers?.length || 0} offers_normalized=${normalizedOffers.length}`);
+
     if (extraction.plans.length < 2) {
+      console.log(`   [ChatGPT] PARSE_FAILED: plans=${extraction.plans.length} (need >= 2)`);
       return {
         providerId: 'chatgpt',
         displayName: 'ChatGPT',
@@ -544,6 +553,7 @@ async function extractChatGPT(browser: Browser): Promise<OfficialExtractedProvid
       };
     }
 
+    console.log(`   [ChatGPT] VERIFIED: plans=${extraction.plans.length} offers=${normalizedOffers.length}`);
     return {
       providerId: 'chatgpt',
       displayName: 'ChatGPT',
@@ -2015,6 +2025,22 @@ export async function runOfficialExtraction(syncTarget: string = 'both'): Promis
     executedAt: new Date(),
     providers: extractedProviders,
   };
+
+  // DIAGNOSTIC: Log extraction summary
+  console.log('\n========================================================================================================================');
+  console.log('EXTRACTION DIAGNOSTIC SUMMARY (PER-PROVIDER OFFER COUNTS)');
+  console.log('========================================================================================================================');
+  let totalExtracted = 0;
+  let totalNormalized = 0;
+  for (const provider of extractedProviders) {
+    const extracted = provider.offers?.length || 0;
+    totalExtracted += extracted;
+    totalNormalized += extracted;
+    console.log(`${provider.providerId.padEnd(20)} | extracted=${extracted.toString().padStart(2)} | status=${provider.status}`);
+  }
+  console.log('========================================================================================================================');
+  console.log(`TOTAL EXTRACTION RESULT: ${totalExtracted} offers extracted across ${extractedProviders.length} providers`);
+  console.log('========================================================================================================================\n');
 
   if (syncTarget === 'pricing') {
     for (const p of payload.providers) {
