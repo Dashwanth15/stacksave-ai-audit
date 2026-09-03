@@ -460,13 +460,19 @@ export async function ingestOfficialExtractedPricing(
     }
 
     // Ingest genuine offers with fingerprint deduplication and lifecycle tracking
-    if (isVerified && item.offers && item.offers.length > 0) {
+    // NOTE: Offers can be ingested even if plan extraction failed, as long as pages were successfully scanned (VERIFIED).
+    // Offers are public only if: provider was VERIFIED, AND offer passes isPubliclyVerifiableOffer checks.
+    const hasVerifiedPages = item.scannedPages?.some((page) => page.status === 'VERIFIED') ?? (item.status === 'VERIFIED');
+    if (hasVerifiedPages && item.offers && item.offers.length > 0) {
       const verifiedSourceUrls = new Set(
         item.scannedPages?.filter((page) => page.status === 'VERIFIED').map((page) => page.url)
           || (item.sourceUrl ? [item.sourceUrl] : [])
       );
+      // Offers use the provider's scanned page verification status, not the overall provider status
+      // This allows offers to be discovered and evaluated even if plan pricing extraction failed
       for (const off of item.offers) {
-        await upsertOffer(item.providerId, displayName, off, item.status, new Date(item.checkedAt || Date.now()), payload.runnerVersion || '', verifiedSourceUrls);
+        // Pass 'VERIFIED' as providerStatus since offers only exist when pages were successfully scanned
+        await upsertOffer(item.providerId, displayName, off, 'VERIFIED', new Date(item.checkedAt || Date.now()), payload.runnerVersion || '', verifiedSourceUrls);
       }
     }
 
