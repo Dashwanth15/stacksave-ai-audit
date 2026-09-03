@@ -118,9 +118,11 @@ async function upsertOffer(
   checkedAt: Date,
   extractorVersion: string,
   verifiedSourceUrls: ReadonlySet<string>,
-): Promise<{ isNew: boolean }> {
+): Promise<{ isNew: boolean; wasRejected?: boolean }> {
   if (!isPubliclyVerifiableOffer(offer, { providerStatus })) {
-    return { isNew: false };
+    // DIAGNOSTIC: Offer rejected by validation gates
+    console.log(`[PricingSync:Ingest] REJECTED: ${providerId}/${offer.title} - failed isPubliclyVerifiableOffer validation`);
+    return { isNew: false, wasRejected: true };
   }
   const fp = buildCanonicalOfferFingerprint(offer);
   const confirmedAt = checkedAt;
@@ -475,15 +477,15 @@ export async function ingestOfficialExtractedPricing(
       for (const off of item.offers) {
         // Pass 'VERIFIED' as providerStatus since offers only exist when pages were successfully scanned
         const result = await upsertOffer(item.providerId, displayName, off, 'VERIFIED', new Date(item.checkedAt || Date.now()), payload.runnerVersion || '', verifiedSourceUrls);
-        if (result.isNew || !result.isNew) {
-          // Check if offer passed validation by seeing if it would have been rejected
-          // Since upsertOffer returns early if isPubliclyVerifiableOffer fails, we need another approach
+        if (result.wasRejected) {
+          offersRejected++;
+        } else {
           offersAccepted++;
         }
       }
       // DIAGNOSTIC: Log offer ingestion for this provider
       if (item.offers.length > 0) {
-        console.log(`[PricingSync:Ingest] ${item.providerId}: offered=${item.offers.length} ingested attempts`);
+        console.log(`[PricingSync:Ingest] ${item.providerId}: offered=${item.offers.length} accepted=${offersAccepted} rejected=${offersRejected}`);
       }
     }
 
