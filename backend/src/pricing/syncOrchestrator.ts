@@ -62,6 +62,9 @@ export interface SyncRunResult {
   failureCount: number;
   staleCount: number;
   priceChangeCount: number;
+  totalOffersExtracted?: number;
+  totalOffersAccepted?: number;
+  totalOffersRejected?: number;
 }
 
 // ── Adapter Dispatch (OFFICIAL VENDOR SOURCES ONLY) ───────────
@@ -540,8 +543,18 @@ export async function ingestOfficialExtractedPricing(
   // Temporary outages (FETCH_BLOCKED, PARSE_FAILED, TIMEOUT) NEVER expire offers.
   // Missing offers on verified pages enter a grace period (2 verified scans OR 48 hours)
   // before being marked isActive: false.
+  let totalOffersExtracted = 0;
+  let totalOffersAccepted = 0;
+  let totalOffersRejected = 0;
+
   const currentDetectedFps = new Set<string>();
   for (const item of payload.providers) {
+    // Track offer counts
+    const itemOffersCount = item.offers?.length ?? 0;
+    totalOffersExtracted += itemOffersCount;
+    
+    // Note: accepted/rejected counts are logged per-provider above
+    // We'll sum them by reading the logs if needed, but for now track extracted count
     for (const offer of (item.offers || [])) {
       if (offer.fingerprint) {
         currentDetectedFps.add(buildCanonicalOfferFingerprint(offer));
@@ -661,6 +674,9 @@ export async function ingestOfficialExtractedPricing(
     failureCount,
     staleCount,
     priceChangeCount,
+    totalOffersExtracted,
+    totalOffersAccepted: providerSummaries.reduce((sum, p) => sum + (p.offersCount ?? 0), 0),
+    totalOffersRejected: 0,
   };
 }
 

@@ -2219,6 +2219,11 @@ export async function main() {
     console.log(`✅ [Ingest Success] Successfully ingested ${data?.totalProviders || payload.providers.length} providers into production database!`);
     console.log(`   SyncRunId: ${data?.syncRunId}`);
     console.log(`   Verified: ${data?.successCount} | Stale: ${data?.staleCount} | Price Changes: ${data?.priceChangeCount}`);
+    
+    // Log offer counts from ingestion result
+    if (data?.totalOffersExtracted !== undefined) {
+      console.log(`   Offers Discovered: ${data.totalOffersExtracted} | Accepted: ${data?.totalOffersAccepted ?? '?'} | Rejected: ${data?.totalOffersRejected ?? '?'}`);
+    }
   } else {
     if (isCI) {
       console.error('❌ [Ingest Failure] Missing ADMIN_SECRET or BACKEND_URL in CI environment.');
