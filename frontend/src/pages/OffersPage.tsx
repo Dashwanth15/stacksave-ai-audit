@@ -22,7 +22,7 @@ import type { FormattedOffer, OfferCategory } from '../utils/offerFormatter';
 import type { PublicOffer } from '../types';
 import { trackOfferClicked } from '../utils/analytics';
 
-type SortOption = 'recommended' | 'savings' | 'newest' | 'alphabetical';
+type SortOption = 'recommended' | 'savings' | 'newest';
 type CategoryIconName = 'sparkles' | 'graduation' | 'zap' | 'dollar' | 'rocket' | 'gift';
 
 const CATEGORY_TABS: { id: OfferCategory; label: string; icon: CategoryIconName }[] = [
@@ -195,17 +195,11 @@ export default function OffersPage() {
 
     // Sort result
     return result.sort((a, b) => {
-      if (sortBy === 'recommended') {
-        return b.savingsScore - a.savingsScore;
-      }
-      if (sortBy === 'savings') {
+      if (sortBy === 'recommended' || sortBy === 'savings') {
         return b.savingsScore - a.savingsScore;
       }
       if (sortBy === 'newest') {
         return new Date(b.detectedAt || 0).getTime() - new Date(a.detectedAt || 0).getTime();
-      }
-      if (sortBy === 'alphabetical') {
-        return a.providerName.localeCompare(b.providerName);
       }
       return 0;
     });
@@ -326,37 +320,57 @@ export default function OffersPage() {
         </section>
 
         {/* ── Category Navigation ─────────────────────────────── */}
-        <div className="mb-4 overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-1.5 shadow-[0_2px_8px_-2px_rgba(15,23,42,0.04)]">
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-          {CATEGORY_TABS.map((tab) => {
-            const count = categoryCounts[tab.id] || 0;
-            const isSelected = selectedCategory === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setSelectedCategory(tab.id)}
-                className={`flex h-9 items-center gap-1.5 rounded-xl px-3.5 text-xs font-bold transition-all whitespace-nowrap cursor-pointer border ${
-                  isSelected
-                    ? 'bg-slate-950 text-white border-slate-950 shadow-sm'
-                    : 'border-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900'
-                }`}
-              >
-                <span className="flex h-4 w-4 items-center justify-center text-current">
-                  <UiIcon name={tab.icon} size={14} />
-                </span>
-                <span>{tab.label}</span>
-                {count > 0 && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${
-                      isSelected ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-500'
-                    }`}
-                  >
-                    {count}
+        <div className="relative mb-4 sm:mb-5">
+          {/* Subtle mobile right-edge fade cue to indicate horizontal swiping */}
+          <div
+            className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#F8FAFC] via-[#F8FAFC]/70 to-transparent z-10 sm:hidden"
+            aria-hidden="true"
+          />
+
+          {/* Horizontally scrollable track without native scrollbar */}
+          <div
+            role="tablist"
+            aria-label="Filter offers by category"
+            className="flex items-center gap-2 sm:gap-1 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x py-1.5 -mx-4 px-4 sm:mx-0 sm:px-0 sm:py-0 sm:rounded-2xl sm:border sm:border-slate-200/90 sm:bg-white sm:p-1.5 sm:shadow-[0_2px_8px_-2px_rgba(15,23,42,0.04)]"
+          >
+            {CATEGORY_TABS.map((tab) => {
+              const count = categoryCounts[tab.id] || 0;
+              const isSelected = selectedCategory === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  aria-selected={isSelected}
+                  onClick={(e) => {
+                    setSelectedCategory(tab.id);
+                    e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                  }}
+                  className={`group shrink-0 flex h-10 sm:h-9 items-center gap-2 sm:gap-1.5 rounded-xl px-3.5 sm:px-3 text-xs font-semibold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98] select-none border focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 ${
+                    isSelected
+                      ? 'bg-slate-950 text-white border-slate-950 shadow-xs'
+                      : 'bg-white sm:bg-transparent text-slate-600 sm:text-slate-500 border-slate-200/80 sm:border-transparent hover:border-slate-300 sm:hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 shadow-2xs sm:shadow-none'
+                  }`}
+                >
+                  <span className="flex h-4 w-4 items-center justify-center text-current shrink-0">
+                    <UiIcon name={tab.icon} size={14} />
                   </span>
-                )}
-              </button>
-            );
-          })}
+                  <span>{tab.label}</span>
+                  {count > 0 && (
+                    <span
+                      className={`text-[10.5px] px-1.5 py-0.5 rounded-md font-semibold tabular-nums shrink-0 transition-colors ${
+                        isSelected
+                          ? 'bg-slate-800 text-slate-200'
+                          : 'bg-slate-100 text-slate-600 sm:text-slate-500 group-hover:bg-slate-200/70'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+            {/* Trailing spacer for smooth mobile scroll padding */}
+            <div className="w-3 shrink-0 sm:hidden" aria-hidden="true" />
           </div>
         </div>
 
@@ -378,7 +392,7 @@ export default function OffersPage() {
             </div>
 
             {/* Provider & Sort Selectors */}
-            <div className="flex min-w-0 items-center gap-2 overflow-x-auto scrollbar-none">
+            <div className="flex min-w-0 items-center gap-2 overflow-x-auto no-scrollbar scrollbar-none">
               <div className="min-w-[148px] sm:w-48 sm:flex-initial">
                 <select
                   value={selectedProvider}
@@ -397,7 +411,7 @@ export default function OffersPage() {
               <div className="min-w-[148px] sm:w-44 sm:flex-initial">
                 <div className="relative">
                   <span className="pointer-events-none absolute left-3 top-3 flex text-slate-500">
-                    <UiIcon name={sortBy === 'recommended' ? 'sparkles' : sortBy === 'savings' ? 'dollar' : sortBy === 'newest' ? 'clock' : 'chevron'} size={14} />
+                    <UiIcon name={sortBy === 'recommended' ? 'sparkles' : sortBy === 'savings' ? 'dollar' : 'clock'} size={14} />
                   </span>
                   <select
                     value={sortBy}
@@ -407,7 +421,6 @@ export default function OffersPage() {
                     <option value="recommended">Recommended</option>
                     <option value="savings">Highest Savings</option>
                     <option value="newest">Newest First</option>
-                    <option value="alphabetical">Provider (A-Z)</option>
                   </select>
                 </div>
               </div>

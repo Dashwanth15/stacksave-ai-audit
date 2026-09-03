@@ -1077,3 +1077,20 @@ button:disabled { cursor: not-allowed; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+   Scrollbar Hiding Utility — Preserves touch & wheel scrolling
+   ============================================================ */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  -webkit-overflow-scrolling: touch; /* Smooth iOS momentum scrolling */
+}
