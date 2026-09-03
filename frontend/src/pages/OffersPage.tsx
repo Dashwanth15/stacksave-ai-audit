@@ -162,7 +162,7 @@ export default function OffersPage() {
 
   // Filter & sort logic
   const filteredAndSortedOffers = useMemo(() => {
-    let result = formattedOffers.filter((offer) => {
+    const result = formattedOffers.filter((offer) => {
       // Provider filter
       if (selectedProvider !== 'all' && offer.providerName !== selectedProvider) {
         return false;

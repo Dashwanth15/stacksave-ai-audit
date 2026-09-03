@@ -70,9 +70,21 @@ export default function AnalyticsDashboardPage() {
     }
   }, []);
 
+  // Load data when period changes (safe for async state updates)
   useEffect(() => {
-    loadData(false);
-  }, [loadData]);
+    let isMounted = true;
+
+    const loadAsync = async () => {
+      if (!isMounted) return;
+      await loadData(false);
+    };
+
+    loadAsync();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [period, loadData]);
 
   // Timer for relative "seconds ago" counter
   useEffect(() => {
