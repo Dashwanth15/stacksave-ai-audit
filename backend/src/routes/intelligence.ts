@@ -5,10 +5,32 @@
 import { Router, Request, Response } from 'express';
 import { ToolEntry, UseCase } from '../types';
 import { AIStackIntelligenceService } from '../audit-engine/services/AIStackIntelligenceService';
-import { PricingSourceModel, NotificationEventModel } from '../services/dbService';
+import { PricingSourceModel, NotificationEventModel, SyncLogModel } from '../services/dbService';
 import { PricingOverlayService } from '../pricing/pricingOverlay';
+import { isRegisteredOfficialSource } from '../pricing/offerTrust';
 
 const router = Router();
+
+// ── Auth Middleware (copied from admin.ts) ────────────────────
+
+function requireAdminSecret(req: Request, res: Response, next: Function): void {
+  const secret = process.env.ADMIN_SECRET;
+  if (!secret) {
+    res.status(503).json({ success: false, error: 'ADMIN_SECRET not configured on server' });
+    return;
+  }
+  const auth = req.headers.authorization;
+  const xSecret = req.headers['x-admin-secret'];
+
+  const matchesBearer = auth === `Bearer ${secret}`;
+  const matchesXSecret = xSecret === secret;
+
+  if (!matchesBearer && !matchesXSecret) {
+    res.status(401).json({ success: false, error: 'Unauthorized' });
+    return;
+  }
+  next();
+}
 
 // ── POST /api/intelligence/audit-analysis ────────────────────
 // Main endpoint: Generates replacement, consolidation, and removal
@@ -76,8 +98,16 @@ router.post('/remove', async (req: Request, res: Response) => {
 //   { success: true, data: { providers: ProviderStatus[], summary: {...} } }
 router.get('/pricing-status', async (_req: Request, res: Response) => {
   try {
+    const latestSuccessfulSync = await SyncLogModel.findOne({
+      completedAt: { $exists: true },
+      successCount: { $gt: 0 },
+    })
+      .sort({ completedAt: -1 })
+      .select('completedAt')
+      .lean();
+
     const sources = await PricingSourceModel.find({})
-      .select('providerId displayName status lastVerifiedAt consecutiveFailures pricingUrl strategy')
+      .select('providerId displayName status lastCheckedAt lastSuccessfulCheckAt lastVerifiedAt consecutiveFailures pricingUrl strategy')
       .sort({ providerId: 1 })
       .lean();
 
@@ -135,6 +165,8 @@ router.get('/pricing-status', async (_req: Request, res: Response) => {
         authorityCategory,
         authorityDescription,
         lastVerifiedAt: s.lastVerifiedAt ?? null,
+        lastCheckedAt: s.lastCheckedAt ?? null,
+        lastSuccessfulCheckAt: s.lastSuccessfulCheckAt ?? null,
         consecutiveFailures: s.consecutiveFailures ?? 0,
         sourceUrl: (s as { pricingUrl?: string }).pricingUrl ?? null,
         pricingStrategy: strategy,
@@ -168,12 +200,118 @@ router.get('/pricing-status', async (_req: Request, res: Response) => {
           blockedCount,
           overallHealth,
           overlayLastAppliedAt: overlayStatus.appliedAt,
+          lastSuccessfulSyncAt: latestSuccessfulSync?.completedAt ?? null,
         },
       },
     });
   } catch (err) {
     console.error('GET /api/intelligence/pricing-status error:', err);
     return res.status(500).json({ success: false, error: 'Failed to fetch pricing status' });
+  }
+});
+
+// ── GET /api/intelligence/offers/diagnostic (ADMIN-ONLY) ─────
+// INTERNAL: Safe diagnostic endpoint (no credentials exposed)
+// Reports offer verification state without exposing secrets
+// Purpose: Debug why offers page may show zero offers
+// SECURITY: Protected by requireAdminSecret — returns 401 if not authenticated
+router.get('/offers/diagnostic', requireAdminSecret, async (_req: Request, res: Response) => {
+  try {
+    // DIAGNOSTIC COUNTS — No evidence/secrets exposed
+    const [
+      totalEvents,
+      newOfferEvents,
+      activeEvents,
+      publicEvents,
+      verifiedEvents,
+      withEvidence,
+      withSourceFetched,
+      withLastConfirmed,
+      withLastCheck,
+      allConditions,
+    ] = await Promise.all([
+      NotificationEventModel.countDocuments({}),
+      NotificationEventModel.countDocuments({ eventType: 'NEW_OFFER' }),
+      NotificationEventModel.countDocuments({ isActive: { $ne: false } }),
+      NotificationEventModel.countDocuments({ isPublic: true }),
+      NotificationEventModel.countDocuments({ sourceStatus: 'VERIFIED' }),
+      NotificationEventModel.countDocuments({ evidenceText: { $exists: true, $ne: null } }),
+      NotificationEventModel.countDocuments({ sourceFetchedAt: { $exists: true, $ne: null } }),
+      NotificationEventModel.countDocuments({ lastConfirmedAt: { $exists: true, $ne: null } }),
+      NotificationEventModel.countDocuments({ lastSuccessfulCheckAt: { $exists: true, $ne: null } }),
+      NotificationEventModel.countDocuments({
+        eventType: 'NEW_OFFER',
+        isActive: { $ne: false },
+        isPublic: true,
+        sourceStatus: 'VERIFIED',
+        evidenceText: { $exists: true, $ne: null },
+        lastConfirmedAt: { $exists: true, $ne: null },
+        sourceFetchedAt: { $exists: true, $ne: null },
+        lastSuccessfulCheckAt: { $exists: true, $ne: null },
+      }),
+    ]);
+
+    // Provider-level diagnostics
+    const providerCounts = await NotificationEventModel.aggregate([
+      {
+        $match: {
+          eventType: 'NEW_OFFER',
+          isActive: { $ne: false },
+          isPublic: true,
+          sourceStatus: 'VERIFIED',
+          evidenceText: { $exists: true, $ne: null },
+          lastConfirmedAt: { $exists: true, $ne: null },
+          sourceFetchedAt: { $exists: true, $ne: null },
+          lastSuccessfulCheckAt: { $exists: true, $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: '$providerId',
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
+
+    return res.json({
+      success: true,
+      data: {
+        diagnostic: {
+          totalNotificationEvents: totalEvents,
+          breakdown: {
+            eventType_NEW_OFFER: newOfferEvents,
+            isActive_true: activeEvents,
+            isPublic_true: publicEvents,
+            sourceStatus_VERIFIED: verifiedEvents,
+            evidenceText_exists: withEvidence,
+            sourceFetchedAt_exists: withSourceFetched,
+            lastConfirmedAt_exists: withLastConfirmed,
+            lastSuccessfulCheckAt_exists: withLastCheck,
+          },
+          percentages: {
+            eventType_NEW_OFFER: totalEvents > 0 ? Math.round((newOfferEvents / totalEvents) * 100) : 0,
+            isActive_true: totalEvents > 0 ? Math.round((activeEvents / totalEvents) * 100) : 0,
+            isPublic_true: totalEvents > 0 ? Math.round((publicEvents / totalEvents) * 100) : 0,
+            sourceStatus_VERIFIED: totalEvents > 0 ? Math.round((verifiedEvents / totalEvents) * 100) : 0,
+            evidenceText_exists: totalEvents > 0 ? Math.round((withEvidence / totalEvents) * 100) : 0,
+            sourceFetchedAt_exists: totalEvents > 0 ? Math.round((withSourceFetched / totalEvents) * 100) : 0,
+            lastConfirmedAt_exists: totalEvents > 0 ? Math.round((withLastConfirmed / totalEvents) * 100) : 0,
+            lastSuccessfulCheckAt_exists: totalEvents > 0 ? Math.round((withLastCheck / totalEvents) * 100) : 0,
+          },
+          offersPassingAllConditions: allConditions,
+          offersPassingAllConditions_percent: totalEvents > 0 ? Math.round((allConditions / totalEvents) * 100) : 0,
+          providerBreakdown: providerCounts.map((p: { _id: string; count: number }) => ({
+            providerId: p._id,
+            verifiedOfferCount: p.count,
+          })),
+          note: 'This is a DIAGNOSTIC ONLY endpoint. It reports record counts without exposing credentials or commercial evidence. Use this to identify why offers may not be appearing publicly.',
+        },
+      },
+    });
+  } catch (err) {
+    console.error('GET /api/intelligence/offers/diagnostic error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to generate diagnostic' });
   }
 });
 
@@ -189,13 +327,22 @@ router.get('/pricing-status', async (_req: Request, res: Response) => {
 //   { success: true, data: { offers: PublicOffer[], count: number } }
 router.get('/offers', async (_req: Request, res: Response) => {
   try {
-    const events = await NotificationEventModel.find({ eventType: 'NEW_OFFER' })
+    const events = await NotificationEventModel.find({
+      eventType: 'NEW_OFFER',
+      isActive: { $ne: false },
+      isPublic: true,
+    })
       .sort({ detectedAt: -1 })
-      .limit(30)
-      .select('providerId providerName title description discount discountType sourceUrl detectedAt expiresAt fingerprint')
+      .select('providerId providerName title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive lastSeenAt lastConfirmedAt')
       .lean();
 
-    const offers = events.map((e) => ({
+    const offers = events.filter((e) => (
+      e.sourceStatus === 'VERIFIED' &&
+      e.isPublic === true &&
+      Boolean(e.evidenceText?.trim()) &&
+      Boolean(e.lastConfirmedAt && e.sourceFetchedAt && e.lastSuccessfulCheckAt) &&
+      isRegisteredOfficialSource(e.providerId, e.sourceUrl)
+    )).map((e) => ({
       id: e.fingerprint || (e as { _id?: unknown })._id?.toString() || `${e.providerId}-${e.title}`,
       fingerprint: e.fingerprint,
       providerId: e.providerId,
@@ -204,8 +351,17 @@ router.get('/offers', async (_req: Request, res: Response) => {
       description: e.description || null,
       discount: e.discount || null,
       discountType: e.discountType || null,
+      evidenceText: e.evidenceText || null,
+      detectionMethod: e.detectionMethod || 'PLAYWRIGHT_DOM',
+      sourceStatus: e.sourceStatus,
       sourceUrl: e.sourceUrl,
+      sourceFetchedAt: e.sourceFetchedAt,
+      lastSuccessfulCheckAt: e.lastSuccessfulCheckAt,
+      evidenceLocation: e.evidenceLocation,
+      contentHash: e.contentHash,
+      extractorVersion: e.extractorVersion,
       detectedAt: e.detectedAt,
+      lastConfirmedAt: e.lastConfirmedAt,
       expiresAt: e.expiresAt || null,
     }));
 

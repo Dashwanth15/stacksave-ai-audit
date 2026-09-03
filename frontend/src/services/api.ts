@@ -241,6 +241,8 @@ export async function fetchPricingStatus(): Promise<{
 
     authorityDescription: string;
     lastVerifiedAt: string | null;
+    lastCheckedAt: string | null;
+    lastSuccessfulCheckAt: string | null;
     consecutiveFailures: number;
     sourceUrl: string | null;
     pricingStrategy: string | null;
@@ -255,6 +257,7 @@ export async function fetchPricingStatus(): Promise<{
     blockedCount: number;
     overallHealth: 'ALL_VERIFIED' | 'PARTIAL' | 'DEGRADED';
     overlayLastAppliedAt: string | null;
+    lastSuccessfulSyncAt: string | null;
   };
 }> {
   const response = await api.get('/intelligence/pricing-status', { timeout: 10_000 });
@@ -283,4 +286,65 @@ export async function fetchPublicOffers(): Promise<{
   }
   return response.data.data;
 }
+
+// ── Analytics & Statistics Endpoints ─────────────────────────
+
+import type {
+  TimePeriod,
+  AnalyticsOverviewPayload,
+  RealtimeAnalyticsPayload,
+  HistoricalAnalyticsPayload,
+  SearchConsoleAnalyticsPayload,
+  DatabaseAnalyticsPayload,
+  AnalyticsHealthPayload,
+} from '../types/analytics';
+
+export async function fetchAnalyticsOverview(period: TimePeriod = '7days'): Promise<AnalyticsOverviewPayload> {
+  const response = await api.get(`/analytics/overview?period=${period}`, { timeout: 15_000 });
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.error ?? 'Failed to fetch analytics overview');
+  }
+  return response.data.data;
+}
+
+export async function fetchRealtimeAnalytics(): Promise<RealtimeAnalyticsPayload> {
+  const response = await api.get('/analytics/realtime', { timeout: 10_000 });
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.error ?? 'Failed to fetch realtime analytics');
+  }
+  return response.data.data;
+}
+
+export async function fetchHistoricalAnalytics(period: TimePeriod = '7days'): Promise<HistoricalAnalyticsPayload> {
+  const response = await api.get(`/analytics/historical?period=${period}`, { timeout: 15_000 });
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.error ?? 'Failed to fetch historical analytics');
+  }
+  return response.data.data;
+}
+
+export async function fetchSearchConsoleAnalytics(period: TimePeriod = '7days'): Promise<SearchConsoleAnalyticsPayload> {
+  const response = await api.get(`/analytics/search-console?period=${period}`, { timeout: 15_000 });
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.error ?? 'Failed to fetch search console analytics');
+  }
+  return response.data.data;
+}
+
+export async function fetchDatabaseAnalytics(period: TimePeriod = '7days'): Promise<DatabaseAnalyticsPayload> {
+  const response = await api.get(`/analytics/database?period=${period}`, { timeout: 10_000 });
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.error ?? 'Failed to fetch database analytics');
+  }
+  return response.data.data;
+}
+
+export async function fetchAnalyticsHealth(): Promise<AnalyticsHealthPayload> {
+  const response = await api.get('/analytics/health', { timeout: 10_000 });
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.error ?? 'Failed to fetch analytics health');
+  }
+  return response.data.data;
+}
+
 

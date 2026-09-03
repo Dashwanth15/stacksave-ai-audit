@@ -1,0 +1,144 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║              STRICT VERIFICATION FILTER: PRODUCTION DRY-RUN                   ║
+║                                                                                ║
+║                       ✅ READY FOR EXECUTION                                  ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+WHAT IS THIS?
+─────────────
+A safe, read-only test that proves whether your strict verification filter
+can recover the 26 existing offers after deployment.
+
+✅ Uses real Playwright extraction (same as production)
+✅ Runs in GitHub Actions (correct environment)
+✅ Tests all 13 official provider adapters
+✅ Zero database modifications
+✅ Can run unlimited times with no risk
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+READ THESE FIRST (IN THIS ORDER)
+────────────────────────────────
+
+1. QUICKSTART.txt
+   └─ 3-step process to run the dry-run
+
+2. PRODUCTION_DRYRUN_READY.md
+   └─ Overview, status, and implementation details
+
+3. DRYRUN_DEPLOYMENT_INSTRUCTIONS.md
+   └─ Quick reference guide
+
+4. PRODUCTION_DRYRUN_GUIDE.md
+   └─ Complete guide with examples and troubleshooting
+
+5. DEPLOYMENT_CHECKLIST.md
+   └─ Step-by-step checklist
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+THE 3-STEP PROCESS
+──────────────────
+
+STEP 1: PUSH CODE
+┌──────────────────────────────────────────┐
+│ $ git add .                              │
+│ $ git commit -m "Add dry-run"            │
+│ $ git push origin main                   │
+└──────────────────────────────────────────┘
+
+STEP 2: RUN WORKFLOW IN GITHUB ACTIONS
+┌──────────────────────────────────────────┐
+│ 1. GitHub repo → Actions → Workflows     │
+│ 2. "Pricing Sync DRY-RUN (Read-Only)"   │
+│ 3. "Run workflow" button                 │
+│ 4. Choose: main branch                   │
+│ 5. "Run workflow"                        │
+│ ⏱️  Wait: ~10 minutes                     │
+└──────────────────────────────────────────┘
+
+STEP 3: REVIEW RESULTS
+┌──────────────────────────────────────────┐
+│ 1. Download: pricing-sync-dryrun-report  │
+│ 2. Check: VERDICT field                  │
+│ 3. Review: Projected public offers       │
+│ 4. Decide: Deploy or investigate         │
+└──────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+WHAT THE DRY-RUN TELLS YOU
+──────────────────────────
+
+VERDICT = PRODUCTION_RECOVERY_VERIFIED ✅
+  ├─ Fresh extraction works in GitHub Actions
+  ├─ Existing offers can be recovered
+  └─ Safe to deploy filter to production
+
+VERDICT = PRODUCTION_RECOVERY_NOT_VERIFIED ❌
+  ├─ Fresh extraction failed or doesn't match
+  ├─ Existing offers cannot be recovered
+  └─ Do NOT deploy; investigate first
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+WHY THIS APPROACH?
+──────────────────
+
+❌ Cannot test locally:
+   - 12/13 providers fail locally (403 blocks, timeouts)
+   - Official pages may block non-GitHub IPs
+   - Results don't prove production behavior
+
+✅ Must test in GitHub Actions:
+   - Same environment as production sync
+   - Has Playwright + Chromium installed
+   - Different IP range (AWS) may allow access
+   - Results prove real production behavior
+
+✅ Dry-run is safe:
+   - Read-only access to MongoDB
+   - Simulates changes in memory
+   - Zero database modifications
+   - Can run unlimited times
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+IMPORTANT NOTES
+───────────────
+
+⚠️  Do NOT deploy without running the dry-run
+⚠️  Do NOT deploy if VERDICT is NOT_VERIFIED
+⚠️  Do NOT skip the GitHub Actions step (local ≠ production)
+⚠️  Do NOT modify the strict filter without dry-run proof
+⚠️  The dry-run is 100% safe; run it as many times as needed
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+CURRENT STATUS
+──────────────
+
+✅ Strict filter: IMPLEMENTED
+✅ GitHub Actions workflow: CREATED
+✅ Dry-run script: CREATED
+✅ Documentation: COMPLETE
+✅ Code: COMPILES
+✅ Safety: VERIFIED
+
+⏳ Waiting: You to run the workflow
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+NEXT ACTION
+───────────
+
+→ Read QUICKSTART.txt
+→ Push code to GitHub
+→ Run GitHub Actions dry-run
+→ Review VERDICT
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+Questions? Start with QUICKSTART.txt, then read PRODUCTION_DRYRUN_GUIDE.md

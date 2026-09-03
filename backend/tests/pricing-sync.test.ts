@@ -561,9 +561,26 @@ describe('Production GitHub Actions Runner & Ingestion Verification', () => {
     const { chromium } = await import('playwright');
     const mockPage = {
       goto: vi.fn().mockResolvedValue(undefined),
-      waitForTimeout: vi.fn().mockResolvedValue(undefined),
-      evaluate: vi.fn().mockResolvedValue([]),
-      content: vi.fn().mockResolvedValue('<html><body>Pricing</body></html>'),
+      waitForFunction: vi.fn().mockResolvedValue(undefined),
+      waitForSelector: vi.fn().mockResolvedValue(undefined),
+      evaluate: vi.fn().mockResolvedValue({
+        isBlocked: false,
+        plans: [
+          { id: 'free', label: 'Free', monthlyPricePerSeat: 0, currency: 'USD' },
+          { id: 'pro', label: 'Pro', monthlyPricePerSeat: 20, annualPricePerSeat: 17, currency: 'USD' },
+          { id: 'team', label: 'Team', monthlyPricePerSeat: 25, minSeats: 5, currency: 'USD' },
+        ],
+        offers: [
+          {
+            title: 'Claude Pro Annual Savings',
+            description: 'Save on Claude Pro with annual billing ($17/mo billed annually vs $20/mo monthly)',
+            discount: '15%',
+            normalPrice: 20,
+            promotionalPrice: 17,
+            duration: 'Annual',
+          },
+        ],
+      }),
       close: vi.fn().mockResolvedValue(undefined),
     };
     const mockContext = {
@@ -575,6 +592,49 @@ describe('Production GitHub Actions Runner & Ingestion Verification', () => {
       close: vi.fn().mockResolvedValue(undefined),
     };
     vi.spyOn(chromium, 'launch').mockResolvedValue(mockBrowser as any);
+
+    const mockFetch = vi.fn().mockImplementation((url: string) => {
+      const urlStr = String(url);
+      if (urlStr.includes('cursor.com')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          text: async () => `<html><head><script type="application/ld+json">[{"@type":"Offer","name":"Pro","price":"20","priceCurrency":"USD"}]</script></head></html>`,
+        });
+      }
+      if (urlStr.includes('github.com')) {
+        const payload = {
+          payload: {
+            contentfulRawJsonResponse: {
+              includes: {
+                Entry: [
+                  { fields: { heading: 'Pro', subheading: { nodeType: 'document', content: [{ nodeType: 'paragraph', content: [{ nodeType: 'text', value: '$19 per user / month' }] }] } } },
+                  { fields: { heading: 'Enterprise', subheading: { nodeType: 'document', content: [{ nodeType: 'paragraph', content: [{ nodeType: 'text', value: '$39 per user / month' }] }] } } },
+                ]
+              }
+            }
+          }
+        };
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          text: async () => `<html><body><script type="application/json" data-target="react-app.embeddedData">${JSON.stringify(payload)}</script></body></html>`,
+        });
+      }
+      if (urlStr.includes('deepseek.com')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          text: async () => `<html><body><table><tr><td>Model</td><td>Price: $0.14/M input</td></tr></table></body></html>`,
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        text: async () => `<html><body>Free tier</body></html>`,
+      });
+    });
+    global.fetch = mockFetch as any;
 
     const { runOfficialExtraction } = await import('../scripts/official_pricing_extractor');
     const payload = await runOfficialExtraction('both');
@@ -583,7 +643,11 @@ describe('Production GitHub Actions Runner & Ingestion Verification', () => {
     for (const p of payload.providers) {
       expect(p.sourceUrl).not.toContain('openrouter');
       expect(p.sourceUrl).toMatch(/^https?:\/\//);
-      expect(p.plans.length).toBeGreaterThan(0);
+      if (p.status === 'VERIFIED') {
+        expect(p.plans.length).toBeGreaterThan(0);
+      } else {
+        expect(p.plans).toHaveLength(0);
+      }
     }
   });
 
@@ -591,9 +655,13 @@ describe('Production GitHub Actions Runner & Ingestion Verification', () => {
     const { chromium } = await import('playwright');
     const mockPage = {
       goto: vi.fn().mockResolvedValue(undefined),
-      waitForTimeout: vi.fn().mockResolvedValue(undefined),
-      evaluate: vi.fn().mockResolvedValue([]),
-      content: vi.fn().mockResolvedValue('<html><body>Pricing</body></html>'),
+      waitForFunction: vi.fn().mockResolvedValue(undefined),
+      waitForSelector: vi.fn().mockResolvedValue(undefined),
+      evaluate: vi.fn().mockResolvedValue({
+        isBlocked: false,
+        plans: [{ id: 'pro', label: 'Pro', monthlyPricePerSeat: 20, currency: 'USD' }],
+        offers: [{ title: 'Special Promo', description: 'Promo desc' }],
+      }),
       close: vi.fn().mockResolvedValue(undefined),
     };
     const mockContext = {
@@ -606,6 +674,13 @@ describe('Production GitHub Actions Runner & Ingestion Verification', () => {
     };
     vi.spyOn(chromium, 'launch').mockResolvedValue(mockBrowser as any);
 
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => `<html><head><script type="application/ld+json">[{"@type":"Offer","name":"Pro","price":"20","priceCurrency":"USD"}]</script></head></html>`,
+    });
+    global.fetch = mockFetch as any;
+
     const { runOfficialExtraction } = await import('../scripts/official_pricing_extractor');
     const payload = await runOfficialExtraction('pricing');
 
@@ -613,6 +688,121 @@ describe('Production GitHub Actions Runner & Ingestion Verification', () => {
     for (const p of payload.providers) {
       expect(p.offers).toHaveLength(0);
     }
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// 9. DYNAMIC STATIC ADAPTER TESTS & VERIFICATION
+// ────────────────────────────────────────────────────────────────────────────
+
+describe('Official Static Pricing Adapters', () => {
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('fetchClaudePricing parses $20 Pro and $25 Team from official markup', async () => {
+    const { fetchClaudePricing } = await import('../src/pricing/adapters/claude');
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => `<html><body><div>Claude Pro is $20 per month</div><div>Claude Team is $25 per user/month</div></body></html>`,
+    } as any);
+
+    const res = await fetchClaudePricing();
+    expect(res.status).toBe('VERIFIED');
+    expect(res.plans.length).toBeGreaterThanOrEqual(2);
+    const pro = res.plans.find((p) => p.id === 'pro');
+    expect(pro?.monthlyPricePerSeat).toBe(20);
+    const team = res.plans.find((p) => p.id === 'team');
+    expect(team?.monthlyPricePerSeat).toBe(25);
+  });
+
+  it('fetchClaudePricing returns FETCH_BLOCKED on Cloudflare challenge', async () => {
+    const { fetchClaudePricing } = await import('../src/pricing/adapters/claude');
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => `<html><body><title>Just a moment... Cloudflare</title></body></html>`,
+    } as any);
+
+    const res = await fetchClaudePricing();
+    expect(res.status).toBe('FETCH_BLOCKED');
+    expect(res.plans).toHaveLength(0);
+  });
+
+  it('fetchClaudePricing returns PARSE_FAILED when markup lacks price indicators', async () => {
+    const { fetchClaudePricing } = await import('../src/pricing/adapters/claude');
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => `<html><body><div>Welcome to Claude, no pricing here</div></body></html>`,
+    } as any);
+
+    const res = await fetchClaudePricing();
+    expect(res.status).toBe('PARSE_FAILED');
+    expect(res.plans).toHaveLength(0);
+  });
+
+  it('fetchChatGPTPricing extracts Plus $20 and Pro $200', async () => {
+    const { fetchChatGPTPricing } = await import('../src/pricing/adapters/chatgpt');
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => `<html><body><div>ChatGPT Plus is $20/month</div><div>ChatGPT Pro is $200/month</div></body></html>`,
+    } as any);
+
+    const res = await fetchChatGPTPricing();
+    expect(res.status).toBe('VERIFIED');
+    const plus = res.plans.find((p) => p.id === 'plus');
+    expect(plus?.monthlyPricePerSeat).toBe(20);
+    const pro = res.plans.find((p) => p.id === 'pro');
+    expect(pro?.monthlyPricePerSeat).toBe(200);
+  });
+
+  it('fetchGeminiPricing extracts Google AI Premium $19.99', async () => {
+    const { fetchGeminiPricing } = await import('../src/pricing/adapters/gemini');
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => `<html><body><div>Google AI Premium with Gemini Advanced is $19.99/mo</div></body></html>`,
+    } as any);
+
+    const res = await fetchGeminiPricing();
+    expect(res.status).toBe('VERIFIED');
+    const prem = res.plans.find((p) => p.id === 'ai-premium');
+    expect(prem?.monthlyPricePerSeat).toBe(19.99);
+  });
+
+  it('fetchWindsurfPricing extracts Pro $15 and Teams $30', async () => {
+    const { fetchWindsurfPricing } = await import('../src/pricing/adapters/windsurf');
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => `<html><body><div>Windsurf Pro $15/month</div><div>Teams $30/month</div><div>Enterprise $60/month</div></body></html>`,
+    } as any);
+
+    const res = await fetchWindsurfPricing();
+    expect(res.status).toBe('VERIFIED');
+    const pro = res.plans.find((p) => p.id === 'pro');
+    expect(pro?.monthlyPricePerSeat).toBe(15);
+    const teams = res.plans.find((p) => p.id === 'teams');
+    expect(teams?.monthlyPricePerSeat).toBe(30);
+  });
+
+  it('fetchPerplexityPricing extracts Pro $20', async () => {
+    const { fetchPerplexityPricing } = await import('../src/pricing/adapters/perplexity');
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => `<html><body><div>Perplexity Pro $20 per month</div></body></html>`,
+    } as any);
+
+    const res = await fetchPerplexityPricing();
+    expect(res.status).toBe('VERIFIED');
+    const pro = res.plans.find((p) => p.id === 'pro');
+    expect(pro?.monthlyPricePerSeat).toBe(20);
   });
 });
 

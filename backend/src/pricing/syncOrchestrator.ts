@@ -11,15 +11,25 @@ import {
   PricingSourceModel,
   PricingHistoryModel,
   SyncLogModel,
+  NotificationEventModel,
 } from '../services/dbService';
 import { PROVIDER_SOURCE_REGISTRY } from './sourceRegistry';
 import { PricingOverlayService } from './pricingOverlay';
 import { fetchCursorPricing } from './adapters/cursor';
 import { fetchGithubCopilotPricing } from './adapters/githubCopilot';
 import { fetchDeepSeekPricing } from './adapters/deepseek';
+import { fetchClaudePricing } from './adapters/claude';
+import { fetchChatGPTPricing } from './adapters/chatgpt';
+import { fetchGeminiPricing } from './adapters/gemini';
+import { fetchWindsurfPricing } from './adapters/windsurf';
+import { fetchPerplexityPricing } from './adapters/perplexity';
+import { fetchOpenAIApiPricing } from './adapters/openaiApi';
+import { fetchAnthropicApiPricing } from './adapters/anthropicApi';
+import { fetchKimiPricing } from './adapters/kimi';
 import { fetchOfficialDirectPricing } from './adapters/officialDirect';
 import { validatePlans, diffPlans, isSuspiciousChange } from './validator';
 import { NormalizedPlan, ProviderPricingResult, SyncStatus } from './types';
+import { buildCanonicalOfferFingerprint, hashOfferEvidence, isPubliclyVerifiableOffer } from './offerTrust';
 
 
 // ── Types ────────────────────────────────────────────────────
@@ -29,6 +39,8 @@ export interface ProviderSyncSummary {
   displayName: string;
   status: SyncStatus;
   plansCount: number;
+  offersCount: number;
+  checkedAt: Date;
   strategy: string;
   priceChanged: boolean;
   changeSummary?: string;
@@ -62,6 +74,22 @@ async function runAdapter(providerId: string, sourceUrl: string): Promise<Provid
       return fetchGithubCopilotPricing();
     case 'deepseek':
       return fetchDeepSeekPricing();
+    case 'claude':
+      return fetchClaudePricing();
+    case 'chatgpt':
+      return fetchChatGPTPricing();
+    case 'gemini':
+      return fetchGeminiPricing();
+    case 'windsurf':
+      return fetchWindsurfPricing();
+    case 'perplexity':
+      return fetchPerplexityPricing();
+    case 'openai-api':
+      return fetchOpenAIApiPricing();
+    case 'anthropic-api':
+      return fetchAnthropicApiPricing();
+    case 'kimi':
+      return fetchKimiPricing();
     default:
       return fetchOfficialDirectPricing(providerId, sourceUrl);
   }
@@ -78,6 +106,93 @@ function plansAreEqual(a: NormalizedPlan[], b: NormalizedPlan[]): boolean {
     if ((planA.annualPricePerSeat ?? 0) !== (planB.annualPricePerSeat ?? 0)) return false;
   }
   return true;
+}
+
+// ── Offer Lifecycle Upsert Helper ─────────────────────────────
+
+async function upsertOffer(
+  providerId: string,
+  providerName: string,
+  offer: import('./types').NormalizedOffer,
+  providerStatus: SyncStatus,
+  checkedAt: Date,
+  extractorVersion: string,
+  verifiedSourceUrls: ReadonlySet<string>,
+): Promise<{ isNew: boolean }> {
+  if (!isPubliclyVerifiableOffer(offer, { providerStatus, checkedAt, extractorVersion, verifiedSourceUrls })) {
+    return { isNew: false };
+  }
+  const fp = buildCanonicalOfferFingerprint(offer);
+  const confirmedAt = checkedAt;
+  const contentHash = offer.contentHash || hashOfferEvidence(offer.evidenceText!.trim());
+
+  const existing = await NotificationEventModel.findOne({ fingerprint: fp });
+  if (existing) {
+    await NotificationEventModel.updateOne(
+      { _id: existing._id },
+      {
+        $set: {
+          lastConfirmedAt: confirmedAt,
+          lastSeenAt: confirmedAt,
+          isActive: true,
+          consecutiveMisses: 0,
+          title: offer.title || existing.title,
+          description: offer.description || existing.description,
+          evidenceText: offer.evidenceText || existing.evidenceText,
+          detectionMethod: offer.detectionMethod || existing.detectionMethod,
+          sourceStatus: 'VERIFIED',
+          sourceFetchedAt: checkedAt,
+          lastSuccessfulCheckAt: checkedAt,
+          evidenceLocation: offer.evidenceLocation,
+          contentHash,
+          extractorVersion,
+          isPublic: true,
+          discount: typeof offer.discount === 'number' ? `${offer.discount}%` : String(offer.discount || existing.discount || ''),
+        },
+      }
+    );
+    return { isNew: false };
+  }
+
+  // Replace an older fingerprint for the same source/title when a commercial field changes.
+  await NotificationEventModel.updateMany(
+    {
+      providerId,
+      sourceUrl: offer.sourceUrl,
+      title: offer.title,
+      fingerprint: { $ne: fp },
+      isActive: { $ne: false },
+    },
+    { $set: { isActive: false } }
+  );
+
+  await NotificationEventModel.create({
+    providerId,
+    providerName,
+    eventType: 'NEW_OFFER',
+    fingerprint: fp,
+    title: offer.title,
+    description: offer.description,
+    evidenceText: offer.evidenceText,
+    detectionMethod: offer.detectionMethod,
+    sourceStatus: 'VERIFIED',
+    sourceFetchedAt: checkedAt,
+    lastSuccessfulCheckAt: checkedAt,
+    evidenceLocation: offer.evidenceLocation,
+    contentHash,
+    extractorVersion,
+    isPublic: true,
+    sourceUrl: offer.sourceUrl,
+    detectedAt: offer.detectedAt || checkedAt,
+    lastConfirmedAt: confirmedAt,
+    lastSeenAt: confirmedAt,
+    consecutiveMisses: 0,
+    isActive: true,
+    expiresAt: offer.expiresAt,
+    discount: typeof offer.discount === 'number' ? `${offer.discount}%` : String(offer.discount || ''),
+    discountType: 'PROMOTION',
+  });
+  return { isNew: true };
 }
 
 // ── Main Orchestrator ─────────────────────────────────────────
@@ -124,6 +239,8 @@ export async function runPricingSync(triggeredBy: string = 'api'): Promise<SyncR
       displayName: source.displayName,
       status: result.status,
       plansCount: result.plans?.length ?? 0,
+      offersCount: 0,
+      checkedAt: result.fetchedAt,
       strategy: source.strategy,
       priceChanged: false,
       isSuspicious: false,
@@ -342,27 +459,14 @@ export async function ingestOfficialExtractedPricing(
       });
     }
 
-    // Ingest genuine offers with fingerprint deduplication if present
-    if (item.offers && item.offers.length > 0) {
+    // Ingest genuine offers with fingerprint deduplication and lifecycle tracking
+    if (isVerified && item.offers && item.offers.length > 0) {
+      const verifiedSourceUrls = new Set(
+        item.scannedPages?.filter((page) => page.status === 'VERIFIED').map((page) => page.url)
+          || (item.sourceUrl ? [item.sourceUrl] : [])
+      );
       for (const off of item.offers) {
-        const fp = off.fingerprint || randomUUID();
-        const existingEvent = await import('../services/dbService').then(m => m.NotificationEventModel.findOne({
-          fingerprint: fp,
-        }));
-        if (!existingEvent) {
-          await import('../services/dbService').then(m => m.NotificationEventModel.create({
-            providerId: item.providerId,
-            providerName: displayName,
-            eventType: 'NEW_OFFER',
-            fingerprint: fp,
-            title: off.title,
-            description: off.description,
-            sourceUrl: off.sourceUrl || item.sourceUrl,
-            detectedAt: new Date(),
-            discount: typeof off.discount === 'number' ? `${off.discount}%` : String(off.discount || ''),
-            discountType: 'PROMOTION',
-          }));
-        }
+        await upsertOffer(item.providerId, displayName, off, item.status, new Date(item.checkedAt || Date.now()), payload.runnerVersion || '', verifiedSourceUrls);
       }
     }
 
@@ -383,13 +487,12 @@ export async function ingestOfficialExtractedPricing(
           validationWarnings: validation.warnings,
           failureReason: isVerified ? undefined : (item.failureReason || 'Failed validation'),
           ...(isVerified ? {
-            lastVerifiedAt: new Date(),
-            lastSuccessfulCheckAt: new Date(),
+              lastVerifiedAt: new Date(item.checkedAt || Date.now()),
+              lastSuccessfulCheckAt: new Date(item.checkedAt || Date.now()),
             consecutiveFailures: 0,
-          } : {
-            $inc: { consecutiveFailures: 1 },
-          }),
+          } : {}),
         },
+        ...(isVerified ? {} : { $inc: { consecutiveFailures: 1 } }),
       },
       { upsert: true, new: true }
     );
@@ -399,6 +502,8 @@ export async function ingestOfficialExtractedPricing(
       displayName,
       status: finalStatus,
       plansCount: plansToStore.length,
+      offersCount: item.offers?.length ?? 0,
+      checkedAt: new Date(item.checkedAt || Date.now()),
       strategy: item.extractionStrategy,
       priceChanged,
       changeSummary,
@@ -408,6 +513,95 @@ export async function ingestOfficialExtractedPricing(
       durationMs: 0,
       failureReason: isVerified ? undefined : item.failureReason,
     });
+  }
+
+  // ── Offer Expiry Lifecycle Sweep (Per-Source Verification + Grace Period) ──
+  // Track confirmation per source page. Only source pages that were successfully
+  // scanned (status === 'VERIFIED') participate in offer absence checks.
+  // Temporary outages (FETCH_BLOCKED, PARSE_FAILED, TIMEOUT) NEVER expire offers.
+  // Missing offers on verified pages enter a grace period (2 verified scans OR 48 hours)
+  // before being marked isActive: false.
+  const currentDetectedFps = new Set<string>();
+  for (const item of payload.providers) {
+    for (const offer of (item.offers || [])) {
+      if (offer.fingerprint) {
+        currentDetectedFps.add(buildCanonicalOfferFingerprint(offer));
+      }
+    }
+  }
+
+  // Collect all verified source page URLs scanned in this run
+  const verifiedSources: Array<{ providerId: string; sourceUrl: string }> = [];
+  for (const item of payload.providers) {
+    if (item.scannedPages && item.scannedPages.length > 0) {
+      for (const page of item.scannedPages) {
+        if (page.status === 'VERIFIED' && page.url) {
+          verifiedSources.push({ providerId: item.providerId, sourceUrl: page.url });
+        }
+      }
+    } else if (item.status === 'VERIFIED' && item.sourceUrl) {
+      verifiedSources.push({ providerId: item.providerId, sourceUrl: item.sourceUrl });
+    }
+  }
+
+  let expiredOffersCount = 0;
+  let warnedGraceOffersCount = 0;
+
+  for (const src of verifiedSources) {
+    const activeOffersForSource = await NotificationEventModel.find({
+      providerId: src.providerId,
+      sourceUrl: src.sourceUrl,
+      isActive: { $ne: false },
+    });
+
+    for (const doc of activeOffersForSource) {
+      if (!currentDetectedFps.has(doc.fingerprint)) {
+        // Offer was absent from this verified source page scan
+        const nextMissCount = (doc.consecutiveMisses || 0) + 1;
+        const lastConfirmed = doc.lastConfirmedAt || doc.lastSeenAt || doc.detectedAt || new Date(0);
+        const hoursSinceConfirmed = (Date.now() - new Date(lastConfirmed).getTime()) / (1000 * 60 * 60);
+
+        if (nextMissCount >= 2 || hoursSinceConfirmed >= 48) {
+          // Grace period elapsed (2 verified scans missed OR >=48 hours unconfirmed)
+          await NotificationEventModel.updateOne(
+            { _id: doc._id },
+            { $set: { isActive: false, consecutiveMisses: nextMissCount } }
+          );
+          expiredOffersCount++;
+        } else {
+          // Still in grace period (1st miss & <48h) — increment miss count, keep active
+          await NotificationEventModel.updateOne(
+            { _id: doc._id },
+            { $set: { consecutiveMisses: nextMissCount } }
+          );
+          warnedGraceOffersCount++;
+        }
+      }
+    }
+  }
+
+  // Deactivate offers for retired providers immediately
+  for (const item of payload.providers) {
+    if (item.status === 'RETIRED') {
+      const retiredOffers = await NotificationEventModel.find({
+        providerId: item.providerId,
+        isActive: { $ne: false },
+      });
+      if (retiredOffers.length > 0) {
+        await NotificationEventModel.updateMany(
+          { providerId: item.providerId, isActive: { $ne: false } },
+          { $set: { isActive: false, consecutiveMisses: 2 } }
+        );
+        expiredOffersCount += retiredOffers.length;
+      }
+    }
+  }
+
+  if (expiredOffersCount > 0) {
+    console.log(`[PricingSync:Ingest] Deactivated ${expiredOffersCount} expired offer(s) after grace period (source verified absent / retired)`);
+  }
+  if (warnedGraceOffersCount > 0) {
+    console.log(`[PricingSync:Ingest] ${warnedGraceOffersCount} offer(s) absent in 1st verified scan — grace period active`);
   }
 
   const completedAt = new Date();

@@ -15,6 +15,7 @@ import chatRouter from './routes/chat';
 import stackBuilderRouter from './routes/stackBuilder';
 import intelligenceRouter from './routes/intelligence';
 import adminRouter from './routes/admin';
+import analyticsRouter from './routes/analytics';
 import { globalLimiter, leadLimiter } from './middleware/rateLimit';
 import { requestLogger } from './middleware/logger';
 import { findAvailablePort } from './utils/port';
@@ -97,6 +98,7 @@ app.use('/api/chat', chatRouter);
 app.use('/api/stack-builder', stackBuilderRouter);
 app.use('/api/intelligence', intelligenceRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/analytics', analyticsRouter);
 
 // ── 404 Handler ──────────────────────────────────────────────
 app.use((_req, res) => {

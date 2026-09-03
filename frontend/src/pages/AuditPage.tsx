@@ -8,7 +8,7 @@ import Logo from '../components/Logo';
 import ToolBrowser from '../components/ToolBrowser';
 import OfferNotificationBell from '../components/OfferNotificationBell';
 import { getUserScopedKey } from '../utils/userSession';
-import { trackAuditStarted, trackAuditSubmitted } from '../utils/analytics';
+import { trackAuditStarted, trackAuditSubmitted, trackAuditCompleted, trackAuditFailed } from '../utils/analytics';
 import './AuditPage.css';
 
 
@@ -129,6 +129,14 @@ export default function AuditPage() {
       setParentToolIds(null);
       setParentVersion(null);
       setForm(DEFAULT_FORM);
+    }
+  }, [reAuditOf]);
+
+  const auditStartedTracked = useRef(false);
+  useEffect(() => {
+    if (!auditStartedTracked.current) {
+      auditStartedTracked.current = true;
+      trackAuditStarted({ is_reaudit: !!reAuditOf });
     }
   }, [reAuditOf]);
 
@@ -314,6 +322,13 @@ export default function AuditPage() {
         throw new Error('Audit completed but no valid audit identifier was returned.');
       }
       
+      // Track genuinely completed audit event in GA4
+      trackAuditCompleted({
+        tool_count: form.tools.length,
+        savings_percentage: result.savingsPercentage,
+        monthly_savings: result.estimatedMonthlySavings,
+      });
+
       // Mark this audit as owned by this user session (scoped — not shared across users)
       localStorage.setItem(getUserScopedKey(`owned_${result.auditId}`), 'true');
       if (result.ownerToken) {
@@ -327,7 +342,9 @@ export default function AuditPage() {
         navigate(`/audit/${result.auditId}`, { state: { audit: result, isOwner: true } });
       }
     } catch (err) {
-      setError((err as Error).message || 'Failed to run audit. Please try again.');
+      const errorMsg = (err as Error).message || 'Failed to run audit. Please try again.';
+      trackAuditFailed(errorMsg);
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

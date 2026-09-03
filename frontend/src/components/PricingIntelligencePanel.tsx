@@ -526,17 +526,18 @@ export default function PricingIntelligencePanel() {
                   </div>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gap: 8 }}>
+                <div style={{ display: 'grid', gap: 10 }}>
                   {offers.map((rawOffer, idx) => {
                     const offer = formatOfferForDisplay(rawOffer);
                     return (
                       <div
                         key={idx}
                         style={{
-                          borderRadius: 8,
+                          borderRadius: 10,
                           border: '1px solid rgba(226, 232, 240, 0.9)',
-                          background: '#FAFAFA',
-                          padding: '10px 12px',
+                          background: '#FFFFFF',
+                          padding: '12px 14px',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
@@ -545,18 +546,30 @@ export default function PricingIntelligencePanel() {
                               <ProviderLogo providerId={offer.providerId} providerName={offer.providerName} size="xs" />
                               <span
                                 style={{
-                                  fontSize: 11,
-                                  fontWeight: 700,
+                                  fontSize: 12,
+                                  fontWeight: 800,
                                   color: 'var(--color-text-heading)',
                                 }}
                               >
                                 {offer.providerName}
                               </span>
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 600,
+                                  color: '#64748B',
+                                  background: '#F1F5F9',
+                                  padding: '1px 5px',
+                                  borderRadius: 4,
+                                }}
+                              >
+                                {offer.categoryLabel}
+                              </span>
                               {offer.discountBadge && (
                                 <span
                                   style={{
                                     fontSize: 10,
-                                    fontWeight: 700,
+                                    fontWeight: 800,
                                     background: '#ECFDF5',
                                     color: '#065F46',
                                     borderRadius: 4,
@@ -567,17 +580,17 @@ export default function PricingIntelligencePanel() {
                                   {offer.discountBadge}
                                 </span>
                               )}
-                              <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>
+                              <span style={{ fontSize: 10, color: 'var(--color-text-muted)', marginLeft: 'auto' }}>
                                 {formatTimeAgo(offer.detectedAt)}
                               </span>
                             </div>
                             <div
                               style={{
-                                fontSize: 12,
+                                fontSize: 13,
                                 fontWeight: 700,
                                 color: 'var(--color-text-heading)',
-                                marginTop: 4,
-                                lineHeight: 1.4,
+                                marginTop: 5,
+                                lineHeight: 1.35,
                               }}
                             >
                               {offer.title}
@@ -587,43 +600,50 @@ export default function PricingIntelligencePanel() {
                                 style={{
                                   fontSize: 11,
                                   color: 'var(--color-text-body, #475569)',
-                                  marginTop: 3,
+                                  marginTop: 4,
                                   lineHeight: 1.5,
+                                  background: '#F8FAFC',
+                                  padding: '6px 8px',
+                                  borderRadius: 6,
+                                  border: '1px solid #F1F5F9',
                                 }}
                               >
                                 {offer.summary}
                               </div>
                             )}
+                            <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontSize: 10 }}>
+                              <span style={{ color: '#94A3B8', fontWeight: 600 }}>Eligibility:</span>
+                              <span style={{ color: '#334155', fontWeight: 600, background: '#F1F5F9', padding: '1px 5px', borderRadius: 4 }}>
+                                {offer.eligibility}
+                              </span>
+                            </div>
                           </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, paddingTop: 6, borderTop: '1px solid #F1F5F9' }}>
+                          <span style={{ fontSize: 10, color: '#10B981', fontWeight: 700 }}>
+                            ✓ Official Vendor Source
+                          </span>
                           <a
                             href={offer.sourceUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{
-                              flexShrink: 0,
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: 700,
-                              color: 'var(--color-text-heading)',
+                              color: '#FFFFFF',
                               textDecoration: 'none',
-                              background: '#F1F5F9',
-                              border: '1px solid #E2E8F0',
-                              borderRadius: 5,
-                              padding: '3px 8px',
+                              background: '#0F172A',
+                              borderRadius: 6,
+                              padding: '3px 9px',
                               whiteSpace: 'nowrap',
                             }}
                           >
-                            Official source ↗
+                            View Deal →
                           </a>
                         </div>
-                        {offer.expiresAt && (
-                          <div style={{ fontSize: 10, color: 'var(--color-text-muted)', marginTop: 5 }}>
-                            Expires: {new Date(offer.expiresAt).toLocaleDateString()}
-                          </div>
-                        )}
                       </div>
                     );
                   })}
-
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(30,58,95,0.06)' }}>
                     <div style={{ fontSize: 10, color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
@@ -638,7 +658,7 @@ export default function PricingIntelligencePanel() {
                         textDecoration: 'none',
                       }}
                     >
-                      View all in Offers Hub →
+                      Browse all {offers.length} offers in Offers Hub →
                     </a>
                   </div>
                 </div>

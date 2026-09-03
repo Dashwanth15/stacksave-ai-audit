@@ -208,6 +208,8 @@ export interface PricingSourceDocument extends Document {
   strategy: string;           // ExtractionStrategy
   status: string;             // SyncStatus
   lastSyncedAt: Date;
+  lastCheckedAt?: Date;
+  lastSuccessfulCheckAt?: Date;
   lastVerifiedAt?: Date;      // Only set when status = 'VERIFIED'
   plans: object[];            // NormalizedPlan[]
   failureReason?: string;
@@ -222,6 +224,8 @@ const PricingSourceSchema = new Schema<PricingSourceDocument>(
     strategy:            { type: String, required: true },
     status:              { type: String, required: true, default: 'STALE' },
     lastSyncedAt:        { type: Date, required: true },
+    lastCheckedAt:       { type: Date },
+    lastSuccessfulCheckAt: { type: Date },
     lastVerifiedAt:      { type: Date },
     plans:               { type: [Schema.Types.Mixed], default: [] },
     failureReason:       { type: String },
@@ -314,23 +318,55 @@ export interface NotificationEventDocument extends Document {
   expiresAt?: Date;
   discount?: string;         // Human-readable discount amount, e.g. "20% off" or "$5/mo"
   discountType?: string;     // 'percentage' | 'fixed' | 'trial' | 'free'
+  evidenceText?: string;     // Exact snippet extracted directly from the live official page DOM
+  detectionMethod?: string;  // Extraction method used (PLAYWRIGHT_DOM, JSON_LD, etc.)
+  sourceStatus?: string;     // Status of source page when confirmed (VERIFIED)
+  sourceFetchedAt?: Date;
+  lastSuccessfulCheckAt?: Date;
+  evidenceLocation?: string;
+  contentHash?: string;
+  extractorVersion?: string;
+  // ── Offer Lifecycle Fields (added for active/expired tracking) ──
+  isActive?: boolean;        // false = offer no longer detected on source page (expired/removed)
+  lastConfirmedAt?: Date;    // Exact timestamp when this offer was last verified on live source page
+  lastSeenAt?: Date;         // Alias/backward-compat for lastConfirmedAt
+  consecutiveMisses?: number;// Count of consecutive verified scans where offer was absent
+  isPublic?: boolean;         // False/absent records are quarantined from public API
 }
 
 const NotificationEventSchema = new Schema<NotificationEventDocument>(
   {
-    providerId:   { type: String, required: true, index: true },
-    providerName: { type: String },
-    eventType:    { type: String, default: 'NEW_OFFER' },
-    type:         { type: String },                        // Legacy field — kept for backward compat
-    fingerprint:  { type: String, required: true, unique: true, index: true },
-    title:        { type: String, required: true },
-    description:  { type: String, required: true },
-    sourceUrl:    { type: String, required: true },
-    detectedAt:   { type: Date, required: true, default: Date.now },
-    notifiedAt:   { type: Date },
-    expiresAt:    { type: Date },
-    discount:     { type: String },
-    discountType: { type: String },
+    providerId:      { type: String, required: true, index: true },
+    providerName:    { type: String },
+    eventType:       { type: String, default: 'NEW_OFFER' },
+    type:            { type: String },                        // Legacy field — kept for backward compat
+    fingerprint:     { type: String, required: true, unique: true, index: true },
+    title:           { type: String, required: true },
+    description:     { type: String, required: true },
+    sourceUrl:       { type: String, required: true },
+    evidenceText:    { type: String },
+    detectionMethod: { type: String },
+    sourceStatus:    { type: String },
+    sourceFetchedAt: { type: Date },
+    lastSuccessfulCheckAt: { type: Date },
+    evidenceLocation: { type: String },
+    contentHash:     { type: String },
+    extractorVersion: { type: String },
+    detectedAt:      { type: Date, required: true, default: Date.now },
+    notifiedAt:      { type: Date },
+    expiresAt:       { type: Date },
+    discount:        { type: String },
+    discountType:    { type: String },
+    // ── Offer Lifecycle Fields ────────────────────────────────────
+    // isActive defaults to true. Set to false when the offer is no longer
+    // detected on the provider's page after the grace period (2 verified scans or 48h).
+    // Existing documents without this field are treated as active
+    // (isActive: { $ne: false } in queries — safe backward-compat pattern).
+    isActive:          { type: Boolean, default: true },
+    lastConfirmedAt:   { type: Date },
+    lastSeenAt:        { type: Date },
+    consecutiveMisses: { type: Number, default: 0 },
+    isPublic:          { type: Boolean, default: false },
   },
   { timestamps: false }
 );

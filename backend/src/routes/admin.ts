@@ -20,7 +20,7 @@ const router = Router();
 
 // ── Auth Middleware ───────────────────────────────────────────
 
-function requireAdminSecret(req: Request, res: Response, next: NextFunction): void {
+export function requireAdminSecret(req: Request, res: Response, next: NextFunction): void {
   const secret = process.env.ADMIN_SECRET;
   if (!secret) {
     res.status(503).json({ success: false, error: 'ADMIN_SECRET not configured on server' });

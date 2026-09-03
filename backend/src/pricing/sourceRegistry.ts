@@ -10,12 +10,20 @@
 
 import { ExtractionStrategy } from './types';
 
+export interface OfficialOfferSource {
+  label: string;
+  url: string;
+  type: 'pricing' | 'education' | 'startups' | 'nonprofit' | 'api_promotions' | 'annual_discount';
+}
+
 export interface ProviderSourceConfig {
   /** Must match ToolCatalog.id exactly */
   id: string;
   displayName: string;
   pricingUrl: string;
   offersUrl?: string;
+  /** Secondary official URLs monitored for promotions, student plans, API discounts */
+  secondaryOfferUrls?: OfficialOfferSource[];
   strategy: ExtractionStrategy;
   /** Additional notes on why this strategy was chosen */
   strategyNotes: string;
@@ -27,6 +35,9 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
     displayName: 'Cursor',
     pricingUrl: 'https://cursor.com/pricing',
     offersUrl: 'https://cursor.com/pricing',
+    secondaryOfferUrls: [
+      { label: 'Student Program', url: 'https://cursor.com/pricing', type: 'education' },
+    ],
     strategy: 'JSON_LD',
     strategyNotes:
       'Official JSON-LD SoftwareApplication schema with Offer[] prices embedded in static HTML. Direct vendor extraction.',
@@ -36,6 +47,9 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
     displayName: 'GitHub Copilot',
     pricingUrl: 'https://github.com/features/copilot/plans',
     offersUrl: 'https://github.com/features/copilot/plans',
+    secondaryOfferUrls: [
+      { label: 'GitHub Education Pack', url: 'https://education.github.com/pack', type: 'education' },
+    ],
     strategy: 'NEXTJS_EMBEDDED',
     strategyNotes:
       'Official GitHub SSR embeds Contentful CMS payload in <script data-target="react-app.embeddedData">. Direct vendor extraction.',
@@ -44,7 +58,10 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
     id: 'deepseek',
     displayName: 'DeepSeek',
     pricingUrl: 'https://api-docs.deepseek.com/quick_start/pricing/',
-    offersUrl: 'https://www.deepseek.com',
+    offersUrl: 'https://api-docs.deepseek.com/quick_start/pricing/',
+    secondaryOfferUrls: [
+      { label: 'Off-Peak Schedule', url: 'https://api-docs.deepseek.com/quick_start/pricing/', type: 'api_promotions' },
+    ],
     strategy: 'HTML_TABLE',
     strategyNotes:
       'Official DeepSeek documentation table parsed directly from static HTML. Direct vendor extraction.',
@@ -53,80 +70,107 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
     id: 'chatgpt',
     displayName: 'ChatGPT',
     pricingUrl: 'https://openai.com/chatgpt/pricing',
-    offersUrl: 'https://openai.com/blog',
-    strategy: 'STATIC_FALLBACK',
+    offersUrl: 'https://openai.com/education',
+    secondaryOfferUrls: [
+      { label: 'OpenAI Education (Teachers & Edu)', url: 'https://openai.com/education', type: 'education' },
+      { label: 'OpenAI Nonprofits', url: 'https://openai.com/nonprofit', type: 'nonprofit' },
+      { label: 'OpenAI Startups', url: 'https://openai.com/startups', type: 'startups' },
+    ],
+    strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
-      'Official OpenAI pricing page probed directly every 24h. Cloudflare HTTP 403 challenge page returned; authoritative baseline retained.',
+      'Official OpenAI multi-page Playwright DOM crawler. Extracts plans, K-12 teacher grants, ChatGPT Edu, and nonprofit discounts.',
   },
   {
     id: 'claude',
     displayName: 'Claude',
     pricingUrl: 'https://claude.com/pricing',
-    offersUrl: 'https://www.anthropic.com/news',
-    strategy: 'STATIC_FALLBACK',
+    offersUrl: 'https://claude.com/pricing',
+    secondaryOfferUrls: [
+      { label: 'Anthropic for Startups', url: 'https://www.anthropic.com/startups', type: 'startups' },
+    ],
+    strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
-      'Official Anthropic page probed directly every 24h. Dynamic Webflow SPA lacks static plan text; authoritative baseline retained.',
+      'Official Anthropic multi-page Playwright DOM crawler. Extracts plans, annual discount savings, and startup accelerator credits.',
   },
   {
     id: 'gemini',
     displayName: 'Gemini',
     pricingUrl: 'https://one.google.com/about/ai-premium',
-    offersUrl: 'https://blog.google/technology/ai/',
-    strategy: 'STATIC_FALLBACK',
+    offersUrl: 'https://one.google.com/ai-student',
+    secondaryOfferUrls: [
+      { label: 'Google AI Student 12-Month Trial', url: 'https://one.google.com/ai-student', type: 'education' },
+    ],
+    strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
-      'Official Google One page probed directly every 24h. Dynamic React client SPA; authoritative baseline retained.',
+      'Official Google One multi-page Playwright DOM crawler. Extracts AI Premium, student bundle promotions, and 12-month student trials.',
   },
   {
     id: 'windsurf',
     displayName: 'Windsurf',
     pricingUrl: 'https://codeium.com/pricing',
-    offersUrl: 'https://codeium.com/blog',
-    strategy: 'STATIC_FALLBACK',
+    offersUrl: 'https://codeium.com/students',
+    secondaryOfferUrls: [
+      { label: 'Codeium for Students', url: 'https://codeium.com/students', type: 'education' },
+    ],
+    strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
-      'Official Codeium/Windsurf page probed directly every 24h. Vercel Security Checkpoint (HTTP 429); authoritative baseline retained.',
+      'Official Codeium/Windsurf multi-page Playwright DOM crawler. Extracts plans, annual billing savings, and student education tiers.',
   },
   {
     id: 'perplexity',
     displayName: 'Perplexity',
     pricingUrl: 'https://www.perplexity.ai/pro',
-    offersUrl: 'https://www.perplexity.ai/blog',
-    strategy: 'STATIC_FALLBACK',
+    offersUrl: 'https://www.perplexity.ai/enterprise',
+    secondaryOfferUrls: [
+      { label: 'Perplexity Enterprise for Education', url: 'https://www.perplexity.ai/enterprise', type: 'education' },
+    ],
+    strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
-      'Official Perplexity Pro page probed directly every 24h. Cloudflare HTTP 403 challenge; authoritative baseline retained.',
+      'Official Perplexity multi-page Playwright DOM crawler. Extracts Pro plans, annual savings, and academic enterprise discounts.',
   },
   {
     id: 'kimi',
     displayName: 'Kimi',
     pricingUrl: 'https://platform.moonshot.cn/docs/pricing/chat',
     offersUrl: 'https://platform.moonshot.cn/pricing',
-    strategy: 'STATIC_FALLBACK',
+    secondaryOfferUrls: [
+      { label: 'Moonshot Platform Registration Credits', url: 'https://platform.moonshot.cn/pricing', type: 'api_promotions' },
+    ],
+    strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
-      'Official Moonshot/Kimi documentation probed directly every 24h. WAF/Session auth wall; authoritative baseline retained.',
+      'Official Moonshot/Kimi multi-page Playwright DOM crawler. Extracts model pricing and developer registration trial credits.',
   },
   {
     id: 'anthropic-api',
     displayName: 'Anthropic API',
     pricingUrl: 'https://docs.anthropic.com/en/docs/about-claude/models',
-    offersUrl: 'https://www.anthropic.com/pricing',
-    strategy: 'STATIC_FALLBACK',
+    offersUrl: 'https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching',
+    secondaryOfferUrls: [
+      { label: 'Prompt Caching Docs (90% Read Discount)', url: 'https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching', type: 'api_promotions' },
+      { label: 'Message Batches API Docs (50% Discount)', url: 'https://docs.anthropic.com/en/docs/build-with-claude/batch-processing', type: 'api_promotions' },
+    ],
+    strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
-      'Official Anthropic documentation probed directly every 24h. Client-side Mintlify SPA; authoritative baseline retained.',
+      'Official Anthropic API multi-page Playwright DOM crawler. Extracts token pricing, prompt caching 90% savings, and batch discounts.',
   },
   {
     id: 'openai-api',
     displayName: 'OpenAI API',
     pricingUrl: 'https://openai.com/api/pricing',
-    offersUrl: 'https://openai.com/api/pricing',
-    strategy: 'STATIC_FALLBACK',
+    offersUrl: 'https://openai.com/startups',
+    secondaryOfferUrls: [
+      { label: 'OpenAI for Startups', url: 'https://openai.com/startups', type: 'startups' },
+    ],
+    strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
-      'Official OpenAI API pricing probed directly every 24h. Cloudflare HTTP 403 challenge; authoritative baseline retained.',
+      'Official OpenAI API multi-page Playwright DOM crawler. Extracts token pricing, Batch API 50% discount, and startup grants.',
   },
   {
     id: 'codex',
     displayName: 'OpenAI Codex',
     pricingUrl: 'https://openai.com/blog/openai-codex',
     offersUrl: 'https://openai.com/blog/openai-codex',
-    strategy: 'STATIC_FALLBACK',
+    strategy: 'STATIC_BASELINE',
     strategyNotes:
       'Official OpenAI Codex developer blog probed directly. Developer free tier access baseline.',
   },
@@ -135,7 +179,7 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
     displayName: 'GitHub Models',
     pricingUrl: 'https://github.com/marketplace/models',
     offersUrl: 'https://github.com/marketplace/models',
-    strategy: 'STATIC_FALLBACK',
+    strategy: 'STATIC_BASELINE',
     strategyNotes:
       'Official GitHub Marketplace models portal probed directly. Prototyping free tier access baseline.',
   },

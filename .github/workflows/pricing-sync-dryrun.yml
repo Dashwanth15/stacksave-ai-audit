@@ -1,0 +1,74 @@
+name: Official AI Pricing Sync DRY-RUN (Read-Only Test)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SAFE GITHUB ACTIONS DRY-RUN
+# 
+# Purpose: Verify production extraction and offer recovery WITHOUT modifying data
+# 
+# This workflow:
+#  1. Executes the exact Playwright extraction used by real sync
+#  2. Fetches current official provider pages
+#  3. Extracts real commercial data
+#  4. Reads existing 26 MongoDB offers (READ-ONLY)
+#  5. Simulates strict filter in memory
+#  6. Reports recovery analysis
+#  7. DOES NOT write to MongoDB
+# 
+# REQUIRED GITHUB REPOSITORY SECRETS:
+#   BACKEND_URL   The full base URL of the deployed backend
+#   ADMIN_SECRET  The ADMIN_SECRET configured in Render environment
+#   MONGODB_URI   (optional if accessing backend API only)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+on:
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: 'Enable detailed provider output'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  pricing-sync-dryrun:
+    name: Pricing Extraction DRY-RUN (No Database Writes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: backend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Pricing Sync DRY-RUN (Real Extraction + In-Memory Simulation)
+        working-directory: backend
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI || '' }}
+          DRY_RUN: 'true'
+          VERBOSE: ${{ inputs.verbose || false }}
+          CI: 'true'
+        run: npx tsx scripts/pricing_sync_dryrun.ts
+
+      - name: Upload DRY-RUN Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pricing-sync-dryrun-report
+          path: backend/dryrun-report.json
+          if-no-files-found: ignore

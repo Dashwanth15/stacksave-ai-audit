@@ -564,8 +564,12 @@ export interface PublicOffer {
   description: string | null;
   discount: string | null;
   discountType: string | null;
+  evidenceText?: string | null;
+  detectionMethod?: string | null;
+  sourceStatus?: string | null;
   sourceUrl: string;
   detectedAt: string;
+  lastConfirmedAt?: string;
   expiresAt: string | null;
   isVerified?: boolean;
 }

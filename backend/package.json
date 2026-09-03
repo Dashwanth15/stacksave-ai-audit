@@ -10,13 +10,22 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src --ext .ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "audit:offers:predeploy": "npm run build && tsx scripts/predeployment_offer_audit.ts",
+    "audit:sync:path": "tsx scripts/verify_sync_reverification_path.ts",
+    "audit:providers:dryrun": "tsx scripts/provider_dryrun.ts",
+    "audit:real-sync": "npm run build && tsx scripts/verify_real_provider_sync.ts",
+    "audit:production-extract": "tsx scripts/production_extraction_simulator.ts",
+    "sync:dryrun": "npm run build && tsx scripts/pricing_sync_dryrun.ts",
+    "audit:all": "npm run audit:offers:predeploy && echo '' && npm run audit:sync:path && echo '' && npm run audit:providers:dryrun && echo '' && npm run audit:real-sync"
   },
   "dependencies": {
+    "@google-analytics/data": "^7.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.18.3",
     "express-rate-limit": "^7.2.0",
+    "googleapis": "^178.0.0",
     "helmet": "^7.1.0",
     "mongoose": "^8.3.2",
     "openai": "^4.52.7",

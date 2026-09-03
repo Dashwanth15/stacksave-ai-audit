@@ -1,0 +1,137 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                  PRODUCTION DRY-RUN: QUICK START GUIDE                        ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+WHAT IS THIS?
+─────────────
+A safe way to test whether your strict verification filter can recover
+the 26 existing offers after deployment. No data modifications. Read-only.
+
+STATUS: ✅ READY TO RUN
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+HOW TO RUN (3 STEPS)
+────────────────────
+
+STEP 1: Push to GitHub
+┌──────────────────────────────────────────────────────────────────────────┐
+│ $ git add .                                                              │
+│ $ git commit -m "Add production dry-run for strict verification filter" │
+│ $ git push origin main                                                  │
+└──────────────────────────────────────────────────────────────────────────┘
+
+STEP 2: Run Dry-Run in GitHub Actions
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 1. Go to GitHub: your-repo/actions                                      │
+│ 2. Find: "Official AI Pricing Sync DRY-RUN (Read-Only Test)"           │
+│ 3. Click: "Run workflow" button                                         │
+│ 4. Choose: main branch                                                  │
+│ 5. Click: "Run workflow"                                                │
+│ ⏱️  Wait: ~10 minutes                                                    │
+└──────────────────────────────────────────────────────────────────────────┘
+
+STEP 3: Review Results
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 1. Check: Workflow "Actions" tab for status                             │
+│ 2. Download: artifact "pricing-sync-dryrun-report" (JSON)               │
+│ 3. Review: VERDICT field (VERIFIED or NOT_VERIFIED)                    │
+│ 4. Check: Projected public offers count                                 │
+│ 5. Decide: Deploy or investigate                                        │
+└──────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+WHAT IT TESTS
+─────────────
+✅ Real Playwright extraction (same as production)
+✅ All 13 official provider adapters
+✅ Current official provider pages
+✅ Real commercial data with evidence
+✅ Fingerprint matching against 26 existing offers
+✅ Strict filter simulation
+✅ Recovery projection
+
+✅ DOES NOT: Modify any database data
+✅ DOES NOT: Run real sync
+✅ DOES NOT: Write to MongoDB
+✅ DOES NOT: Delete offers
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+EXPECTED RESULTS
+────────────────
+
+GOOD SCENARIO (Deploy):
+─────────────────────
+  Existing offers: 26
+  Matched to fresh extraction: 8
+  Would pass strict filter: 3
+  Projected public: 5
+
+  VERDICT: PRODUCTION_RECOVERY_VERIFIED ✅
+  → SAFE TO DEPLOY
+
+CONCERNING SCENARIO (Investigate):
+─────────────────────────────────
+  Existing offers: 26
+  Matched to fresh extraction: 0
+  Would pass strict filter: 0
+  Projected public: 0
+
+  VERDICT: PRODUCTION_RECOVERY_NOT_VERIFIED ❌
+  → DO NOT DEPLOY YET
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+KEY DECISION
+────────────
+
+VERDICT = PRODUCTION_RECOVERY_VERIFIED ✅
+  → Deploy filter to production
+  → Run real pricing-sync
+  → Monitor results
+
+VERDICT = PRODUCTION_RECOVERY_NOT_VERIFIED ❌
+  → Do NOT deploy
+  → Investigate why extraction failed
+  → Fix issues
+  → Re-run dry-run
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+IMPORTANT
+─────────
+⚠️  This is the ONLY way to test the real extraction pipeline
+⚠️  Local testing does NOT work (providers block local IPs)
+⚠️  GitHub Actions environment is required
+⚠️  Results prove production behavior
+⚠️  Do NOT deploy without VERIFIED verdict
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+DOCUMENTATION
+──────────────
+📄 PRODUCTION_DRYRUN_READY.md
+   └─ Overview and status
+
+📄 DRYRUN_DEPLOYMENT_INSTRUCTIONS.md
+   └─ Quick reference guide
+
+📄 PRODUCTION_DRYRUN_GUIDE.md
+   └─ Complete guide with examples and troubleshooting
+
+📄 DEPLOYMENT_CHECKLIST.md
+   └─ Step-by-step checklist
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+NEXT ACTION
+───────────
+→ Push code to GitHub
+→ Run GitHub Actions dry-run
+→ Review VERDICT
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+Questions? Read PRODUCTION_DRYRUN_GUIDE.md for detailed help.

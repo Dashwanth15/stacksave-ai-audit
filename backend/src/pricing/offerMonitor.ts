@@ -271,12 +271,22 @@ export async function runOfferMonitor(): Promise<OfferMonitorResult[]> {
     }
 
     for (const offer of offers) {
+      // Keyword matches are discovery signals only and cannot create public offers.
+      if (!offer.evidenceText?.trim() || offer.sourceStatus !== 'VERIFIED') {
+        result.errors.push(`Offer quarantined: keyword-only evidence is not verification (${config.providerId})`);
+        continue;
+      }
+
       // Fingerprint-based deduplication â€” insert only if fingerprint not already in DB
       const existing = await NotificationEventModel.findOne({ fingerprint: offer.fingerprint });
 
       if (existing) {
         result.skippedDuplicates++;
-        console.log(`[OfferMonitor] Duplicate skipped provider=${config.providerId} fingerprint=${offer.fingerprint.slice(0, 8)}...`);
+        await NotificationEventModel.updateOne(
+          { _id: existing._id },
+          { $set: { lastSeenAt: new Date(), isActive: true } }
+        );
+        console.log(`[OfferMonitor] Duplicate skipped & refreshed provider=${config.providerId} fingerprint=${offer.fingerprint.slice(0, 8)}...`);
         continue;
       }
 
@@ -290,6 +300,8 @@ export async function runOfferMonitor(): Promise<OfferMonitorResult[]> {
           description: offer.description,
           sourceUrl: offer.sourceUrl,
           detectedAt: offer.detectedAt,
+          lastSeenAt: new Date(),
+          isActive: true,
           expiresAt: offer.expiresAt,
         });
         result.newOffers++;

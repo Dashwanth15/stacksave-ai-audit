@@ -1,0 +1,203 @@
+================================================================================
+REAL PROVIDER SYNC DRY-RUN VERIFICATION - COMPLETE RAW OUTPUT
+Date: August 24, 2026
+Command: npm run audit:real-sync
+Environment: Local development (no Playwright browser)
+================================================================================
+
+🔍 REAL PROVIDER SYNC DRY-RUN VERIFICATION
+
+Executing actual production extraction pipeline...
+
+📡 Connecting to MongoDB...
+✅ Connected
+
+📊 Analyzing current database state...
+  Total offers in database: 26
+  Active: 12
+  Public: 0
+  Verified: 12
+
+🚀 Running real production provider extraction...
+⚠️  NOTE: Full Playwright extraction not available in this environment.
+   (Production uses official_pricing_extractor.ts with 8 Playwright extractors)
+   Running simplified dry-run with available adapters...
+
+✅ Extraction complete (partial - adapters only)
+
+📈 Analyzing extracted provider data...
+
+  Cursor           | ✅ VERIFIED           | Offers: 0
+  Claude           | ❌ FETCH_BLOCKED      | Offers: 0
+  ChatGPT          | ❌ NOT_VERIFIED       | Offers: 0
+  Gemini           | ❌ NOT_VERIFIED       | Offers: 0
+  Windsurf         | ❌ NOT_VERIFIED       | Offers: 0
+  Perplexity       | ❌ NOT_VERIFIED       | Offers: 0
+  OpenAI API       | ❌ NOT_VERIFIED       | Offers: 0
+  Anthropic API    | ❌ NOT_VERIFIED       | Offers: 0
+  Kimi             | ❌ NOT_VERIFIED       | Offers: 0
+  GitHub Copilot   | ❌ NOT_VERIFIED       | Offers: 0
+  DeepSeek         | ❌ NOT_VERIFIED       | Offers: 0
+  Codex            | ❌ NOT_VERIFIED       | Offers: 0
+  GitHub Models    | ❌ NOT_VERIFIED       | Offers: 0
+
+🔎 Building fresh offer fingerprints from extraction...
+  Fresh fingerprints: 0
+  Fresh offers with evidence: 0
+
+🤝 Matching existing 26 offers to fresh provider extraction...
+
+════════════════════════════════════════════════════════════════════════════════
+REAL PROVIDER SYNC DRY-RUN VERIFICATION RESULTS
+════════════════════════════════════════════════════════════════════════════════
+
+CURRENT DATABASE:
+  Total offers: 26
+  Active: 12
+  Public: 0
+  Verified: 12
+
+REAL PROVIDER EXTRACTION:
+  Providers attempted: 13
+  Providers successful: 1
+  Providers failed: 12
+
+PROVIDER EXTRACTION DETAILS:
+  ✅ Cursor           | VERIFIED        | Offers: 0 (w/evidence: 0)
+  ❌ Claude           | FETCH_BLOCKED   | Offers: 0 (w/evidence: 0)
+     Error: HTTP 403 or network block
+  ❌ ChatGPT          | NOT_VERIFIED    | Offers: 0 (w/evidence: 0)
+     Error: Playwright extraction not available in this environment (requires browser)
+  ❌ Gemini           | NOT_VERIFIED    | Offers: 0 (w/evidence: 0)
+     Error: Playwright extraction not available in this environment (requires browser)
+  ❌ Windsurf         | NOT_VERIFIED    | Offers: 0 (w/evidence: 0)
+     Error: Playwright extraction not available in this environment (requires browser)
+  ❌ Perplexity       | NOT_VERIFIED    | Offers: 0 (w/evidence: 0)
+     Error: Playwright extraction not available in this environment (requires browser)
+  ❌ OpenAI API       | NOT_VERIFIED    | Offers: 0 (w/evidence: 0)
+     Error: Playwright extraction not available in this environment (requires browser)
+  ❌ Anthropic API    | NOT_VERIFIED    | Offers: 0 (w/evidence: 0)
+     Error: Playwright extraction not available in this environment (requires browser)
+  ❌ Kimi             | NOT_VERIFIED    | Offers: 0 (w/evidence: 0)
+     Error: Playwright extraction not available in this environment (requires browser)
+  ❌ GitHub Copilot   | NOT_VERIFIED    | Offers: 0 (w/evidence: 0)
+     Error: Playwright extraction not available in this environment (requires browser)
+  ❌ DeepSeek         | NOT_VERIFIED    | Offers: 0 (w/evidence: 0)
+     Error: Playwright extraction not available in this environment (requires browser)
+  ❌ Codex            | NOT_VERIFIED    | Offers: 0 (w/evidence: 0)
+     Error: Playwright extraction not available in this environment (requires browser)
+  ❌ GitHub Models    | NOT_VERIFIED    | Offers: 0 (w/evidence: 0)
+     Error: Playwright extraction not available in this environment (requires browser)
+
+EXISTING OFFER MATCHING:
+  Total existing offers: 26
+  Matched to fresh data: 0
+  Not matched: 26
+
+PROJECTED POST-SYNC RESULTS:
+  Existing offers that would pass strict filter: 0
+  Existing offers that remain quarantined: 0
+  Total expected public after sync: 0
+
+════════════════════════════════════════════════════════════════════════════════
+OFFER-BY-OFFER MATCHING ANALYSIS
+════════════════════════════════════════════════════════════════════════════════
+
+❌ NOT_MATCHED   | cursor       | Cursor: "off" promotion detected          | → FAIL
+❌ NOT_MATCHED   | deepseek     | DeepSeek: "off-peak" promotion detected   | → FAIL
+❌ NOT_MATCHED   | cursor       | Cursor Pro 14-Day Free Trial              | → FAIL
+❌ NOT_MATCHED   | github-copilot | GitHub Copilot Free for Students & Educa  | → FAIL
+❌ NOT_MATCHED   | deepseek     | DeepSeek Off-Peak 50% Discount            | → FAIL
+❌ NOT_MATCHED   | claude       | Claude Pro Annual Savings                 | → FAIL
+❌ NOT_MATCHED   | gemini       | Google AI Student Bundle Promotion        | → FAIL
+❌ NOT_MATCHED   | openai-api   | OpenAI Batch API 50% Discount             | → FAIL
+❌ NOT_MATCHED   | cursor       | Cursor Pro 14-Day Free Trial              | → FAIL
+❌ NOT_MATCHED   | cursor       | Cursor for Students (12 Months Free Pro)  | → FAIL
+❌ NOT_MATCHED   | github-copilot | GitHub Copilot Free for Students & Educa  | → FAIL
+❌ NOT_MATCHED   | github-copilot | GitHub Student Developer Pack (Copilot B  | → FAIL
+❌ NOT_MATCHED   | deepseek     | DeepSeek Off-Peak 50% Discount            | → FAIL
+❌ NOT_MATCHED   | claude       | Claude Pro Annual Savings                 | → FAIL
+❌ NOT_MATCHED   | claude       | Anthropic for Startups Program Credits    | → FAIL
+❌ NOT_MATCHED   | chatgpt      | ChatGPT for Teachers (Free K-12 Workspac  | → FAIL
+❌ NOT_MATCHED   | chatgpt      | ChatGPT Edu for Universities              | → FAIL
+❌ NOT_MATCHED   | gemini       | Google AI Student Bundle Promotion        | → FAIL
+❌ NOT_MATCHED   | windsurf     | Windsurf Pro Annual Billing Savings       | → FAIL
+❌ NOT_MATCHED   | perplexity   | Perplexity Pro Annual Subscription Savin  | → FAIL
+❌ NOT_MATCHED   | openai-api   | OpenAI for Startups API Credits Program   | → FAIL
+❌ NOT_MATCHED   | anthropic-api | Anthropic Prompt Caching (90% Cache Read  | → FAIL
+❌ NOT_MATCHED   | kimi         | Moonshot AI Developer Registration Free   | → FAIL
+❌ NOT_MATCHED   | deepseek     | DeepSeek Off-Peak 50% Discount            | → FAIL
+❌ NOT_MATCHED   | anthropic-api | Anthropic Message Batches API 50% Discou  | → FAIL
+❌ NOT_MATCHED   | gemini       | Google AI Student Bundle Promotion        | → FAIL
+
+════════════════════════════════════════════════════════════════════════════════
+CRITICAL FINDINGS
+════════════════════════════════════════════════════════════════════════════════
+
+❌ Real provider extraction FAILED
+
+EXISTING OFFERS STATUS:
+   Matched: 0/26
+   Would pass strict filter after sync: 0
+
+════════════════════════════════════════════════════════════════════════════════
+FINAL SUMMARY
+════════════════════════════════════════════════════════════════════════════════
+
+CURRENT DATABASE
+  Total offers: 26
+  Strict filter passing: 0/26
+
+REAL PROVIDER EXTRACTION
+  Providers attempted: 13
+  Providers successful: 1
+  Providers failed: 12
+
+EXISTING OFFER MATCHING
+  Existing offers: 26
+  Matched to fresh official data: 0
+  Not matched: 26
+
+PROJECTED PUBLIC RESULT
+  Existing offers that will become public after sync: 0
+  Existing offers that remain quarantined: 0
+  Total expected public after sync: 0
+
+UNVERIFIED ITEMS
+  ⚠️  12 provider(s) failed extraction (may impact offer matching)
+     - Claude: FETCH_BLOCKED (HTTP 403 or network block)
+     - ChatGPT: NOT_VERIFIED (Playwright extraction not available)
+     - Gemini: NOT_VERIFIED (Playwright extraction not available)
+     - Windsurf: NOT_VERIFIED (Playwright extraction not available)
+     - Perplexity: NOT_VERIFIED (Playwright extraction not available)
+     - OpenAI API: NOT_VERIFIED (Playwright extraction not available)
+     - Anthropic API: NOT_VERIFIED (Playwright extraction not available)
+     - Kimi: NOT_VERIFIED (Playwright extraction not available)
+     - GitHub Copilot: NOT_VERIFIED (Playwright extraction not available)
+     - DeepSeek: NOT_VERIFIED (Playwright extraction not available)
+     - Codex: NOT_VERIFIED (Playwright extraction not available)
+     - GitHub Models: NOT_VERIFIED (Playwright extraction not available)
+
+  ⚠️  26 offer(s) not found in fresh extraction
+     - cursor/Cursor: "off" promotion detected
+     - deepseek/DeepSeek: "off-peak" promotion
+     - cursor/Cursor Pro 14-Day Free Trial
+     - github-copilot/GitHub Copilot Free for Students
+     - deepseek/DeepSeek Off-Peak 50% Discount
+     ... and 21 more
+
+════════════════════════════════════════════════════════════════════════════════
+DEPLOYMENT DECISION
+════════════════════════════════════════════════════════════════════════════════
+
+❌ CRITICAL: NO EXISTING OFFERS MATCHED TO FRESH EXTRACTION
+
+Provider extraction failed or fingerprints don't match.
+
+Consider: 12 provider(s) failed to extract (network/auth issues?)
+
+✅ Audit complete. This is a read-only dry-run (no data modified).
+
+================================================================================
+END OF OUTPUT
+================================================================================

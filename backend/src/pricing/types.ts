@@ -7,8 +7,11 @@
 export type SyncStatus =
   | 'VERIFIED'                  // Live price extracted & validated this cycle
   | 'STALE'                     // Last verified >24 h ago; previous price retained
-  | 'FETCH_BLOCKED'             // Server returned 403 / 429 / network error
+  | 'FETCH_BLOCKED'             // Server returned 403 / 429 / challenge / network error
   | 'PARSE_FAILED'              // Page fetched but pricing not found in markup
+  | 'AUTH_REQUIRED'             // Account sign-in / institutional verification required
+  | 'RETIRED'                   // Service retired or folded into another product
+  | 'UNKNOWN'                   // Unclassified status
   | 'NO_RELIABLE_PUBLIC_SOURCE' // SPA-rendered; no static extraction possible
   | 'VALIDATION_SUSPICIOUS';    // Price change >200% — flagged for manual review
 
@@ -20,6 +23,7 @@ export type ExtractionStrategy =
   | 'PLAYWRIGHT_DOM'    // Headless browser hydrated DOM (Claude, Gemini, ChatGPT, Windsurf, Perplexity, API docs)
   | 'STATIC_BASELINE'   // Verified free tier or static reference baseline (Codex, GitHub Models)
   | 'REST_API'          // Public REST API endpoint (optional reference only)
+  | 'FETCH_STATIC_HTML' // Server-side HTTP fetch and HTML/regex extraction
   | 'STATIC_FALLBACK';  // Server-side fallback probe when browser is unavailable
 
 // ── Normalized Plan ───────────────────────────────────────────
@@ -59,16 +63,36 @@ export interface NormalizedOffer {
   currency?: string;
   duration?: string;
   eligibility?: string;
+  /** Exact snippet extracted directly from the live official page DOM */
+  evidenceText?: string;
+  /** Detection method used */
+  detectionMethod?: string;
   /** Deterministic fingerprint for deduplication */
   fingerprint: string;
   sourceUrl: string;
+  sourceStatus?: SyncStatus;
+  sourceFetchedAt?: Date;
+  lastSuccessfulCheckAt?: Date;
+  evidenceLocation?: string;
+  contentHash?: string;
+  extractorVersion?: string;
   detectedAt: Date;
+  lastConfirmedAt?: Date;
+  consecutiveMisses?: number;
   expiresAt?: Date;
   discountPercent?: number;
   promoCode?: string;
   isVerified?: boolean;
+  isPublic?: boolean;
 }
 
+// ── Multi-Page Scanned Source Status ──────────────────────────
+export interface ScannedSourcePage {
+  url: string;
+  status: SyncStatus;
+  scannedAt: Date | string;
+  failureReason?: string;
+}
 
 // ── Runner Ingestion Payload Types ────────────────────────────
 export interface OfficialExtractedProviderData {
@@ -80,13 +104,16 @@ export interface OfficialExtractedProviderData {
   authorityStatus?: string;
   plans: NormalizedPlan[];
   offers?: NormalizedOffer[];
+  scannedPages?: ScannedSourcePage[];
   failureReason?: string;
   checkedAt: string | Date;
 }
 
 export interface OfficialIngestPayload {
-  runnerVersion: string;
-  executedAt: string | Date;
+  runnerVersion?: string;
+  executedAt?: string | Date;
+  source?: string;
+  syncTarget?: string;
   providers: OfficialExtractedProviderData[];
 }
 
