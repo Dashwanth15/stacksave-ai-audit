@@ -218,6 +218,7 @@ router.get('/pricing-status', async (_req: Request, res: Response) => {
 router.get('/offers/diagnostic', requireAdminSecret, async (_req: Request, res: Response) => {
   try {
     // DIAGNOSTIC COUNTS — No evidence/secrets exposed
+    // NOTE: Updated to match simplified architecture (no timestamp publication gates)
     const [
       totalEvents,
       newOfferEvents,
@@ -239,30 +240,26 @@ router.get('/offers/diagnostic', requireAdminSecret, async (_req: Request, res: 
       NotificationEventModel.countDocuments({ sourceFetchedAt: { $exists: true, $ne: null } }),
       NotificationEventModel.countDocuments({ lastConfirmedAt: { $exists: true, $ne: null } }),
       NotificationEventModel.countDocuments({ lastSuccessfulCheckAt: { $exists: true, $ne: null } }),
+      // NEW: Match the simplified architecture — only 3 gates matter for publication
       NotificationEventModel.countDocuments({
         eventType: 'NEW_OFFER',
         isActive: { $ne: false },
         isPublic: true,
-        sourceStatus: 'VERIFIED',
         evidenceText: { $exists: true, $ne: null },
-        lastConfirmedAt: { $exists: true, $ne: null },
-        sourceFetchedAt: { $exists: true, $ne: null },
-        lastSuccessfulCheckAt: { $exists: true, $ne: null },
+        // sourceRegistry validation happens in application code, not DB query
+        // So we can't filter by it here — but we report this as the qualifying count
       }),
     ]);
 
-    // Provider-level diagnostics
+    // Provider-level diagnostics (updated for simplified architecture)
     const providerCounts = await NotificationEventModel.aggregate([
       {
         $match: {
           eventType: 'NEW_OFFER',
           isActive: { $ne: false },
           isPublic: true,
-          sourceStatus: 'VERIFIED',
           evidenceText: { $exists: true, $ne: null },
-          lastConfirmedAt: { $exists: true, $ne: null },
-          sourceFetchedAt: { $exists: true, $ne: null },
-          lastSuccessfulCheckAt: { $exists: true, $ne: null },
+          // sourceRegistry filtering happens in application layer
         },
       },
       {
@@ -301,11 +298,13 @@ router.get('/offers/diagnostic', requireAdminSecret, async (_req: Request, res: 
           },
           offersPassingAllConditions: allConditions,
           offersPassingAllConditions_percent: totalEvents > 0 ? Math.round((allConditions / totalEvents) * 100) : 0,
+          offersQualifyingForPublic: allConditions,
+          offersQualifyingForPublic_note: 'Events matching: eventType=NEW_OFFER, isActive=true, isPublic=true, evidenceText exists. Note: sourceRegistry filtering happens in app layer.',
           providerBreakdown: providerCounts.map((p: { _id: string; count: number }) => ({
             providerId: p._id,
-            verifiedOfferCount: p.count,
+            publicOfferCount: p.count,
           })),
-          note: 'This is a DIAGNOSTIC ONLY endpoint. It reports record counts without exposing credentials or commercial evidence. Use this to identify why offers may not be appearing publicly.',
+          note: 'DIAGNOSTIC: Reports record counts to identify why offers may not appear. Simplified architecture: Offers are public if eventType=NEW_OFFER, isActive=true, isPublic=true, evidenceText exists, AND sourceUrl is in sourceRegistry (checked in app layer).',
         },
       },
     });
