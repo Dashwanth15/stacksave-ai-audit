@@ -332,7 +332,7 @@ router.get('/offers', async (_req: Request, res: Response) => {
       isPublic: true,
     })
       .sort({ detectedAt: -1 })
-      .select('providerId providerName title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive lastSeenAt lastConfirmedAt')
+      .select('providerId providerName title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive isPublic lastSeenAt lastConfirmedAt')
       .lean();
 
     const offers = events.filter((e) => (
