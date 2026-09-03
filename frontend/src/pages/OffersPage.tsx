@@ -17,6 +17,7 @@ import {
   formatVerificationDate,
   formatCompactTime,
 } from '../utils/offerFormatter';
+import { renderEmphasizedDescription } from '../utils/descriptionFormatter';
 import type { FormattedOffer, OfferCategory } from '../utils/offerFormatter';
 import type { PublicOffer } from '../types';
 import { trackOfferClicked } from '../utils/analytics';
@@ -477,16 +478,16 @@ export default function OffersPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackOfferClicked(offer.providerName)}
-                  className="group flex flex-col rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-4 shadow-[0_2px_10px_-3px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_12px_24px_-6px_rgba(15,23,42,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 cursor-pointer"
+                  className="group flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 cursor-pointer"
                 >
                   <div>
-                    {/* Provider identity and live state */}
+                    {/* Provider identity and subtle live status */}
                     <div className="flex items-center justify-between gap-3 min-w-0">
                       <div className="flex items-center gap-3 min-w-0">
                         <ProviderLogo providerId={offer.providerId} providerName={offer.providerName} size="md" />
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <h3 className="text-[15px] font-bold tracking-[-0.01em] text-slate-950 truncate">
+                            <h3 className="text-sm font-semibold tracking-tight text-slate-900 truncate">
                               {offer.providerName}
                             </h3>
                             {offer.isUnread && (
@@ -496,59 +497,63 @@ export default function OffersPage() {
                               />
                             )}
                           </div>
-                          <span className="mt-0.5 block text-[11px] font-medium text-slate-500 truncate">
+                          <span className="mt-0.5 block text-[11px] text-slate-400 truncate">
                             {offer.categoryLabel}
                           </span>
                         </div>
                       </div>
 
-                      <div className="inline-flex items-center gap-1.5 px-1 py-1 text-[9px] font-extrabold uppercase tracking-[0.1em] text-emerald-700 shrink-0">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                        {offer.verificationStatusType === 'unavailable' ? 'Unavailable' : 'Active'}
+                      {/* Subtle status indicator: ● Available (no colored pill) */}
+                      <div className="flex items-center gap-1.5 text-[11px] font-normal text-slate-400 shrink-0">
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                            offer.verificationStatusType === 'unavailable' ? 'bg-amber-400' : 'bg-emerald-500'
+                          }`}
+                        />
+                        <span>
+                          {offer.verificationStatusType === 'unavailable' ? 'Unavailable' : 'Available'}
+                        </span>
                       </div>
                     </div>
 
-                    {/* Data-driven offer value and title */}
+                    {/* Offer Value Highlight — Strong typographic emphasis with subtle accent notch */}
                     {offer.discountBadge && (
-                      <div className="mt-2.5 flex min-h-[18px] max-w-full items-center gap-2 text-[11px] font-bold uppercase tracking-[0.035em] text-slate-900">
-                        <span className="h-4 w-0.5 rounded-full bg-emerald-500" />
-                        <span className="truncate">{offer.discountBadge}</span>
+                      <div className="mt-4 flex items-center gap-2">
+                        <span className="h-3.5 w-1 rounded-sm bg-emerald-500 shrink-0" aria-hidden="true" />
+                        <span className="text-xs font-black uppercase tracking-[0.05em] text-slate-900 truncate">
+                          {offer.discountBadge}
+                        </span>
                       </div>
                     )}
-                    <h4 className="mt-1 line-clamp-2 min-h-[2.4rem] text-[17px] font-bold leading-[1.3] tracking-[-0.01em] text-slate-950 transition-colors group-hover:text-slate-800">
+
+                    {/* Offer Title — Strongest textual element after provider */}
+                    <h4 className="mt-1.5 line-clamp-2 min-h-[2.65rem] text-[17px] font-bold leading-snug tracking-tight text-slate-950 transition-colors group-hover:text-slate-800">
                       {offer.title}
                     </h4>
 
-                    {/* Compact information panel */}
-                    <div className="mt-2 rounded-xl border border-slate-200/80 bg-slate-50/75 px-3 py-2">
-                      <p className="line-clamp-2 text-[13px] leading-[1.5] text-slate-600">{offer.summary}</p>
-                    </div>
+                    {/* Clean description with selective bold emphasis on commercial facts */}
+                    <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-slate-600">
+                      {renderEmphasizedDescription(offer.summary)}
+                    </p>
 
-                    {/* Live Evidence Snippet if available */}
-                    {offer.evidenceText && (
-                      <div className="mt-2 flex min-w-0 items-center gap-1.5 text-[10px] text-slate-500">
-                        <span className="font-bold text-emerald-700 shrink-0">Evidence</span>
-                        <span className="truncate italic">"{offer.evidenceText}"</span>
-                      </div>
+                    {/* Subtle eligibility indicator */}
+                    {offer.eligibility && (
+                      <p className="mt-3 text-[11.5px] text-slate-400 truncate">
+                        For <span className="font-medium text-slate-700">{offer.eligibility.replace(/^(Verified|Eligible)\s+/i, (m) => m.toLowerCase())}</span>
+                      </p>
                     )}
-
-                    <div className="mt-2 flex min-w-0 items-center gap-1.5 text-[11px]">
-                      <span className="truncate rounded-md bg-slate-50 px-2 py-1 font-semibold text-slate-700">
-                        {offer.eligibility}
-                      </span>
-                    </div>
                   </div>
 
                   {/* Footer stays aligned across cards */}
-                  <div className="mt-3 border-t border-slate-100 pt-2.5">
-                    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 text-[10px] font-medium text-slate-400">
-                      <div className="min-w-0 space-y-1">
+                  <div className="mt-4.5 border-t border-slate-100 pt-3">
+                    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 text-[11px] font-medium text-slate-400">
+                      <div className="min-w-0 space-y-0.5">
                         <span className="flex min-w-0 items-center gap-1.5 truncate">
                           <UiIcon name="calendar" size={12} />
                           <span className="truncate text-slate-500">Verified {formatVerificationDate(offer.lastConfirmedAt || offer.detectedAt)}</span>
                         </span>
-                        <span className="flex min-w-0 items-center gap-1 text-slate-500">
-                          <UiIcon name="clock" size={12} />
+                        <span className="flex min-w-0 items-center gap-1 text-slate-400 text-[10.5px]">
+                          <UiIcon name="clock" size={11} />
                           <span className="truncate">{formatDetectedTime(offer.detectedAt)}</span>
                         </span>
                       </div>
@@ -562,9 +567,9 @@ export default function OffersPage() {
                         {offer.isUnread ? 'New' : 'Mark unread'}
                       </button>
 
-                      <span className="row-span-1 inline-flex h-8 items-center gap-1.5 rounded-lg bg-slate-950 px-3 text-xs font-bold text-white shadow-2xs transition-all duration-150 group-hover:bg-slate-800 shrink-0">
+                      <span className="row-span-1 inline-flex h-8.5 items-center gap-1.5 rounded-lg bg-slate-950 px-3.5 text-xs font-semibold text-white shadow-2xs transition-all duration-150 group-hover:bg-slate-800 shrink-0">
                         <span>View Offer</span>
-                        <span className="text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-white">
+                        <span className="text-slate-400 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-white">
                           <UiIcon name="arrow" size={13} />
                         </span>
                       </span>

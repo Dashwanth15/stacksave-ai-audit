@@ -11,6 +11,7 @@ import { useUserScopedStorage } from '../hooks/useUserScopedStorage';
 import { getUserScopedKey } from '../utils/userSession';
 import ProviderLogo from './ProviderLogo';
 import { formatOfferForDisplay, formatCompactTime } from '../utils/offerFormatter';
+import { renderEmphasizedDescription } from '../utils/descriptionFormatter';
 import type { PublicOffer } from '../types';
 import { trackNotificationOpened, trackOfferClicked } from '../utils/analytics';
 
@@ -163,7 +164,7 @@ export default function OfferNotificationBell() {
             ? 'bg-slate-100 border-slate-300 text-slate-950 shadow-2xs'
             : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-950 shadow-2xs hover:border-slate-300'
         }`}
-        aria-label={`AI Offers and Intelligence Notifications (${availableCount} available offers, ${unreadCount} unread)`}
+        aria-label={`AI Offers and Intelligence Notifications (${offerCountLabel}, ${unreadCount} unread)`}
         title="AI Offers & Pricing Intelligence"
       >
         <svg
@@ -181,9 +182,9 @@ export default function OfferNotificationBell() {
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
 
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[19px] h-[19px] px-1 text-[10px] font-extrabold leading-none text-white bg-emerald-600 rounded-full ring-2 ring-white shadow-2xs">
-            {unreadCount > 9 ? '9+' : unreadCount}
+        {availableCount > 0 && (
+          <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1 text-[10px] font-bold leading-none text-white bg-emerald-600 rounded-full ring-2 ring-white shadow-xs tabular-nums">
+            {availableCount}
           </span>
         )}
       </button>
@@ -197,21 +198,20 @@ export default function OfferNotificationBell() {
             exit={{ opacity: 0, y: -4, scale: 0.96 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
             onClick={handleHintClick}
-            className="absolute right-0 top-full mt-2 w-[220px] p-3 rounded-xl bg-white border border-slate-200/90 shadow-xl z-50 cursor-pointer text-left select-none group transition-all hover:border-slate-300"
-            style={{
-              boxShadow: '0 12px 30px -6px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(15, 23, 42, 0.04)',
-            }}
+            className="absolute right-0 top-full mt-2 w-[228px] p-3 rounded-xl bg-white border border-slate-200/90 shadow-[0_12px_30px_-6px_rgba(15,23,42,0.14),0_0_0_1px_rgba(15,23,42,0.04)] z-50 cursor-pointer text-left select-none group transition-all hover:border-slate-300"
           >
             {/* Triangular pointer / caret directed toward the bell */}
             <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white border-t border-l border-slate-200/90 rotate-45" />
 
-            <div className="relative z-10 flex items-start justify-between gap-2">
+            <div className="relative z-10 flex items-start justify-between gap-2.5">
               <div>
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 leading-none">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                  <span>{offerCountLabel}</span>
+                  <span className="tabular-nums">
+                    <span className="font-extrabold text-slate-950">{availableCount}</span> {availableCount === 1 ? 'available offer' : 'available offers'}
+                  </span>
                 </div>
-                <p className="text-[11px] font-medium text-slate-500 mt-1 leading-snug">
+                <p className="text-[11px] font-medium text-slate-500 mt-1.5 leading-snug">
                   New AI pricing updates
                 </p>
               </div>
@@ -222,8 +222,9 @@ export default function OfferNotificationBell() {
                   const hintDismissedKey = getUserScopedKey('hint_dismissed');
                   sessionStorage.setItem(hintDismissedKey, 'true');
                 }}
-                className="text-slate-400 hover:text-slate-700 text-xs p-0.5 rounded cursor-pointer"
+                className="text-slate-400 hover:text-slate-700 text-xs p-1 -mr-1 -mt-1 rounded hover:bg-slate-100 transition-colors cursor-pointer"
                 title="Dismiss hint"
+                aria-label="Dismiss notification hint"
               >
                 ✕
               </button>
@@ -264,9 +265,16 @@ export default function OfferNotificationBell() {
             {/* ── 1. Popover Header ─────────────────────────── */}
             <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
               <div className="min-w-0 pr-2">
-                <h4 className="text-sm font-extrabold text-slate-950 tracking-tight truncate">
-                  AI Offers & Promotions
-                </h4>
+                <div className="flex items-baseline gap-2 min-w-0">
+                  <h4 className="text-sm font-bold text-slate-950 tracking-tight truncate">
+                    AI Offers & Promotions
+                  </h4>
+                  {availableCount > 0 && (
+                    <span className="text-xs font-medium text-slate-400 tabular-nums shrink-0">
+                      · {availableCount} {availableCount === 1 ? 'offer' : 'offers'}
+                    </span>
+                  )}
+                </div>
                 <p className="text-[11.5px] sm:text-xs text-slate-500 mt-0.5 font-medium line-clamp-1">
                   Live pricing opportunities from monitored AI providers
                 </p>
@@ -335,9 +343,9 @@ export default function OfferNotificationBell() {
                       {offer.title}
                     </h5>
 
-                    {/* Concise Summary */}
+                    {/* Concise Summary with selective emphasis */}
                     <p className="text-xs text-slate-600 mt-1 leading-relaxed line-clamp-2">
-                      {offer.summary}
+                      {renderEmphasizedDescription(offer.summary)}
                     </p>
 
                     {/* Footer Row: Metadata & View Deal CTA */}
