@@ -4,7 +4,7 @@
 // 100% Data-Driven: Powered by official daily Playwright crawler
 // ============================================================
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { fetchPublicOffers, fetchPricingStatus } from '../services/api';
@@ -87,6 +87,40 @@ export default function OffersPage() {
   const [vendorFeedCount, setVendorFeedCount] = useState<number | null>(null);
   // USER-SCOPED: read offer IDs are stored per user session
   const [readOfferIds, setReadOfferIds] = useUserScopedStorage<string[]>('read_offer_ids', []);
+
+  // Category scroll tracking for dynamic mobile edge affordances
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollIndicators = useCallback(() => {
+    const el = categoryScrollRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 2);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 2);
+  }, []);
+
+  useEffect(() => {
+    const el = categoryScrollRef.current;
+    if (!el) return;
+
+    updateScrollIndicators();
+
+    el.addEventListener('scroll', updateScrollIndicators, { passive: true });
+    window.addEventListener('resize', updateScrollIndicators);
+
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => {
+      updateScrollIndicators();
+    }) : null;
+    ro?.observe(el);
+
+    return () => {
+      el.removeEventListener('scroll', updateScrollIndicators);
+      window.removeEventListener('resize', updateScrollIndicators);
+      ro?.disconnect();
+    };
+  }, [updateScrollIndicators, offers.length]);
 
   useEffect(() => {
     let isMounted = true;
@@ -236,7 +270,7 @@ export default function OffersPage() {
   }, [lastSyncDate]);
 
   return (
-    <div className="min-h-screen pb-24 selection:bg-slate-900 selection:text-white bg-[#F8FAFC]">
+    <div className="min-h-screen pb-24 selection:bg-slate-900 selection:text-white bg-[#F8FAFC] overflow-x-hidden">
       {/* ── Top Navigation Bar ───────────────────────────────── */}
       <header className="sticky top-0 z-40 bg-white/95 border-b border-slate-200/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -319,58 +353,74 @@ export default function OffersPage() {
           </div>
         </section>
 
-        {/* ── Category Navigation ─────────────────────────────── */}
+        {/* ── Category Navigation (Horizontally Scrollable Tabs) ── */}
         <div className="relative mb-4 sm:mb-5">
-          {/* Subtle mobile right-edge fade cue to indicate horizontal swiping */}
-          <div
-            className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#F8FAFC] via-[#F8FAFC]/70 to-transparent z-10 sm:hidden"
-            aria-hidden="true"
-          />
+          {/* Subtle mobile left-edge dynamic fade cue */}
+          {canScrollLeft && (
+            <div
+              className="pointer-events-none absolute left-0 top-0 bottom-0 w-7 bg-gradient-to-r from-[#F8FAFC] to-transparent z-10 transition-opacity duration-150 sm:hidden"
+              aria-hidden="true"
+            />
+          )}
 
-          {/* Horizontally scrollable track without native scrollbar */}
+          {/* Subtle mobile right-edge dynamic fade cue */}
+          {canScrollRight && (
+            <div
+              className="pointer-events-none absolute right-0 top-0 bottom-0 w-9 bg-gradient-to-l from-[#F8FAFC] to-transparent z-10 transition-opacity duration-150 sm:hidden"
+              aria-hidden="true"
+            />
+          )}
+
+          {/* Dedicated horizontal scroll wrapper */}
           <div
-            role="tablist"
-            aria-label="Filter offers by category"
-            className="flex items-center gap-2 sm:gap-1 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x py-1.5 -mx-4 px-4 sm:mx-0 sm:px-0 sm:py-0 sm:rounded-2xl sm:border sm:border-slate-200/90 sm:bg-white sm:p-1.5 sm:shadow-[0_2px_8px_-2px_rgba(15,23,42,0.04)]"
+            ref={categoryScrollRef}
+            className="w-full overflow-x-auto overflow-y-hidden no-scrollbar scrollbar-none overscroll-x-contain touch-pan-x py-1 sm:py-0 sm:rounded-2xl sm:border sm:border-slate-200/90 sm:bg-white sm:p-1.5 sm:shadow-[0_2px_8px_-2px_rgba(15,23,42,0.04)]"
+            style={{ WebkitOverflowScrolling: 'touch' }}
           >
-            {CATEGORY_TABS.map((tab) => {
-              const count = categoryCounts[tab.id] || 0;
-              const isSelected = selectedCategory === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  role="tab"
-                  aria-selected={isSelected}
-                  onClick={(e) => {
-                    setSelectedCategory(tab.id);
-                    e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-                  }}
-                  className={`group shrink-0 flex h-10 sm:h-9 items-center gap-2 sm:gap-1.5 rounded-xl px-3.5 sm:px-3 text-xs font-semibold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98] select-none border focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 ${
-                    isSelected
-                      ? 'bg-slate-950 text-white border-slate-950 shadow-xs'
-                      : 'bg-white sm:bg-transparent text-slate-600 sm:text-slate-500 border-slate-200/80 sm:border-transparent hover:border-slate-300 sm:hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 shadow-2xs sm:shadow-none'
-                  }`}
-                >
-                  <span className="flex h-4 w-4 items-center justify-center text-current shrink-0">
-                    <UiIcon name={tab.icon} size={14} />
-                  </span>
-                  <span>{tab.label}</span>
-                  {count > 0 && (
-                    <span
-                      className={`text-[10.5px] px-1.5 py-0.5 rounded-md font-semibold tabular-nums shrink-0 transition-colors ${
-                        isSelected
-                          ? 'bg-slate-800 text-slate-200'
-                          : 'bg-slate-100 text-slate-600 sm:text-slate-500 group-hover:bg-slate-200/70'
-                      }`}
-                    >
-                      {count}
+            {/* Horizontal track content */}
+            <div
+              role="tablist"
+              aria-label="Filter offers by category"
+              className="flex flex-nowrap w-max min-w-full items-center gap-2 sm:gap-1.5 pr-8 sm:pr-0"
+            >
+              {CATEGORY_TABS.map((tab) => {
+                const count = categoryCounts[tab.id] || 0;
+                const isSelected = selectedCategory === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    role="tab"
+                    aria-selected={isSelected}
+                    onClick={(e) => {
+                      setSelectedCategory(tab.id);
+                      e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                      setTimeout(updateScrollIndicators, 350);
+                    }}
+                    className={`flex-none shrink-0 flex h-10 sm:h-9 items-center gap-2 sm:gap-1.5 rounded-xl px-3.5 sm:px-3 text-xs font-semibold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98] select-none border focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 ${
+                      isSelected
+                        ? 'bg-slate-950 text-white border-slate-950 shadow-xs'
+                        : 'bg-white sm:bg-transparent text-slate-600 sm:text-slate-500 border-slate-200/80 sm:border-transparent hover:border-slate-300 sm:hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 shadow-2xs sm:shadow-none'
+                    }`}
+                  >
+                    <span className="flex h-4 w-4 items-center justify-center text-current shrink-0">
+                      <UiIcon name={tab.icon} size={14} />
                     </span>
-                  )}
-                </button>
-              );
-            })}
-            {/* Trailing spacer for smooth mobile scroll padding */}
-            <div className="w-3 shrink-0 sm:hidden" aria-hidden="true" />
+                    <span>{tab.label}</span>
+                    {count > 0 && (
+                      <span
+                        className={`text-[10.5px] px-1.5 py-0.5 rounded-md font-semibold tabular-nums shrink-0 transition-colors ${
+                          isSelected
+                            ? 'bg-slate-800 text-slate-200'
+                            : 'bg-slate-100 text-slate-600 sm:text-slate-500 group-hover:bg-slate-200/70'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
