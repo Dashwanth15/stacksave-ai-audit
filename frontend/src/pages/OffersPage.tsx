@@ -320,18 +320,12 @@ export default function OffersPage() {
         </section>
 
         {/* ── Category Navigation ─────────────────────────────── */}
-        <div className="relative mb-4 sm:mb-5">
-          {/* Subtle mobile right-edge fade cue to indicate horizontal swiping */}
-          <div
-            className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#F8FAFC] via-[#F8FAFC]/70 to-transparent z-10 sm:hidden"
-            aria-hidden="true"
-          />
-
-          {/* Horizontally scrollable track without native scrollbar */}
+        <div className="mb-4 sm:mb-5">
+          {/* Horizontally scrollable track — real scrollbar on mobile, styled pill on desktop */}
           <div
             role="tablist"
             aria-label="Filter offers by category"
-            className="flex items-center gap-2 sm:gap-1 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x py-1.5 -mx-4 px-4 sm:mx-0 sm:px-0 sm:py-0 sm:rounded-2xl sm:border sm:border-slate-200/90 sm:bg-white sm:p-1.5 sm:shadow-[0_2px_8px_-2px_rgba(15,23,42,0.04)]"
+            className="flex items-center gap-2 sm:gap-1 overflow-x-auto categories-scrollbar scroll-smooth overscroll-x-contain touch-pan-x py-1.5 -mx-4 px-4 sm:mx-0 sm:px-0 sm:py-0 sm:rounded-2xl sm:border sm:border-slate-200/90 sm:bg-white sm:p-1.5 sm:shadow-[0_2px_8px_-2px_rgba(15,23,42,0.04)]"
           >
             {CATEGORY_TABS.map((tab) => {
               const count = categoryCounts[tab.id] || 0;

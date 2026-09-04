@@ -52,15 +52,24 @@ export default function BuildStackPage() {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
 
-  useEffect(() => {
-    trackBuildStackStarted();
-  }, []);
-
   const [step, setStep] = useState(1);
   const [maxStepReached, setMaxStepReached] = useState(1); // UI-only: enables click-to-edit
   const [briefOpen, setBriefOpen] = useState(false); // mobile "Review choices" disclosure
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    trackBuildStackStarted();
+  }, []);
+
+  // Scroll to top instantly on every step change (forward and backward).
+  // Tied directly to [step] so it fires for handleNext, handleBack, and jumpToStep.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    // Belt-and-suspenders for browsers that don't support behavior:'instant'
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [step]);
 
   // Form State
   const [domain, setDomain] = useState('');

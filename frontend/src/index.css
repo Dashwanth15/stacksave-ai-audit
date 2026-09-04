@@ -1094,3 +1094,42 @@ button:disabled { cursor: not-allowed; }
   scrollbar-width: none; /* Firefox */
   -webkit-overflow-scrolling: touch; /* Smooth iOS momentum scrolling */
 }
+
+/* ============================================================
+   Category Scrollbar — Real thin scrollbar on mobile only.
+   Shows actual scroll position so users know more tabs exist.
+   Suppressed on sm+ where the desktop pill fits all tabs.
+   ============================================================ */
+@media (max-width: 639px) {
+  .categories-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #CBD5E1 transparent; /* thumb track */
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px; /* give the scrollbar room below the tabs */
+  }
+  .categories-scrollbar::-webkit-scrollbar {
+    height: 4px;
+  }
+  .categories-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .categories-scrollbar::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 9999px;
+  }
+  .categories-scrollbar::-webkit-scrollbar-thumb:active {
+    background: #94A3B8;
+  }
+}
+@media (min-width: 640px) {
+  .categories-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .categories-scrollbar::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
