@@ -88,15 +88,27 @@ export default function OffersPage() {
   // USER-SCOPED: read offer IDs are stored per user session
   const [readOfferIds, setReadOfferIds] = useUserScopedStorage<string[]>('read_offer_ids', []);
 
-  // Category scroll tracking for dynamic mobile right-edge affordance
+  // Category scroll tracking for mobile horizontal scroll indicator
   const categoryScrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [scrollRatio, setScrollRatio] = useState(0.35);
+  const [hasScrollableOverflow, setHasScrollableOverflow] = useState(false);
 
   const updateScrollIndicators = useCallback(() => {
     const el = categoryScrollRef.current;
     if (!el) return;
     const { scrollLeft, scrollWidth, clientWidth } = el;
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
+    const maxScroll = scrollWidth - clientWidth;
+    if (maxScroll > 2) {
+      setHasScrollableOverflow(true);
+      const progress = Math.min(1, Math.max(0, scrollLeft / maxScroll));
+      setScrollProgress(progress);
+      setScrollRatio(Math.min(0.6, Math.max(0.2, clientWidth / scrollWidth)));
+    } else {
+      setHasScrollableOverflow(false);
+      setScrollProgress(0);
+      setScrollRatio(1);
+    }
   }, []);
 
   useEffect(() => {
@@ -352,15 +364,7 @@ export default function OffersPage() {
         </section>
 
         {/* ── Category Navigation (Horizontally Scrollable Tabs) ── */}
-        <div className="relative mb-4 sm:mb-5">
-          {/* Very subtle, narrow right-edge fade cue (only at far right edge when more categories exist) */}
-          {canScrollRight && (
-            <div
-              className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-[#F8FAFC]/80 via-[#F8FAFC]/30 to-transparent z-10 transition-opacity duration-200 sm:hidden"
-              aria-hidden="true"
-            />
-          )}
-
+        <div className="mb-4 sm:mb-5">
           {/* Dedicated horizontal scroll wrapper */}
           <div
             ref={categoryScrollRef}
@@ -412,6 +416,24 @@ export default function OffersPage() {
               })}
             </div>
           </div>
+
+          {/* Real Horizontal Scroll Indicator (Mobile only, tracks actual scroll position) */}
+          {hasScrollableOverflow && (
+            <div
+              className="sm:hidden pt-2 pb-0.5 flex justify-center items-center pointer-events-none select-none"
+              aria-hidden="true"
+            >
+              <div className="h-1 w-24 bg-slate-200/90 rounded-full overflow-hidden relative">
+                <div
+                  className="absolute top-0 bottom-0 bg-slate-400 rounded-full transition-all duration-75 ease-out"
+                  style={{
+                    width: `${Math.round(scrollRatio * 100)}%`,
+                    left: `${Math.round(scrollProgress * (100 - scrollRatio * 100))}%`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Filter & Search Toolbar ─────────────────────────── */}

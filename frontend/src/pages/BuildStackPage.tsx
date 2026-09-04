@@ -62,6 +62,17 @@ export default function BuildStackPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Scroll to top immediately whenever the wizard step changes (forward or backward)
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (document.documentElement) {
+      document.documentElement.scrollTop = 0;
+    }
+    if (document.body) {
+      document.body.scrollTop = 0;
+    }
+  }, [step]);
+
   // Form State
   const [domain, setDomain] = useState('');
   const [teamSize, setTeamSize] = useState(10);
@@ -166,17 +177,20 @@ export default function BuildStackPage() {
           <button onClick={() => navigate('/')} className="focus:outline-none flex items-center gap-2">
             <Logo size="md" asDiv />
           </button>
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-4">
             <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-[0.08em] bg-[rgba(30,58,95,0.06)] text-[#1E3A5F]">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               Stack Architect
             </span>
-            <OfferNotificationBell />
+            <div className="shrink-0">
+              <OfferNotificationBell />
+            </div>
             <button
               onClick={() => navigate('/audit')}
-              className="text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md border border-slate-200 hover:border-slate-300 transition-colors bg-white"
+              className="text-xs font-semibold text-slate-600 hover:text-slate-900 px-2.5 sm:px-3 py-1.5 rounded-md border border-slate-200 hover:border-slate-300 transition-colors bg-white whitespace-nowrap"
             >
-              Audit Existing Stack →
+              <span className="hidden sm:inline">Audit Existing Stack →</span>
+              <span className="inline sm:hidden">Audit Stack →</span>
             </button>
           </div>
         </div>
