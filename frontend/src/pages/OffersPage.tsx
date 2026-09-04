@@ -88,17 +88,15 @@ export default function OffersPage() {
   // USER-SCOPED: read offer IDs are stored per user session
   const [readOfferIds, setReadOfferIds] = useUserScopedStorage<string[]>('read_offer_ids', []);
 
-  // Category scroll tracking for dynamic mobile edge affordances
+  // Category scroll tracking for dynamic mobile right-edge affordance
   const categoryScrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const updateScrollIndicators = useCallback(() => {
     const el = categoryScrollRef.current;
     if (!el) return;
     const { scrollLeft, scrollWidth, clientWidth } = el;
-    setCanScrollLeft(scrollLeft > 2);
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 2);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
   }, []);
 
   useEffect(() => {
@@ -355,18 +353,10 @@ export default function OffersPage() {
 
         {/* ── Category Navigation (Horizontally Scrollable Tabs) ── */}
         <div className="relative mb-4 sm:mb-5">
-          {/* Subtle mobile left-edge dynamic fade cue */}
-          {canScrollLeft && (
-            <div
-              className="pointer-events-none absolute left-0 top-0 bottom-0 w-7 bg-gradient-to-r from-[#F8FAFC] to-transparent z-10 transition-opacity duration-150 sm:hidden"
-              aria-hidden="true"
-            />
-          )}
-
-          {/* Subtle mobile right-edge dynamic fade cue */}
+          {/* Very subtle, narrow right-edge fade cue (only at far right edge when more categories exist) */}
           {canScrollRight && (
             <div
-              className="pointer-events-none absolute right-0 top-0 bottom-0 w-9 bg-gradient-to-l from-[#F8FAFC] to-transparent z-10 transition-opacity duration-150 sm:hidden"
+              className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-[#F8FAFC]/80 via-[#F8FAFC]/30 to-transparent z-10 transition-opacity duration-200 sm:hidden"
               aria-hidden="true"
             />
           )}
@@ -381,7 +371,7 @@ export default function OffersPage() {
             <div
               role="tablist"
               aria-label="Filter offers by category"
-              className="flex flex-nowrap w-max min-w-full items-center gap-2 sm:gap-1.5 pr-8 sm:pr-0"
+              className="flex flex-nowrap w-max min-w-full items-center gap-2 sm:gap-1.5 pr-6 sm:pr-0"
             >
               {CATEGORY_TABS.map((tab) => {
                 const count = categoryCounts[tab.id] || 0;
