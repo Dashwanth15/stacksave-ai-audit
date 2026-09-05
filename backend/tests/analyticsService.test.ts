@@ -64,6 +64,21 @@ describe('GoogleAnalyticsService — Analytics Data Integrity & Isolation', () =
         }
       });
     });
+
+    it('includes unfiltered property-level Total Users and Active Users from GA4', async () => {
+      const historical = await GoogleAnalyticsService.getHistoricalAnalytics('7days');
+
+      expect(historical.totalUsers).toBeDefined();
+      expect(historical.totalUsers.metricName).toBe('Total Users');
+      expect(historical.totalUsers.dataSource).toBe('GA4_HISTORICAL');
+
+      expect(historical.activeUsers).toBeDefined();
+      expect(historical.activeUsers.metricName).toBe('Active Users');
+      expect(historical.activeUsers.dataSource).toBe('GA4_HISTORICAL');
+
+      expect(historical.sessions).toBeDefined();
+      expect(historical.screenPageViews).toBeDefined();
+    });
   });
 
   describe('3. Strict Isolation of GA4 Funnel vs Database Ground Truth', () => {

@@ -396,8 +396,8 @@ export default function AnalyticsDashboardPage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-            <MetricCard title="Active Users" card={overview?.historical.activeUsers} accent="indigo" icon="👤" loading={loading} />
-            <MetricCard title="Total Users" card={overview?.historical.totalUsers} accent="slate" icon="👥" loading={loading} />
+            <MetricCard title="Active Users" card={overview?.historical.activeUsers} accent="indigo" icon="👤" loading={loading} footnote="Active visitors across all traffic sources (GA4)." />
+            <MetricCard title="Total Users" card={overview?.historical.totalUsers} accent="slate" icon="👥" loading={loading} footnote="All unique visitors across all sources (GA4 totalUsers)." />
             <MetricCard title="Sessions" card={overview?.historical.sessions} accent="blue" icon="🔄" loading={loading} />
             <MetricCard title="Page Views" card={overview?.historical.screenPageViews} accent="emerald" icon="📊" loading={loading} />
             <MetricCard title="Engagement Rate" card={overview?.historical.engagementRate} accent="violet" icon="🎯" loading={loading} />
@@ -585,7 +585,7 @@ export default function AnalyticsDashboardPage() {
               accent="emerald"
               icon="🖱️"
               loading={loading}
-              footnote="Clicks from google.com search results (e.g. the '8 clicks' metric)."
+              footnote="Clicks from Google organic search results (GSC data only)."
             />
             <MetricCard
               title="Organic Search Impressions"

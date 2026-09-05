@@ -604,14 +604,14 @@ export class GoogleAnalyticsService {
       let engagementRate = 0;
       let avgDuration = 0;
 
-      if (trafficReport.rows && trafficReport.rows.length > 0) {
-        const metrics = trafficReport.rows[0].metricValues;
-        activeUsers = parseInt(metrics?.[0]?.value || '0', 10);
-        totalUsers = parseInt(metrics?.[1]?.value || '0', 10);
-        sessions = parseInt(metrics?.[2]?.value || '0', 10);
-        pageViews = parseInt(metrics?.[3]?.value || '0', 10);
-        engagementRate = parseFloat(metrics?.[4]?.value || '0') * 100;
-        avgDuration = parseFloat(metrics?.[5]?.value || '0');
+      const metricValues = trafficReport.rows?.[0]?.metricValues || (trafficReport as any).totals?.[0]?.metricValues;
+      if (metricValues && metricValues.length > 0) {
+        activeUsers = parseInt(metricValues[0]?.value || '0', 10);
+        totalUsers = parseInt(metricValues[1]?.value || '0', 10);
+        sessions = parseInt(metricValues[2]?.value || '0', 10);
+        pageViews = parseInt(metricValues[3]?.value || '0', 10);
+        engagementRate = parseFloat(metricValues[4]?.value || '0') * 100;
+        avgDuration = parseFloat(metricValues[5]?.value || '0');
       }
 
       // 2. Events & Funnel Report (Strictly GA4 events)
@@ -797,7 +797,7 @@ export class GoogleAnalyticsService {
       // Convert date window to YYYY-MM-DD for Search Console API
       const now = new Date();
       const endYmd = now.toISOString().split('T')[0];
-      const startDays = period === '30days' ? 30 : period === 'yesterday' ? 2 : 7;
+      const startDays = period === '30days' ? 30 : period === '7days' ? 7 : period === 'yesterday' ? 2 : 1;
       const startDateIso = new Date(now.getTime() - startDays * 24 * 60 * 60 * 1000);
       const startYmd = startDateIso.toISOString().split('T')[0];
 
