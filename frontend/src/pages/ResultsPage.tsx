@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { m, AnimatePresence } from 'framer-motion';
+import { m } from 'framer-motion';
 import type { AuditResult, Insight } from '../types';
 import type { StackIntelligenceResult } from '../types/intelligence';
-import { fetchAudit, captureLead, triggerReAudit } from '../services/api';
+import { fetchAudit, triggerReAudit } from '../services/api';
 import { fetchStackIntelligence } from '../services/intelligence';
 import { formatCurrencyFull, insightTypeLabel, formatRelativeTime } from '../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
@@ -325,179 +325,6 @@ function InsightCard({
   );
 }
 
-function EmailCaptureModal({
-  auditId,
-  onClose,
-  onSuccess,
-}: {
-  auditId: string;
-  onClose: () => void;
-  onSuccess: () => void;
-}) {
-  const [email, setEmail] = useState('');
-  const [company, setCompany] = useState('');
-  const [role, setRole] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [hp, setHp] = useState('');
-  const [sent, setSent] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email) { setError('Email is required'); return; }
-    setLoading(true);
-    setError('');
-    try {
-      await captureLead({ email, auditId, companyName: company, role, _hp: hp });
-      setSent(true);
-      setTimeout(() => onSuccess(), 2000);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const inputStyle = {
-    background: 'var(--color-bg-surface)',
-    border: '1px solid var(--color-border)',
-    color: 'var(--color-text-heading)',
-  } as const;
-
-  const inputClass = 'w-full px-4 py-3 text-sm focus:outline-none placeholder:text-[#94A3B8] rounded';
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Save your audit report">
-      <div
-        className="absolute inset-0"
-        style={{ background: 'rgba(15,23,42,0.4)' }}
-        onClick={onClose}
-      />
-      <m.div
-        initial={{ opacity: 0, scale: 0.97, y: 6 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.15, ease: 'easeOut' }}
-        className="relative w-full max-w-md bg-[var(--color-bg-card)] border p-8 rounded-lg"
-        style={{
-          borderColor: 'var(--color-border)',
-          boxShadow: 'var(--shadow-xl)',
-        }}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:text-slate-600 transition-colors"
-          aria-label="Close"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-
-        {sent ? (
-          <div className="text-center py-6">
-            <h3 className="text-xl font-bold mb-2 text-[var(--color-success)]">
-              Report Saved
-            </h3>
-            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-              A public bookmark link has been dispatched to {email}.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="mb-6">
-              <h3 className="text-lg font-bold mb-1.5 text-[var(--color-text-heading)]">
-                Save Audit Report
-              </h3>
-              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                We'll email you a secure link to this audit report so you can refer back to it.
-              </p>
-            </div>
-            {error && (
-              <p
-                className="text-xs p-3 rounded mb-4 font-semibold"
-                style={{ background: 'var(--color-danger-bg)', color: 'var(--color-danger-t)' }}
-                role="alert"
-              >
-                {error}
-              </p>
-            )}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="text"
-                name="_hp"
-                value={hp}
-                onChange={(e) => setHp(e.target.value)}
-                tabIndex={-1}
-                aria-hidden="true"
-                style={{ position: 'absolute', left: '-9999px', opacity: 0 }}
-                autoComplete="off"
-              />
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }} htmlFor="lead-email">
-                  Email Address *
-                </label>
-                <input
-                  id="lead-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  required
-                  className={inputClass}
-                  style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-bg-base), 0 0 0 4px var(--color-primary)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none'; }}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }} htmlFor="lead-company">
-                    Company
-                  </label>
-                  <input
-                    id="lead-company"
-                    type="text"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                    placeholder="Optional"
-                    className={inputClass}
-                    style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-bg-base), 0 0 0 4px var(--color-primary)'; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none'; }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }} htmlFor="lead-role">
-                    Role
-                  </label>
-                  <input
-                    id="lead-role"
-                    type="text"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    placeholder="Optional"
-                    className={inputClass}
-                    style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-bg-base), 0 0 0 4px var(--color-primary)'; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none'; }}
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary w-full py-3 text-xs font-semibold disabled:opacity-50"
-              >
-                {loading ? 'Processing…' : 'Save Report'}
-              </button>
-            </form>
-          </>
-        )}
-      </m.div>
-    </div>
-  );
-}
-
 export default function ResultsPage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
@@ -516,8 +343,6 @@ export default function ResultsPage() {
   );
   const [loading, setLoading] = useState(!audit);
   const [error, setError] = useState<string | null>(null);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [emailCaptured, setEmailCaptured] = useState(false);
   const [copied, setCopied] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [reAuditing, setReAuditing] = useState(false);
@@ -586,13 +411,6 @@ export default function ResultsPage() {
         .catch((err) => console.error('Failed to fetch stack intelligence:', err));
     }
   }, [audit]);
-
-  useEffect(() => {
-    if (isOwner && audit && !emailCaptured) {
-      const timer = setTimeout(() => setShowEmailModal(true), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [audit, emailCaptured, isOwner]);
 
   function copyShareUrl() {
     if (!audit) return;
@@ -1047,20 +865,6 @@ export default function ResultsPage() {
         useCase={audit?.useCase}
         onClose={handleClosePanel}
       />
-
-      {/* ── Save Modal ──────────────────────────────────────── */}
-      <AnimatePresence>
-        {showEmailModal && !emailCaptured && (
-          <EmailCaptureModal
-            auditId={audit.auditId}
-            onClose={() => setShowEmailModal(false)}
-            onSuccess={() => {
-              setEmailCaptured(true);
-              setShowEmailModal(false);
-            }}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }

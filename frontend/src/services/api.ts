@@ -7,7 +7,6 @@ import axios from 'axios';
 import type {
   AuditRequest,
   AuditResult,
-  LeadCaptureRequest,
   ReAuditResponse,
   AuditDiff,
   StackBuilderRequest,
@@ -134,10 +133,6 @@ export async function fetchAudit(auditId: string): Promise<AuditResult> {
     throw new Error('Server returned success, but the audit details payload is missing.');
   }
   return response.data.data;
-}
-
-export async function captureLead(request: LeadCaptureRequest): Promise<void> {
-  await api.post('/leads', request);
 }
 
 export async function checkHealth(): Promise<{ status: string; db: string }> {
