@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { fetchPublicOffers, fetchPricingStatus } from '../services/api';
+import { fetchPublicOffers, fetchPricingStatus, getCachedPublicOffers } from '../services/api';
 import { useUserScopedStorage } from '../hooks/useUserScopedStorage';
 import Logo from '../components/Logo';
 import ProviderLogo from '../components/ProviderLogo';
@@ -76,8 +76,12 @@ function formatDetectedTime(dateString: string): string {
 export default function OffersPage() {
   const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
-  const [offers, setOffers] = useState<PublicOffer[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Initialize from the in-memory/sessionStorage cache so that if the notification bell
+  // already fetched the 12 offers, the page renders them immediately without a skeleton.
+  const cachedOnMount = getCachedPublicOffers();
+  const [offers, setOffers] = useState<PublicOffer[]>(() => cachedOnMount?.offers ?? []);
+  // Only show the loading skeleton when there is nothing cached to display yet.
+  const [loading, setLoading] = useState(!cachedOnMount || cachedOnMount.offers.length === 0);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<string>('all');

@@ -16,6 +16,12 @@ import type { PublicOffer } from '../types';
 import { trackNotificationOpened, trackOfferClicked } from '../utils/analytics';
 
 
+// Module-level flag: true after the hint has auto-shown once in this JS session.
+// Survives SPA navigation (component unmount/remount) but resets on a real browser refresh
+// because the JS module is reloaded from scratch. This ensures the hint only appears
+// on the first landing page entry, not on every internal route change.
+let hintShownThisSession = false;
+
 export default function OfferNotificationBell() {
   const navigate = useNavigate();
   // Initialize with cached offers to prevent initial empty 0-offer flash
@@ -28,20 +34,19 @@ export default function OfferNotificationBell() {
 
   // Load public offers from official backend API on mount
   useEffect(() => {
-    // Reset hint_dismissed on every fresh page load so the hint popup
-    // is allowed to appear again each time the user visits the site.
-    const hintDismissedKey = getUserScopedKey('hint_dismissed');
-    sessionStorage.removeItem(hintDismissedKey);
-
     let isMounted = true;
     fetchPublicOffers()
       .then((res) => {
         if (isMounted && res && Array.isArray(res.offers)) {
           setOffers(res.offers);
 
-          // Show floating hint on every fresh page load whenever offers are available.
-          // We do NOT gate this on unread status — the user wants it to appear on every visit.
-          if (res.offers.length > 0) {
+          // Auto-show the hint ONLY if it has not been shown yet in this browser session.
+          // hintShownThisSession is a module-level flag that survives SPA navigation
+          // (component unmount/remount) but resets on a real page refresh.
+          // This means the hint appears only on the first landing-page load, not on
+          // every internal route change (e.g. / → /offers → /build-stack → /).
+          if (res.offers.length > 0 && !hintShownThisSession) {
+            hintShownThisSession = true;
             setShowHint(true);
           }
         }
