@@ -269,22 +269,112 @@ export async function fetchPricingStatus(): Promise<{
 
 
 
+// ── Public Offers In-Flight Deduplication & Cache ────────────
+export interface PublicOffersResponse {
+  offers: PublicOffer[];
+  count: number;
+  note: string;
+}
+
+let inFlightOffersPromise: Promise<PublicOffersResponse> | null = null;
+let cachedOffersPayload: PublicOffersResponse | null = null;
+let lastOffersFetchedAt = 0;
+const OFFERS_CACHE_TTL_MS = 60_000; // 60s fresh TTL
+
+/**
+ * Synchronously retrieves cached public offers if available in memory or sessionStorage.
+ * Allows components to initialize immediately without blank / zero flashes.
+ */
+export function getCachedPublicOffers(): PublicOffersResponse | null {
+  if (cachedOffersPayload && Array.isArray(cachedOffersPayload.offers) && cachedOffersPayload.offers.length > 0) {
+    return cachedOffersPayload;
+  }
+  try {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      const stored = window.sessionStorage.getItem('stacksave_cached_public_offers');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && Array.isArray(parsed.offers) && parsed.offers.length > 0) {
+          cachedOffersPayload = parsed;
+          return parsed;
+        }
+      }
+    }
+  } catch {
+    // Ignore storage parsing errors
+  }
+  return null;
+}
+
 /**
  * GET /api/intelligence/offers
  * Returns recent new public offers detected from official provider sources.
  * PUBLIC endpoint — no admin secret required.
  * Only genuinely new offers; repeat promotions are deduped by fingerprint.
+ * Includes in-flight deduplication, auto-retry for cold starts, and cache persistence.
  */
-export async function fetchPublicOffers(): Promise<{
-  offers: PublicOffer[];
-  count: number;
-  note: string;
-}> {
-  const response = await api.get('/intelligence/offers', { timeout: 10_000 });
-  if (!response?.data?.success) {
-    throw new Error(response?.data?.error ?? 'Failed to fetch public offers');
+export async function fetchPublicOffers(): Promise<PublicOffersResponse> {
+  // 1. If an identical request is currently in-flight, return the existing promise
+  if (inFlightOffersPromise) {
+    return inFlightOffersPromise;
   }
-  return response.data.data;
+
+  // 2. If we have fresh cached data (< 60s old) with offers, return immediately
+  const now = Date.now();
+  if (cachedOffersPayload && (now - lastOffersFetchedAt) < OFFERS_CACHE_TTL_MS && cachedOffersPayload.offers.length > 0) {
+    return cachedOffersPayload;
+  }
+
+  inFlightOffersPromise = (async () => {
+    const MAX_ATTEMPTS = 3;
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const response = await api.get('/intelligence/offers', { timeout: 10_000 });
+        if (!response?.data?.success) {
+          throw new Error(response?.data?.error ?? 'Failed to fetch public offers');
+        }
+
+        const data: PublicOffersResponse = response.data.data;
+
+        // Update memory and session storage caches if data was received
+        if (data && Array.isArray(data.offers)) {
+          cachedOffersPayload = data;
+          lastOffersFetchedAt = Date.now();
+          if (data.offers.length > 0) {
+            try {
+              if (typeof window !== 'undefined' && window.sessionStorage) {
+                window.sessionStorage.setItem('stacksave_cached_public_offers', JSON.stringify(data));
+              }
+            } catch {
+              // Ignore sessionStorage quota / privacy errors
+            }
+          }
+        }
+
+        return data;
+      } catch (err) {
+        lastError = err;
+        if (attempt < MAX_ATTEMPTS) {
+          // Backoff: 600ms, 1200ms
+          await new Promise((resolve) => setTimeout(resolve, attempt * 600));
+        }
+      }
+    }
+
+    // If all retries failed but we have a previous cached payload with offers, return it as fallback!
+    if (cachedOffersPayload && cachedOffersPayload.offers.length > 0) {
+      console.warn('Network error fetching offers — serving cached offers fallback:', lastError);
+      return cachedOffersPayload;
+    }
+
+    throw lastError instanceof Error ? lastError : new Error('Failed to fetch public offers after retries');
+  })().finally(() => {
+    inFlightOffersPromise = null;
+  });
+
+  return inFlightOffersPromise;
 }
 
 // ── Analytics & Statistics Endpoints ─────────────────────────

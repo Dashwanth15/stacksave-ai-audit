@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
-import { fetchPublicOffers } from '../services/api';
+import { fetchPublicOffers, getCachedPublicOffers } from '../services/api';
 import { useUserScopedStorage } from '../hooks/useUserScopedStorage';
 import { getUserScopedKey } from '../utils/userSession';
 import ProviderLogo from './ProviderLogo';
@@ -18,7 +18,8 @@ import { trackNotificationOpened, trackOfferClicked } from '../utils/analytics';
 
 export default function OfferNotificationBell() {
   const navigate = useNavigate();
-  const [offers, setOffers] = useState<PublicOffer[]>([]);
+  // Initialize with cached offers to prevent initial empty 0-offer flash
+  const [offers, setOffers] = useState<PublicOffer[]>(() => getCachedPublicOffers()?.offers ?? []);
   const [isOpen, setIsOpen] = useState(false);
   const [showHint, setShowHint] = useState(false);
   // USER-SCOPED: read offer IDs are stored per user session, not shared globally
@@ -119,14 +120,12 @@ export default function OfferNotificationBell() {
     setShowHint(false);
     const hintDismissedKey = getUserScopedKey('hint_dismissed');
     sessionStorage.setItem(hintDismissedKey, 'true');
-    setIsOpen((prev) => {
-      const willOpen = !prev;
-      if (willOpen) {
-        trackNotificationOpened();
-        markCurrentOffersAsSeen();
-      }
-      return willOpen;
-    });
+    const willOpen = !isOpen;
+    setIsOpen(willOpen);
+    if (willOpen) {
+      trackNotificationOpened();
+      markCurrentOffersAsSeen();
+    }
   };
 
   const handleHintClick = () => {
