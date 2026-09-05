@@ -14,6 +14,7 @@ const navItems = [
   { label: 'How It Works', id: 'how-it-works' },
   { label: 'About', id: 'about' },
   { label: 'FAQ', id: 'faq' },
+  { label: 'Contact', id: 'contact' },
 ];
 
 const techLogos = [
@@ -1451,72 +1452,150 @@ export default function LandingPage() {
 
       {/* ── 7. Pricing / Final Call to Action ───────────────── */}
       <section
-        className="py-20 md:py-28"
+        className="py-14 sm:py-16 md:py-20"
         style={{ background: 'var(--color-bg-dark)' }}
       >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <m.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-center max-w-2xl mx-auto space-y-6"
+            className="text-center max-w-xl mx-auto space-y-4 sm:space-y-5"
           >
             <p
-              className="text-overline"
-              style={{ color: 'rgba(255,255,255,0.4)' }}
+              className="text-overline text-xs font-bold uppercase tracking-[0.16em]"
+              style={{ color: 'rgba(255,255,255,0.45)' }}
             >
               Optimization Report
             </p>
             <h2
-              className="text-3xl sm:text-4xl font-extrabold tracking-tight"
+              className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight"
               style={{ color: '#F8FAFC', letterSpacing: '-0.025em' }}
             >
               Recapture your software spend.
             </h2>
             <p
-              className="text-sm leading-relaxed"
-              style={{ color: 'rgba(248, 250, 252, 0.6)' }}
+              className="text-xs sm:text-sm leading-relaxed"
+              style={{ color: 'rgba(248, 250, 252, 0.65)' }}
             >
               Free audit. No credentials or credentials sharing. Done in 60 seconds.
             </p>
-            <m.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                trackCtaClicked('bottom_start_free_audit');
-                navigate('/audit');
-              }}
-              className="btn-cta px-8 py-4 text-sm font-semibold text-center"
-              aria-label="Start your free AI spend audit"
-              id="bottom-cta"
-            >
-              Start My Free Audit
-            </m.button>
+            <div className="pt-1">
+              <m.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  trackCtaClicked('bottom_start_free_audit');
+                  navigate('/audit');
+                }}
+                className="btn-cta px-7 py-3.5 text-sm font-semibold text-center"
+                aria-label="Start your free AI spend audit"
+                id="bottom-cta"
+              >
+                Start My Free Audit
+              </m.button>
+            </div>
           </m.div>
         </div>
       </section>
 
       {/* ── Footer ──────────────────────────────────────────── */}
       <footer
+        id="contact"
         style={{
           background: 'var(--color-bg-dark)',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          scrollMarginTop: '94px',
         }}
-        className="py-12 mt-auto text-xs"
+        className="py-8 sm:py-10 mt-auto text-xs"
       >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="brightness-0 invert opacity-90">
-              <Logo asDiv />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-7">
+          {/* Main Footer Row: Brand Info + Connect With Us */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 sm:pb-7 border-b border-white/[0.08]">
+            <div className="space-y-1.5 max-w-sm">
+              <div className="flex items-center gap-2.5">
+                <div className="brightness-0 invert opacity-95">
+                  <Logo asDiv />
+                </div>
+                <span style={{ color: 'rgba(255,255,255,0.25)' }}>·</span>
+                <span className="text-[11px] uppercase font-bold tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                  AI Spend Intelligence
+                </span>
+              </div>
+              <p style={{ color: 'rgba(255,255,255,0.45)' }} className="text-xs leading-relaxed">
+                AI spend audit & optimization dashboard
+              </p>
             </div>
-            <span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
-            <span style={{ color: 'rgba(255,255,255,0.4)' }}>
-              AI spend audit & optimization dashboard
-            </span>
+
+            {/* Social / Contact Links */}
+            <div className="flex flex-col items-start sm:items-end gap-2.5">
+              <span className="text-[10.5px] font-bold uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                Connect With Us
+              </span>
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://www.instagram.com/stacksaveai?igsi=MXN5bDZ1MXJoenM5Ng=="
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg flex items-center justify-center bg-white/[0.04] hover:bg-white/[0.12] border border-white/[0.08] hover:border-white/25 text-slate-300 hover:text-white transition-all duration-150 shadow-2xs"
+                  aria-label="Instagram"
+                  title="Instagram"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                  </svg>
+                </a>
+                <a
+                  href="https://wa.me/917013893535"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg flex items-center justify-center bg-white/[0.04] hover:bg-white/[0.12] border border-white/[0.08] hover:border-white/25 text-slate-300 hover:text-white transition-all duration-150 shadow-2xs"
+                  aria-label="WhatsApp"
+                  title="WhatsApp"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.885-9.888 9.885m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                </a>
+                <a
+                  href="https://x.com/DashwanthM80038"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg flex items-center justify-center bg-white/[0.04] hover:bg-white/[0.12] border border-white/[0.08] hover:border-white/25 text-slate-300 hover:text-white transition-all duration-150 shadow-2xs"
+                  aria-label="X (Twitter)"
+                  title="X (Twitter)"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/dashwanth-madduri-6b073a31b/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg flex items-center justify-center bg-white/[0.04] hover:bg-white/[0.12] border border-white/[0.08] hover:border-white/25 text-slate-300 hover:text-white transition-all duration-150 shadow-2xs"
+                  aria-label="LinkedIn"
+                  title="LinkedIn"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                  </svg>
+                </a>
+              </div>
+            </div>
           </div>
-          <div style={{ color: 'rgba(255,255,255,0.4)' }}>
-            StackSave · AI Spend Intelligence Platform
+
+          {/* Bottom Copyright Row */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-400">
+            <div>
+              StackSave · AI Spend Intelligence Platform
+            </div>
+            <div className="text-[11px] text-slate-400">
+              © {new Date().getFullYear()} StackSave AI. All rights reserved.
+            </div>
           </div>
         </div>
       </footer>
