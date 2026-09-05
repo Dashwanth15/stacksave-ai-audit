@@ -28,23 +28,20 @@ export default function OfferNotificationBell() {
 
   // Load public offers from official backend API on mount
   useEffect(() => {
+    // Reset hint_dismissed on every fresh page load so the hint popup
+    // is allowed to appear again each time the user visits the site.
+    const hintDismissedKey = getUserScopedKey('hint_dismissed');
+    sessionStorage.removeItem(hintDismissedKey);
+
     let isMounted = true;
     fetchPublicOffers()
       .then((res) => {
         if (isMounted && res && Array.isArray(res.offers)) {
           setOffers(res.offers);
 
-          // Show floating hint if there are unread offers for THIS user session
-          // hint_dismissed is scoped to the browser tab (sessionStorage) — per-tab only
-          const hintDismissedKey = getUserScopedKey('hint_dismissed');
-          const alreadyDismissed = sessionStorage.getItem(hintDismissedKey);
-          // Read current user-scoped read IDs directly from localStorage to avoid stale closure
-          const scopedReadKey = getUserScopedKey('read_offer_ids');
-          const savedReadIdsStr = window.localStorage.getItem(scopedReadKey);
-          const savedReadIds: string[] = savedReadIdsStr ? JSON.parse(savedReadIdsStr) : [];
-          const hasUnread = res.offers.some((o: PublicOffer) => !savedReadIds.includes(o.id));
-
-          if (hasUnread && !alreadyDismissed) {
+          // Show floating hint on every fresh page load whenever offers are available.
+          // We do NOT gate this on unread status — the user wants it to appear on every visit.
+          if (res.offers.length > 0) {
             setShowHint(true);
           }
         }
