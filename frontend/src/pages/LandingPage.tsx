@@ -269,7 +269,7 @@ function AuditDemoCard() {
   ];
 
   return (
-    <div style={{ width: '100%', maxWidth: '410px', margin: '0 auto', position: 'relative' }}>
+    <div style={{ width: '100%', maxWidth: '420px', margin: '0 auto', position: 'relative' }}>
       {/* The card itself — clean SaaS elevation entrance */}
       <m.div
         initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
@@ -278,46 +278,46 @@ function AuditDemoCard() {
           duration: 0.5,
           ease: [0.16, 1, 0.3, 1],
         }}
-        className="relative z-10 w-full rounded-[20px] border border-slate-200 bg-white shadow-[0_16px_40px_-12px_rgba(15,23,42,0.12),0_2px_6px_-2px_rgba(15,23,42,0.04)] overflow-hidden text-slate-800"
+        className="relative z-10 w-full rounded-2xl border border-slate-200/90 bg-white shadow-[0_20px_48px_-12px_rgba(15,23,42,0.10),0_2px_8px_-2px_rgba(15,23,42,0.04)] overflow-hidden text-slate-800"
       >
         {/* Browser chrome bar */}
-        <div className="px-3.5 py-2 sm:py-2.5 flex items-center justify-between border-b border-slate-200 bg-slate-50/90">
+        <div className="px-4 py-2.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/70">
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+            <span className="w-2 h-2 rounded-full bg-slate-300" />
+            <span className="w-2 h-2 rounded-full bg-slate-300" />
+            <span className="w-2 h-2 rounded-full bg-slate-300" />
           </div>
 
-          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-extrabold text-slate-900">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
             </svg>
-            <span className="tracking-tight font-extrabold">StackSave AI</span>
+            <span className="tracking-tight font-extrabold text-[11px] sm:text-xs text-slate-900">StackSave AI</span>
           </div>
 
-          <span className="inline-flex items-center gap-1 text-[9.5px] sm:text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-300">
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50/80 px-2 py-0.5 rounded-md border border-emerald-200/60">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Live Analysis
           </span>
         </div>
 
         {/* Card Body */}
-        <div className="p-3 sm:p-3.5 space-y-2 sm:space-y-2.5">
+        <div className="p-4 sm:p-5 space-y-3 sm:space-y-3.5">
           {/* Header Title */}
           <div>
             <h3 className="text-lg sm:text-xl font-extrabold text-slate-950 tracking-tight leading-tight">
               Your AI Stack
             </h3>
-            <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 font-medium leading-relaxed">
+            <p className="text-xs text-slate-500 mt-0.5 font-medium leading-relaxed">
               Find savings, better plans and exclusive offers.
             </p>
           </div>
 
-          {/* ── 1. CURRENT MONTHLY SPEND (Neutral Refined High-Contrast Treatment) ── */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 sm:p-3 transition-colors">
-            <div className="flex items-start justify-between gap-2">
+          {/* ── 1. CURRENT MONTHLY SPEND (Clean editorial treatment) ── */}
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 sm:p-4 transition-colors">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="flex items-center gap-1 text-[9px] sm:text-[9.5px] uppercase font-bold tracking-[0.14em] text-slate-600">
+                <div className="flex items-center gap-1 text-[10px] uppercase font-bold tracking-[0.14em] text-slate-500">
                   <span>Current Monthly Spend</span>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
                     <circle cx="12" cy="12" r="10" />
@@ -325,56 +325,59 @@ function AuditDemoCard() {
                     <line x1="12" y1="8" x2="12.01" y2="8" />
                   </svg>
                 </div>
-                <div className="mt-0.5 text-xl sm:text-2xl font-extrabold text-slate-950 tracking-tight font-mono-financial">
+                <div className="mt-1 text-2xl sm:text-[26px] font-extrabold text-slate-950 tracking-tight font-mono-financial">
                   <CountUp to={120} prefix="$" suffix="/mo" delay={0.2} duration={0.8} />
                 </div>
               </div>
 
               {/* Tool Icons Cluster */}
-              <div className="flex flex-col items-end">
+              <div className="flex flex-col items-end pt-0.5">
                 <div className="flex items-center gap-1">
-                  <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center p-0.75 shadow-2xs shrink-0" title="ChatGPT">
+                  <div className="w-6 h-6 rounded-md bg-white border border-slate-200/90 flex items-center justify-center p-1 shadow-2xs shrink-0" title="ChatGPT">
                     <img src="/logos/chatgpt.svg" alt="ChatGPT" className="w-full h-full object-contain" />
                   </div>
-                  <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center p-0.75 shadow-2xs shrink-0" title="Claude">
+                  <div className="w-6 h-6 rounded-md bg-white border border-slate-200/90 flex items-center justify-center p-1 shadow-2xs shrink-0" title="Claude">
                     <img src="/logos/claude.svg" alt="Claude" className="w-full h-full object-contain" />
                   </div>
-                  <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center p-0.75 shadow-2xs shrink-0" title="Cursor">
+                  <div className="w-6 h-6 rounded-md bg-white border border-slate-200/90 flex items-center justify-center p-1 shadow-2xs shrink-0" title="Cursor">
                     <img src="/logos/cursor.svg" alt="Cursor" className="w-full h-full object-contain" />
                   </div>
-                  <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center p-0.75 shadow-2xs shrink-0" title="Gemini">
+                  <div className="w-6 h-6 rounded-md bg-white border border-slate-200/90 flex items-center justify-center p-1 shadow-2xs shrink-0" title="Gemini">
                     <img src="/logos/gemini.svg" alt="Gemini" className="w-full h-full object-contain" />
                   </div>
-                  <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center p-0.75 shadow-2xs shrink-0" title="Perplexity">
+                  <div className="w-6 h-6 rounded-md bg-white border border-slate-200/90 flex items-center justify-center p-1 shadow-2xs shrink-0" title="Perplexity">
                     <img src="/logos/perplexity.svg" alt="Perplexity" className="w-full h-full object-contain" />
                   </div>
                 </div>
-                <span className="text-[9px] sm:text-[9.5px] text-slate-500 font-semibold mt-1">
+                <span className="text-[10px] text-slate-500 font-medium mt-1">
                   5 tools • Possibly overpaying
                 </span>
               </div>
             </div>
           </div>
 
-          {/* ── Connector 1: StackSave AI analyzes your stack ── */}
-          <div className="flex flex-col items-center justify-center -my-1 py-0.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white border border-slate-200 text-[9.5px] sm:text-[10px] font-bold text-slate-700 shadow-2xs">
+          {/* ── Status Line & Single Flow Arrow 1 ── */}
+          <div className="py-1 flex flex-col items-center justify-center text-slate-400">
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              StackSave AI analyzes your stack
-            </span>
-            <span className="text-slate-400 text-xs font-bold -mt-0.5">↓</span>
+              <span>StackSave AI analyzes your stack</span>
+            </div>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 mt-1">
+              <line x1="12" y1="4" x2="12" y2="20" />
+              <polyline points="18 14 12 20 6 14" />
+            </svg>
           </div>
 
-          {/* ── 2. WE FOUND 3 OPPORTUNITIES ─────────────────── */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 sm:p-3 space-y-1.5">
-            <div className="flex items-center gap-1 text-[9px] sm:text-[9.5px] font-bold uppercase tracking-[0.16em] text-slate-700">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
+          {/* ── 2. WE FOUND 3 OPPORTUNITIES (Clean list with dividers) ── */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 pb-0.5">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
                 <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
               </svg>
               <span>We Found 3 Opportunities</span>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="divide-y divide-slate-100 border-y border-slate-100">
               {savingsOpportunities.map((item, index) => (
                 <m.div
                   key={item.id}
@@ -385,22 +388,22 @@ function AuditDemoCard() {
                     duration: 0.3,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 sm:py-2 shadow-2xs hover:border-slate-300 transition-colors"
+                  className="py-2.5 sm:py-3 flex items-center justify-between gap-3 first:pt-1.5 last:pb-1.5 rounded-md hover:bg-slate-50/50 transition-colors duration-150"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-md bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-center shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-md bg-slate-50 border border-slate-200/70 text-slate-600 flex items-center justify-center shrink-0">
                       {item.icon}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs sm:text-[12.5px] font-bold text-slate-950 truncate leading-snug">
+                      <p className="text-xs sm:text-[13px] font-semibold text-slate-900 truncate leading-snug">
                         {item.title}
                       </p>
-                      <p className="text-[10px] sm:text-[10.5px] text-slate-600 font-medium truncate leading-tight">
+                      <p className="text-[10.5px] sm:text-[11px] text-slate-500 truncate leading-tight mt-0.5">
                         {item.subtitle}
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs sm:text-[13px] font-extrabold text-emerald-700 font-mono-financial shrink-0 whitespace-nowrap">
+                  <span className="text-xs sm:text-[13px] font-bold text-emerald-600 font-mono-financial shrink-0 whitespace-nowrap">
                     {item.amount}
                   </span>
                 </m.div>
@@ -408,15 +411,18 @@ function AuditDemoCard() {
             </div>
           </div>
 
-          {/* ── Connector 2 ── */}
-          <div className="flex justify-center -my-1 py-0.5">
-            <span className="text-slate-400 text-xs font-bold">↓</span>
+          {/* ── Single Flow Arrow 2 ── */}
+          <div className="py-1 flex justify-center text-slate-400">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="4" x2="12" y2="20" />
+              <polyline points="18 14 12 20 6 14" />
+            </svg>
           </div>
 
-          {/* ── 3. OPTIMIZED MONTHLY SPEND ────────────────────── */}
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-2.5 sm:p-3 flex items-center justify-between">
+          {/* ── 3. OPTIMIZED MONTHLY SPEND (Flat 33% less metric, no badge pill) ── */}
+          <div className="rounded-xl border border-emerald-200/70 bg-emerald-50/30 p-3.5 sm:p-4 flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-1 text-[9px] sm:text-[9.5px] uppercase font-bold tracking-[0.14em] text-slate-600">
+              <div className="flex items-center gap-1 text-[10px] uppercase font-bold tracking-[0.14em] text-slate-500">
                 <span>Optimized Monthly Spend</span>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
                   <circle cx="12" cy="12" r="10" />
@@ -424,57 +430,57 @@ function AuditDemoCard() {
                   <line x1="12" y1="8" x2="12.01" y2="8" />
                 </svg>
               </div>
-              <div className="mt-0.5 text-xl sm:text-2xl font-extrabold text-slate-950 tracking-tight font-mono-financial">
+              <div className="mt-1 text-2xl sm:text-[26px] font-extrabold text-slate-950 tracking-tight font-mono-financial">
                 <CountUp to={80} prefix="$" suffix="/mo" delay={0.4} duration={0.8} />
               </div>
             </div>
 
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10.5px] sm:text-[11px] font-bold shadow-2xs">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <div className="flex items-center gap-1 text-xs font-bold text-emerald-600">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <polyline points="19 12 12 19 5 12" />
               </svg>
               <span>33% less</span>
-            </span>
+            </div>
           </div>
 
-          {/* ── 4. YOU SAVE HIGHLIGHT BANNER ─────────────────── */}
-          <div className="rounded-xl border-2 border-emerald-500 bg-emerald-50/70 p-2.5 sm:p-3 flex items-center justify-between shadow-xs gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-xs sm:text-sm shrink-0 shadow-xs">
+          {/* ── 4. YOU SAVE HIGHLIGHT (Clean hero payoff) ── */}
+          <div className="rounded-xl border border-emerald-400/90 bg-emerald-50/70 p-3.5 sm:p-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-extrabold text-sm shrink-0 shadow-2xs">
                 $
               </div>
               <div>
-                <div className="text-[9px] sm:text-[9.5px] uppercase font-bold text-emerald-800 tracking-widest">
+                <div className="text-[10px] uppercase font-bold text-emerald-800/90 tracking-widest">
                   You Save
                 </div>
-                <div className="text-lg sm:text-xl lg:text-[22px] font-extrabold text-emerald-950 tracking-tight leading-none mt-0.5 font-mono-financial">
+                <div className="text-2xl sm:text-[28px] font-extrabold text-emerald-950 tracking-tight leading-none mt-0.5 font-mono-financial">
                   <CountUp to={40} prefix="$" suffix="/month" delay={0.6} duration={0.8} />
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-0.5 text-[9.5px] sm:text-[10.5px] font-semibold text-slate-800 shrink-0">
-              <div className="flex items-center gap-1 text-slate-800">
-                <span className="text-emerald-700 font-bold">✓</span>
+            <div className="flex flex-col gap-1 text-[10.5px] sm:text-[11px] font-medium text-slate-700 shrink-0">
+              <div className="flex items-center gap-1.5 text-emerald-950">
+                <span className="text-emerald-600 font-bold">✓</span>
                 <span>Smarter plans</span>
               </div>
-              <div className="flex items-center gap-1 text-slate-800">
-                <span className="text-emerald-700 font-bold">✓</span>
+              <div className="flex items-center gap-1.5 text-emerald-950">
+                <span className="text-emerald-600 font-bold">✓</span>
                 <span>Exclusive offers</span>
               </div>
-              <div className="flex items-center gap-1 text-slate-800">
-                <span className="text-emerald-700 font-bold">✓</span>
+              <div className="flex items-center gap-1.5 text-emerald-950">
+                <span className="text-emerald-600 font-bold">✓</span>
                 <span>A more efficient stack</span>
               </div>
             </div>
           </div>
 
-          {/* ── 5. BOTTOM SLOGAN FOOTER ───────────────────────── */}
-          <div className="pt-0.5 flex items-center justify-center gap-2 text-[8.5px] sm:text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500">
-            <span className="w-7 h-px bg-slate-300" />
+          {/* ── 5. BOTTOM SLOGAN FOOTER ── */}
+          <div className="pt-2 flex items-center justify-center gap-2.5 text-[9px] sm:text-[9.5px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            <span className="w-8 h-px bg-slate-200" />
             <span>Same tools. A smarter AI stack.</span>
-            <span className="w-7 h-px bg-slate-300" />
+            <span className="w-8 h-px bg-slate-200" />
           </div>
         </div>
       </m.div>
