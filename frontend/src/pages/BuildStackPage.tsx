@@ -181,12 +181,6 @@ export default function BuildStackPage() {
               Stack Architect
             </span>
             <OfferNotificationBell />
-            <button
-              onClick={() => navigate('/audit')}
-              className="text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md border border-slate-200 hover:border-slate-300 transition-colors bg-white"
-            >
-              Audit Existing Stack →
-            </button>
           </div>
         </div>
       </header>

@@ -267,13 +267,6 @@ export default function OffersPage() {
 
           <div className="flex items-center gap-3.5">
             <OfferNotificationBell />
-            <button
-              onClick={() => navigate('/audit')}
-              className="h-9 px-3 sm:px-4 rounded-xl font-bold text-xs text-white bg-slate-950 hover:bg-slate-800 transition-all shadow-sm cursor-pointer whitespace-nowrap"
-            >
-              <span className="hidden sm:inline">Audit My Existing Stack</span>
-              <span className="inline sm:hidden">Audit Stack</span>
-            </button>
           </div>
         </div>
       </header>

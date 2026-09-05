@@ -457,23 +457,6 @@ export default function LandingPage() {
           <div className="ml-auto flex items-center gap-2 sm:gap-3.5">
             <OfferNotificationBell />
 
-            {/* Desktop CTA — hidden on small mobile, shown from sm up */}
-            <m.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                trackCtaClicked('header_audit_cta');
-                navigate('/audit');
-              }}
-              className="hidden sm:flex h-[44px] px-4 md:px-5 items-center justify-center rounded-xl font-medium text-[13px] md:text-[14px] transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
-              style={{ background: 'var(--color-primary)', color: '#ffffff' }}
-              aria-label="Audit my existing stack"
-            >
-              <span className="hidden md:inline">Audit My Existing Stack</span>
-              <span className="inline md:hidden">Audit Stack</span>
-              <span className="ml-2 font-normal opacity-70">→</span>
-            </m.button>
-
             {/* Hamburger — visible on mobile only */}
             <button
               className="hamburger-btn"
@@ -639,86 +622,11 @@ export default function LandingPage() {
               {/* ── 3 Action Cards (Audit, Build, Offers) ────────────────── */}
               <div className="mt-4 action-cards-grid">
 
-                {/* 1. Audit Existing Stack (Dark Luxury Card — Primary Action) */}
+                {/* 1. Build AI Stack (Dark Luxury Card — Primary Action) */}
                 <m.div
                   initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: shouldReduceMotion ? 0 : 0.05, ease: [0.16, 1, 0.3, 1] }}
-                  whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.008 }}
-                  whileTap={shouldReduceMotion ? {} : { scale: 0.985, y: 0 }}
-                  onClick={() => {
-                    trackCtaClicked('audit_existing_stack');
-                    navigate('/audit');
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      trackCtaClicked('audit_existing_stack');
-                      navigate('/audit');
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Audit My Existing Stack"
-                  className="group relative cursor-pointer rounded-2xl bg-slate-950 p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-800 shadow-sm hover:border-slate-700 hover:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 transition-colors transition-shadow duration-200"
-                >
-                  {/* Subtle top-light gradient sheen */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-transparent pointer-events-none" />
-
-                  <div>
-                    {/* Top Icon */}
-                    <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-3.5">
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 7V5a2 2 0 0 1 2-2h2" />
-                        <path d="M17 3h2a2 2 0 0 1 2 2v2" />
-                        <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
-                        <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    </div>
-
-                    {/* Eyebrow */}
-                    <p className="text-[10px] font-bold text-white/50 tracking-widest uppercase">
-                      Already using AI tools?
-                    </p>
-
-                    {/* Title */}
-                    <h3 className="text-base font-extrabold text-white tracking-tight leading-snug mt-1">
-                      Audit My Existing Stack
-                    </h3>
-
-                    {/* Description */}
-                    <p className="text-xs text-white/60 mt-1.5 leading-relaxed">
-                      Get a deterministic breakdown of waste, overlap, and savings opportunities in minutes.
-                    </p>
-
-                    {/* Benefit Bullets */}
-                    <ul className="mt-4 space-y-2">
-                      {['Detect duplicate subscriptions', 'Flag idle seats & unused tiers', 'Identify billing anomalies'].map((item) => (
-                        <li key={item} className="flex items-center gap-2 text-[11px] text-white/75">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Bottom Action Footer — Clean Matte Highlighted Button */}
-                  <div className="mt-6 pt-3.5 border-t border-white/10">
-                    <div className="w-full py-2.5 px-3.5 rounded-xl bg-white text-slate-950 text-xs font-bold flex items-center justify-between shadow-2xs group-hover:bg-slate-100 transition-colors duration-150">
-                      <span className="tracking-tight">Audit My Existing Stack</span>
-                      <span className="w-6 h-6 rounded-full bg-slate-950 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-1 transition-transform duration-200 ease-out">
-                        →
-                      </span>
-                    </div>
-                  </div>
-                </m.div>
-
-                {/* 2. Build AI Stack (Light Glass Card) */}
-                <m.div
-                  initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, delay: shouldReduceMotion ? 0 : 0.16, ease: [0.16, 1, 0.3, 1] }}
                   whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.008 }}
                   whileTap={shouldReduceMotion ? {} : { scale: 0.985, y: 0 }}
                   onClick={() => {
@@ -735,12 +643,15 @@ export default function LandingPage() {
                   role="button"
                   tabIndex={0}
                   aria-label="Build My AI Stack"
-                  className="group relative cursor-pointer rounded-2xl p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-200/90 bg-white/95 backdrop-blur-md shadow-2xs hover:border-slate-300 hover:shadow-[0_14px_28px_-8px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white transition-colors transition-shadow duration-200"
+                  className="group relative cursor-pointer rounded-2xl bg-slate-950 p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-800 shadow-sm hover:border-slate-700 hover:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 transition-colors transition-shadow duration-200"
                 >
+                  {/* Subtle top-light gradient sheen */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-transparent pointer-events-none" />
+
                   <div>
                     {/* Top Icon */}
-                    <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center mb-3.5">
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-3.5">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polygon points="12 2 2 7 12 12 22 7 12 2" />
                         <polyline points="2 17 12 22 22 17" />
                         <polyline points="2 12 12 17 22 12" />
@@ -748,23 +659,95 @@ export default function LandingPage() {
                     </div>
 
                     {/* Eyebrow */}
-                    <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">
+                    <p className="text-[10px] font-bold text-white/50 tracking-widest uppercase">
                       Starting from scratch?
                     </p>
 
                     {/* Title */}
-                    <h3 className="text-base font-extrabold text-slate-950 tracking-tight leading-snug mt-1">
+                    <h3 className="text-base font-extrabold text-white tracking-tight leading-snug mt-1">
                       Build My AI Stack
                     </h3>
 
                     {/* Description */}
-                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                    <p className="text-xs text-white/60 mt-1.5 leading-relaxed">
                       Tell us your budget, team size, and workflow. Get a curated, cost-optimised AI tool suite.
                     </p>
 
                     {/* Benefit Bullets */}
                     <ul className="mt-4 space-y-2">
                       {['Personalised tool recommendations', 'Compare plans side-by-side', 'Avoid vendor lock-in from day 1'].map((item) => (
+                        <li key={item} className="flex items-center gap-2 text-[11px] text-white/75">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Bottom Action Footer — Clean Matte Highlighted Button */}
+                  <div className="mt-6 pt-3.5 border-t border-white/10">
+                    <div className="w-full py-2.5 px-3.5 rounded-xl bg-white text-slate-950 text-xs font-bold flex items-center justify-between shadow-2xs group-hover:bg-slate-100 transition-colors duration-150">
+                      <span className="tracking-tight">Build My AI Stack</span>
+                      <span className="w-6 h-6 rounded-full bg-slate-950 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-1 transition-transform duration-200 ease-out">
+                        →
+                      </span>
+                    </div>
+                  </div>
+                </m.div>
+
+                {/* 2. Audit Existing Stack (Light Glass Card) */}
+                <m.div
+                  initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: shouldReduceMotion ? 0 : 0.16, ease: [0.16, 1, 0.3, 1] }}
+                  whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.008 }}
+                  whileTap={shouldReduceMotion ? {} : { scale: 0.985, y: 0 }}
+                  onClick={() => {
+                    trackCtaClicked('audit_existing_stack');
+                    navigate('/audit');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      trackCtaClicked('audit_existing_stack');
+                      navigate('/audit');
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Audit My Existing Stack"
+                  className="group relative cursor-pointer rounded-2xl p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-200/90 bg-white/95 backdrop-blur-md shadow-2xs hover:border-slate-300 hover:shadow-[0_14px_28px_-8px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white transition-colors transition-shadow duration-200"
+                >
+                  <div>
+                    {/* Top Icon */}
+                    <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center mb-3.5">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                        <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                        <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                        <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </div>
+
+                    {/* Eyebrow */}
+                    <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">
+                      Already using AI tools?
+                    </p>
+
+                    {/* Title */}
+                    <h3 className="text-base font-extrabold text-slate-950 tracking-tight leading-snug mt-1">
+                      Audit My Existing Stack
+                    </h3>
+
+                    {/* Description */}
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      Get a deterministic breakdown of waste, overlap, and savings opportunities in minutes.
+                    </p>
+
+                    {/* Benefit Bullets */}
+                    <ul className="mt-4 space-y-2">
+                      {['Detect duplicate subscriptions', 'Flag idle seats & unused tiers', 'Identify billing anomalies'].map((item) => (
                         <li key={item} className="flex items-center gap-2 text-[11px] text-slate-600">
                           <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" />
                           <span>{item}</span>
@@ -776,7 +759,7 @@ export default function LandingPage() {
                   {/* Bottom Action Footer — Clean Matte Highlighted Button */}
                   <div className="mt-6 pt-3.5 border-t border-slate-100">
                     <div className="w-full py-2.5 px-3.5 rounded-xl bg-slate-950 text-white text-xs font-bold flex items-center justify-between shadow-2xs group-hover:bg-slate-800 transition-colors duration-150">
-                      <span className="tracking-tight">Build My AI Stack</span>
+                      <span className="tracking-tight">Audit My Existing Stack</span>
                       <span className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-1 transition-transform duration-200 ease-out">
                         →
                       </span>
