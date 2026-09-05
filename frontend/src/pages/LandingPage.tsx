@@ -219,137 +219,262 @@ function CountUp({ to, prefix = '', suffix = '', decimals = 0, duration = 1.2, d
 function AuditDemoCard() {
   const shouldReduceMotion = useReducedMotion();
   const [showRows, setShowRows] = useState(() => Boolean(shouldReduceMotion));
-  const [showGlow, setShowGlow] = useState(() => Boolean(shouldReduceMotion));
 
-  /* Trigger rows + glow cleanly */
   useEffect(() => {
     if (shouldReduceMotion) return;
-    const glowT = setTimeout(() => setShowGlow(true), 400);
-    const rowsT = setTimeout(() => setShowRows(true), 600);
-    return () => { clearTimeout(glowT); clearTimeout(rowsT); };
+    const rowsT = setTimeout(() => setShowRows(true), 300);
+    return () => clearTimeout(rowsT);
   }, [shouldReduceMotion]);
 
-  const recommendations = [
-    'Duplicate ChatGPT subscription',
-    'Unused Cursor seat',
+  const savingsOpportunities = [
+    {
+      id: 'plan',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+          <line x1="7" y1="7" x2="7.01" y2="7" />
+        </svg>
+      ),
+      title: 'Switch to a better plan',
+      subtitle: 'Same tool, lower price',
+      amount: '− $20/mo',
+    },
+    {
+      id: 'offer',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 12 20 22 4 22 4 12" />
+          <rect x="2" y="7" width="20" height="5" />
+          <line x1="12" y1="22" x2="12" y2="7" />
+          <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+          <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+        </svg>
+      ),
+      title: 'Apply available offer',
+      subtitle: 'Student / special discount',
+      amount: '− $15/mo',
+    },
+    {
+      id: 'duplicate',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+      ),
+      title: 'Remove duplicate subscription',
+      subtitle: "You're paying twice",
+      amount: '− $5/mo',
+    },
   ];
 
   return (
-    <div style={{ width: '100%', maxWidth: '440px', margin: '0 auto', position: 'relative' }}>
-      {/* Glow that fades in behind the card */}
+    <div style={{ width: '100%', maxWidth: '410px', margin: '0 auto', position: 'relative' }}>
+      {/* The card itself — clean SaaS elevation entrance */}
       <m.div
-        initial={shouldReduceMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
-        animate={showGlow ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
-        style={{
-          position: 'absolute',
-          inset: '-24px',
-          borderRadius: '48px',
-          background: 'radial-gradient(ellipse at 50% 60%, rgba(16,185,129,0.14) 0%, rgba(30,58,95,0.06) 50%, transparent 80%)',
-          filter: 'blur(30px)',
-          zIndex: 0,
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* The card itself — smooth elevation entrance and subtle hover response */}
-      <m.div
-        initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
+        initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{
-          duration: 0.65,
+          duration: 0.5,
           ease: [0.16, 1, 0.3, 1],
         }}
-        whileHover={shouldReduceMotion ? {} : { y: -3, transition: { duration: 0.2 } }}
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          borderRadius: '28px',
-          border: '1px solid var(--color-border)',
-          background: 'var(--color-bg-card)',
-          boxShadow: '0 28px 64px -12px rgba(30,58,95,0.14), 0 4px 16px -4px rgba(30,58,95,0.06)',
-          overflow: 'hidden',
-          width: '100%',
-        }}
+        className="relative z-10 w-full rounded-[20px] border border-slate-200 bg-white shadow-[0_16px_40px_-12px_rgba(15,23,42,0.12),0_2px_6px_-2px_rgba(15,23,42,0.04)] overflow-hidden text-slate-800"
       >
         {/* Browser chrome bar */}
-        <div className="px-4 py-3 flex items-center justify-between border-b" style={{ borderColor: 'var(--color-border)' }}>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+        <div className="px-3.5 py-2 sm:py-2.5 flex items-center justify-between border-b border-slate-200 bg-slate-50/90">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
           </div>
-          <span className="text-[10px] font-mono text-slate-400">stacksave.ai/summary</span>
-          <div className="w-8" />
+
+          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-extrabold text-slate-900">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+            </svg>
+            <span className="tracking-tight font-extrabold">StackSave AI</span>
+          </div>
+
+          <span className="inline-flex items-center gap-1 text-[9.5px] sm:text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Live Analysis
+          </span>
         </div>
 
-        <div className="p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-[0.32em] font-semibold text-slate-400">Example AI Audit</span>
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live Preview
+        {/* Card Body */}
+        <div className="p-3 sm:p-3.5 space-y-2 sm:space-y-2.5">
+          {/* Header Title */}
+          <div>
+            <h3 className="text-lg sm:text-xl font-extrabold text-slate-950 tracking-tight leading-tight">
+              Your AI Stack
+            </h3>
+            <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 font-medium leading-relaxed">
+              Find savings, better plans and exclusive offers.
+            </p>
+          </div>
+
+          {/* ── 1. CURRENT MONTHLY SPEND (Neutral Refined High-Contrast Treatment) ── */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 sm:p-3 transition-colors">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-1 text-[9px] sm:text-[9.5px] uppercase font-bold tracking-[0.14em] text-slate-600">
+                  <span>Current Monthly Spend</span>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                </div>
+                <div className="mt-0.5 text-xl sm:text-2xl font-extrabold text-slate-950 tracking-tight font-mono-financial">
+                  <CountUp to={120} prefix="$" suffix="/mo" delay={0.2} duration={0.8} />
+                </div>
+              </div>
+
+              {/* Tool Icons Cluster */}
+              <div className="flex flex-col items-end">
+                <div className="flex items-center gap-1">
+                  <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center p-0.75 shadow-2xs shrink-0" title="ChatGPT">
+                    <img src="/logos/chatgpt.svg" alt="ChatGPT" className="w-full h-full object-contain" />
+                  </div>
+                  <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center p-0.75 shadow-2xs shrink-0" title="Claude">
+                    <img src="/logos/claude.svg" alt="Claude" className="w-full h-full object-contain" />
+                  </div>
+                  <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center p-0.75 shadow-2xs shrink-0" title="Cursor">
+                    <img src="/logos/cursor.svg" alt="Cursor" className="w-full h-full object-contain" />
+                  </div>
+                  <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center p-0.75 shadow-2xs shrink-0" title="Gemini">
+                    <img src="/logos/gemini.svg" alt="Gemini" className="w-full h-full object-contain" />
+                  </div>
+                  <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center p-0.75 shadow-2xs shrink-0" title="Perplexity">
+                    <img src="/logos/perplexity.svg" alt="Perplexity" className="w-full h-full object-contain" />
+                  </div>
+                </div>
+                <span className="text-[9px] sm:text-[9.5px] text-slate-500 font-semibold mt-1">
+                  5 tools • Possibly overpaying
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Connector 1: StackSave AI analyzes your stack ── */}
+          <div className="flex flex-col items-center justify-center -my-1 py-0.5">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white border border-slate-200 text-[9.5px] sm:text-[10px] font-bold text-slate-700 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              StackSave AI analyzes your stack
+            </span>
+            <span className="text-slate-400 text-xs font-bold -mt-0.5">↓</span>
+          </div>
+
+          {/* ── 2. WE FOUND 3 OPPORTUNITIES ─────────────────── */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 sm:p-3 space-y-1.5">
+            <div className="flex items-center gap-1 text-[9px] sm:text-[9.5px] font-bold uppercase tracking-[0.16em] text-slate-700">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
+                <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+              </svg>
+              <span>We Found 3 Opportunities</span>
+            </div>
+
+            <div className="space-y-1.5">
+              {savingsOpportunities.map((item, index) => (
+                <m.div
+                  key={item.id}
+                  initial={shouldReduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 8 }}
+                  animate={showRows ? { opacity: 1, x: 0 } : { opacity: 0, x: 8 }}
+                  transition={{
+                    delay: shouldReduceMotion ? 0 : index * 0.1,
+                    duration: 0.3,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 sm:py-2 shadow-2xs hover:border-slate-300 transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-md bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-center shrink-0">
+                      {item.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-[12.5px] font-bold text-slate-950 truncate leading-snug">
+                        {item.title}
+                      </p>
+                      <p className="text-[10px] sm:text-[10.5px] text-slate-600 font-medium truncate leading-tight">
+                        {item.subtitle}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs sm:text-[13px] font-extrabold text-emerald-700 font-mono-financial shrink-0 whitespace-nowrap">
+                    {item.amount}
+                  </span>
+                </m.div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Connector 2 ── */}
+          <div className="flex justify-center -my-1 py-0.5">
+            <span className="text-slate-400 text-xs font-bold">↓</span>
+          </div>
+
+          {/* ── 3. OPTIMIZED MONTHLY SPEND ────────────────────── */}
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-2.5 sm:p-3 flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-1 text-[9px] sm:text-[9.5px] uppercase font-bold tracking-[0.14em] text-slate-600">
+                <span>Optimized Monthly Spend</span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+              </div>
+              <div className="mt-0.5 text-xl sm:text-2xl font-extrabold text-slate-950 tracking-tight font-mono-financial">
+                <CountUp to={80} prefix="$" suffix="/mo" delay={0.4} duration={0.8} />
+              </div>
+            </div>
+
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10.5px] sm:text-[11px] font-bold shadow-2xs">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <polyline points="19 12 12 19 5 12" />
+              </svg>
+              <span>33% less</span>
             </span>
           </div>
 
-          {/* Spend rows with counting numbers */}
-          <div className="space-y-3">
-            <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-3 transition-colors hover:border-slate-300" style={{ borderColor: 'var(--color-border)' }}>
-              <div className="text-[9px] uppercase tracking-[0.28em] text-slate-400">Current AI Spend</div>
-              <div className="mt-2 text-3xl font-semibold text-[var(--color-text-heading)]">
-                $<CountUp to={120} suffix="/mo" delay={0.3} duration={0.8} />
+          {/* ── 4. YOU SAVE HIGHLIGHT BANNER ─────────────────── */}
+          <div className="rounded-xl border-2 border-emerald-500 bg-emerald-50/70 p-2.5 sm:p-3 flex items-center justify-between shadow-xs gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-xs sm:text-sm shrink-0 shadow-xs">
+                $
+              </div>
+              <div>
+                <div className="text-[9px] sm:text-[9.5px] uppercase font-bold text-emerald-800 tracking-widest">
+                  You Save
+                </div>
+                <div className="text-lg sm:text-xl lg:text-[22px] font-extrabold text-emerald-950 tracking-tight leading-none mt-0.5 font-mono-financial">
+                  <CountUp to={40} prefix="$" suffix="/month" delay={0.6} duration={0.8} />
+                </div>
               </div>
             </div>
-            <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-3 transition-colors hover:border-slate-300" style={{ borderColor: 'var(--color-border)' }}>
-              <div className="text-[9px] uppercase tracking-[0.28em] text-slate-400">Optimized AI Spend</div>
-              <div className="mt-2 text-3xl font-semibold text-[var(--color-success)]">
-                $<CountUp to={80} suffix="/mo" delay={0.45} duration={0.8} />
+
+            <div className="flex flex-col gap-0.5 text-[9.5px] sm:text-[10.5px] font-semibold text-slate-800 shrink-0">
+              <div className="flex items-center gap-1 text-slate-800">
+                <span className="text-emerald-700 font-bold">✓</span>
+                <span>Smarter plans</span>
+              </div>
+              <div className="flex items-center gap-1 text-slate-800">
+                <span className="text-emerald-700 font-bold">✓</span>
+                <span>Exclusive offers</span>
+              </div>
+              <div className="flex items-center gap-1 text-slate-800">
+                <span className="text-emerald-700 font-bold">✓</span>
+                <span>A more efficient stack</span>
               </div>
             </div>
           </div>
 
-          {/* Savings highlight */}
-          <div className="rounded-3xl border bg-[var(--color-bg-surface)] px-4 py-4 transition-all hover:border-emerald-200 hover:shadow-2xs" style={{ borderColor: 'var(--color-border)' }}>
-            <div className="text-[10px] uppercase tracking-[0.28em] text-slate-400">You Save</div>
-            <div className="mt-2 text-4xl font-extrabold tracking-tight text-[var(--color-primary)]">
-              $<CountUp to={40} delay={0.65} duration={0.7} />
-              <span className="text-base font-semibold text-slate-500">/month</span>
-            </div>
-          </div>
-
-          {/* Waste reduction label */}
-          <div className="flex items-center justify-between text-sm font-semibold text-[var(--color-text-heading)]">
-            <span>Waste reduction</span>
-            <m.span
-              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.85, duration: 0.4 }}
-              className="text-[var(--color-success)] font-bold"
-            >
-              33%
-            </m.span>
-          </div>
-
-          {/* Recommendation rows — staggered reveal */}
-          <div className="space-y-2">
-            {recommendations.map((item, index) => (
-              <m.div
-                key={item}
-                initial={shouldReduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 12 }}
-                animate={showRows ? { opacity: 1, x: 0 } : { opacity: 0, x: 12 }}
-                transition={{
-                  delay: shouldReduceMotion ? 0 : index * 0.14,
-                  duration: 0.35,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-slate-300"
-              >
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-success-bg)] text-[var(--color-success)] font-semibold text-sm">
-                  ✓
-                </span>
-                <p className="text-sm leading-snug text-[var(--color-text-heading)]">{item}</p>
-              </m.div>
-            ))}
+          {/* ── 5. BOTTOM SLOGAN FOOTER ───────────────────────── */}
+          <div className="pt-0.5 flex items-center justify-center gap-2 text-[8.5px] sm:text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500">
+            <span className="w-7 h-px bg-slate-300" />
+            <span>Same tools. A smarter AI stack.</span>
+            <span className="w-7 h-px bg-slate-300" />
           </div>
         </div>
       </m.div>
@@ -553,16 +678,16 @@ export default function LandingPage() {
 
 
       {/* ── 1. Hero with compact preview teaser ─────────── */}
-      <section className="hero-section pt-12 pb-16 md:pt-16 md:pb-20" style={{ borderBottom: '1px solid var(--color-border)' }}>
+      <section className="hero-section pt-5 pb-12 sm:pt-6 sm:pb-14 md:pt-7 md:pb-16" style={{ borderBottom: '1px solid var(--color-border)' }}>
         {/* Layered continuous background canvas with mouse interaction */}
         <InteractiveBackground />
 
         <div className="hero-content max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-16 xl:px-20">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 xl:gap-24 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-14 items-start">
 
             {/* Left: Headline & CTA */}
-            <div className="lg:col-span-6 space-y-6 text-left">
-              <div className="space-y-4">
+            <div className="lg:col-span-7 space-y-4 text-left">
+              <div className="space-y-3">
                 <m.span
                   initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -578,7 +703,7 @@ export default function LandingPage() {
                 </m.span>
 
                 <h1
-                  className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight"
+                  className="text-3xl sm:text-4xl lg:text-[40px] xl:text-[46px] font-extrabold leading-[1.15] tracking-tight"
                   style={{
                     color: 'var(--color-text-heading)',
                     letterSpacing: '-0.03em',
@@ -612,7 +737,7 @@ export default function LandingPage() {
                   initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: shouldReduceMotion ? 0 : 0.45 }}
-                  className="max-w-xl text-base sm:text-lg leading-relaxed"
+                  className="max-w-xl text-sm sm:text-base leading-relaxed"
                   style={{ color: 'var(--color-text-body)' }}
                 >
                   Most companies waste 30% of their software budget on wrong tiers, duplicate accounts, and idle seats.
@@ -643,7 +768,7 @@ export default function LandingPage() {
                   role="button"
                   tabIndex={0}
                   aria-label="Build My AI Stack"
-                  className="group relative cursor-pointer rounded-2xl bg-slate-950 p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-800 shadow-sm hover:border-slate-700 hover:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 transition-colors transition-shadow duration-200"
+                  className="group relative cursor-pointer rounded-2xl bg-slate-950 p-5 sm:p-5.5 flex flex-col justify-between overflow-hidden select-none border border-slate-800 shadow-sm hover:border-slate-700 hover:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 transition-colors transition-shadow duration-200"
                 >
                   {/* Subtle top-light gradient sheen */}
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-transparent pointer-events-none" />
@@ -664,12 +789,12 @@ export default function LandingPage() {
                     </p>
 
                     {/* Title */}
-                    <h3 className="text-base font-extrabold text-white tracking-tight leading-snug mt-1">
+                    <h3 className="text-base font-extrabold text-white tracking-tight leading-snug mt-1.5">
                       Build My AI Stack
                     </h3>
 
                     {/* Description */}
-                    <p className="text-xs text-white/60 mt-1.5 leading-relaxed">
+                    <p className="text-xs text-white/60 mt-2 leading-relaxed">
                       Tell us your budget, team size, and workflow. Get a curated, cost-optimised AI tool suite.
                     </p>
 
@@ -685,7 +810,7 @@ export default function LandingPage() {
                   </div>
 
                   {/* Bottom Action Footer — Clean Matte Highlighted Button */}
-                  <div className="mt-6 pt-3.5 border-t border-white/10">
+                  <div className="mt-5 sm:mt-6 pt-3.5 border-t border-white/10">
                     <div className="w-full py-2.5 px-3.5 rounded-xl bg-white text-slate-950 text-xs font-bold flex items-center justify-between shadow-2xs group-hover:bg-slate-100 transition-colors duration-150">
                       <span className="tracking-tight">Build My AI Stack</span>
                       <span className="w-6 h-6 rounded-full bg-slate-950 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-1 transition-transform duration-200 ease-out">
@@ -716,7 +841,7 @@ export default function LandingPage() {
                   role="button"
                   tabIndex={0}
                   aria-label="Audit My Existing Stack"
-                  className="group relative cursor-pointer rounded-2xl p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-200/90 bg-white/95 backdrop-blur-md shadow-2xs hover:border-slate-300 hover:shadow-[0_14px_28px_-8px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white transition-colors transition-shadow duration-200"
+                  className="group relative cursor-pointer rounded-2xl p-5 sm:p-5.5 flex flex-col justify-between overflow-hidden select-none border border-slate-200/90 bg-white/95 backdrop-blur-md shadow-2xs hover:border-slate-300 hover:shadow-[0_14px_28px_-8px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white transition-colors transition-shadow duration-200"
                 >
                   <div>
                     {/* Top Icon */}
@@ -736,12 +861,12 @@ export default function LandingPage() {
                     </p>
 
                     {/* Title */}
-                    <h3 className="text-base font-extrabold text-slate-950 tracking-tight leading-snug mt-1">
+                    <h3 className="text-base font-extrabold text-slate-950 tracking-tight leading-snug mt-1.5">
                       Audit My Existing Stack
                     </h3>
 
                     {/* Description */}
-                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                    <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                       Get a deterministic breakdown of waste, overlap, and savings opportunities in minutes.
                     </p>
 
@@ -757,7 +882,7 @@ export default function LandingPage() {
                   </div>
 
                   {/* Bottom Action Footer — Clean Matte Highlighted Button */}
-                  <div className="mt-6 pt-3.5 border-t border-slate-100">
+                  <div className="mt-5 sm:mt-6 pt-3.5 border-t border-slate-100">
                     <div className="w-full py-2.5 px-3.5 rounded-xl bg-slate-950 text-white text-xs font-bold flex items-center justify-between shadow-2xs group-hover:bg-slate-800 transition-colors duration-150">
                       <span className="tracking-tight">Audit My Existing Stack</span>
                       <span className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-1 transition-transform duration-200 ease-out">
@@ -788,7 +913,7 @@ export default function LandingPage() {
                   role="button"
                   tabIndex={0}
                   aria-label="View AI Offers"
-                  className="group relative cursor-pointer rounded-2xl p-5 flex flex-col justify-between overflow-hidden select-none border border-slate-200/90 bg-white/95 backdrop-blur-md shadow-2xs hover:border-emerald-300 hover:shadow-[0_14px_28px_-8px_rgba(5,150,105,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white transition-colors transition-shadow duration-200"
+                  className="group relative cursor-pointer rounded-2xl p-5 sm:p-5.5 flex flex-col justify-between overflow-hidden select-none border border-slate-200/90 bg-white/95 backdrop-blur-md shadow-2xs hover:border-emerald-300 hover:shadow-[0_14px_28px_-8px_rgba(5,150,105,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white transition-colors transition-shadow duration-200"
                 >
                   <div>
                     {/* Top Icon */}
@@ -806,12 +931,12 @@ export default function LandingPage() {
                     </p>
 
                     {/* Title */}
-                    <h3 className="text-base font-extrabold text-slate-950 tracking-tight leading-snug mt-1">
+                    <h3 className="text-base font-extrabold text-slate-950 tracking-tight leading-snug mt-1.5">
                       AI Offers &amp; Pricing
                     </h3>
 
                     {/* Description */}
-                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                    <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                       Track verified vendor discounts, promotions, and price shifts across 13 providers.
                     </p>
 
@@ -827,7 +952,7 @@ export default function LandingPage() {
                   </div>
 
                   {/* Bottom Action Footer — Clean Matte Highlighted Button */}
-                  <div className="mt-6 pt-3.5 border-t border-slate-100">
+                  <div className="mt-5 sm:mt-6 pt-3.5 border-t border-slate-100">
                     <div className="w-full py-2.5 px-3.5 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center justify-between shadow-2xs group-hover:bg-emerald-700 transition-colors duration-150">
                       <span className="tracking-tight">View AI Offers</span>
                       <span className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-xs font-bold group-hover:translate-x-1 transition-transform duration-200 ease-out">
@@ -845,7 +970,7 @@ export default function LandingPage() {
 
 
             {/* Right: Premium AI Audit Demo Card with entrance animation */}
-            <div className="lg:col-span-6 lg:flex lg:justify-end">
+            <div className="lg:col-span-5 lg:flex lg:justify-end">
               <div className="hero-card-stage w-full">
                 <div className="hero-card-wrapper mx-auto lg:mx-0">
                   <AuditDemoCard />
