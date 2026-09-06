@@ -3,7 +3,7 @@
 // StackSave AI Audit — Realtime, Historical, Search & DB Analytics
 // ============================================================
 
-import { BetaAnalyticsDataClient } from '@google-analytics/data';
+import { BetaAnalyticsDataClient, protos } from '@google-analytics/data';
 import { google } from 'googleapis';
 import mongoose from 'mongoose';
 import { AuditModel, LeadModel } from './dbService';
@@ -414,7 +414,7 @@ export class GoogleAnalyticsService {
           { name: 'screenPageViews' },
           { name: 'eventCount' },
         ],
-        metricAggregations: ['TOTAL'],
+        metricAggregations: [protos.google.analytics.data.v1beta.MetricAggregation.TOTAL],
       });
 
       let totalActiveUsers = 0;
