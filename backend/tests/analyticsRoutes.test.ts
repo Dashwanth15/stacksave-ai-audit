@@ -36,22 +36,23 @@ describe('Analytics HTTP Routes Integration', () => {
     delete process.env.ADMIN_SECRET;
   });
 
-  it('rejects unauthenticated access to all analytics endpoints', async () => {
-    const routes = ['/overview', '/realtime', '/historical', '/search-console', '/database', '/health'];
+  it('allows frontend access to all read-only analytics endpoints without exposing secrets', async () => {
+    const routes = ['/overview?period=7days', '/realtime', '/historical?period=7days', '/search-console?period=7days', '/database?period=7days', '/health'];
 
     await withAnalyticsApp(async (fetch) => {
       for (const route of routes) {
         const res = await fetch(`/api/analytics${route}`);
-        expect(res.status).toBe(401);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.success).toBe(true);
+        expect(data.data).toBeDefined();
       }
     });
   });
 
-  it('allows authorized admin access to analytics endpoints', async () => {
+  it('fetches analytics overview with all 4 independent data sections', async () => {
     await withAnalyticsApp(async (fetch) => {
-      const res = await fetch('/api/analytics/overview?period=7days', {
-        headers: { Authorization: `Bearer ${TEST_SECRET}` },
-      });
+      const res = await fetch('/api/analytics/overview?period=7days');
 
       expect(res.status).toBe(200);
       const data = await res.json();

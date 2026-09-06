@@ -42,6 +42,17 @@ const FORBIDDEN_KEYS = new Set([
   'monthlySpend',
 ]);
 
+// Synchronously ensure window.dataLayer and window.gtag exist immediately on script evaluation
+if (typeof window !== 'undefined') {
+  window.dataLayer = window.dataLayer || [];
+  if (!window.gtag) {
+    window.gtag = function () {
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer?.push(arguments);
+    };
+  }
+}
+
 /**
  * Check if GA4 DebugView / Dev mode is requested
  */
@@ -68,11 +79,12 @@ export function initGA(): void {
   window.__GA_INITIALIZED__ = true;
 
   window.dataLayer = window.dataLayer || [];
-  // Use function declaration to forward Arguments object to dataLayer (Google standard)
-  window.gtag = function () {
-    // eslint-disable-next-line prefer-rest-params
-    window.dataLayer?.push(arguments);
-  };
+  if (!window.gtag) {
+    window.gtag = function () {
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer?.push(arguments);
+    };
+  }
 
   window.gtag('js', new Date());
 
@@ -100,11 +112,21 @@ export function initGA(): void {
   }
 }
 
+// Auto-run initGA immediately in browser context
+if (typeof window !== 'undefined') {
+  initGA();
+}
+
 /**
  * Track SPA page views on client-side route changes with duplicate suppression
  */
 export function trackPageView(path?: string, title?: string): void {
-  if (typeof window === 'undefined' || !window.gtag) return;
+  if (typeof window === 'undefined') return;
+
+  // Ensure GA is initialized before tracking
+  if (!window.__GA_INITIALIZED__ || !window.gtag) {
+    initGA();
+  }
 
   const currentPath = path || window.location.pathname + window.location.search;
   const now = Date.now();
@@ -131,7 +153,9 @@ export function trackPageView(path?: string, title?: string): void {
     ...(debugMode ? { debug_mode: true } : {}),
   };
 
-  window.gtag('event', 'page_view', params);
+  if (window.gtag) {
+    window.gtag('event', 'page_view', params);
+  }
 
   if (debugMode) {
     console.log('[GA4 PageView]', currentPath, params);
@@ -142,7 +166,12 @@ export function trackPageView(path?: string, title?: string): void {
  * Privacy-safe event tracker that strips any private/sensitive fields
  */
 export function trackEvent(eventName: string, params?: Record<string, unknown>): void {
-  if (typeof window === 'undefined' || !window.gtag) return;
+  if (typeof window === 'undefined') return;
+
+  // Ensure GA is initialized before tracking
+  if (!window.__GA_INITIALIZED__ || !window.gtag) {
+    initGA();
+  }
 
   const safeParams: Record<string, unknown> = {};
 
@@ -164,7 +193,9 @@ export function trackEvent(eventName: string, params?: Record<string, unknown>):
     console.log(`[GA4 Event Delivery] ${eventName}:`, safeParams);
   }
 
-  window.gtag('event', eventName, safeParams);
+  if (window.gtag) {
+    window.gtag('event', eventName, safeParams);
+  }
 }
 
 // ── Specific StackSave Behavioral Event Helpers ──────────────

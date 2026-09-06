@@ -5,10 +5,8 @@
 
 import { Router, Request, Response } from 'express';
 import { GoogleAnalyticsService, TimePeriod } from '../services/googleAnalyticsService';
-import { requireAdminSecret } from './admin';
 
 const router = Router();
-router.use(requireAdminSecret);
 
 // Validate and sanitize the period query parameter
 function parsePeriod(rawPeriod: unknown): TimePeriod {

@@ -414,11 +414,19 @@ export class GoogleAnalyticsService {
           { name: 'screenPageViews' },
           { name: 'eventCount' },
         ],
+        metricAggregations: ['TOTAL'],
       });
 
       let totalActiveUsers = 0;
       let totalViews = 0;
       let totalEvents = 0;
+
+      // Prefer property-level totals aggregated by GA4 Realtime Data API
+      if (response.totals && response.totals.length > 0 && response.totals[0].metricValues) {
+        totalActiveUsers = parseInt(response.totals[0].metricValues[0]?.value || '0', 10);
+        totalViews = parseInt(response.totals[0].metricValues[1]?.value || '0', 10);
+        totalEvents = parseInt(response.totals[0].metricValues[2]?.value || '0', 10);
+      }
 
       const eventMap = new Map<string, number>();
       const pageMap = new Map<string, number>();
@@ -436,9 +444,11 @@ export class GoogleAnalyticsService {
           const views = parseInt(row.metricValues?.[1]?.value || '0', 10);
           const events = parseInt(row.metricValues?.[2]?.value || '0', 10);
 
-          totalActiveUsers += users;
-          totalViews += views;
-          totalEvents += events;
+          if (!response.totals || response.totals.length === 0) {
+            totalActiveUsers = Math.max(totalActiveUsers, users);
+            totalViews += views;
+            totalEvents += events;
+          }
 
           if (event) {
             eventMap.set(event, (eventMap.get(event) || 0) + events);
