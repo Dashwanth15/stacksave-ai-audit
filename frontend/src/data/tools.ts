@@ -521,6 +521,129 @@ export const TOOLS: ToolInfo[] = [
       },
     ],
   },
+
+  // ──────────────────────────────────────────────
+  // DEEPSEEK — https://deepseek.com
+  // Verified from backend/src/knowledge/providers/deepseek/plans.json
+  // ──────────────────────────────────────────────
+  {
+    id: 'deepseek',
+    name: 'DeepSeek',
+    icon: '🐳',
+    category: 'AI Chat',
+    description: 'High-performance open-reasoning models (DeepSeek-V3 & R1) at fraction of retail cost',
+    defaultPlan: 'pro',
+    plans: [
+      {
+        id: 'free',
+        label: 'Free',
+        tagline: 'Basic web chat access',
+        monthlyPricePerSeat: 0,
+        billingType: 'per-seat',
+        features: ['Standard web chat queries', 'DeepSeek-V3 access', 'Basic file context'],
+      },
+      {
+        id: 'pro',
+        label: 'Pro',
+        tagline: 'Priority R1 reasoning access',
+        monthlyPricePerSeat: 15,
+        billingType: 'per-seat',
+        features: ['Priority R1 reasoning queue', 'Higher message limits', 'Faster throughput'],
+      },
+      {
+        id: 'api',
+        label: 'API Pay As You Go',
+        tagline: 'Token-based API access',
+        monthlyPricePerSeat: 0,
+        billingType: 'usage-based',
+        isPayPerUse: true,
+        features: ['DeepSeek V3: $0.14/M input, $0.28/M output', 'Off-peak discounts available'],
+      },
+    ],
+  },
+
+  // ──────────────────────────────────────────────
+  // PERPLEXITY — https://perplexity.ai/hub/pricing
+  // Verified from backend/src/knowledge/providers/perplexity/plans.json
+  // Static fallback — runtime plans hydrated from GET /api/pricing/providers/perplexity
+  // ──────────────────────────────────────────────
+  {
+    id: 'perplexity',
+    name: 'Perplexity',
+    icon: '🔍',
+    category: 'AI Chat',
+    description: 'AI-powered search & research — cited web answers, Pro Search & Sonar API',
+    defaultPlan: 'pro',
+    plans: [
+      {
+        id: 'free',
+        label: 'Free',
+        tagline: 'Basic search access',
+        monthlyPricePerSeat: 0,
+        billingType: 'per-seat',
+        features: ['Standard search queries', 'Limited Pro search queries', 'Basic file uploads'],
+      },
+      {
+        id: 'pro',
+        label: 'Pro',
+        tagline: '600+ Pro Searches per day',
+        monthlyPricePerSeat: 20,
+        annualPrice: 16.67,
+        billingType: 'per-seat',
+        features: ['600+ Pro Searches per day', 'Select model: Sonnet 3.5, GPT-4o, Opus', 'Unlimited file analysis & image generation', '$5/mo API credit included'],
+      },
+      {
+        id: 'max',
+        label: 'Max',
+        tagline: 'Frontier models, highest limits',
+        monthlyPricePerSeat: 200,
+        annualPrice: 166.67,
+        billingType: 'per-seat',
+        features: ['Frontier AI models (highest usage limits)', '35,000 bonus credits/month', '10,000 monthly computer credits', 'Expert research & deep investigation'],
+      },
+      {
+        id: 'education_pro',
+        label: 'Education Pro',
+        tagline: 'Pro features at academic pricing',
+        monthlyPricePerSeat: 0,
+        billingType: 'per-seat',
+        isPayPerUse: true,
+        features: ['All Pro features', 'Verified student/faculty access', 'Institutional pricing where applicable'],
+      },
+      {
+        id: 'enterprise_pro',
+        label: 'Enterprise Pro',
+        tagline: 'For teams — SSO, admin & compliance',
+        monthlyPricePerSeat: 40,
+        annualPrice: 33.33,
+        billingType: 'per-seat',
+        isEnterprise: true,
+        minSeats: 1,
+        features: ['Everything in Pro', 'Single Sign-On (SSO) & SCIM', 'SOC2 compliance & data privacy', 'Admin controls & pooled credits', '8,500 bonus credits per seat'],
+      },
+      {
+        id: 'enterprise_max',
+        label: 'Enterprise Max',
+        tagline: 'Maximum reasoning — enterprise scale',
+        monthlyPricePerSeat: 325,
+        annualPrice: 270.83,
+        billingType: 'per-seat',
+        isEnterprise: true,
+        minSeats: 1,
+        features: ['Everything in Enterprise Pro', 'Maximum model reasoning', '40,000 bonus credits per seat', '15,000 computer credits per seat/month'],
+      },
+      {
+        id: 'custom',
+        label: 'Custom / Contact Sales',
+        tagline: 'Custom enterprise arrangement',
+        monthlyPricePerSeat: 0,
+        billingType: 'per-seat',
+        isPayPerUse: true,
+        isEnterprise: true,
+        features: ['Custom enterprise configuration', 'Dedicated security & compliance', 'Volume pricing & custom domain'],
+      },
+    ],
+  },
 ];
 
 export const USE_CASES = [

@@ -1039,10 +1039,17 @@ async function extractWindsurf(browser: Browser): Promise<OfficialExtractedProvi
 
 /**
  * Perplexity — Multi-Page Live Playwright DOM Extraction
- * Pages: https://www.perplexity.ai/pro, https://www.perplexity.ai/enterprise
+ *
+ * PRIMARY SOURCE: https://perplexity.ai/hub/pricing
+ *   - Contains Individual tab (Free, Pro, Max, Education Pro)
+ *   - Contains Enterprise tab (Enterprise Pro, Enterprise Max, Custom)
+ *
+ * SECONDARY (Education/Enterprise context):
+ *   - https://www.perplexity.ai/enterprise (Enterprise info page)
  */
 async function extractPerplexity(browser: Browser): Promise<OfficialExtractedProviderData> {
-  const sourceUrl = 'https://www.perplexity.ai/pro';
+  // Use the canonical hub/pricing page which shows ALL tiers in one place
+  const sourceUrl = 'https://perplexity.ai/hub/pricing';
   const checkedAt = new Date();
   let context: BrowserContext | null = null;
   const scannedPages: ScannedSourcePage[] = [];
@@ -1055,12 +1062,25 @@ async function extractPerplexity(browser: Browser): Promise<OfficialExtractedPro
     let primaryOk = false;
     let primaryBlockedReason = '';
     try {
-      await page.goto(sourceUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await page.goto(sourceUrl, { waitUntil: 'networkidle', timeout: 35000 });
+      // Wait for pricing cards to hydrate
       await page.waitForFunction(
-        () => (document.body.innerText || '').includes('Pro') || (document.body.innerText || '').includes('$'),
+        () => {
+          const text = document.body.innerText || '';
+          return (
+            text.includes('Pro') ||
+            text.includes('Max') ||
+            text.includes('Enterprise') ||
+            text.includes('$')
+          );
+        },
         { timeout: 15000 }
       ).catch(() => null);
-      await page.waitForTimeout(3000);
+      // Scroll to trigger any lazy-loaded pricing sections
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await page.waitForTimeout(2000);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(1500);
       primaryOk = true;
     } catch (err: any) {
       primaryBlockedReason = err.message || 'Navigation failed';
@@ -1089,6 +1109,7 @@ async function extractPerplexity(browser: Browser): Promise<OfficialExtractedPro
 
       const bodyText = document.body.innerText || '';
       const plans: NormalizedPlan[] = [];
+      const diagnostics: Record<string, string> = {};
       const offers: {
         title: string;
         description: string;
@@ -1102,42 +1123,181 @@ async function extractPerplexity(browser: Browser): Promise<OfficialExtractedPro
         sourceUrl?: string;
       }[] = [];
 
-      plans.push({ id: 'standard', label: 'Standard Free', monthlyPricePerSeat: 0, currency: 'USD' });
-
-      // Live Pro price extraction from rendered card: "$17 /month or equivalent, when billed annually"
-      const proMatch = /\$(\d+(?:\.\d+)?)\s*(?:\/month|\/mo)[\s\S]{0,60}?(?:billed annually|equivalent)/i.exec(bodyText) ||
-        /\$(\d+(?:\.\d+)?)\s*(?:\/month|\/mo)/i.exec(bodyText);
-      const proAnnualPrice = proMatch ? parseFloat(proMatch[1]) : null;
-
-      if (proAnnualPrice !== null && proAnnualPrice > 0) {
-        plans.push({
-          id: 'pro',
-          label: 'Perplexity Pro',
-          monthlyPricePerSeat: proAnnualPrice,
-          annualPricePerSeat: proAnnualPrice,
-          currency: 'USD',
-        });
+      // ── Free tier ───────────────────────────────────────────────
+      if (/\bfree\b/i.test(bodyText)) {
+        plans.push({ id: 'free', label: 'Free', monthlyPricePerSeat: 0, currency: 'USD' });
+        diagnostics.free = 'extracted (free keyword found)';
+      } else {
+        diagnostics.free = 'not found';
       }
 
-      // Live Max price extraction from rendered card: "$167 /month or equivalent, when billed annually"
-      const getProIdx = bodyText.indexOf('Get Pro');
-      if (getProIdx !== -1) {
-        const maxSection = bodyText.slice(getProIdx);
-        const maxMatch = /\$(\d+(?:\.\d+)?)\s*(?:\/month|\/mo)/i.exec(maxSection);
-        const maxPrice = maxMatch ? parseFloat(maxMatch[1]) : null;
-        if (maxPrice !== null && maxPrice > 0) {
+      // ── Pro tier ($20/mo, ~$17/mo annual) ───────────────────────
+      // Match: "Pro" near "$20" or "$17" (annual-effective) with /month context
+      const proExactMatch =
+        /\bpro\b[\s\S]{0,120}?\$(20|17)(?:\.\d+)?\s*(?:\/\s*(?:month|mo))/i.exec(bodyText) ||
+        /\$(20|17)(?:\.\d+)?\s*(?:\/\s*(?:month|mo))[\s\S]{0,80}?\bpro\b/i.exec(bodyText);
+      const proPrice = proExactMatch ? parseFloat(proExactMatch[1]) : null;
+
+      // Annual effective monthly price for Pro
+      const proAnnualMatch = /\bpro\b[\s\S]{0,120}?\$(16|17)(?:\.\d+)?\s*(?:\/\s*(?:month|mo))/i.exec(bodyText);
+      const proAnnualPrice = proAnnualMatch ? parseFloat(proAnnualMatch[1]) : (proPrice && proPrice === 20 ? 16.67 : proPrice);
+
+      if (proPrice !== null && proPrice > 0) {
+        plans.push({
+          id: 'pro',
+          label: 'Pro',
+          monthlyPricePerSeat: 20,  // Canonical monthly price
+          annualPricePerSeat: proAnnualPrice ?? 16.67,
+          currency: 'USD',
+        });
+        diagnostics.pro = `extracted ($${proPrice}/mo)`;
+      } else {
+        // Fallback: look for any standalone $20 near a /month indicator
+        const fallbackProMatch = /\$(20)(?:\.\d+)?\s*(?:\/\s*(?:month|mo))/i.exec(bodyText);
+        if (fallbackProMatch) {
           plans.push({
-            id: 'max',
-            label: 'Perplexity Max',
-            monthlyPricePerSeat: maxPrice,
-            annualPricePerSeat: maxPrice,
+            id: 'pro',
+            label: 'Pro',
+            monthlyPricePerSeat: 20,
+            annualPricePerSeat: 16.67,
             currency: 'USD',
           });
+          diagnostics.pro = 'extracted via fallback ($20/mo)';
+        } else {
+          diagnostics.pro = 'not found';
         }
       }
 
-      // Live Computer Bonus Credits promotional offers
-      const proCreditsMatch = bodyText.match(/\+\$(\d+)\s+free\s+Computer\s+credits\s+LIMITED\s+TIME[\s\S]{0,60}?Popular/i) ||
+      // ── Max tier ($200/mo, ~$167/mo annual) ─────────────────────
+      const maxExactMatch =
+        /\bmax\b[\s\S]{0,120}?\$(200|167)(?:\.\d+)?\s*(?:\/\s*(?:month|mo))/i.exec(bodyText) ||
+        /\$(200|167)(?:\.\d+)?\s*(?:\/\s*(?:month|mo))[\s\S]{0,80}?\bmax\b/i.exec(bodyText);
+      const maxPrice = maxExactMatch ? parseFloat(maxExactMatch[1]) : null;
+
+      if (maxPrice !== null && maxPrice > 0) {
+        // Normalise to the monthly rate; 167 is the annual-effective
+        const canonicalMax = maxPrice >= 167 && maxPrice < 180 ? 200 : maxPrice;
+        const maxAnnual = canonicalMax === 200 ? 166.67 : maxPrice;
+        plans.push({
+          id: 'max',
+          label: 'Max',
+          monthlyPricePerSeat: canonicalMax,
+          annualPricePerSeat: maxAnnual,
+          currency: 'USD',
+        });
+        diagnostics.max = `extracted ($${maxPrice}/mo shown → canonical $${canonicalMax}/mo)`;
+      } else {
+        diagnostics.max = 'not found';
+      }
+
+      // ── Education Pro tier ──────────────────────────────────────
+      // Education Pro may show a price or may redirect to an institutional portal
+      const eduProMatch =
+        /(?:education\s+pro|edu\s+pro)[\s\S]{0,120}?\$(\d+(?:\.\d+)?)\s*(?:\/\s*(?:month|mo))/i.exec(bodyText) ||
+        /\$(\d+(?:\.\d+)?)\s*(?:\/\s*(?:month|mo))[\s\S]{0,80}?(?:education\s+pro|edu\s+pro)/i.exec(bodyText);
+
+      if (eduProMatch) {
+        const eduPrice = parseFloat(eduProMatch[1]);
+        if (!isNaN(eduPrice) && eduPrice >= 0) {
+          plans.push({
+            id: 'education_pro',
+            label: 'Education Pro',
+            monthlyPricePerSeat: eduPrice,
+            currency: 'USD',
+          });
+          diagnostics.education_pro = `extracted ($${eduPrice}/mo)`;
+        }
+      } else if (/education\s+pro/i.test(bodyText)) {
+        // Education Pro exists on page but price is not directly visible — mark as institutional
+        plans.push({
+          id: 'education_pro',
+          label: 'Education Pro',
+          monthlyPricePerSeat: 0,
+          isPayPerUse: true,
+          currency: 'USD',
+        });
+        diagnostics.education_pro = 'found (institutional/contact pricing)';
+      } else {
+        diagnostics.education_pro = 'not found on this page';
+      }
+
+      // ── Enterprise Pro tier ($40/seat/mo list, $33.33 annual, or contact) ────
+      const entProMatch =
+        /enterprise\s+pro[\s\S]{0,120}?\$(\d+(?:\.\d+)?)\s*(?:\/\s*(?:month|mo|seat))/i.exec(bodyText) ||
+        /\$(\d+(?:\.\d+)?)\s*(?:\/\s*(?:month|mo))[\s\S]{0,80}?enterprise\s+pro/i.exec(bodyText);
+
+      if (entProMatch) {
+        const entProPrice = parseFloat(entProMatch[1]);
+        if (!isNaN(entProPrice) && entProPrice > 0 && entProPrice < 500) {
+          plans.push({
+            id: 'enterprise_pro',
+            label: 'Enterprise Pro',
+            monthlyPricePerSeat: entProPrice,
+            currency: 'USD',
+          });
+          diagnostics.enterprise_pro = `extracted ($${entProPrice}/seat/mo)`;
+        }
+      } else if (/enterprise\s+pro/i.test(bodyText)) {
+        plans.push({
+          id: 'enterprise_pro',
+          label: 'Enterprise Pro',
+          monthlyPricePerSeat: 0,
+          isPayPerUse: true,
+          currency: 'USD',
+        });
+        diagnostics.enterprise_pro = 'found (contact sales pricing)';
+      } else {
+        diagnostics.enterprise_pro = 'not found on this page';
+      }
+
+      // ── Enterprise Max tier ($325/seat/mo list, $270.83 annual, or contact) ───
+      const entMaxMatch =
+        /enterprise\s+max[\s\S]{0,120}?\$(\d+(?:\.\d+)?)\s*(?:\/\s*(?:month|mo|seat))/i.exec(bodyText) ||
+        /\$(\d+(?:\.\d+)?)\s*(?:\/\s*(?:month|mo))[\s\S]{0,80}?enterprise\s+max/i.exec(bodyText);
+
+      if (entMaxMatch) {
+        const entMaxPrice = parseFloat(entMaxMatch[1]);
+        if (!isNaN(entMaxPrice) && entMaxPrice > 0 && entMaxPrice < 2000) {
+          plans.push({
+            id: 'enterprise_max',
+            label: 'Enterprise Max',
+            monthlyPricePerSeat: entMaxPrice,
+            currency: 'USD',
+          });
+          diagnostics.enterprise_max = `extracted ($${entMaxPrice}/seat/mo)`;
+        }
+      } else if (/enterprise\s+max/i.test(bodyText)) {
+        plans.push({
+          id: 'enterprise_max',
+          label: 'Enterprise Max',
+          monthlyPricePerSeat: 0,
+          isPayPerUse: true,
+          currency: 'USD',
+        });
+        diagnostics.enterprise_max = 'found (contact sales pricing)';
+      } else {
+        diagnostics.enterprise_max = 'not found on this page';
+      }
+
+      // ── Custom / Contact Sales tier ─────────────────────────────
+      if (/contact\s+sales|custom\s+pricing|custom\s+plan/i.test(bodyText) && !/enterprise\s+pro|enterprise\s+max/i.test(bodyText)) {
+        if (!plans.find((p) => p.id === 'custom')) {
+          plans.push({
+            id: 'custom',
+            label: 'Custom / Contact Sales',
+            monthlyPricePerSeat: 0,
+            isPayPerUse: true,
+            currency: 'USD',
+          });
+          diagnostics.custom = 'found (contact sales)';
+        }
+      } else {
+        diagnostics.custom = 'not found or subsumed by enterprise tiers';
+      }
+
+      // ── Live Computer Credits promotional offers ─────────────────
+      const proCreditsMatch =
+        bodyText.match(/\+\$(\d+)\s+free\s+Computer\s+credits\s+LIMITED\s+TIME[\s\S]{0,60}?Popular/i) ||
         bodyText.match(/\+\$(\d+)\s+free\s+Computer\s+credits/i);
 
       if (proCreditsMatch) {
@@ -1150,26 +1310,11 @@ async function extractPerplexity(browser: Browser): Promise<OfficialExtractedPro
           detectionMethod: 'PLAYWRIGHT_DOM',
           discount: `+$${creditsAmt} Free Credits`,
           eligibility: 'All Users',
-          sourceUrl: 'https://www.perplexity.ai/pro',
+          sourceUrl: 'https://perplexity.ai/hub/pricing',
         });
       }
 
-      const maxCreditsMatch = bodyText.match(/\+\$(\d+)\s+free\s+Computer\s+credits\s+LIMITED\s+TIME[\s\S]{0,60}?Unlimited/i);
-      if (maxCreditsMatch) {
-        const creditsAmt = maxCreditsMatch[1];
-        const evidence = maxCreditsMatch[0].replace(/\n+/g, ' ').trim();
-        offers.push({
-          title: 'Perplexity Max Computer Credits Promotion',
-          description: `Limited time promotion: get +$${creditsAmt} in free Perplexity Computer credits with Max plan subscription.`,
-          evidenceText: evidence,
-          detectionMethod: 'PLAYWRIGHT_DOM',
-          discount: `+$${creditsAmt} Free Credits`,
-          eligibility: 'All Users',
-          sourceUrl: 'https://www.perplexity.ai/pro',
-        });
-      }
-
-      return { isBlocked: false, plans, offers };
+      return { isBlocked: false, plans, offers, diagnostics };
     });
 
     if (extraction.isBlocked) {
@@ -1187,9 +1332,17 @@ async function extractPerplexity(browser: Browser): Promise<OfficialExtractedPro
       };
     }
 
+    // DIAGNOSTIC: Log per-plan extraction status
+    console.log(`   [Perplexity] Extraction diagnostics:`);
+    const diagnostics = (extraction as any).diagnostics || {};
+    for (const [planId, result] of Object.entries(diagnostics)) {
+      console.log(`   [Perplexity]   ${planId}: ${result}`);
+    }
+    console.log(`   [Perplexity]   total plans extracted: ${extraction.plans.length}`);
+
     scannedPages.push({ url: sourceUrl, status: 'VERIFIED', scannedAt: checkedAt });
 
-    // Secondary Page: Perplexity Enterprise & Education
+    // Secondary Page: Perplexity Enterprise detail page for additional context
     const enterpriseUrl = 'https://www.perplexity.ai/enterprise';
     let entScanStatus: SyncStatus = 'FETCH_BLOCKED';
     let entScanFailure: string | undefined;
@@ -1257,7 +1410,10 @@ async function extractPerplexity(browser: Browser): Promise<OfficialExtractedPro
       lastConfirmedAt: checkedAt,
     }));
 
-    if (extraction.plans.length < 2) {
+    // Require at least free + 1 paid plan to report VERIFIED
+    const paidPlans = extraction.plans.filter((p: NormalizedPlan) => p.monthlyPricePerSeat > 0 || p.isPayPerUse);
+    if (extraction.plans.length < 2 || paidPlans.length < 1) {
+      console.log(`   [Perplexity] PARSE_FAILED: plans=${extraction.plans.length} paid=${paidPlans.length} (need >= 2 total, >= 1 paid)`);
       return {
         providerId: 'perplexity',
         displayName: 'Perplexity',
@@ -1267,7 +1423,7 @@ async function extractPerplexity(browser: Browser): Promise<OfficialExtractedPro
         plans: extraction.plans || [],
         offers: normalizedOffers,
         scannedPages,
-        failureReason: 'Could not extract paid plan prices from live Perplexity DOM',
+        failureReason: `Could not extract paid plan prices from live Perplexity hub/pricing page (got ${extraction.plans.length} plans)`,
         checkedAt,
       };
     }

@@ -22,7 +22,10 @@ const logoMap: Record<string, string> = {
   'gemini': '/logos/gemini.svg',
   'windsurf': '/logos/windsurf.svg',
   'kimi': '/logos/kimi.svg',
+  'deepseek': '/logos/deepseek.svg',
+  'perplexity': '/logos/perplexity.svg',
 };
+
 
 type BillingPeriod = 'monthly' | 'annual';
 

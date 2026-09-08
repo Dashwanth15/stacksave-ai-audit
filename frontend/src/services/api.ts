@@ -262,7 +262,50 @@ export async function fetchPricingStatus(): Promise<{
   return response.data.data;
 }
 
+// ── Canonical Provider Pricing (Plan Hydration) ──────────────
+// Used by Build My Stack & Audit My Existing Stack to hydrate
+// plan selectors with the latest DB-verified plans.
 
+export interface CanonicalPlan {
+  id: string;
+  label: string;
+  monthlyPricePerSeat: number;
+  annualPricePerSeat: number | null;
+  isPayPerUse: boolean;
+  isContactSales: boolean;
+  currency: string;
+  tierRank: number | null;
+  features: string[];
+}
+
+export interface ProviderPricingResponse {
+  providerId: string;
+  pricingStatus: 'VERIFIED' | 'STATIC_BASELINE' | 'STALE' | 'UNKNOWN';
+  sourceUrl: string;
+  lastVerifiedAt: string | null;
+  overlayStatus: string;
+  plans: CanonicalPlan[];
+  planCount: number;
+  note: string;
+}
+
+/**
+ * GET /api/pricing/providers/:providerId
+ * Returns the current verified runtime plan catalog for a provider.
+ * Returns null on any error — callers must fall back to static tools.ts plans.
+ */
+export async function fetchProviderPricing(providerId: string): Promise<ProviderPricingResponse | null> {
+  try {
+    const response = await api.get<{ success: boolean; data: ProviderPricingResponse; error?: string }>(
+      `/pricing/providers/${encodeURIComponent(providerId)}`,
+      { timeout: 8_000 }
+    );
+    if (!response?.data?.success || !response.data.data) return null;
+    return response.data.data;
+  } catch {
+    return null;
+  }
+}
 
 // ── Public Offers In-Flight Deduplication & Cache ────────────
 export interface PublicOffersResponse {

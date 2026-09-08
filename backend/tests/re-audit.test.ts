@@ -350,7 +350,7 @@ describe('4. pricingChangeDetectionService notifications & duplicate protection'
 
   it('detects changes, triggers a background re-audit, sends email, and prevents duplicate notification', async () => {
     // 1. Mock email sending
-    const sendEmailSpy = vi.spyOn(emailService, 'sendReAuditNotification').mockResolvedValue(undefined);
+    const sendEmailSpy = vi.spyOn(emailService, 'sendReAuditNotification').mockResolvedValue({ success: true });
 
     // 2. Create an audit document with outdated pricing
     const oldSnapshot: PricingSnapshot = {

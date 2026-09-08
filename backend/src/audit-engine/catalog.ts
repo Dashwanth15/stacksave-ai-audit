@@ -394,13 +394,17 @@ export const TOOL_CATALOG: ToolCatalog[] = [
     name: 'Perplexity',
     category: 'search',
     useCases: ['research'],
-    pricingUrl: 'https://perplexity.ai/pro',
-    pricingVerifiedDate: '2026-05-07',
+    pricingUrl: 'https://perplexity.ai/hub/pricing',
+    pricingVerifiedDate: '2026-09-08',
     plans: [
       { id: 'free', label: 'Free', monthlyPricePerSeat: 0 },
       { id: 'pro', label: 'Pro', monthlyPricePerSeat: 20, annualPricePerSeat: 16.67 },
-      { id: 'enterprise', label: 'Enterprise', monthlyPricePerSeat: 40 }
-    ]
+      { id: 'max', label: 'Max', monthlyPricePerSeat: 200, annualPricePerSeat: 166.67 },
+      { id: 'education_pro', label: 'Education Pro', monthlyPricePerSeat: 0, isPayPerUse: true },
+      { id: 'enterprise_pro', label: 'Enterprise Pro', monthlyPricePerSeat: 40, annualPricePerSeat: 33.33, minSeats: 1 },
+      { id: 'enterprise_max', label: 'Enterprise Max', monthlyPricePerSeat: 325, annualPricePerSeat: 270.83, minSeats: 1 },
+      { id: 'custom', label: 'Custom / Contact Sales', monthlyPricePerSeat: 0, isPayPerUse: true },
+    ],
   },
   {
     id: 'deepseek',

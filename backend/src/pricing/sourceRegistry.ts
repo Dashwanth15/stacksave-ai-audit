@@ -119,14 +119,14 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
   {
     id: 'perplexity',
     displayName: 'Perplexity',
-    pricingUrl: 'https://www.perplexity.ai/pro',
-    offersUrl: 'https://www.perplexity.ai/enterprise',
+    pricingUrl: 'https://perplexity.ai/hub/pricing',
+    offersUrl: 'https://perplexity.ai/hub/pricing',
     secondaryOfferUrls: [
-      { label: 'Perplexity Enterprise for Education', url: 'https://www.perplexity.ai/enterprise', type: 'education' },
+      { label: 'Perplexity Enterprise', url: 'https://www.perplexity.ai/enterprise', type: 'education' },
     ],
     strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
-      'Official Perplexity multi-page Playwright DOM crawler. Extracts Pro plans, annual savings, and academic enterprise discounts.',
+      'Official Perplexity hub/pricing page Playwright DOM crawler. Extracts all tiers: Free, Pro ($20/mo), Max ($200/mo), Education Pro (institutional), Enterprise Pro, Enterprise Max, and Custom/Contact Sales. Secondary page: /enterprise for additional enterprise context.',
   },
   {
     id: 'kimi',
