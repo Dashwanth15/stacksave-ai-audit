@@ -353,10 +353,15 @@ export class KnowledgeLoader {
   private static boilerplateEnterpriseSignatures = new Set<string>();
   private static boilerplateFinancialSignatures = new Set<string>();
 
+  public static reload(): void {
+    this.cache.clear();
+    this.knowledgeCache.clear();
+    this.initialized = false;
+    this.initialize();
+  }
+
   /**
-   * Initializes the repository by loading hierarchical provider directories
-   * (provider.json, plans.json, models/*.json) from knowledge/providers.
-   * Validates profiles and runs KnowledgeQualityEngine once on startup.
+   * Initializes the knowledge base by loading all provider profiles.
    */
   public static initialize(): void {
     if (this.initialized) return;

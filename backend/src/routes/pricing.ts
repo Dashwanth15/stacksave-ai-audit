@@ -65,8 +65,8 @@ router.get('/providers/:providerId', async (req: Request, res: Response) => {
       });
     }
 
-    // Ensure KnowledgeLoader is initialized
-    KnowledgeLoader.initialize();
+    // Ensure KnowledgeLoader is initialized with latest baseline
+    KnowledgeLoader.reload();
 
     // Load static knowledge base plans
     const staticPlans = KnowledgeLoader.loadPlans(normalizedId);
