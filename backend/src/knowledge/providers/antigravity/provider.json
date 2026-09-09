@@ -1,0 +1,60 @@
+{
+  "id": "antigravity",
+  "name": "Google Antigravity",
+  "category": "ide",
+  "vendor": "Google",
+  "vendorProfile": {
+    "vendorId": "google",
+    "vendorName": "Google DeepMind",
+    "establishedYear": 1998,
+    "headquarters": "Mountain View, CA",
+    "fundingStage": "Public",
+    "productFamily": [
+      "antigravity",
+      "gemini"
+    ],
+    "stabilityRating": "Very High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "AI IDE & Multi-File Agentic Coding",
+  "secondaryRole": "Autonomous Terminal & Browser Agent",
+  "billingModels": [
+    "monthly",
+    "annual"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "Autonomous multi-file agentic code generation and planning",
+    "Integrated terminal execution and subagent orchestration",
+    "Deep codebase vector indexing and 1M+ token context window"
+  ],
+  "knownWeaknesses": [
+    "High compute consumption for continuous autonomous subagents",
+    "Requires active internet connectivity for model inference",
+    "Custom extensions and skills require configuration"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Autonomous fullstack software engineering",
+    "Complex codebase refactoring and debugging",
+    "Automated CLI and web browser research workflows"
+  ],
+  "typicalTeamSize": "Small to Enterprise",
+  "supportedModels": [
+    "Gemini 2.5 Pro",
+    "Gemini 2.5 Flash"
+  ],
+  "supportedPlatforms": [
+    "Antigravity IDE",
+    "Antigravity CLI"
+  ],
+  "apiSupport": true,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-09-09",
+  "sources": [
+    "https://antigravity.google/pricing",
+    "https://antigravity.google/docs/plans",
+    "https://antigravity.google/docs/enterprise"
+  ]
+}

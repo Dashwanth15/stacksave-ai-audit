@@ -182,8 +182,8 @@ describe('Behavioral Procurement Intelligence & Multi-Dimension Verification', (
     expect(smallTeam.categories.bestOverall.recommendedStack.primary.estimatedMonthlyCostPerTeam).toBe(20);
     expect(smallTeam.categories.bestOverall.recommendedStack.estimatedMonthlyCost).toBeLessThanOrEqual(100);
 
-    // 50 seats uses enterprise compliant commercial tier (Copilot Business or ChatGPT Team)
-    expect(['Business', 'Team']).toContain(largeTeam.categories.bestOverall.recommendedStack.primary.recommendedPlan);
+    // 50 seats uses enterprise compliant commercial tier (Copilot Business, ChatGPT Team, X Premium, or SuperGrok)
+    expect(['Business', 'Team', 'Enterprise', 'SuperGrok', 'SuperGrok Heavy', 'X Premium (Grok Access)', 'X Premium+ (Grok Access)']).toContain(largeTeam.categories.bestOverall.recommendedStack.primary.recommendedPlan);
     expect(largeTeam.categories.bestOverall.recommendedStack.estimatedMonthlyCost).toBeLessThanOrEqual(2000);
   });
 

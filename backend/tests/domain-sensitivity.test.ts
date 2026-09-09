@@ -25,7 +25,7 @@ describe('AIStackRecommendationEngine - 10 Input Sensitivity & Domain Adaptabili
     };
     const result = AIStackRecommendationEngine.run(req);
     const primary = result.categories.bestOverall.recommendedStack.primary;
-    expect(['cursor', 'windsurf', 'github-copilot']).toContain(primary.toolId);
+    expect(['cursor', 'windsurf', 'github-copilot', 'antigravity']).toContain(primary.toolId);
     expect(primary.category).toBe('ide');
   });
 

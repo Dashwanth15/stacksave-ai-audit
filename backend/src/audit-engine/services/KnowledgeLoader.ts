@@ -166,6 +166,8 @@ export interface PlanEntry {
   annualPricePerSeat?: number;
   isPayPerUse?: boolean;
   tierRank?: number;            // Explicit ordering within the provider's plan ladder (1 = entry, N = highest)
+  planSurface?: "grok-consumer" | "x-platform" | "xai-api" | "antigravity-seat" | "google-cloud-enterprise" | string;
+  isXPlatformBundle?: boolean;
   agentCreditsMultiplier?: number; // Relative agent credit multiplier vs entry plan
   contextWindow?: string;      // e.g. "128K", "1M"
   features?: string[];         // Human-readable feature list

@@ -1,0 +1,198 @@
+{
+  "providerId": "grok",
+  "pricing": {
+    "free": 0,
+    "supergrok_lite": 10,
+    "supergrok": 30,
+    "supergrok_plus": 100,
+    "supergrok_heavy": 300,
+    "x_premium": 8,
+    "x_premium_plus": 40,
+    "api": 0
+  },
+  "annualDiscountPercent": 17,
+  "plans": [
+    {
+      "id": "free",
+      "label": "Free",
+      "monthlyPricePerSeat": 0,
+      "planSurface": "grok-consumer",
+      "tierRank": 0,
+      "features": [
+        "Standard Grok chat access",
+        "Limited daily queries",
+        "Web & X search integration"
+      ],
+      "premiumFeatures": []
+    },
+    {
+      "id": "supergrok_lite",
+      "label": "SuperGrok Lite",
+      "monthlyPricePerSeat": 10,
+      "planSurface": "grok-consumer",
+      "tierRank": 1,
+      "features": [
+        "Expanded Grok chat access",
+        "Higher message limits",
+        "Fast response throughput"
+      ],
+      "premiumFeatures": [
+        "Expanded query caps"
+      ]
+    },
+    {
+      "id": "supergrok",
+      "label": "SuperGrok",
+      "monthlyPricePerSeat": 30,
+      "annualPricePerSeat": 25,
+      "planSurface": "grok-consumer",
+      "tierRank": 2,
+      "features": [
+        "Standard standalone Grok subscription",
+        "Advanced reasoning & Think Mode",
+        "Image & video generation",
+        "Higher rate limits on grok.com",
+        "Memory & context persistence",
+        "Workspace admin console access via console.x.ai",
+        "Usage policy controls and compliance dashboard"
+      ],
+      "premiumFeatures": [
+        "Advanced Think Mode reasoning",
+        "Image & video creation",
+        "High prompt caps",
+        "Admin console and usage policy management"
+      ]
+    },
+    {
+      "id": "supergrok_plus",
+      "label": "SuperGrok Plus",
+      "monthlyPricePerSeat": 100,
+      "planSurface": "grok-consumer",
+      "tierRank": 3,
+      "features": [
+        "Significantly expanded limits across chat, image & voice",
+        "1080p video creation capabilities",
+        "Priority access to new Grok 4 models",
+        "Everything in SuperGrok"
+      ],
+      "premiumFeatures": [
+        "1080p video generation",
+        "Priority model access"
+      ]
+    },
+    {
+      "id": "supergrok_heavy",
+      "label": "SuperGrok Heavy",
+      "monthlyPricePerSeat": 300,
+      "planSurface": "grok-consumer",
+      "tierRank": 4,
+      "features": [
+        "Maximum intelligence & highest usage caps",
+        "Includes X Premium+ at no extra charge",
+        "Top-tier priority model reasoning",
+        "Enterprise Admin controls & Security"
+      ],
+      "premiumFeatures": [
+        "Highest usage limits",
+        "Includes X Premium+",
+        "Enterprise Admin controls & Security"
+      ]
+    },
+    {
+      "id": "x_premium",
+      "label": "X Premium (Grok Access)",
+      "monthlyPricePerSeat": 8,
+      "annualPricePerSeat": 7,
+      "planSurface": "x-platform",
+      "isXPlatformBundle": true,
+      "tierRank": 0,
+      "features": [
+        "X platform subscription including Grok access",
+        "Verified checkmark on X",
+        "Edit post & longer posts",
+        "Basic Grok chat queries"
+      ],
+      "premiumFeatures": [
+        "Bundled X platform verification & basic Grok access"
+      ]
+    },
+    {
+      "id": "x_premium_plus",
+      "label": "X Premium+ (Grok Access)",
+      "monthlyPricePerSeat": 40,
+      "annualPricePerSeat": 35,
+      "planSurface": "x-platform",
+      "isXPlatformBundle": true,
+      "tierRank": 0,
+      "features": [
+        "X platform subscription with ad-free experience",
+        "Higher Grok usage limits than standard X Premium",
+        "Full creator tools & verification",
+        "Priority Grok response speed"
+      ],
+      "premiumFeatures": [
+        "Ad-free X experience & expanded Grok caps"
+      ]
+    },
+    {
+      "id": "api",
+      "label": "API (Pay As You Go)",
+      "monthlyPricePerSeat": 0,
+      "planSurface": "xai-api",
+      "isPayPerUse": true,
+      "tierRank": 0,
+      "features": [
+        "OpenAI-compatible REST API at api.x.ai",
+        "Grok 4.6: $2.00/M input, $6.00/M output",
+        "Grok 4.3: $1.25/M input, $2.50/M output",
+        "500K to 1M context window options"
+      ],
+      "premiumFeatures": [
+        "Token-based API usage"
+      ]
+    }
+  ],
+  "enterprise": {
+    "compliance": {
+      "soc2": true,
+      "gdpr": true,
+      "hipaa": false,
+      "iso27001": true
+    },
+    "security": {
+      "encryption": true,
+      "privateDeployment": true,
+      "zeroDataRetention": true
+    },
+    "administration": {
+      "rbac": true,
+      "auditLogs": true,
+      "adminConsole": true
+    },
+    "identity": {
+      "sso": true,
+      "saml": true,
+      "scim": true
+    },
+    "governance": {
+      "policyManagement": true,
+      "workspaceControls": true
+    }
+  },
+  "financialProfile": {
+    "vendorLockInRisk": "Medium",
+    "scalingCost": 60,
+    "upgradeFlexibility": "High",
+    "subscriptionFlexibility": "High",
+    "maintenanceCost": "Low",
+    "enterpriseROI": "High",
+    "typicalCustomerSize": "1-1000",
+    "industryFit": [
+      "Software",
+      "Technology",
+      "Financial Services",
+      "Media & Publishing",
+      "AI Research"
+    ]
+  }
+}

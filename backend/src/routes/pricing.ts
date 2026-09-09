@@ -23,7 +23,8 @@ const router = Router();
 
 // ── Canonical plan IDs that are valid for each provider ──────
 // This whitelist prevents arbitrary/untrusted plan IDs from entering the catalog.
-const CANONICAL_PLAN_IDS: Record<string, ReadonlySet<string>> = {
+export const CANONICAL_PLAN_IDS: Record<string, ReadonlySet<string>> = {
+  antigravity: new Set(['free', 'pro', 'ultra_100', 'ultra_200', 'organization']),
   perplexity: new Set(['free', 'pro', 'max', 'education_pro', 'enterprise_pro', 'enterprise_max', 'custom']),
   cursor: new Set(['hobby', 'pro', 'pro-plus', 'ultra', 'teams', 'enterprise']),
   'github-copilot': new Set(['free', 'individual', 'business', 'enterprise']),
@@ -32,18 +33,20 @@ const CANONICAL_PLAN_IDS: Record<string, ReadonlySet<string>> = {
   gemini: new Set(['free', 'google-ai-plus', 'google-ai-pro', 'google-ai-ultra', 'workspace', 'api']),
   windsurf: new Set(['free', 'pro', 'max', 'teams', 'enterprise']),
   deepseek: new Set(['free', 'pro', 'api']),
+  grok: new Set(['free', 'supergrok_lite', 'supergrok', 'supergrok_plus', 'supergrok_heavy', 'x_premium', 'x_premium_plus', 'api']),
   'openai-api': new Set(['pay-as-you-go']),
   'anthropic-api': new Set(['pay-as-you-go']),
   kimi: new Set(['pay-as-you-go']),
   codex: new Set(['api']),
   'github-models': new Set(['free', 'pro']),
+  glm: new Set(['lite', 'pro', 'max', 'enterprise', 'api']),
 };
 
 /**
  * Validates that a plan ID is canonical for the given provider.
  * Rejects unknown/untrusted plan IDs.
  */
-function isCanonicalPlanId(providerId: string, planId: string): boolean {
+export function isCanonicalPlanId(providerId: string, planId: string): boolean {
   const allowed = CANONICAL_PLAN_IDS[providerId];
   if (!allowed) return false; // Unknown provider — reject
   return allowed.has(planId);

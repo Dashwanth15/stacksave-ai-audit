@@ -31,6 +31,18 @@ export interface ProviderSourceConfig {
 
 export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
   {
+    id: 'antigravity',
+    displayName: 'Google Antigravity',
+    pricingUrl: 'https://antigravity.google/pricing',
+    offersUrl: 'https://antigravity.google/docs/plans',
+    secondaryOfferUrls: [
+      { label: 'Google Antigravity Enterprise Docs', url: 'https://antigravity.google/docs/enterprise', type: 'pricing' },
+    ],
+    strategy: 'PLAYWRIGHT_DOM',
+    strategyNotes:
+      'Official Google Antigravity developer portal and pricing page Playwright DOM crawler. Extracts Free, Pro, Ultra, and Enterprise/Organization tiers.',
+  },
+  {
     id: 'cursor',
     displayName: 'Cursor',
     pricingUrl: 'https://cursor.com/pricing',
@@ -141,6 +153,18 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
       'Official Moonshot/Kimi multi-page Playwright DOM crawler. Extracts model pricing and developer registration trial credits.',
   },
   {
+    id: 'grok',
+    displayName: 'Grok',
+    pricingUrl: 'https://docs.x.ai',
+    offersUrl: 'https://grok.com',
+    secondaryOfferUrls: [
+      { label: 'X Premium Sign Up', url: 'https://x.com/i/premium_sign_up', type: 'annual_discount' },
+    ],
+    strategy: 'PLAYWRIGHT_DOM',
+    strategyNotes:
+      'Official xAI documentation and Grok portal Playwright DOM crawler. Extracts SuperGrok consumer tiers, X Premium bundles, and API pay-as-you-go pricing.',
+  },
+  {
     id: 'anthropic-api',
     displayName: 'Anthropic API',
     pricingUrl: 'https://docs.anthropic.com/en/docs/about-claude/models',
@@ -182,6 +206,20 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
     strategy: 'STATIC_BASELINE',
     strategyNotes:
       'Official GitHub Marketplace models portal probed directly. Prototyping free tier access baseline.',
+  },
+  {
+    id: 'glm',
+    displayName: 'GLM (Z.ai)',
+    pricingUrl: 'https://z.ai/pricing',
+    offersUrl: 'https://z.ai/subscribe',
+    secondaryOfferUrls: [
+      { label: 'Z.ai Model API', url: 'https://z.ai/model-api', type: 'pricing' },
+      { label: 'Z.ai Developer Docs', url: 'https://docs.z.ai', type: 'pricing' },
+      { label: 'ZCode Official ADE', url: 'https://zcode.z.ai/en', type: 'pricing' },
+    ],
+    strategy: 'PLAYWRIGHT_DOM',
+    strategyNotes:
+      'Official Z.ai / GLM Coding subscription and API documentation crawler. Extracts Lite, Pro, Max, Enterprise, and API tiers.',
   },
 ];
 

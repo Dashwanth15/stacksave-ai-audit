@@ -1,0 +1,111 @@
+{
+  "modelId": "grok-4",
+  "name": "Grok 4",
+  "providerId": "grok",
+  "releaseDate": "2026-09-08",
+  "capabilities": {
+    "reasoning": {
+      "score": 9,
+      "evidence": "Grok 4 family provides state-of-the-art reasoning, logic, and Think Mode analysis.",
+      "source": "https://docs.x.ai",
+      "lastVerified": "2026-09-08"
+    },
+    "coding": {
+      "score": 8,
+      "evidence": "Strong code comprehension and code generation via Grok 4 models.",
+      "source": "https://docs.x.ai",
+      "lastVerified": "2026-09-08"
+    },
+    "architectureDesign": {
+      "score": 8,
+      "evidence": "Solid system design and architectural mapping capabilities.",
+      "source": "https://docs.x.ai",
+      "lastVerified": "2026-09-08"
+    },
+    "largeCodebaseUnderstanding": {
+      "score": 8,
+      "evidence": "Supports up to 1M token context windows on select Grok 4 variants.",
+      "source": "https://docs.x.ai",
+      "lastVerified": "2026-09-08"
+    },
+    "autocomplete": {
+      "score": 0,
+      "evidence": "No native inline editor completion plugins.",
+      "source": "https://docs.x.ai",
+      "lastVerified": "2026-09-08"
+    },
+    "aiAgent": {
+      "score": 7,
+      "evidence": "Supports multi-step agent tool execution.",
+      "source": "https://docs.x.ai",
+      "lastVerified": "2026-09-08"
+    },
+    "research": {
+      "score": 9,
+      "evidence": "Exceptional real-time X platform and web search grounding.",
+      "source": "https://grok.com",
+      "lastVerified": "2026-09-08"
+    },
+    "writing": {
+      "score": 9,
+      "evidence": "High quality natural language generation, analysis, and synthesis.",
+      "source": "https://grok.com",
+      "lastVerified": "2026-09-08"
+    },
+    "longContext": {
+      "score": 9,
+      "evidence": "500K to 1M token context windows available.",
+      "source": "https://docs.x.ai",
+      "lastVerified": "2026-09-08"
+    },
+    "imageUnderstanding": {
+      "score": 8,
+      "evidence": "Supports image and visual input analysis.",
+      "source": "https://grok.com",
+      "lastVerified": "2026-09-08"
+    },
+    "vision": {
+      "score": 8,
+      "evidence": "Supports image analysis and visual understanding.",
+      "source": "https://grok.com",
+      "lastVerified": "2026-09-08"
+    },
+    "enterpriseSecurity": {
+      "score": 8,
+      "evidence": "SOC2 certified, user data privacy options available.",
+      "source": "https://docs.x.ai",
+      "lastVerified": "2026-09-08"
+    },
+    "sso": {
+      "score": 8,
+      "evidence": "Enterprise SSO and SCIM capabilities for organizational accounts.",
+      "source": "https://docs.x.ai",
+      "lastVerified": "2026-09-08"
+    }
+  },
+  "benchmarks": {},
+  "productivityScores": {
+    "reasoning": 9,
+    "coding": 8,
+    "planning": 8,
+    "velocity": 9,
+    "developerExperience": 8,
+    "enterpriseReadiness": 8,
+    "maintainability": 8,
+    "learningCurve": "Low",
+    "migrationCost": "Medium",
+    "risk": "Low"
+  },
+  "developerExperience": {
+    "reasoning": 9,
+    "coding": 8,
+    "planning": 8,
+    "velocity": 9,
+    "developerExperience": 8,
+    "enterpriseReadiness": 8,
+    "maintainability": 8,
+    "learningCurve": "Low",
+    "migrationCost": "Medium",
+    "risk": "Low"
+  }
+}

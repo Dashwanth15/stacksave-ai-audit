@@ -57,6 +57,46 @@ export async function getVerifiedPricing(toolId: string): Promise<{
 
 export const TOOL_CATALOG: ToolCatalog[] = [
   // ──────────────────────────────────────────────
+  // GOOGLE ANTIGRAVITY
+  // Source: https://antigravity.google/pricing
+  // ──────────────────────────────────────────────
+  {
+    id: 'antigravity',
+    name: 'Google Antigravity',
+    category: 'ide',
+    useCases: ['coding'],
+    pricingUrl: 'https://antigravity.google/pricing',
+    pricingVerifiedDate: '2026-09-09',
+    plans: [
+      { id: 'free', label: 'Free', monthlyPricePerSeat: 0 },
+      { id: 'pro', label: 'Pro', monthlyPricePerSeat: 20 },
+      { id: 'ultra_100', label: 'Ultra (Standard)', monthlyPricePerSeat: 100 },
+      { id: 'ultra_200', label: 'Ultra (Maximum)', monthlyPricePerSeat: 200 },
+      { id: 'organization', label: 'Enterprise / Organization', monthlyPricePerSeat: 0, isPayPerUse: true },
+    ],
+    alternatives: [
+      {
+        toolId: 'cursor',
+        toolName: 'Cursor',
+        reason: 'Both are frontier AI-first code editors with multi-file agentic capabilities and fast tab autocomplete.',
+        estimatedSaving: '$0 — comparable Pro tier at $20/user/mo',
+      },
+      {
+        toolId: 'windsurf',
+        toolName: 'Windsurf',
+        reason: 'Windsurf Pro ($15/user/mo) offers flow-based AI coding at a lower monthly price point.',
+        estimatedSaving: '~$5/user/mo savings with Windsurf Pro',
+      },
+      {
+        toolId: 'github-copilot',
+        toolName: 'GitHub Copilot',
+        reason: 'GitHub Copilot Business ($19/user/mo) integrates into existing VS Code / JetBrains setups.',
+        estimatedSaving: '~$1/user/mo savings with Copilot Business',
+      },
+    ],
+  },
+
+  // ──────────────────────────────────────────────
   // CURSOR
   // Source: https://cursor.com/pricing
   // ──────────────────────────────────────────────
@@ -475,6 +515,120 @@ export const TOOL_CATALOG: ToolCatalog[] = [
         toolName: 'ChatGPT',
         reason: 'ChatGPT offers consumer subscriptions with voice, memory, and plugin ecosystem. Kimi K3 offers superior intelligence benchmarks and ultra-long 1M context.',
         estimatedSaving: 'Variable by usage pattern',
+      },
+    ],
+  },
+
+  // ──────────────────────────────────────────────
+  // GROK (xAI)
+  // Source: https://docs.x.ai, https://grok.com, https://x.com/i/premium_sign_up
+  // Updated: 2026-09-08
+  // ──────────────────────────────────────────────
+  {
+    id: 'grok',
+    name: 'Grok',
+    category: 'chat',
+    useCases: ['coding', 'research', 'writing', 'data', 'mixed'],
+    pricingUrl: 'https://docs.x.ai',
+    pricingVerifiedDate: '2026-09-08',
+    plans: [
+      {
+        id: 'free',
+        label: 'Free',
+        monthlyPricePerSeat: 0,
+      },
+      {
+        id: 'supergrok_lite',
+        label: 'SuperGrok Lite',
+        monthlyPricePerSeat: 10,
+      },
+      {
+        id: 'supergrok',
+        label: 'SuperGrok',
+        monthlyPricePerSeat: 30,
+        annualPricePerSeat: 25,
+      },
+      {
+        id: 'supergrok_plus',
+        label: 'SuperGrok Plus',
+        monthlyPricePerSeat: 100,
+      },
+      {
+        id: 'supergrok_heavy',
+        label: 'SuperGrok Heavy',
+        monthlyPricePerSeat: 300,
+      },
+      {
+        id: 'x_premium',
+        label: 'X Premium (Includes Grok)',
+        monthlyPricePerSeat: 8,
+        annualPricePerSeat: 7,
+      },
+      {
+        id: 'x_premium_plus',
+        label: 'X Premium+ (Includes Grok)',
+        monthlyPricePerSeat: 40,
+        annualPricePerSeat: 35,
+      },
+      {
+        id: 'api',
+        label: 'xAI API (Pay As You Go)',
+        monthlyPricePerSeat: 0,
+        isPayPerUse: true,
+      },
+    ],
+    alternatives: [
+      {
+        toolId: 'claude',
+        toolName: 'Claude',
+        reason: 'For deep reasoning, document analysis, and coding, Claude Pro ($20/mo) provides high context efficiency.',
+        estimatedSaving: '$10/mo savings compared to SuperGrok ($30/mo)',
+      },
+      {
+        toolId: 'perplexity',
+        toolName: 'Perplexity',
+        reason: 'For multi-engine web research and citation-rich search, Perplexity Pro ($20/mo) offers unified search capabilities.',
+        estimatedSaving: '$10/mo savings compared to SuperGrok ($30/mo)',
+      },
+    ],
+  },
+
+  // ──────────────────────────────────────────────
+  // GLM (Z.AI)
+  // Source: https://z.ai/pricing & https://z.ai/subscribe
+  // ──────────────────────────────────────────────
+  {
+    id: 'glm',
+    name: 'GLM (Z.ai)',
+    category: 'ide',
+    useCases: ['coding'],
+    pricingUrl: 'https://z.ai/subscribe',
+    pricingVerifiedDate: '2026-09-09',
+    plans: [
+      { id: 'lite', label: 'GLM Coding Lite', monthlyPricePerSeat: 18, annualPricePerSeat: 12.60 },
+      { id: 'pro', label: 'GLM Coding Pro', monthlyPricePerSeat: 80, annualPricePerSeat: 56.00 },
+      { id: 'max', label: 'GLM Coding Max', monthlyPricePerSeat: 168, annualPricePerSeat: 117.60 },
+      { id: 'enterprise', label: 'Z.ai Enterprise', monthlyPricePerSeat: 0, isPayPerUse: true },
+      { id: 'api', label: 'Z.ai Model API', monthlyPricePerSeat: 0, isPayPerUse: true },
+    ],
+    alternatives: [
+      {
+        toolId: 'cursor',
+        toolName: 'Cursor',
+        reason: 'Cursor Pro ($20/user/mo) offers native IDE coding with frontier models.',
+        estimatedSaving: '~$60/user/mo savings compared to GLM Coding Pro ($80/mo)',
+      },
+      {
+        toolId: 'windsurf',
+        toolName: 'Windsurf',
+        reason: 'Windsurf Pro ($15/user/mo) offers low-latency flow-based AI coding.',
+        estimatedSaving: '~$3/user/mo savings compared to GLM Coding Lite ($18/mo)',
+      },
+      {
+        toolId: 'antigravity',
+        toolName: 'Google Antigravity',
+        reason: 'Google Antigravity Pro ($20/user/mo) offers multi-file autonomous agentic coding.',
+        estimatedSaving: '~$60/user/mo savings compared to GLM Coding Pro ($80/mo)',
       },
     ],
   }

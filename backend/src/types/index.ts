@@ -3,6 +3,7 @@
 // ============================================================
 
 export type ToolId =
+  | 'antigravity'
   | 'cursor'
   | 'github-copilot'
   | 'claude'
@@ -13,9 +14,11 @@ export type ToolId =
   | 'windsurf'
   | 'perplexity'
   | 'deepseek'
+  | 'grok'
   | 'codex'
   | 'github-models'
   | 'kimi'
+  | 'glm'
   | 'all-stack-tools';
 
 export type UseCase = 'coding' | 'writing' | 'data' | 'research' | 'mixed';

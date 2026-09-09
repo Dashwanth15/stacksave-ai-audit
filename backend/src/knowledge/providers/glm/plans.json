@@ -1,0 +1,158 @@
+{
+  "providerId": "glm",
+  "pricing": {
+    "lite": 18,
+    "pro": 80,
+    "max": 168,
+    "enterprise": 0,
+    "api": 0
+  },
+  "annualDiscountPercent": 30,
+  "plans": [
+    {
+      "id": "lite",
+      "label": "GLM Coding Lite",
+      "monthlyPricePerSeat": 18,
+      "annualPricePerSeat": 12.60,
+      "annualDiscountPercent": 30,
+      "planSurface": "glm-coding",
+      "tierRank": 1,
+      "features": [
+        "2,000 credits per 5-hour rolling window",
+        "10,000 credits per 7-day weekly quota",
+        "50% credit consumption discount during off-peak hours",
+        "Access to GLM-5.3 and GLM-5.3-Flash frontier models",
+        "Universal compatibility with ZCode, Claude Code, Cline, and Roo Code",
+        "Model Context Protocol (MCP) tool integration"
+      ],
+      "premiumFeatures": []
+    },
+    {
+      "id": "pro",
+      "label": "GLM Coding Pro",
+      "monthlyPricePerSeat": 80,
+      "annualPricePerSeat": 56.00,
+      "annualDiscountPercent": 30,
+      "planSurface": "glm-coding",
+      "tierRank": 2,
+      "features": [
+        "12,000 credits per 5-hour rolling window (6x Lite allowance)",
+        "60,000 credits per 7-day weekly quota",
+        "50% credit consumption discount during off-peak hours",
+        "Priority inference queues for GLM-5.3 and GLM-5.3-Flash",
+        "Deep reasoning and long-horizon software engineering workflows",
+        "Everything in Lite"
+      ],
+      "premiumFeatures": [
+        "12,000 credits per 5h window / 60,000 weekly credits",
+        "Priority GLM-5.3 inference queues"
+      ]
+    },
+    {
+      "id": "max",
+      "label": "GLM Coding Max",
+      "monthlyPricePerSeat": 168,
+      "annualPricePerSeat": 117.60,
+      "annualDiscountPercent": 30,
+      "planSurface": "glm-coding",
+      "tierRank": 3,
+      "features": [
+        "28,000 credits per 5-hour rolling window (14x Lite allowance)",
+        "140,000 credits per 7-day weekly quota",
+        "50% credit consumption discount during off-peak hours",
+        "Maximum compute concurrency and priority queues",
+        "Ideal for continuous autonomous agent swarms and full-day agentic workflows",
+        "Everything in Pro"
+      ],
+      "premiumFeatures": [
+        "28,000 credits per 5h window / 140,000 weekly credits",
+        "Maximum compute allocation and concurrency"
+      ]
+    },
+    {
+      "id": "enterprise",
+      "label": "Z.ai Enterprise",
+      "monthlyPricePerSeat": 0,
+      "planSurface": "zai-enterprise",
+      "isPayPerUse": true,
+      "isEnterprise": true,
+      "tierRank": 4,
+      "features": [
+        "SAML 2.0 and OIDC Single Sign-On (SSO)",
+        "SCIM directory synchronization and centralized user provisioning",
+        "Role-based access control (RBAC) and organization admin console",
+        "Centralized audit logs, exportable security reports, and compliance monitoring",
+        "Dedicated VPC or on-premise private deployment options",
+        "Custom data retention and enterprise zero-training privacy SLA",
+        "Custom enterprise volume billing and dedicated support manager"
+      ],
+      "premiumFeatures": [
+        "SAML 2.0 and OIDC Single Sign-On (SSO)",
+        "SCIM user provisioning and centralized RBAC",
+        "Centralized audit logs and enterprise compliance monitoring",
+        "VPC / on-premise private deployment with zero-retention SLA"
+      ]
+    },
+    {
+      "id": "api",
+      "label": "Z.ai Model API",
+      "monthlyPricePerSeat": 0,
+      "planSurface": "zai-api",
+      "isPayPerUse": true,
+      "isEnterprise": false,
+      "tierRank": 0,
+      "features": [
+        "Direct REST and OpenAI-compatible API endpoints",
+        "GLM-5.3: $1.40/1M input, $0.26/1M cached input, $4.40/1M output tokens",
+        "GLM-5.3-Flash: $0.15/1M input, $0.03/1M cached input, $0.50/1M output tokens",
+        "1M token context window and 128K max output length",
+        "Cached input storage with low-latency prompt caching",
+        "Pure pay-as-you-go consumption billing with no monthly seat fee"
+      ],
+      "premiumFeatures": []
+    }
+  ],
+  "enterprise": {
+    "compliance": {
+      "soc2": false,
+      "gdpr": true,
+      "hipaa": false,
+      "iso27001": false
+    },
+    "security": {
+      "encryption": true,
+      "privateDeployment": true,
+      "zeroDataRetention": true
+    },
+    "administration": {
+      "rbac": true,
+      "auditLogs": true,
+      "adminConsole": true
+    },
+    "identity": {
+      "sso": true,
+      "saml": true,
+      "scim": true
+    },
+    "governance": {
+      "policyManagement": true,
+      "workspaceControls": true
+    }
+  },
+  "financialProfile": {
+    "vendorLockInRisk": "Low",
+    "scalingCost": 35,
+    "upgradeFlexibility": "High",
+    "subscriptionFlexibility": "High",
+    "maintenanceCost": "Low",
+    "enterpriseROI": "Very High",
+    "typicalCustomerSize": "1-10000",
+    "industryFit": [
+      "Software",
+      "Technology",
+      "AI Engineering",
+      "Enterprise Services",
+      "Research & Academia"
+    ]
+  }
+}

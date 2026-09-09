@@ -43,8 +43,8 @@ describe('Enterprise Audit & Decision Engine Logic — Comprehensive Regression 
     expect(primaryProfile!.securityScore).toBeGreaterThanOrEqual(70);
     expect(bestEntProfile!.securityScore).toBeGreaterThanOrEqual(70);
 
-    // In general productivity under enterprise-security, Claude or ChatGPT (verified governance / enterprise security) leads
-    expect(['chatgpt', 'claude', 'github-copilot']).toContain(bestEnt.toolId);
+    // In general productivity under enterprise-security, Claude, ChatGPT, GitHub Copilot, or Grok leads
+    expect(['chatgpt', 'claude', 'github-copilot', 'grok']).toContain(bestEnt.toolId);
   });
 
   // ── TEST B — USED PRIMARY INDEPENDENCE ──────────────────────────────────────
@@ -373,9 +373,9 @@ describe('Enterprise Audit & Decision Engine Logic — Comprehensive Regression 
     const res = AIStackRecommendationEngine.run(repairReq);
     const stack = res.categories.bestEnterprise.recommendedStack;
 
-    // Primary or companion must be upgraded to an organizational tier (e.g. Team, Business)
+    // Primary or companion must be upgraded to an organizational tier (e.g. Team, Business, Heavy, API)
     const hasOrgPlan = stack.tools.some(t =>
-      ['Team', 'Business', 'Enterprise', 'Org', 'Plus'].some(term => t.recommendedPlan.includes(term))
+      ['Team', 'Business', 'Enterprise', 'Org', 'Plus', 'Heavy', 'SuperGrok', 'API'].some(term => t.recommendedPlan.includes(term))
     );
     expect(hasOrgPlan).toBe(true);
     expect(stack.coverageResult.covered.some(c => c.featureKey === 'enterprise-governance')).toBe(true);

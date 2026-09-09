@@ -409,7 +409,7 @@ describe('End-to-End Simulation — Day 1 → Day 2 pricing change', () => {
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-// 7. ALL 13 PROVIDERS SYNC & OFFICIAL ADAPTER TESTS
+// 7. ALL 16 PROVIDERS SYNC & OFFICIAL ADAPTER TESTS
 // ────────────────────────────────────────────────────────────────────────────
 
 describe('Provider Coverage Completeness & Official Adapters', () => {
@@ -423,16 +423,17 @@ describe('Provider Coverage Completeness & Official Adapters', () => {
     'perplexity',
     'deepseek',
     'kimi',
+    'grok',
     'anthropic-api',
     'openai-api',
     'codex',
     'github-models',
   ];
 
-  it('contains exactly the 13 required providers with zero silent omissions', () => {
-    expect(EXPECTED_PROVIDERS).toHaveLength(13);
+  it('contains exactly the 14 required providers with zero silent omissions', () => {
+    expect(EXPECTED_PROVIDERS).toHaveLength(14);
     const unique = new Set(EXPECTED_PROVIDERS);
-    expect(unique.size).toBe(13);
+    expect(unique.size).toBe(14);
   });
 
   it('fetchDeepSeekPricing uses official Docusaurus HTML table strategy', async () => {
@@ -639,7 +640,7 @@ describe('Production GitHub Actions Runner & Ingestion Verification', () => {
     const { runOfficialExtraction } = await import('../scripts/official_pricing_extractor');
     const payload = await runOfficialExtraction('both');
 
-    expect(payload.providers).toHaveLength(13);
+    expect(payload.providers).toHaveLength(16);
     for (const p of payload.providers) {
       expect(p.sourceUrl).not.toContain('openrouter');
       expect(p.sourceUrl).toMatch(/^https?:\/\//);
@@ -684,7 +685,7 @@ describe('Production GitHub Actions Runner & Ingestion Verification', () => {
     const { runOfficialExtraction } = await import('../scripts/official_pricing_extractor');
     const payload = await runOfficialExtraction('pricing');
 
-    expect(payload.providers).toHaveLength(13);
+    expect(payload.providers).toHaveLength(16);
     for (const p of payload.providers) {
       expect(p.offers).toHaveLength(0);
     }

@@ -1,0 +1,73 @@
+{
+  "id": "glm",
+  "name": "GLM (Z.ai)",
+  "category": "ide",
+  "vendor": "Z.AI",
+  "vendorProfile": {
+    "vendorId": "z-ai",
+    "vendorName": "Z.AI Co., Ltd. (Zhipu AI)",
+    "establishedYear": 2019,
+    "headquarters": "Beijing, China",
+    "fundingStage": "Private",
+    "productFamily": [
+      "GLM-5.3",
+      "GLM-5.3-Flash",
+      "GLM Coding Plan",
+      "ZCode",
+      "Z.ai Model API"
+    ],
+    "stabilityRating": "High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "AI Coding & Agentic Software Engineering",
+  "secondaryRole": "ZCode ADE Desktop Client & High-Concurrency Model API",
+  "billingModels": [
+    "monthly",
+    "annual",
+    "usage-based"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "Advanced long-horizon agentic software engineering and deep reasoning with GLM-5.3",
+    "Dual-window credit quotas with 50% off-peak consumption discounts on GLM Coding Plan",
+    "Free official ZCode Agentic Development Environment (ADE) desktop client with integrated terminal, git, and live preview",
+    "1M token context window and 128K max output on flagship models"
+  ],
+  "knownWeaknesses": [
+    "Individual coding plans (Lite, Pro, Max) do not provide centralized SAML SSO or enterprise audit logs",
+    "Requires internet connectivity to Z.ai model inference endpoints",
+    "Dual-window credit caps require monitoring for bursty workflows"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Autonomous multi-file software engineering in ZCode, Claude Code, Cline, and Roo Code",
+    "Complex fullstack planning, refactoring, and automated testing",
+    "High-throughput multimodal document parsing and code generation with GLM-5.3-Flash"
+  ],
+  "typicalTeamSize": "Individual to Enterprise",
+  "supportedModels": [
+    "GLM-5.3",
+    "GLM-5.3-Flash",
+    "GLM-5.2",
+    "GLM-5"
+  ],
+  "supportedPlatforms": [
+    "ZCode (macOS, Windows, Linux)",
+    "Claude Code",
+    "Cline",
+    "Roo Code",
+    "OpenClaw",
+    "Z.ai Model API"
+  ],
+  "apiSupport": true,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-09-09",
+  "sources": [
+    "https://z.ai/pricing",
+    "https://z.ai/subscribe",
+    "https://z.ai/model-api",
+    "https://docs.z.ai",
+    "https://zcode.z.ai/en"
+  ]
+}

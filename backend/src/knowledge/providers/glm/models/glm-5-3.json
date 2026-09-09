@@ -1,0 +1,231 @@
+{
+  "modelId": "glm-5-3",
+  "name": "GLM-5.3",
+  "providerId": "glm",
+  "releaseDate": "2026-09-09",
+  "capabilities": {
+    "reasoning": {
+      "score": 9,
+      "evidence": "Frontier high-order reasoning with always-on Thinking Mode and adjustable reasoning effort levels.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "coding": {
+      "score": 9,
+      "evidence": "Autonomous software engineering, deep multi-file code editing, and full repository refactoring.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "architectureDesign": {
+      "score": 9,
+      "evidence": "Complex software system planning, multi-module scaffolding, and automated test orchestration.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "largeCodebaseUnderstanding": {
+      "score": 10,
+      "evidence": "Native 1,000,000 (1M) token context window for massive repository indexing and analysis.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "autocomplete": {
+      "score": 9,
+      "evidence": "High-accuracy code completion and inline generation across major IDE extensions and ZCode.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "aiAgent": {
+      "score": 9,
+      "evidence": "Autonomous multi-step tool execution, terminal commands, and long-horizon agentic task planning.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "multiFileEditing": {
+      "score": 9,
+      "evidence": "Concurrent multi-file editing and diff patch application across workspaces.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "terminalIntegration": {
+      "score": 9,
+      "evidence": "Integrated terminal execution in ZCode ADE, Claude Code, Cline, and Roo Code.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "planning": {
+      "score": 9,
+      "evidence": "Systematic goal-driven task planning, implementation breakdowns, and iterative execution.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "research": {
+      "score": 8,
+      "evidence": "Live web search, developer documentation lookup, and MCP web-reading tools.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "writing": {
+      "score": 8,
+      "evidence": "Technical documentation generation, commit message drafting, and PR summaries.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "longContext": {
+      "score": 10,
+      "evidence": "1,000,000 token active context window with 128,000 token maximum generation length.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "imageUnderstanding": {
+      "score": 0,
+      "evidence": "GLM-5.3 base flagship is text-only input/output; multimodal tasks route to GLM-5.3-Flash.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "vision": {
+      "score": 0,
+      "evidence": "Text-only model; visual comprehension provided by GLM-5.3-Flash.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "voice": {
+      "score": 0,
+      "evidence": "No native audio/voice processing in GLM-5.3.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "memory": {
+      "score": 8,
+      "evidence": "Long-context retention, persistent workspace rules, and MCP memory tool integration.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "customGpts": {
+      "score": 0,
+      "evidence": "Uses Model Context Protocol (MCP) servers, agent skills, and ZCode configurations.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "plugins": {
+      "score": 9,
+      "evidence": "Full Model Context Protocol (MCP) server support, VS Code extensions, and external tools.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "api": {
+      "score": 9,
+      "evidence": "OpenAI-compatible REST API endpoints, streaming responses, and prompt caching.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "embeddings": {
+      "score": 8,
+      "evidence": "Z.ai text embeddings and localized workspace indexing.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "functionCalling": {
+      "score": 10,
+      "evidence": "Standardized tool use, multi-function calling, and agent loop execution.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "enterpriseSecurity": {
+      "score": 8,
+      "evidence": "SOC 2 Type II, ISO 27001, private VPC deployments, and zero data retention agreements.",
+      "source": "https://z.ai/enterprise",
+      "lastVerified": "2026-09-09"
+    },
+    "adminControls": {
+      "score": 8,
+      "evidence": "Centralized enterprise admin console, team workspaces, and RBAC.",
+      "source": "https://z.ai/enterprise",
+      "lastVerified": "2026-09-09"
+    },
+    "sso": {
+      "score": 8,
+      "evidence": "Enterprise SAML 2.0 and OIDC single sign-on.",
+      "source": "https://z.ai/enterprise",
+      "lastVerified": "2026-09-09"
+    },
+    "ideIntegration": {
+      "score": 9,
+      "evidence": "Deep integration in ZCode ADE, Claude Code, Cline, Roo Code, and VS Code.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "jetbrainsSupport": {
+      "score": 8,
+      "evidence": "JetBrains IDE plugins and OpenAI-compatible provider configuration.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "vscodeSupport": {
+      "score": 9,
+      "evidence": "Full integration with VS Code extensions (Cline, Roo Code, Continue) and ZCode ADE.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "githubIntegration": {
+      "score": 8,
+      "evidence": "Git version control integration in ZCode and CLI agents.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "googleWorkspaceIntegration": {
+      "score": 0,
+      "evidence": "Independent developer platform.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "microsoftIntegration": {
+      "score": 0,
+      "evidence": "Independent developer platform.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "latency": {
+      "score": 8,
+      "evidence": "Fast streaming responses with speculative decoding and cached input acceleration.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "reliability": {
+      "score": 8,
+      "evidence": "High-availability global cloud infrastructure.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "offlineSupport": {
+      "score": 0,
+      "evidence": "Requires internet connectivity to Z.ai cloud inference endpoints.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    }
+  },
+  "benchmarks": {},
+  "productivityScores": {
+    "reasoning": 9,
+    "coding": 9,
+    "planning": 9,
+    "velocity": 9,
+    "developerExperience": 9,
+    "enterpriseReadiness": 8,
+    "maintainability": 9,
+    "learningCurve": "Low",
+    "migrationCost": "Low",
+    "risk": "Low"
+  },
+  "developerExperience": {
+    "reasoning": 9,
+    "coding": 9,
+    "planning": 9,
+    "velocity": 9,
+    "developerExperience": 9,
+    "enterpriseReadiness": 8,
+    "maintainability": 9,
+    "learningCurve": "Low",
+    "migrationCost": "Low",
+    "risk": "Low"
+  }
+}

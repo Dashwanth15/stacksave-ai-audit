@@ -13,6 +13,7 @@ import './AuditPage.css';
 
 
 const logoMap: Record<string, string> = {
+  'antigravity': '/logos/antigravity.svg',
   'cursor': '/logos/cursor.svg',
   'github-copilot': '/logos/copilot.svg',
   'claude': '/logos/claude.svg',
@@ -24,6 +25,8 @@ const logoMap: Record<string, string> = {
   'kimi': '/logos/kimi.svg',
   'deepseek': '/logos/deepseek.svg',
   'perplexity': '/logos/perplexity.svg',
+  'grok': '/logos/grok.svg',
+  'glm': '/logos/glm.svg',
 };
 
 

@@ -1741,6 +1741,7 @@ function PanelContent({
 // ─── Sticky Panel Header (Sophisticated Dark Premium SaaS Product Header) ──────
 
 const toolLogoMap: Record<string, string> = {
+  antigravity: '/logos/antigravity.svg',
   cursor: '/logos/cursor.svg',
   'github-copilot': '/logos/copilot.svg',
   claude: '/logos/claude.svg',
@@ -1750,6 +1751,8 @@ const toolLogoMap: Record<string, string> = {
   gemini: '/logos/gemini.svg',
   windsurf: '/logos/windsurf.svg',
   kimi: '/logos/kimi.svg',
+  grok: '/logos/grok.svg',
+  glm: '/logos/glm.svg',
 };
 
 

@@ -80,6 +80,11 @@ import kimiModel from '../../../backend/src/knowledge/providers/kimi/models/kimi
 import kimiK3Model from '../../../backend/src/knowledge/providers/kimi/models/kimi-k3.json';
 import kimiBatchModel from '../../../backend/src/knowledge/providers/kimi/models/kimi-k2-7-code-batch.json';
 
+import glmProvider from '../../../backend/src/knowledge/providers/glm/provider.json';
+import glmPlans from '../../../backend/src/knowledge/providers/glm/plans.json';
+import glmModel from '../../../backend/src/knowledge/providers/glm/models/glm-5-3.json';
+import glmFlashModel from '../../../backend/src/knowledge/providers/glm/models/glm-5-3-flash.json';
+
 export interface ProviderCapability {
   score: number;
   evidence: string;
@@ -292,6 +297,14 @@ export const providerModelCatalog: Record<string, { provider: RawProvider; plans
       { modelId: 'gpt-4o', name: 'GPT-4o', shortName: 'GPT-4o', modelObj: githubModelsGpt4oModel },
       { modelId: 'llama-3', name: 'Llama 3 70B', shortName: 'Llama 3', modelObj: githubModelsLlama3Model },
     ]
+  },
+  glm: {
+    provider: glmProvider,
+    plans: glmPlans,
+    models: [
+      { modelId: 'glm-5-3', name: 'GLM-5.3', shortName: '5.3', modelObj: glmModel },
+      { modelId: 'glm-5-3-flash', name: 'GLM-5.3-Flash', shortName: '5.3 Flash', modelObj: glmFlashModel },
+    ]
   }
 };
 
@@ -312,6 +325,7 @@ export const providerKnowledgeMap: Record<string, ProviderJSON> = {
   'openai-api': buildProviderJSON(openaiApiProvider, openaiApiPlans, openaiApiModel),
   'github-models': buildProviderJSON(githubModelsProvider, githubModelsPlans, githubModelsModel),
   kimi: buildProviderJSON(kimiProvider, kimiPlans, kimiModel),
+  glm: buildProviderJSON(glmProvider, glmPlans, glmModel),
 };
 
 export interface GlobalModelOption extends ModelOption {

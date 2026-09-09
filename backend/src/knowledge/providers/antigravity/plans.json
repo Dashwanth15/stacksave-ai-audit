@@ -1,0 +1,145 @@
+{
+  "providerId": "antigravity",
+  "pricing": {
+    "free": 0,
+    "pro": 20,
+    "ultra_100": 100,
+    "ultra_200": 200,
+    "organization": 0
+  },
+  "annualDiscountPercent": 0,
+  "plans": [
+    {
+      "id": "free",
+      "label": "Free",
+      "monthlyPricePerSeat": 0,
+      "planSurface": "antigravity-seat",
+      "tierRank": 0,
+      "features": [
+        "Individual developer workspace",
+        "Unlimited Antigravity Tab autocomplete",
+        "Standard Gemini 2.5 Flash agent requests",
+        "Basic planning and multi-file code editing"
+      ],
+      "premiumFeatures": []
+    },
+    {
+      "id": "pro",
+      "label": "Pro",
+      "monthlyPricePerSeat": 20,
+      "planSurface": "antigravity-seat",
+      "tierRank": 1,
+      "features": [
+        "Extended Gemini 2.5 Pro agent requests",
+        "Full terminal integration & subagent orchestration",
+        "Autonomous browser agent execution",
+        "Artifacts and custom agent skills"
+      ],
+      "premiumFeatures": [
+        "Extended Gemini 2.5 Pro agent requests",
+        "Autonomous browser agent execution",
+        "Artifacts and custom skills"
+      ]
+    },
+    {
+      "id": "ultra_100",
+      "label": "Ultra (Standard)",
+      "monthlyPricePerSeat": 100,
+      "planSurface": "antigravity-seat",
+      "tierRank": 2,
+      "features": [
+        "5x agent request quota allowance",
+        "Priority access to new frontier models",
+        "High-speed model inference queue",
+        "Everything in Pro"
+      ],
+      "premiumFeatures": [
+        "5x agent request allowance",
+        "Priority frontier model access"
+      ]
+    },
+    {
+      "id": "ultra_200",
+      "label": "Ultra (Maximum)",
+      "monthlyPricePerSeat": 200,
+      "planSurface": "antigravity-seat",
+      "tierRank": 3,
+      "features": [
+        "20x agent request quota allowance",
+        "Maximum compute resources & priority queues",
+        "Extended background subagent concurrency",
+        "Everything in Ultra (Standard)"
+      ],
+      "premiumFeatures": [
+        "20x agent request allowance",
+        "Maximum subagent concurrency"
+      ]
+    },
+    {
+      "id": "organization",
+      "label": "Enterprise / Organization",
+      "monthlyPricePerSeat": 0,
+      "planSurface": "google-cloud-enterprise",
+      "isPayPerUse": true,
+      "isEnterprise": true,
+      "tierRank": 4,
+      "features": [
+        "Google Cloud & Gemini Enterprise Agent Platform integration",
+        "Google Cloud IAM role-based access control (RBAC)",
+        "SAML 2.0 and OIDC Single Sign-On (SSO)",
+        "VPC Service Controls and enterprise security policy governance",
+        "Centralized audit logging and compliance dashboard",
+        "Consumption-based Google Cloud billing (Antigravity CLI & Enterprise Agent Platform)"
+      ],
+      "premiumFeatures": [
+        "Google Cloud IAM and SAML 2.0 Single Sign-On (SSO)",
+        "VPC Service Controls and enterprise security policy governance",
+        "Centralized audit logging and compliance dashboard",
+        "Consumption-based enterprise billing and pooled quotas"
+      ]
+    }
+  ],
+  "enterprise": {
+    "compliance": {
+      "soc2": true,
+      "gdpr": true,
+      "hipaa": true,
+      "iso27001": true
+    },
+    "security": {
+      "encryption": true,
+      "privateDeployment": false,
+      "zeroDataRetention": true
+    },
+    "administration": {
+      "rbac": true,
+      "auditLogs": true,
+      "adminConsole": true
+    },
+    "identity": {
+      "sso": true,
+      "saml": true,
+      "scim": true
+    },
+    "governance": {
+      "policyManagement": true,
+      "workspaceControls": true
+    }
+  },
+  "financialProfile": {
+    "vendorLockInRisk": "Low",
+    "scalingCost": 45,
+    "upgradeFlexibility": "High",
+    "subscriptionFlexibility": "High",
+    "maintenanceCost": "Low",
+    "enterpriseROI": "Very High",
+    "typicalCustomerSize": "1-10000",
+    "industryFit": [
+      "Software",
+      "Technology",
+      "Enterprise Services",
+      "Financial Services",
+      "AI Research"
+    ]
+  }
+}

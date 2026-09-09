@@ -6,8 +6,7 @@
 import { useState } from 'react';
 
 const PROVIDER_LOGO_MAP: Record<string, string> = {
-
-
+  antigravity: '/logos/antigravity.svg',
   cursor: '/logos/cursor.svg',
   'github-copilot': '/logos/copilot.svg',
   copilot: '/logos/copilot.svg',
@@ -22,11 +21,17 @@ const PROVIDER_LOGO_MAP: Record<string, string> = {
   kimi: '/logos/kimi.svg',
   deepseek: '/logos/deepseek.svg',
   perplexity: '/logos/perplexity.svg',
+  grok: '/logos/grok.svg',
+  xai: '/logos/grok.svg',
   codex: '/logos/openai.svg',
   'github-models': '/logos/copilot.svg',
+  glm: '/logos/glm.svg',
+  'z-ai': '/logos/glm.svg',
+  zcode: '/logos/glm.svg',
 };
 
 const PROVIDER_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  antigravity: { bg: 'bg-indigo-50', text: 'text-indigo-800', border: 'border-indigo-200' },
   cursor: { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200' },
   'github-copilot': { bg: 'bg-slate-100', text: 'text-slate-900', border: 'border-slate-300' },
   claude: { bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-200' },
@@ -39,8 +44,10 @@ const PROVIDER_COLORS: Record<string, { bg: string; text: string; border: string
   kimi: { bg: 'bg-purple-50', text: 'text-purple-800', border: 'border-purple-200' },
   deepseek: { bg: 'bg-sky-50', text: 'text-sky-800', border: 'border-sky-200' },
   perplexity: { bg: 'bg-cyan-50', text: 'text-cyan-800', border: 'border-cyan-200' },
+  grok: { bg: 'bg-zinc-100', text: 'text-zinc-900', border: 'border-zinc-300' },
   codex: { bg: 'bg-slate-100', text: 'text-slate-800', border: 'border-slate-200' },
   'github-models': { bg: 'bg-slate-100', text: 'text-slate-800', border: 'border-slate-200' },
+  glm: { bg: 'bg-violet-50', text: 'text-violet-800', border: 'border-violet-200' },
 };
 
 function getInitials(nameOrId: string): string {

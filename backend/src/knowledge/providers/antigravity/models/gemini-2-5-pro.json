@@ -1,0 +1,231 @@
+{
+  "modelId": "gemini-2-5-pro",
+  "name": "Gemini 2.5 Pro",
+  "providerId": "antigravity",
+  "releaseDate": "2026-09-09",
+  "capabilities": {
+    "reasoning": {
+      "score": 9,
+      "evidence": "High-order logical reasoning and automated architectural analysis powered by Gemini 2.5 Pro.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "coding": {
+      "score": 9,
+      "evidence": "Autonomous agentic coding, multi-file code editing, and full repository refactoring.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "architectureDesign": {
+      "score": 9,
+      "evidence": "System-wide software architecture planning and multi-module project scaffolding.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "largeCodebaseUnderstanding": {
+      "score": 10,
+      "evidence": "Native 1M+ token context window and deep workspace vector indexing.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "autocomplete": {
+      "score": 9,
+      "evidence": "Real-time inline tab code completions and next-action prediction.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "aiAgent": {
+      "score": 10,
+      "evidence": "Autonomous multi-step agent workflows, subagent spawning, background execution, and tool use.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "multiFileEditing": {
+      "score": 10,
+      "evidence": "Concurrent multi-file editing with atomic patch application.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "terminalIntegration": {
+      "score": 10,
+      "evidence": "Direct integrated terminal execution, build running, testing, and debugging.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "planning": {
+      "score": 10,
+      "evidence": "Interactive planning mode, implementation plan generation, and systematic execution.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "research": {
+      "score": 6,
+      "evidence": "Performs developer documentation lookups and web search via integrated agent tools.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "writing": {
+      "score": 6,
+      "evidence": "Technical documentation, pull request summaries, and walkthrough generation.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "longContext": {
+      "score": 10,
+      "evidence": "Supports up to 2 million tokens of active context for massive repositories.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "imageUnderstanding": {
+      "score": 9,
+      "evidence": "Native multimodal understanding of diagrams, UI mockups, and screenshots.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "vision": {
+      "score": 9,
+      "evidence": "Visual artifact parsing, screenshot analysis, and design-to-code translation.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "voice": {
+      "score": 0,
+      "evidence": "No native voice interface in the IDE core.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "memory": {
+      "score": 8,
+      "evidence": "Workspace rule persistence, knowledge items (KI), and conversation transcript memory.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "customGpts": {
+      "score": 0,
+      "evidence": "Uses Skills, Rules, and Subagents instead of Custom GPTs.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "plugins": {
+      "score": 9,
+      "evidence": "Extensive extension ecosystem, custom skills, hooks, and MCP server integrations.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "api": {
+      "score": 8,
+      "evidence": "Antigravity CLI, Python SDK, and Google Cloud Gemini API access.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "embeddings": {
+      "score": 9,
+      "evidence": "Deep codebase embeddings and localized knowledge retrieval.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "functionCalling": {
+      "score": 10,
+      "evidence": "Extensive tool calling suite including file edits, terminal commands, subagents, and web search.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "enterpriseSecurity": {
+      "score": 9,
+      "evidence": "Google Cloud security perimeter, VPC Service Controls, SOC 2 Type II, and ISO 27001.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "adminControls": {
+      "score": 8,
+      "evidence": "Google Cloud IAM centralized access policies and enterprise admin console.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "sso": {
+      "score": 9,
+      "evidence": "Google Cloud IAM, SAML 2.0, and OIDC Single Sign-On.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "ideIntegration": {
+      "score": 10,
+      "evidence": "Native purpose-built AI IDE editor environment.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "jetbrainsSupport": {
+      "score": 0,
+      "evidence": "Dedicated Antigravity IDE and VS Code extension architecture.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "vscodeSupport": {
+      "score": 9,
+      "evidence": "Full compatibility with VS Code ecosystem, extensions, and keybindings.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "githubIntegration": {
+      "score": 9,
+      "evidence": "Git version control integration, branch diffing, and PR workflow automation.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "googleWorkspaceIntegration": {
+      "score": 6,
+      "evidence": "Optional Google ecosystem integration.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "microsoftIntegration": {
+      "score": 0,
+      "evidence": "Independent of Microsoft 365.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "latency": {
+      "score": 8,
+      "evidence": "Low-latency streaming responses and fast speculative completions.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "reliability": {
+      "score": 9,
+      "evidence": "High availability backed by Google global infrastructure.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    },
+    "offlineSupport": {
+      "score": 0,
+      "evidence": "Requires cloud connection for frontier model inference.",
+      "source": "https://antigravity.google/features",
+      "lastVerified": "2026-09-09"
+    }
+  },
+  "benchmarks": {},
+  "productivityScores": {
+    "reasoning": 9,
+    "coding": 9,
+    "planning": 10,
+    "velocity": 9,
+    "developerExperience": 10,
+    "enterpriseReadiness": 9,
+    "maintainability": 9,
+    "learningCurve": "Low",
+    "migrationCost": "Low",
+    "risk": "Low"
+  },
+  "developerExperience": {
+    "reasoning": 9,
+    "coding": 9,
+    "planning": 10,
+    "velocity": 9,
+    "developerExperience": 10,
+    "enterpriseReadiness": 9,
+    "maintainability": 9,
+    "learningCurve": "Low",
+    "migrationCost": "Low",
+    "risk": "Low"
+  }
+}

@@ -1,0 +1,231 @@
+{
+  "modelId": "glm-5-3-flash",
+  "name": "GLM-5.3-Flash",
+  "providerId": "glm",
+  "releaseDate": "2026-09-09",
+  "capabilities": {
+    "reasoning": {
+      "score": 8,
+      "evidence": "High-speed reasoning and code planning powered by hybrid sparse-linear attention architecture.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "coding": {
+      "score": 8,
+      "evidence": "Rapid code generation, unit test drafting, and high-frequency code completions.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "architectureDesign": {
+      "score": 8,
+      "evidence": "Fast modular software scaffolding and technical specification parsing.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "largeCodebaseUnderstanding": {
+      "score": 9,
+      "evidence": "1,000,000 (1M) token context window with low KV cache compute overhead.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "autocomplete": {
+      "score": 9,
+      "evidence": "Ultra-low-latency code completions for inline editor suggestions.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "aiAgent": {
+      "score": 8,
+      "evidence": "High-throughput subagent execution, fast file operations, and tool calling.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "multiFileEditing": {
+      "score": 8,
+      "evidence": "Concurrent multi-file patching and code transformation.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "terminalIntegration": {
+      "score": 8,
+      "evidence": "Direct terminal command execution in ZCode and CLI agents.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "planning": {
+      "score": 8,
+      "evidence": "Fast task breakdown and execution roadmap creation.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "research": {
+      "score": 8,
+      "evidence": "Multimodal research, reading PDFs, diagrams, and web sources.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "writing": {
+      "score": 8,
+      "evidence": "Fast technical documentation, README generation, and pull request notes.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "longContext": {
+      "score": 10,
+      "evidence": "1,000,000 token active context window with 128,000 token maximum generation length.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "imageUnderstanding": {
+      "score": 9,
+      "evidence": "Native multimodal understanding of architecture diagrams, UI mockups, charts, and screenshots.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "vision": {
+      "score": 9,
+      "evidence": "Visual comprehension, image and video input parsing, and design-to-code extraction.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "voice": {
+      "score": 0,
+      "evidence": "No native audio/voice processing in GLM-5.3-Flash.",
+      "source": "https://docs.z.ai/guides/llm/glm-5",
+      "lastVerified": "2026-09-09"
+    },
+    "memory": {
+      "score": 8,
+      "evidence": "Long-context retention and persistent workspace state.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "customGpts": {
+      "score": 0,
+      "evidence": "Uses Model Context Protocol (MCP) servers and agent skills.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "plugins": {
+      "score": 8,
+      "evidence": "Model Context Protocol (MCP) server support and tool calling integrations.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "api": {
+      "score": 9,
+      "evidence": "Highly economical API endpoint ($0.15/1M input, $0.50/1M output tokens).",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "embeddings": {
+      "score": 8,
+      "evidence": "Z.ai text embeddings and localized workspace retrieval.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "functionCalling": {
+      "score": 9,
+      "evidence": "Fast structured tool use, JSON output mode, and function calling.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "enterpriseSecurity": {
+      "score": 8,
+      "evidence": "SOC 2 Type II, ISO 27001, private VPC deployments, and zero data retention agreements.",
+      "source": "https://z.ai/enterprise",
+      "lastVerified": "2026-09-09"
+    },
+    "adminControls": {
+      "score": 8,
+      "evidence": "Centralized enterprise admin console and access controls.",
+      "source": "https://z.ai/enterprise",
+      "lastVerified": "2026-09-09"
+    },
+    "sso": {
+      "score": 8,
+      "evidence": "Enterprise SAML 2.0 and OIDC single sign-on.",
+      "source": "https://z.ai/enterprise",
+      "lastVerified": "2026-09-09"
+    },
+    "ideIntegration": {
+      "score": 9,
+      "evidence": "Deep integration in ZCode ADE, Claude Code, Cline, and Roo Code.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "jetbrainsSupport": {
+      "score": 8,
+      "evidence": "JetBrains IDE plugins and OpenAI-compatible configuration.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "vscodeSupport": {
+      "score": 9,
+      "evidence": "Full integration with VS Code extensions and ZCode ADE.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "githubIntegration": {
+      "score": 8,
+      "evidence": "Git version control integration in ZCode and CLI agents.",
+      "source": "https://zcode.z.ai/en",
+      "lastVerified": "2026-09-09"
+    },
+    "googleWorkspaceIntegration": {
+      "score": 0,
+      "evidence": "Independent developer platform.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "microsoftIntegration": {
+      "score": 0,
+      "evidence": "Independent developer platform.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "latency": {
+      "score": 10,
+      "evidence": "Ultra-low latency streaming with optimized linear attention kernels.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "reliability": {
+      "score": 8,
+      "evidence": "High-availability global cloud infrastructure.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    },
+    "offlineSupport": {
+      "score": 0,
+      "evidence": "Requires internet connectivity to Z.ai cloud inference endpoints.",
+      "source": "https://docs.z.ai",
+      "lastVerified": "2026-09-09"
+    }
+  },
+  "benchmarks": {},
+  "productivityScores": {
+    "reasoning": 8,
+    "coding": 8,
+    "planning": 8,
+    "velocity": 10,
+    "developerExperience": 9,
+    "enterpriseReadiness": 8,
+    "maintainability": 8,
+    "learningCurve": "Low",
+    "migrationCost": "Low",
+    "risk": "Low"
+  },
+  "developerExperience": {
+    "reasoning": 8,
+    "coding": 8,
+    "planning": 8,
+    "velocity": 10,
+    "developerExperience": 9,
+    "enterpriseReadiness": 8,
+    "maintainability": 8,
+    "learningCurve": "Low",
+    "migrationCost": "Low",
+    "risk": "Low"
+  }
+}

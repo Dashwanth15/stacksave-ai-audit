@@ -8,6 +8,69 @@ import type { ToolInfo } from '../types';
 
 export const TOOLS: ToolInfo[] = [
   // ──────────────────────────────────────────────
+  // GOOGLE ANTIGRAVITY — https://antigravity.google/pricing
+  // ──────────────────────────────────────────────
+  {
+    id: 'antigravity',
+    name: 'Google Antigravity',
+    icon: '🚀',
+    category: 'AI IDE',
+    description: 'AI-first developer IDE with autonomous multi-file agentic coding, terminal execution & Google DeepMind intelligence',
+    defaultPlan: 'pro',
+    plans: [
+      {
+        id: 'free',
+        label: 'Free',
+        tagline: 'Individual developer workspace',
+        monthlyPricePerSeat: 0,
+        billingType: 'per-seat',
+        features: ['Unlimited Antigravity Tab autocomplete', 'Standard Gemini 2.5 Flash agent requests', 'Basic planning and multi-file code editing'],
+      },
+      {
+        id: 'pro',
+        label: 'Pro',
+        tagline: 'Solo developer extended quota',
+        monthlyPricePerSeat: 20,
+        billingType: 'per-seat',
+        features: ['Extended Gemini 2.5 Pro agent requests', 'Full terminal integration & subagent orchestration', 'Autonomous browser agent execution', 'Artifacts and custom agent skills'],
+      },
+      {
+        id: 'ultra_100',
+        label: 'Ultra (Standard)',
+        tagline: '5x developer quota allowance',
+        monthlyPricePerSeat: 100,
+        billingType: 'per-seat',
+        features: ['5x agent request quota allowance', 'Priority access to new frontier models', 'High-speed model inference queue', 'Everything in Pro'],
+      },
+      {
+        id: 'ultra_200',
+        label: 'Ultra (Maximum)',
+        tagline: '20x power user developer quota',
+        monthlyPricePerSeat: 200,
+        billingType: 'per-seat',
+        features: ['20x agent request quota allowance', 'Maximum compute resources & priority queues', 'Extended background subagent concurrency', 'Everything in Ultra (Standard)'],
+      },
+      {
+        id: 'organization',
+        label: 'Enterprise / Organization',
+        tagline: 'Google Cloud Gemini Enterprise Agent Platform',
+        monthlyPricePerSeat: 0,
+        billingType: 'custom',
+        isPayPerUse: true,
+        isEnterprise: true,
+        features: [
+          'Google Cloud & Gemini Enterprise Agent Platform integration',
+          'Google Cloud IAM role-based access control (RBAC)',
+          'SAML 2.0 and OIDC Single Sign-On (SSO)',
+          'VPC Service Controls and enterprise security policy governance',
+          'Centralized audit logging and compliance dashboard',
+          'Consumption-based Google Cloud billing and pooled enterprise quotas',
+        ],
+      },
+    ],
+  },
+
+  // ──────────────────────────────────────────────
   // CURSOR — https://cursor.com/pricing
   // ──────────────────────────────────────────────
   {
@@ -641,6 +704,178 @@ export const TOOLS: ToolInfo[] = [
         isPayPerUse: true,
         isEnterprise: true,
         features: ['Custom enterprise configuration', 'Dedicated security & compliance', 'Volume pricing & custom domain'],
+      },
+    ],
+  },
+
+  // ──────────────────────────────────────────────
+  // GROK — https://docs.x.ai
+  // Verified from backend/src/knowledge/providers/grok/plans.json
+  // ──────────────────────────────────────────────
+  {
+    id: 'grok',
+    name: 'Grok',
+    icon: '⚡',
+    category: 'AI Chat',
+    description: 'xAI\'s flagship reasoning and search models — standalone SuperGrok, X Premium bundles & API',
+    defaultPlan: 'supergrok',
+    plans: [
+      {
+        id: 'free',
+        label: 'Free',
+        tagline: 'Basic Grok access',
+        monthlyPricePerSeat: 0,
+        billingType: 'per-seat',
+        features: ['Limited Grok web queries', 'Basic search assistance', 'Standard speed'],
+      },
+      {
+        id: 'supergrok_lite',
+        label: 'SuperGrok Lite',
+        tagline: 'Light standalone access',
+        monthlyPricePerSeat: 10,
+        billingType: 'per-seat',
+        features: ['Increased daily Grok quota', 'Faster response times', 'Enhanced search integration'],
+      },
+      {
+        id: 'supergrok',
+        label: 'SuperGrok',
+        tagline: 'Full standalone subscription',
+        monthlyPricePerSeat: 30,
+        annualPrice: 25,
+        billingType: 'per-seat',
+        features: ['Unrestricted Grok 3 & Grok 4 access', 'DeepSearch & real-time live data', 'High-priority image generation & coding'],
+      },
+      {
+        id: 'supergrok_plus',
+        label: 'SuperGrok Plus',
+        tagline: 'Heavy usage tier',
+        monthlyPricePerSeat: 100,
+        billingType: 'per-seat',
+        features: ['Higher rate limits & priority execution', 'Advanced reasoning context', 'Power user capabilities'],
+      },
+      {
+        id: 'supergrok_heavy',
+        label: 'SuperGrok Heavy',
+        tagline: 'Maximum power tier',
+        monthlyPricePerSeat: 300,
+        billingType: 'per-seat',
+        features: ['Highest quota across all Grok models', 'Dedicated compute pool access', 'Instant priority queues'],
+      },
+      {
+        id: 'x_premium',
+        label: 'X Premium (Includes Grok)',
+        tagline: 'X Platform Bundle',
+        monthlyPricePerSeat: 8,
+        annualPrice: 7,
+        billingType: 'per-seat',
+        features: ['Grok access included', 'X Verified Blue Checkmark', 'Edit Posts & 50% Ads reduction'],
+      },
+      {
+        id: 'x_premium_plus',
+        label: 'X Premium+ (Includes Grok)',
+        tagline: 'X Platform Premium Bundle',
+        monthlyPricePerSeat: 40,
+        annualPrice: 35,
+        billingType: 'per-seat',
+        features: ['Highest Grok limits on X', 'Zero Ads in For You', 'Creator Subscriptions & Articles'],
+      },
+      {
+        id: 'api',
+        label: 'xAI API (Pay As You Go)',
+        tagline: 'Developer API access',
+        monthlyPricePerSeat: 0,
+        billingType: 'usage-based',
+        isPayPerUse: true,
+        features: ['Grok 3: $2/M input, $10/M output', 'Function calling & vision support', 'Pay as you go'],
+      },
+    ],
+  },
+
+  // ──────────────────────────────────────────────
+  // GLM (Z.AI) — https://z.ai/pricing & https://z.ai/subscribe
+  // ──────────────────────────────────────────────
+  {
+    id: 'glm',
+    name: 'GLM (Z.ai)',
+    icon: '🧠',
+    category: 'AI Coding',
+    description: 'GLM Coding Plan subscription for autonomous AI software engineering via ZCode ADE, Claude Code, Cline, and other coding agents. Powered by frontier GLM-5.3 and GLM-5.3-Flash models with 1M token context.',
+    defaultPlan: 'lite',
+    plans: [
+      {
+        id: 'lite',
+        label: 'GLM Coding Lite',
+        tagline: 'Individual developer entry tier',
+        monthlyPricePerSeat: 18,
+        annualPrice: 12.60,
+        billingType: 'per-seat',
+        features: [
+          '2,000 credits per 5-hour rolling window',
+          '10,000 credits per 7-day weekly quota',
+          '50% off-peak credit consumption discount',
+          'GLM-5.3 and GLM-5.3-Flash access',
+          'Compatible with ZCode, Claude Code, Cline, Roo Code',
+        ],
+      },
+      {
+        id: 'pro',
+        label: 'GLM Coding Pro',
+        tagline: 'Professional developer workloads',
+        monthlyPricePerSeat: 80,
+        annualPrice: 56.00,
+        billingType: 'per-seat',
+        features: [
+          '12,000 credits per 5-hour rolling window (6x Lite)',
+          '60,000 credits per 7-day weekly quota',
+          '50% off-peak credit consumption discount',
+          'Priority GLM-5.3 and GLM-5.3-Flash inference queues',
+          'Everything in Lite',
+        ],
+      },
+      {
+        id: 'max',
+        label: 'GLM Coding Max',
+        tagline: 'Maximum compute for heavy agentic use',
+        monthlyPricePerSeat: 168,
+        annualPrice: 117.60,
+        billingType: 'per-seat',
+        features: [
+          '28,000 credits per 5-hour rolling window (14x Lite)',
+          '140,000 credits per 7-day weekly quota',
+          '50% off-peak credit consumption discount',
+          'Maximum compute concurrency and priority queues',
+          'Everything in Pro',
+        ],
+      },
+      {
+        id: 'enterprise',
+        label: 'Z.ai Enterprise',
+        tagline: 'Custom contract, VPC, SSO & compliance',
+        monthlyPricePerSeat: 0,
+        billingType: 'custom',
+        isPayPerUse: true,
+        isEnterprise: true,
+        features: [
+          'SAML 2.0 / OIDC Single Sign-On (SSO)',
+          'Centralized RBAC admin console and audit logs',
+          'VPC / on-premise private deployment',
+          'Enterprise SLA, zero data retention, custom volume billing',
+        ],
+      },
+      {
+        id: 'api',
+        label: 'Z.ai Model API',
+        tagline: 'Pay-as-you-go token API',
+        monthlyPricePerSeat: 0,
+        billingType: 'usage-based',
+        isPayPerUse: true,
+        features: [
+          'GLM-5.3: $1.40/1M input, $4.40/1M output',
+          'GLM-5.3-Flash: $0.15/1M input, $0.50/1M output',
+          '1M token context window, 128K max output',
+          'OpenAI-compatible REST API',
+          'Prompt caching with cached-input pricing',
+        ],
       },
     ],
   },

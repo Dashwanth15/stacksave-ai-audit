@@ -1,0 +1,60 @@
+{
+  "id": "grok",
+  "name": "Grok",
+  "category": "chat",
+  "vendor": "xAI",
+  "vendorProfile": {
+    "vendorId": "xai",
+    "vendorName": "xAI",
+    "establishedYear": 2023,
+    "headquarters": "Palo Alto, CA",
+    "fundingStage": "Private",
+    "productFamily": [
+      "grok"
+    ],
+    "stabilityRating": "High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "Real-time AI Chat & Reasoning",
+  "secondaryRole": "Real-time Social & Web Intelligence",
+  "billingModels": [
+    "monthly",
+    "annual",
+    "usage-based"
+  ],
+  "enterpriseAvailability": true,
+  "knownStrengths": [
+    "Real-time X platform data grounding",
+    "High-speed multimodal reasoning and Think Mode",
+    "OpenAI SDK compatible REST API"
+  ],
+  "knownWeaknesses": [
+    "No native IDE integration",
+    "X platform bundling can complicate procurement"
+  ],
+  "limitations": [],
+  "bestUseCases": [
+    "Real-time news and market sentiment analysis",
+    "Deep technical reasoning with Think Mode",
+    "OpenAI-compatible API inference"
+  ],
+  "typicalTeamSize": "Any",
+  "supportedModels": [
+    "Grok 4.6",
+    "Grok 4.5",
+    "Grok 4.3",
+    "Grok 3"
+  ],
+  "supportedPlatforms": [
+    "None"
+  ],
+  "apiSupport": true,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-09-08",
+  "sources": [
+    "https://grok.com",
+    "https://docs.x.ai",
+    "https://x.com/i/premium_sign_up"
+  ]
+}
