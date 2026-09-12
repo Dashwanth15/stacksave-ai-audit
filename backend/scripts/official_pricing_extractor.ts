@@ -3279,7 +3279,7 @@ export async function main() {
   const payload = await runOfficialExtraction(syncTarget);
 
   console.log('\n========================================================================================================================');
-  console.log('OFFICIAL MULTI-PAGE SOURCE EXTRACTION SUMMARY (ALL 14 PROVIDERS)');
+  console.log(`OFFICIAL MULTI-PAGE SOURCE EXTRACTION SUMMARY (${payload.providers.length} PROVIDERS)`);
   console.log('========================================================================================================================');
   console.log(
     'Provider'.padEnd(16) +
