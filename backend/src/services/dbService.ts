@@ -332,6 +332,27 @@ export interface NotificationEventDocument extends Document {
   lastSeenAt?: Date;         // Alias/backward-compat for lastConfirmedAt
   consecutiveMisses?: number;// Count of consecutive verified scans where offer was absent
   isPublic?: boolean;         // False/absent records are quarantined from public API
+  
+  providerOfficialUrl?: string; // Official root/pricing URL of the underlying AI provider
+  sourceDomain?: string;     // Root domain of the offer source (e.g. jio.com, airtel.in)
+  // ── Partner AI Offer Specific Fields ─────────────────────────
+  partner?: string;          // e.g. "Jio", "Airtel", "Samsung"
+  partnerType?: string;      // e.g. "telecom", "devices", "broadband", "banking", etc.
+  aiProvider?: string;       // e.g. "gemini", "perplexity", "claude", "chatgpt"
+  aiPlan?: string;           // e.g. "Google AI Pro", "Perplexity Pro"
+  offerType?: string;        // e.g. "TELECOM_BUNDLE", "DEVICE_BUNDLE", "FREE_SUBSCRIPTION"
+  benefit?: string;          // e.g. "18 Months FREE"
+  duration?: string;         // e.g. "18 months", "12 months"
+  value?: string | number;   // e.g. "$360 value"
+  eligibility?: string;      // e.g. "Eligible Jio 5G users"
+  activationMethod?: string; // e.g. "MyJio App activation"
+  country?: string;          // e.g. "IN", "US", "GLOBAL"
+  region?: string;           // e.g. "India", "Global", "North America"
+  startsAt?: Date;
+  termsUrl?: string;
+  sourceType?: string;       // 'official' | 'partner'
+  status?: string;           // 'ACTIVE' | 'EXPIRED' | 'UPCOMING'
+  lastCheckedAt?: Date;
 }
 
 const NotificationEventSchema = new Schema<NotificationEventDocument>(
@@ -344,6 +365,8 @@ const NotificationEventSchema = new Schema<NotificationEventDocument>(
     title:           { type: String, required: true },
     description:     { type: String, required: true },
     sourceUrl:       { type: String, required: true },
+    sourceDomain:    { type: String, index: true },
+    providerOfficialUrl: { type: String },
     evidenceText:    { type: String },
     detectionMethod: { type: String },
     sourceStatus:    { type: String },
@@ -358,15 +381,30 @@ const NotificationEventSchema = new Schema<NotificationEventDocument>(
     discount:        { type: String },
     discountType:    { type: String },
     // ── Offer Lifecycle Fields ────────────────────────────────────
-    // isActive defaults to true. Set to false when the offer is no longer
-    // detected on the provider's page after the grace period (2 verified scans or 48h).
-    // Existing documents without this field are treated as active
-    // (isActive: { $ne: false } in queries — safe backward-compat pattern).
     isActive:          { type: Boolean, default: true },
     lastConfirmedAt:   { type: Date },
     lastSeenAt:        { type: Date },
     consecutiveMisses: { type: Number, default: 0 },
     isPublic:          { type: Boolean, default: false },
+
+    // ── Partner AI Offer Specific Fields ─────────────────────────
+    partner:           { type: String, index: true },
+    partnerType:       { type: String },
+    aiProvider:        { type: String, index: true },
+    aiPlan:            { type: String },
+    offerType:         { type: String },
+    benefit:           { type: String },
+    duration:          { type: String },
+    value:             { type: Schema.Types.Mixed },
+    eligibility:       { type: String },
+    activationMethod:  { type: String },
+    country:           { type: String },
+    region:            { type: String },
+    startsAt:          { type: Date },
+    termsUrl:          { type: String },
+    sourceType:        { type: String, default: 'official' },
+    status:            { type: String, default: 'ACTIVE' },
+    lastCheckedAt:     { type: Date },
   },
   { timestamps: false }
 );

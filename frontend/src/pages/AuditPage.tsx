@@ -27,6 +27,7 @@ const logoMap: Record<string, string> = {
   'perplexity': '/logos/perplexity.svg',
   'grok': '/logos/grok.svg',
   'glm': '/logos/glm.svg',
+  'muse': '/logos/meta.svg',
 };
 
 
@@ -708,6 +709,10 @@ export default function AuditPage() {
                       const isPayPerUse = currentPlan?.isPayPerUse;
                       const isEnterprise = currentPlan?.isEnterprise;
                       const billingType = currentPlan?.billingType || 'per-seat';
+                      // Muse-specific badge: override per-seat label for API/free plans
+                      const billingBadgeLabel = entry.toolId === 'muse'
+                        ? (isPayPerUse ? 'usage-based' : 'free')
+                        : billingType;
                       const minSeats = currentPlan?.minSeats;
                       const logoSrc = logoMap[entry.toolId];
 
@@ -755,7 +760,7 @@ export default function AuditPage() {
                                 border: '1px solid var(--color-border)',
                               }}
                             >
-                              {billingType}
+                              {billingBadgeLabel}
                             </span>
                           </div>
 

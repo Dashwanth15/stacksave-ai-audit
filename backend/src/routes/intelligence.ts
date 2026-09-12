@@ -7,7 +7,9 @@ import { ToolEntry, UseCase } from '../types';
 import { AIStackIntelligenceService } from '../audit-engine/services/AIStackIntelligenceService';
 import { PricingSourceModel, NotificationEventModel, SyncLogModel } from '../services/dbService';
 import { PricingOverlayService } from '../pricing/pricingOverlay';
-import { isRegisteredOfficialSource } from '../pricing/offerTrust';
+import { isRegisteredOfficialSource, canPublishOffer } from '../pricing/offerTrust';
+import { PlatformRankingEngine, RankingCategory } from '../audit-engine/services/PlatformRankingEngine';
+import { ProviderDiscoveryService } from '../pricing/providerDiscoveryService';
 
 const router = Router();
 
@@ -315,12 +317,18 @@ router.get('/offers/diagnostic', requireAdminSecret, async (_req: Request, res: 
 });
 
 // ── GET /api/intelligence/offers ─────────────────────────────
-// PUBLIC (no auth required) — read-only recent new public offers.
-// Returns only genuinely new offers (deduped by fingerprint in DB).
-// Ordered by detectedAt desc, limited to last 20.
+// PUBLIC (no auth required) — all verified active public offers.
+// Returns ALL qualifying offers across all validated providers.
+// Sorted by offerOpportunityScore DESC (strongest offers first).
 //
-// IMPORTANT: These are official public promotions only.
-// Account-specific or private offers are never included.
+// offerOpportunityScore formula:
+//   platformScore   * 0.30  — quality of the AI platform itself
+//   offerValue      * 0.25  — magnitude of the offer benefit
+//   freshness       * 0.15  — recency of last confirmed verification
+//   eligibility     * 0.15  — breadth of who can access it
+//   partnerStrength * 0.10  — weight of the non-AI partner (0 if no partner)
+//   evidenceConf    * 0.05  — quality of detection method
+//   × offerTypeWeight       — normalises by offer category importance
 //
 // Response shape:
 //   { success: true, data: { offers: PublicOffer[], count: number } }
@@ -332,42 +340,165 @@ router.get('/offers', async (_req: Request, res: Response) => {
       isPublic: true,
     })
       .sort({ detectedAt: -1 })
-      .select('providerId providerName title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive isPublic lastSeenAt lastConfirmedAt')
+      .select('providerId providerName title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive isPublic lastSeenAt lastConfirmedAt partner partnerType aiProvider aiPlan offerType benefit duration value eligibility activationMethod country region termsUrl sourceType status')
       .lean();
 
-    const offers = events.filter((e) => (
-      e.isPublic === true &&
-      Boolean(e.evidenceText?.trim()) &&
-      isRegisteredOfficialSource(e.providerId, e.sourceUrl)
-    )).map((e) => ({
-      id: e.fingerprint || (e as { _id?: unknown })._id?.toString() || `${e.providerId}-${e.title}`,
-      fingerprint: e.fingerprint,
-      providerId: e.providerId,
-      providerName: e.providerName || e.providerId,
-      title: e.title,
-      description: e.description || null,
-      discount: e.discount || null,
-      discountType: e.discountType || null,
-      evidenceText: e.evidenceText || null,
-      detectionMethod: e.detectionMethod || 'PLAYWRIGHT_DOM',
-      sourceStatus: e.sourceStatus,
-      sourceUrl: e.sourceUrl,
-      sourceFetchedAt: e.sourceFetchedAt,
-      lastSuccessfulCheckAt: e.lastSuccessfulCheckAt,
-      evidenceLocation: e.evidenceLocation,
-      contentHash: e.contentHash,
-      extractorVersion: e.extractorVersion,
-      detectedAt: e.detectedAt,
-      lastConfirmedAt: e.lastConfirmedAt,
-      expiresAt: e.expiresAt || null,
-    }));
+    // ── offerTypeWeight map ──────────────────────────────────────
+    const OFFER_TYPE_WEIGHT: Record<string, number> = {
+      partner:    1.00,   // NON-AI company + AI benefit (most valuable)
+      startup:    0.90,   // Startup credit grants
+      student:    0.85,   // Student / education access
+      api:        0.80,   // API developer discounts
+      free:       0.75,   // Free access tiers / special promotions
+      trial:      0.65,   // Free trials (time-limited)
+      annual:     0.70,   // Annual billing savings
+    };
+
+    // ── Evidence confidence map ──────────────────────────────────
+    const EVIDENCE_CONF: Record<string, number> = {
+      PLAYWRIGHT_LIVE: 100,
+      PLAYWRIGHT_DOM:  90,
+      JSON_LD:         85,
+      HTML_TABLE:      80,
+      NEXTJS_EMBEDDED: 80,
+      STATIC_BASELINE: 60,
+    };
+
+    // ── Partner type strength map ────────────────────────────────
+    const PARTNER_STRENGTH: Record<string, number> = {
+      telecom:     100,
+      broadband:   100,
+      devices:     95,
+      banking:     85,
+      credit_card: 85,
+      membership:  80,
+    };
+
+    // ── Helper: derive offer category from stored fields ─────────
+    function inferOfferCategory(e: typeof events[0]): string {
+      const combined = `${e.title} ${e.description} ${e.eligibility || ''} ${e.offerType || ''}`.toLowerCase();
+      if (e.partner && e.partnerType) return 'partner';
+      if (combined.includes('startup') || combined.includes('accelerator') || combined.includes('founder') || (e.offerType || '').toUpperCase().includes('STARTUP')) return 'startup';
+      if (combined.includes('student') || combined.includes('educat') || combined.includes('teacher') || combined.includes('.edu') || (e.offerType || '').toUpperCase().includes('EDUCATION')) return 'student';
+      if (combined.includes('api') || combined.includes('batch') || combined.includes('prompt caching') || combined.includes('off-peak')) return 'api';
+      if (combined.includes('annual') || combined.includes('billed annually')) return 'annual';
+      if (combined.includes('trial') || combined.includes('preview')) return 'trial';
+      return 'free';
+    }
+
+    // ── Helper: compute offerOpportunityScore ────────────────────
+    function computeOpportunityScore(e: typeof events[0], category: string): number {
+      // platformScore from PlatformRankingEngine (0–100)
+      const platformScore = PlatformRankingEngine.getScoreForProvider(e.providerId);
+
+      // offerValue — estimate from discount text and category
+      const discountText = (e.discount || e.benefit || e.evidenceText || '').toLowerCase();
+      let offerValue = 50; // baseline
+      if (discountText.includes('100%') || discountText.includes('free for') || discountText.includes('18 month')) offerValue = 100;
+      else if (discountText.includes('12 month') || discountText.includes('1 year')) offerValue = 95;
+      else if (discountText.includes('90%')) offerValue = 90;
+      else if (discountText.includes('50%')) offerValue = 80;
+      else if (discountText.includes('free')) offerValue = 85;
+      else if (discountText.includes('25%')) offerValue = 70;
+      else if (discountText.includes('20%')) offerValue = 65;
+      else if (discountText.includes('15%') || discountText.includes('17%')) offerValue = 60;
+      if (category === 'partner') offerValue = Math.max(offerValue, 90);
+      if (category === 'startup') offerValue = Math.max(offerValue, 75);
+      if (category === 'student') offerValue = Math.max(offerValue, 70);
+
+      // freshness — decays by 3 points per day, floored at 0
+      const confirmedAt = e.lastConfirmedAt ? new Date(e.lastConfirmedAt) : new Date(e.detectedAt);
+      const daysSince = Math.max(0, (Date.now() - confirmedAt.getTime()) / 86_400_000);
+      const freshness = Math.max(0, 100 - Math.round(daysSince * 3));
+
+      // eligibilityScore — global > regional > country-specific
+      const eligText = (e.eligibility || '').toLowerCase();
+      let eligibilityScore = 100; // default global
+      if (e.country && e.country !== 'GLOBAL' && e.country !== 'US') eligibilityScore = 50;
+      else if (e.region) eligibilityScore = 75;
+
+      // partnerStrength — 0 if no partner
+      let partnerScore = 0;
+      if (e.partnerType) {
+        partnerScore = PARTNER_STRENGTH[e.partnerType.toLowerCase()] ?? 70;
+      }
+      // normalise partnerStrength weight: only 10% of score, so use 0–100 input
+      const partnerContrib = partnerScore;
+
+      // evidenceConfidence
+      const evidenceConf = EVIDENCE_CONF[e.detectionMethod || 'PLAYWRIGHT_DOM'] ?? 60;
+
+      // Weighted raw score
+      const rawScore =
+        platformScore    * 0.30 +
+        offerValue       * 0.25 +
+        freshness        * 0.15 +
+        eligibilityScore * 0.15 +
+        partnerContrib   * 0.10 +
+        evidenceConf     * 0.05;
+
+      // Apply offer type multiplier
+      const typeWeight = OFFER_TYPE_WEIGHT[category] ?? 0.70;
+      return Math.min(100, Math.round(rawScore * typeWeight));
+    }
+
+    const scoredOffers = events
+      .filter((e) => e.isPublic === true && canPublishOffer(e))
+      .map((e) => {
+        const category = inferOfferCategory(e);
+        const offerOpportunityScore = computeOpportunityScore(e, category);
+        return {
+          id: e.fingerprint || (e as { _id?: unknown })._id?.toString() || `${e.providerId}-${e.title}`,
+          fingerprint: e.fingerprint,
+          providerId: e.providerId,
+          providerName: e.providerName || e.providerId,
+          title: e.title,
+          description: e.description || null,
+          discount: e.discount || null,
+          discountType: e.discountType || null,
+          evidenceText: e.evidenceText || null,
+          detectionMethod: e.detectionMethod || 'PLAYWRIGHT_DOM',
+          sourceStatus: e.sourceStatus,
+          sourceUrl: e.sourceUrl,
+          sourceDomain: (e as any).sourceDomain || null,
+          providerOfficialUrl: (e as any).providerOfficialUrl || null,
+          sourceFetchedAt: (e as any).sourceFetchedAt,
+          lastSuccessfulCheckAt: (e as any).lastSuccessfulCheckAt,
+          evidenceLocation: (e as any).evidenceLocation,
+          contentHash: (e as any).contentHash,
+          extractorVersion: (e as any).extractorVersion,
+          detectedAt: e.detectedAt,
+          lastConfirmedAt: e.lastConfirmedAt,
+          expiresAt: e.expiresAt || null,
+          // Partner AI Offer fields
+          partner: e.partner || null,
+          partnerType: e.partnerType || null,
+          aiProvider: e.aiProvider || null,
+          aiPlan: e.aiPlan || null,
+          offerType: e.offerType || null,
+          benefit: e.benefit || null,
+          duration: e.duration || null,
+          value: e.value || null,
+          eligibility: e.eligibility || null,
+          activationMethod: e.activationMethod || null,
+          country: e.country || null,
+          region: e.region || null,
+          termsUrl: e.termsUrl || null,
+          sourceType: (e as any).sourceType || 'official',
+          status: (e as any).status || 'ACTIVE',
+          // Intelligence scoring fields
+          offerOpportunityScore,
+        };
+      })
+      // Sort by offerOpportunityScore DESC — strongest offers first
+      .sort((a, b) => b.offerOpportunityScore - a.offerOpportunityScore);
 
     return res.json({
       success: true,
       data: {
-        offers,
-        count: offers.length,
-        note: 'These are publicly available promotions from official provider sources. Account-specific offers are not included.',
+        offers: scoredOffers,
+        count: scoredOffers.length,
+        note: 'Offers sorted by offerOpportunityScore (strongest first). All verified active offers across all validated AI providers.',
       },
     });
   } catch (err) {
@@ -377,4 +508,39 @@ router.get('/offers', async (_req: Request, res: Response) => {
 });
 
 
+// ── GET /api/intelligence/platform-rankings ──────────────────
+// PUBLIC (no auth required) — Evidence-driven, multi-signal platform rankings.
+// Zero hardcoded brand bias. Supported categories:
+//   OVERALL | CODING | GENERAL_ASSISTANT | RESEARCH | WRITING | IMAGE | VIDEO | VOICE_AUDIO | AGENTS | DEVELOPER_API
+router.get('/platform-rankings', async (req: Request, res: Response) => {
+  try {
+    const rawCategory = (req.query.category as string || 'OVERALL').toUpperCase() as RankingCategory;
+    const rankings = PlatformRankingEngine.getCategoryRankings(rawCategory);
+    return res.json({ success: true, data: rankings });
+  } catch (err) {
+    console.error('GET /api/intelligence/platform-rankings error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to generate platform rankings' });
+  }
+});
+
+// ── GET /api/intelligence/discovered-providers ───────────────
+// PUBLIC (no auth required) — AI platforms discovered in the wider ecosystem
+// that are not part of the baseline core StackSave provider catalog.
+router.get('/discovered-providers', async (_req: Request, res: Response) => {
+  try {
+    const providers = ProviderDiscoveryService.getAllDiscoveredProviders();
+    return res.json({
+      success: true,
+      data: {
+        total: providers.length,
+        providers,
+      },
+    });
+  } catch (err) {
+    console.error('GET /api/intelligence/discovered-providers error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to fetch discovered providers' });
+  }
+});
+
 export default router;
+

@@ -1753,6 +1753,7 @@ const toolLogoMap: Record<string, string> = {
   kimi: '/logos/kimi.svg',
   grok: '/logos/grok.svg',
   glm: '/logos/glm.svg',
+  muse: '/logos/meta.svg',
 };
 
 

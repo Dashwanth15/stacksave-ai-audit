@@ -1,0 +1,125 @@
+{
+  "providerId": "muse",
+  "pricing": {
+    "muse-code-cli": 0,
+    "model-api-standard": 0,
+    "model-api-contributor": 0,
+    "muse-free": 0
+  },
+  "plans": [
+    {
+      "id": "muse-code-cli",
+      "label": "Muse Code CLI",
+      "monthlyPricePerSeat": 0,
+      "planSurface": "ide",
+      "tierRank": 1,
+      "isPayPerUse": false,
+      "features": [
+        "Free official terminal coding agent and developer client",
+        "Autonomous multi-file editing and repository indexing",
+        "Direct integration with Muse Spark 1.3 and Muse Spark 1.2",
+        "Zero monthly subscription fee"
+      ],
+      "premiumFeatures": []
+    },
+    {
+      "id": "model-api-standard",
+      "label": "Meta Model API (Standard)",
+      "monthlyPricePerSeat": 0,
+      "planSurface": "api",
+      "isPayPerUse": true,
+      "tierRank": 1,
+      "tokenPricing": {
+        "input": 1.25,
+        "cachedInput": 0.15,
+        "output": 4.25
+      },
+      "features": [
+        "Pay-per-use token inference for Muse Spark 1.3",
+        "Input: $1.25 / 1M tokens, Cached Input: $0.15 / 1M tokens",
+        "Output: $4.25 / 1M tokens",
+        "Standard data policy: prompts and completions are not used to train future Meta models",
+        "Pure pay-per-use consumption with no monthly seat subscription fee"
+      ],
+      "premiumFeatures": []
+    },
+    {
+      "id": "model-api-contributor",
+      "label": "Meta Model API (Contributor)",
+      "monthlyPricePerSeat": 0,
+      "planSurface": "api",
+      "isPayPerUse": true,
+      "tierRank": 0,
+      "tokenPricing": {
+        "input": 0.10,
+        "cachedInput": 0.002,
+        "output": 0.20
+      },
+      "features": [
+        "Discounted pay-per-use token inference for Muse Spark 1.3",
+        "Input: $0.10 / 1M tokens, Cached Input: $0.002 / 1M tokens",
+        "Output: $0.20 / 1M tokens",
+        "Contributor data policy: prompts and completions may be used to train future Meta models",
+        "Pure pay-per-use consumption with no monthly seat subscription fee"
+      ],
+      "premiumFeatures": []
+    },
+    {
+      "id": "muse-free",
+      "label": "Muse Personal Agent Free",
+      "monthlyPricePerSeat": 0,
+      "planSurface": "consumer",
+      "tierRank": 0,
+      "isPayPerUse": false,
+      "features": [
+        "Free web and personal AI assistant interface",
+        "General-purpose reasoning, text, vision, and planning",
+        "Powered by Muse Spark models",
+        "Zero subscription cost"
+      ],
+      "premiumFeatures": []
+    }
+  ],
+  "enterprise": {
+    "compliance": {
+      "soc2": false,
+      "gdpr": true,
+      "hipaa": false,
+      "iso27001": false
+    },
+    "security": {
+      "encryption": true,
+      "privateDeployment": false,
+      "zeroDataRetention": false
+    },
+    "administration": {
+      "rbac": false,
+      "auditLogs": false,
+      "adminConsole": false
+    },
+    "identity": {
+      "sso": false,
+      "saml": false,
+      "scim": false
+    },
+    "governance": {
+      "policyManagement": false,
+      "workspaceControls": false
+    }
+  },
+  "financialProfile": {
+    "vendorLockInRisk": "Medium",
+    "scalingCost": 20,
+    "upgradeFlexibility": "High",
+    "subscriptionFlexibility": "High",
+    "maintenanceCost": "Low",
+    "enterpriseROI": "High",
+    "typicalCustomerSize": "1-1000",
+    "industryFit": [
+      "Software",
+      "Technology",
+      "AI Engineering",
+      "Developers"
+    ]
+  }
+}

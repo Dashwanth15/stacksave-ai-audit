@@ -405,6 +405,24 @@ export async function runPricingSync(triggeredBy: string = 'api'): Promise<SyncR
     });
   }
 
+  // ── 24-Hour Partner AI Offer Discovery & Sync ────────────────
+  // Automatically runs during the scheduled daily sync cycle.
+  // Isolated in try/catch so partner scan errors NEVER break provider pricing sync.
+  try {
+    const { PartnerOfferScanner } = await import('./partnerOfferScanner');
+    PartnerOfferScanner.runFullScan()
+      .then((partnerRes) => {
+        console.log(
+          `[PricingSync] 24-hour Partner Offer scan completed: ${partnerRes.newOffersCount} created, ${partnerRes.preservedActiveCount} confirmed active, ${partnerRes.errorsCount} errors`
+        );
+      })
+      .catch((partnerErr) => {
+        console.error('[PricingSync] Non-blocking partner offer scan error:', partnerErr);
+      });
+  } catch (partnerInitErr) {
+    console.error('[PricingSync] Could not initialize PartnerOfferScanner:', partnerInitErr);
+  }
+
   return {
     syncRunId,
     startedAt,
@@ -661,6 +679,23 @@ export async function ingestOfficialExtractedPricing(
     PricingOverlayService.applyVerifiedPricing().catch((err) => {
       console.error('[PricingSync:Ingest] Post-ingest overlay failed:', err);
     });
+  }
+
+  // ── 24-Hour Partner AI Offer Discovery & Sync (Post-Ingest) ───
+  // Isolated in try/catch so partner scan errors NEVER break provider pricing sync.
+  try {
+    const { PartnerOfferScanner } = await import('./partnerOfferScanner');
+    PartnerOfferScanner.runFullScan()
+      .then((partnerRes) => {
+        console.log(
+          `[PricingSync:Ingest] 24-hour Partner Offer scan completed: ${partnerRes.newOffersCount} created, ${partnerRes.preservedActiveCount} confirmed active, ${partnerRes.errorsCount} errors`
+        );
+      })
+      .catch((partnerErr) => {
+        console.error('[PricingSync:Ingest] Non-blocking partner offer scan error:', partnerErr);
+      });
+  } catch (partnerInitErr) {
+    console.error('[PricingSync:Ingest] Could not initialize PartnerOfferScanner:', partnerInitErr);
   }
 
   return {

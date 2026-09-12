@@ -28,6 +28,8 @@ const PROVIDER_LOGO_MAP: Record<string, string> = {
   glm: '/logos/glm.svg',
   'z-ai': '/logos/glm.svg',
   zcode: '/logos/glm.svg',
+  muse: '/logos/meta.svg',
+  meta: '/logos/meta.svg',
 };
 
 const PROVIDER_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -48,6 +50,8 @@ const PROVIDER_COLORS: Record<string, { bg: string; text: string; border: string
   codex: { bg: 'bg-slate-100', text: 'text-slate-800', border: 'border-slate-200' },
   'github-models': { bg: 'bg-slate-100', text: 'text-slate-800', border: 'border-slate-200' },
   glm: { bg: 'bg-violet-50', text: 'text-violet-800', border: 'border-violet-200' },
+  muse: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+  meta: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
 };
 
 function getInitials(nameOrId: string): string {

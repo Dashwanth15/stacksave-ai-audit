@@ -640,7 +640,7 @@ describe('Production GitHub Actions Runner & Ingestion Verification', () => {
     const { runOfficialExtraction } = await import('../scripts/official_pricing_extractor');
     const payload = await runOfficialExtraction('both');
 
-    expect(payload.providers).toHaveLength(16);
+    expect(payload.providers).toHaveLength(29);
     for (const p of payload.providers) {
       expect(p.sourceUrl).not.toContain('openrouter');
       expect(p.sourceUrl).toMatch(/^https?:\/\//);
@@ -685,7 +685,7 @@ describe('Production GitHub Actions Runner & Ingestion Verification', () => {
     const { runOfficialExtraction } = await import('../scripts/official_pricing_extractor');
     const payload = await runOfficialExtraction('pricing');
 
-    expect(payload.providers).toHaveLength(16);
+    expect(payload.providers).toHaveLength(29);
     for (const p of payload.providers) {
       expect(p.offers).toHaveLength(0);
     }

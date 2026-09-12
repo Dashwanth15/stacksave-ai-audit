@@ -27,6 +27,7 @@ type CategoryIconName = 'sparkles' | 'graduation' | 'zap' | 'dollar' | 'rocket' 
 
 const CATEGORY_TABS: { id: OfferCategory; label: string; icon: CategoryIconName }[] = [
   { id: 'all', label: 'All Offers', icon: 'sparkles' },
+  { id: 'partner', label: 'Partner Bundles', icon: 'zap' },
   { id: 'student', label: 'Student & Education', icon: 'graduation' },
   { id: 'api', label: 'API Discounts', icon: 'zap' },
   { id: 'annual', label: 'Annual Savings', icon: 'dollar' },
@@ -128,9 +129,12 @@ export default function OffersPage() {
   const formattedOffers = useMemo(() => {
     const seen = new Set<string>();
     const list: FormattedOffer[] = [];
-    const sorted = [...offers].sort(
-      (a, b) => new Date(b.detectedAt || 0).getTime() - new Date(a.detectedAt || 0).getTime()
-    );
+    const sorted = [...offers].sort((a, b) => {
+      const scoreA = a.offerOpportunityScore ?? 0;
+      const scoreB = b.offerOpportunityScore ?? 0;
+      if (scoreA !== scoreB) return scoreB - scoreA;
+      return new Date(b.detectedAt || 0).getTime() - new Date(a.detectedAt || 0).getTime();
+    });
 
     for (const raw of sorted) {
       const formatted = formatOfferForDisplay(raw, readOfferIds);
@@ -191,7 +195,9 @@ export default function OffersPage() {
         const matchDiscount = offer.discountBadge.toLowerCase().includes(q);
         const matchEligibility = offer.eligibility.toLowerCase().includes(q);
         const matchCat = offer.categoryLabel.toLowerCase().includes(q);
-        return matchTitle || matchDesc || matchProvider || matchDiscount || matchEligibility || matchCat;
+        const matchPartner = offer.partner ? offer.partner.toLowerCase().includes(q) : false;
+        const matchBenefit = offer.benefit ? offer.benefit.toLowerCase().includes(q) : false;
+        return matchTitle || matchDesc || matchProvider || matchDiscount || matchEligibility || matchCat || matchPartner || matchBenefit;
       }
 
       return true;
@@ -199,7 +205,13 @@ export default function OffersPage() {
 
     // Sort result
     return result.sort((a, b) => {
-      if (sortBy === 'recommended' || sortBy === 'savings') {
+      if (sortBy === 'recommended') {
+        const scoreA = a.offerOpportunityScore ?? a.savingsScore ?? 0;
+        const scoreB = b.offerOpportunityScore ?? b.savingsScore ?? 0;
+        if (scoreA !== scoreB) return scoreB - scoreA;
+        return new Date(b.detectedAt || 0).getTime() - new Date(a.detectedAt || 0).getTime();
+      }
+      if (sortBy === 'savings') {
         return b.savingsScore - a.savingsScore;
       }
       if (sortBy === 'newest') {
@@ -502,7 +514,7 @@ export default function OffersPage() {
                             )}
                           </div>
                           <span className="mt-0.5 block text-[11px] text-slate-400 truncate">
-                            {offer.categoryLabel}
+                            {offer.partner ? `${offer.partner} • Partner Bundle` : offer.categoryLabel}
                           </span>
                         </div>
                       </div>
@@ -527,6 +539,11 @@ export default function OffersPage() {
                         <span className="text-xs font-black uppercase tracking-[0.05em] text-slate-900 truncate">
                           {offer.discountBadge}
                         </span>
+                        {offer.partner && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 uppercase tracking-wider">
+                            Bundled
+                          </span>
+                        )}
                       </div>
                     )}
 
@@ -540,12 +557,20 @@ export default function OffersPage() {
                       {renderEmphasizedDescription(offer.summary)}
                     </p>
 
-                    {/* Subtle eligibility indicator */}
-                    {offer.eligibility && (
-                      <p className="mt-3 text-[11.5px] text-slate-400 truncate">
-                        For <span className="font-medium text-slate-700">{offer.eligibility.replace(/^(Verified|Eligible)\s+/i, (m) => m.toLowerCase())}</span>
-                      </p>
-                    )}
+                    {/* Subtle eligibility & activation indicator */}
+                    <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-slate-400 truncate">
+                      {offer.eligibility && (
+                        <span className="truncate">
+                          For <span className="font-medium text-slate-700">{offer.eligibility.replace(/^(Verified|Eligible)\s+/i, (m) => m.toLowerCase())}</span>
+                        </span>
+                      )}
+                      {offer.activationMethod && (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <span className="font-medium text-slate-600 truncate">{offer.activationMethod}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {/* Footer stays aligned across cards */}

@@ -10,7 +10,7 @@ import { AuditRequest, ToolEntry, UseCase, ToolId } from '../types';
 const VALID_TOOL_IDS: ToolId[] = [
   'antigravity', 'cursor', 'github-copilot', 'claude', 'chatgpt',
   'anthropic-api', 'openai-api', 'gemini', 'windsurf',
-  'perplexity', 'deepseek', 'grok', 'codex', 'github-models', 'kimi', 'glm',
+  'perplexity', 'deepseek', 'grok', 'codex', 'github-models', 'kimi', 'glm', 'muse',
 ];
 
 const VALID_USE_CASES: UseCase[] = ['coding', 'writing', 'data', 'research', 'mixed'];

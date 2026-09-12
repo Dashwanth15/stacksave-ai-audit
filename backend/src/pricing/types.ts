@@ -51,6 +51,13 @@ export interface ProviderPricingResult {
   failureReason?: string;
 }
 
+export type OfferDetectionMethod =
+  | 'PLAYWRIGHT_LIVE'
+  | 'STATIC_FETCH'
+  | 'SEEDED'
+  | 'API_INGEST'
+  | 'OTHER';
+
 // ── Offer Detection ───────────────────────────────────────────
 export interface NormalizedOffer {
   offerId?: string;
@@ -66,12 +73,15 @@ export interface NormalizedOffer {
   /** Exact snippet extracted directly from the live official page DOM */
   evidenceText?: string;
   /** Detection method used */
-  detectionMethod?: string;
+  detectionMethod?: OfferDetectionMethod | string;
   /** Deterministic fingerprint for deduplication */
   fingerprint: string;
   sourceUrl: string;
+  sourceDomain?: string;
+  providerOfficialUrl?: string;
   sourceStatus?: SyncStatus;
   sourceFetchedAt?: Date;
+  lastCheckedAt?: Date;
   lastSuccessfulCheckAt?: Date;
   evidenceLocation?: string;
   contentHash?: string;
@@ -115,6 +125,7 @@ export interface OfficialIngestPayload {
   source?: string;
   syncTarget?: string;
   providers: OfficialExtractedProviderData[];
+  livePartnerOffers?: any[];
 }
 
 // ── Validation Result ─────────────────────────────────────────

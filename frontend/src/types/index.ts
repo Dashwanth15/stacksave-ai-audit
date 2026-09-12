@@ -20,6 +20,7 @@ export type ToolId =
   | 'github-models'
   | 'kimi'
   | 'glm'
+  | 'muse'
   | 'all-stack-tools';
 
 export type UseCase = 'coding' | 'writing' | 'data' | 'research' | 'mixed';
@@ -575,6 +576,26 @@ export interface PublicOffer {
   lastConfirmedAt?: string;
   expiresAt: string | null;
   isVerified?: boolean;
+
+  // Partner AI Offer fields
+  partner?: string | null;
+  partnerType?: string | null;
+  aiProvider?: string | null;
+  aiPlan?: string | null;
+  offerType?: string | null;
+  benefit?: string | null;
+  duration?: string | null;
+  value?: string | number | null;
+  eligibility?: string | null;
+  activationMethod?: string | null;
+  country?: string | null;
+  region?: string | null;
+  termsUrl?: string | null;
+  sourceType?: string | null;
+  status?: string | null;
+
+  // Intelligence scoring fields
+  offerOpportunityScore?: number;
 }
 
 export type OfferFilterTab = 'all' | 'new' | 'active' | 'expired';

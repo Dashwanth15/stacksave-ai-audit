@@ -19,6 +19,7 @@ export type ToolId =
   | 'github-models'
   | 'kimi'
   | 'glm'
+  | 'muse'
   | 'all-stack-tools';
 
 export type UseCase = 'coding' | 'writing' | 'data' | 'research' | 'mixed';

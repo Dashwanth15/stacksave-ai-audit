@@ -1,0 +1,231 @@
+{
+  "modelId": "muse-spark-1-2",
+  "name": "Muse Spark 1.2",
+  "providerId": "muse",
+  "releaseDate": "2026-03-01",
+  "capabilities": {
+    "reasoning": {
+      "score": 8,
+      "evidence": "Multimodal reasoning and logical problem solving for software development.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "coding": {
+      "score": 8,
+      "evidence": "Multi-file code generation, refactoring, and automated debugging.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "architectureDesign": {
+      "score": 7,
+      "evidence": "Basic architecture planning and project scaffolding.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "largeCodebaseUnderstanding": {
+      "score": 8,
+      "evidence": "Repository indexing and codebase search in Muse Code CLI.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "autocomplete": {
+      "score": 8,
+      "evidence": "Inline code completion and generation.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "aiAgent": {
+      "score": 8,
+      "evidence": "CLI agent tool execution and automated command running.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "multiFileEditing": {
+      "score": 8,
+      "evidence": "Multi-file code modifications across repositories.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "terminalIntegration": {
+      "score": 8,
+      "evidence": "Integrated terminal and CLI tool execution in Muse Code.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "planning": {
+      "score": 8,
+      "evidence": "Task decomposition and step-by-step coding plan execution.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "research": {
+      "score": 7,
+      "evidence": "Developer documentation lookup and technical reasoning.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "writing": {
+      "score": 7,
+      "evidence": "Commit messages, documentation, and technical explanations.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "longContext": {
+      "score": 8,
+      "evidence": "Standard long-context support for repository indexing.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "imageUnderstanding": {
+      "score": 8,
+      "evidence": "Multimodal visual reasoning over diagrams and UI components.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "vision": {
+      "score": 8,
+      "evidence": "Multimodal vision understanding for image and UI inputs.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "voice": {
+      "score": 0,
+      "evidence": "No voice audio processing in Muse Spark 1.2.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "memory": {
+      "score": 7,
+      "evidence": "Context retention within active coding sessions.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "customGpts": {
+      "score": 0,
+      "evidence": "No custom GPT marketplace support.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "plugins": {
+      "score": 7,
+      "evidence": "CLI tool integration and shell plugins.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "api": {
+      "score": 8,
+      "evidence": "Model access via Meta developer endpoints.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "embeddings": {
+      "score": 7,
+      "evidence": "Basic workspace vector search.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "functionCalling": {
+      "score": 8,
+      "evidence": "Tool use and agent function calling.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "enterpriseSecurity": {
+      "score": 5,
+      "evidence": "Standard HTTPS transport encryption.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "adminControls": {
+      "score": 4,
+      "evidence": "Developer key and configuration controls.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "sso": {
+      "score": 0,
+      "evidence": "No enterprise SSO support.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "ideIntegration": {
+      "score": 8,
+      "evidence": "Muse Code CLI environment support.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "jetbrainsSupport": {
+      "score": 0,
+      "evidence": "Legacy model accessed via Muse Code CLI.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "vscodeSupport": {
+      "score": 0,
+      "evidence": "Legacy model accessed via Muse Code CLI.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "githubIntegration": {
+      "score": 7,
+      "evidence": "Git command operations via CLI.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "googleWorkspaceIntegration": {
+      "score": 0,
+      "evidence": "Independent developer platform.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "microsoftIntegration": {
+      "score": 0,
+      "evidence": "Independent developer platform.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "latency": {
+      "score": 7,
+      "evidence": "Standard inference response times.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "reliability": {
+      "score": 8,
+      "evidence": "Meta cloud infrastructure.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "offlineSupport": {
+      "score": 0,
+      "evidence": "Requires active internet connection.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    }
+  },
+  "benchmarks": {},
+  "productivityScores": {
+    "reasoning": 8,
+    "coding": 8,
+    "planning": 8,
+    "velocity": 7,
+    "developerExperience": 7,
+    "enterpriseReadiness": 5,
+    "maintainability": 7,
+    "learningCurve": "Low",
+    "migrationCost": "Low",
+    "risk": "Low"
+  },
+  "developerExperience": {
+    "reasoning": 8,
+    "coding": 8,
+    "planning": 8,
+    "velocity": 7,
+    "developerExperience": 7,
+    "enterpriseReadiness": 5,
+    "maintainability": 7,
+    "learningCurve": "Low",
+    "migrationCost": "Low",
+    "risk": "Low"
+  }
+}

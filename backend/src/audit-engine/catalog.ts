@@ -631,7 +631,46 @@ export const TOOL_CATALOG: ToolCatalog[] = [
         estimatedSaving: '~$60/user/mo savings compared to GLM Coding Pro ($80/mo)',
       },
     ],
-  }
+  },
+
+  // ──────────────────────────────────────────────
+  // MUSE (META)
+  // Source: https://dev.meta.ai/docs/pricing-rate-limits & https://about.fb.com/news/2026/09/meta-muse-ai/
+  // ──────────────────────────────────────────────
+  {
+    id: 'muse',
+    name: 'Muse (Meta)',
+    category: 'ide',
+    useCases: ['coding'],
+    pricingUrl: 'https://dev.meta.ai/docs/pricing-rate-limits',
+    pricingVerifiedDate: '2026-09-12',
+    plans: [
+      { id: 'muse-code-cli', label: 'Muse Code CLI', monthlyPricePerSeat: 0 },
+      { id: 'model-api-standard', label: 'Meta Model API (Standard)', monthlyPricePerSeat: 0, isPayPerUse: true },
+      { id: 'model-api-contributor', label: 'Meta Model API (Contributor)', monthlyPricePerSeat: 0, isPayPerUse: true },
+      { id: 'muse-free', label: 'Muse Personal Agent Free', monthlyPricePerSeat: 0 },
+    ],
+    alternatives: [
+      {
+        toolId: 'cursor',
+        toolName: 'Cursor',
+        reason: 'Cursor Pro ($20/user/mo) offers native IDE coding with frontier models.',
+        estimatedSaving: '~$0 — comparable developer client capabilities',
+      },
+      {
+        toolId: 'antigravity',
+        toolName: 'Google Antigravity',
+        reason: 'Google Antigravity Pro ($20/user/mo) offers multi-file autonomous agentic coding and browser workflows.',
+        estimatedSaving: '~$0 — comparable agentic IDE workflows',
+      },
+      {
+        toolId: 'windsurf',
+        toolName: 'Windsurf',
+        reason: 'Windsurf Pro ($15/user/mo) offers flow-based AI coding at low latency.',
+        estimatedSaving: '~$15/user/mo if adopting Windsurf Pro',
+      },
+    ],
+  },
 ];
 
 // Helper: find a tool by ID

@@ -1,0 +1,69 @@
+{
+  "id": "muse",
+  "name": "Muse (Meta)",
+  "category": "ide",
+  "vendor": "Meta",
+  "vendorProfile": {
+    "vendorId": "meta",
+    "vendorName": "Meta Platforms, Inc.",
+    "establishedYear": 2004,
+    "headquarters": "Menlo Park, CA",
+    "fundingStage": "Public",
+    "productFamily": [
+      "Muse Code CLI",
+      "Meta Model API",
+      "Muse Personal Agent",
+      "Muse Spark 1.3",
+      "Muse Spark 1.2"
+    ],
+    "stabilityRating": "Very High",
+    "enterprisePresence": true
+  },
+  "primaryRole": "AI Code Agent & Multimodal Model API",
+  "secondaryRole": "Personal AI Assistant & Model API Inference",
+  "billingModels": [
+    "free",
+    "usage-based"
+  ],
+  "enterpriseAvailability": false,
+  "knownStrengths": [
+    "Free official Muse Code CLI client for autonomous coding workflows",
+    "High-performance multimodal reasoning and long-horizon software engineering with Muse Spark 1.3",
+    "Cost-effective Meta Model API pay-per-use token pricing with standard and contributor tiers",
+    "Ultra-low latency prompt caching rates ($0.15/1M standard, $0.002/1M contributor)"
+  ],
+  "knownWeaknesses": [
+    "No verified enterprise SAML SSO, SCIM provisioning, or centralized enterprise compliance certifications",
+    "Contributor tier allows user data to be used for training future Meta models",
+    "No verified paid consumer subscription tier"
+  ],
+  "limitations": [
+    "Lacks verified SOC 2, HIPAA, or ISO 27001 enterprise certifications",
+    "API usage requires pay-per-use token billing"
+  ],
+  "bestUseCases": [
+    "Autonomous agentic software engineering and long-horizon coding via Muse Code CLI",
+    "Cost-effective multimodal inference via Meta Model API",
+    "Developer reasoning, coding, and workflow automation"
+  ],
+  "typicalTeamSize": "Individual to Team",
+  "supportedModels": [
+    "Muse Spark 1.3",
+    "Muse Spark 1.2"
+  ],
+  "supportedPlatforms": [
+    "Muse Code CLI",
+    "Meta Model API",
+    "Muse Web"
+  ],
+  "apiSupport": true,
+  "knowledgeVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "lastUpdated": "2026-09-12",
+  "sources": [
+    "https://about.fb.com/news/2026/09/meta-muse-ai/",
+    "https://dev.meta.ai/docs/pricing-rate-limits",
+    "https://muse.meta.ai/code",
+    "https://muse.meta.ai"
+  ]
+}

@@ -14,6 +14,8 @@ import {
 } from '../services/dbService';
 import { runPricingSync, ingestOfficialExtractedPricing } from '../pricing/syncOrchestrator';
 import { runOfferMonitor } from '../pricing/offerMonitor';
+import { PartnerOfferScanner } from '../pricing/partnerOfferScanner';
+import { PartnerDiscoveryService } from '../pricing/partnerDiscoveryService';
 import { sendAuditConfirmation, sendReAuditNotification, getSenderAddress } from '../services/emailService';
 
 const router = Router();
@@ -84,10 +86,81 @@ router.post('/offers/scan', async (_req: Request, res: Response) => {
     const result = await runOfferMonitor();
     res.json({ success: true, data: result });
   } catch (err: unknown) {
-
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[Admin] Offer scan failed:', err);
     res.status(500).json({ success: false, error: `Offer scan failed: ${msg}` });
+  }
+});
+
+// ── POST /api/admin/partner-offers/scan ───────────────────────
+// Trigger a full Layer 1 + Layer 2 Partner AI Offer scan & synchronization.
+
+router.post('/partner-offers/scan', async (req: Request, res: Response) => {
+  try {
+    const liveExtractedOffers = req.body?.liveExtractedOffers;
+    const result = await PartnerOfferScanner.runFullScan(liveExtractedOffers);
+    res.json({ success: true, data: result });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[Admin] Partner offer scan failed:', err);
+    res.status(500).json({ success: false, error: `Partner offer scan failed: ${msg}` });
+  }
+});
+
+// ── POST /api/admin/discovery/candidates ─────────────────────
+// Ingest or trigger evaluation of a new candidate signal from discovery channels.
+
+router.post('/discovery/candidates', async (req: Request, res: Response) => {
+  try {
+    const { partnerName, sourceUrl, possibleAiProvider, possibleAiPlan, benefit, offerTitle, offerDescription, eligibility, duration, category } = req.body;
+    if (!partnerName || !sourceUrl) {
+      res.status(400).json({ success: false, error: 'partnerName and sourceUrl are required' });
+      return;
+    }
+
+    const candidate = PartnerDiscoveryService.ingestCandidate({
+      partnerName,
+      sourceUrl,
+      possibleAiProvider: possibleAiProvider || 'AI Service',
+      possibleAiPlan,
+      benefit,
+      offerTitle,
+      offerDescription,
+      eligibility,
+      duration,
+      category,
+      discoveryMethod: 'API_INGEST',
+    });
+
+    const evalResult = PartnerDiscoveryService.evaluateCandidate(candidate);
+    if (evalResult.promoted && evalResult.offer) {
+      await PartnerOfferScanner.persistPartnerOffer(evalResult.offer);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        candidate,
+        evaluation: evalResult,
+      },
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[Admin] Candidate ingestion failed:', err);
+    res.status(500).json({ success: false, error: `Candidate ingestion failed: ${msg}` });
+  }
+});
+
+// ── GET /api/admin/discovery/candidates ──────────────────────
+// List all current discovery candidates and their status.
+
+router.get('/discovery/candidates', async (_req: Request, res: Response) => {
+  try {
+    const candidates = PartnerDiscoveryService.getAllCandidates();
+    res.json({ success: true, data: candidates });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ success: false, error: msg });
   }
 });
 

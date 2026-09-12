@@ -1,0 +1,231 @@
+{
+  "modelId": "muse-spark-1-3",
+  "name": "Muse Spark 1.3",
+  "providerId": "muse",
+  "releaseDate": "2026-09-02",
+  "capabilities": {
+    "reasoning": {
+      "score": 9,
+      "evidence": "Frontier multimodal reasoning and agentic problem solving across complex developer workflows.",
+      "source": "https://about.fb.com/news/2026/09/meta-muse-ai/",
+      "lastVerified": "2026-09-12"
+    },
+    "coding": {
+      "score": 9,
+      "evidence": "Long-horizon coding, repository refactoring, and autonomous agentic software engineering.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "architectureDesign": {
+      "score": 8,
+      "evidence": "Software architecture planning, module scaffolding, and system design breakdown.",
+      "source": "https://about.fb.com/news/2026/09/meta-muse-ai/",
+      "lastVerified": "2026-09-12"
+    },
+    "largeCodebaseUnderstanding": {
+      "score": 9,
+      "evidence": "Deep repository indexing and long-context codebase understanding for multi-file edits.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "autocomplete": {
+      "score": 8,
+      "evidence": "High-accuracy code completion and inline generation in Muse Code CLI workflows.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "aiAgent": {
+      "score": 9,
+      "evidence": "Autonomous multi-step agent workflows, terminal tool execution, and long-horizon task completion.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "multiFileEditing": {
+      "score": 9,
+      "evidence": "Atomic multi-file diff generation and cross-repository code patching.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "terminalIntegration": {
+      "score": 9,
+      "evidence": "Native terminal execution, build automation, and environment interaction in Muse Code CLI.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "planning": {
+      "score": 9,
+      "evidence": "Agentic goal decomposition, structured implementation plans, and iterative verification.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "research": {
+      "score": 8,
+      "evidence": "Developer documentation parsing and technical information retrieval.",
+      "source": "https://about.fb.com/news/2026/09/meta-muse-ai/",
+      "lastVerified": "2026-09-12"
+    },
+    "writing": {
+      "score": 8,
+      "evidence": "Technical documentation generation, pull request summaries, and code explanation.",
+      "source": "https://about.fb.com/news/2026/09/meta-muse-ai/",
+      "lastVerified": "2026-09-12"
+    },
+    "longContext": {
+      "score": 9,
+      "evidence": "Large context window supporting comprehensive repository analysis and long agent trajectories.",
+      "source": "https://dev.meta.ai/docs/pricing-rate-limits",
+      "lastVerified": "2026-09-12"
+    },
+    "imageUnderstanding": {
+      "score": 9,
+      "evidence": "Native multimodal visual reasoning over UI mockups, screenshots, and diagrams.",
+      "source": "https://about.fb.com/news/2026/09/meta-muse-ai/",
+      "lastVerified": "2026-09-12"
+    },
+    "vision": {
+      "score": 9,
+      "evidence": "Multimodal vision understanding integrated into reasoning and coding pipelines.",
+      "source": "https://about.fb.com/news/2026/09/meta-muse-ai/",
+      "lastVerified": "2026-09-12"
+    },
+    "voice": {
+      "score": 0,
+      "evidence": "No verified voice audio support in current Muse Spark model specification.",
+      "source": "https://about.fb.com/news/2026/09/meta-muse-ai/",
+      "lastVerified": "2026-09-12"
+    },
+    "memory": {
+      "score": 8,
+      "evidence": "Session context retention and agent workspace state tracking.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "customGpts": {
+      "score": 0,
+      "evidence": "No proprietary custom GPT marketplace; agent workflows execute via CLI tooling.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "plugins": {
+      "score": 8,
+      "evidence": "Extensible CLI tool use and custom shell integration.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "api": {
+      "score": 9,
+      "evidence": "Full Meta Model API access with pay-per-use token inference and prompt caching.",
+      "source": "https://dev.meta.ai/docs/pricing-rate-limits",
+      "lastVerified": "2026-09-12"
+    },
+    "embeddings": {
+      "score": 7,
+      "evidence": "Repository semantic vector search and workspace indexing.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "functionCalling": {
+      "score": 9,
+      "evidence": "Standardized tool calling, structured JSON outputs, and agent loop execution.",
+      "source": "https://dev.meta.ai/docs/pricing-rate-limits",
+      "lastVerified": "2026-09-12"
+    },
+    "enterpriseSecurity": {
+      "score": 5,
+      "evidence": "Standard HTTPS transport encryption and secure API authentication.",
+      "source": "https://dev.meta.ai/docs/pricing-rate-limits",
+      "lastVerified": "2026-09-12"
+    },
+    "adminControls": {
+      "score": 4,
+      "evidence": "Standard developer API key management and usage monitoring.",
+      "source": "https://dev.meta.ai/docs/pricing-rate-limits",
+      "lastVerified": "2026-09-12"
+    },
+    "sso": {
+      "score": 0,
+      "evidence": "No verified SAML 2.0 or OIDC enterprise single sign-on support.",
+      "source": "https://dev.meta.ai/docs/pricing-rate-limits",
+      "lastVerified": "2026-09-12"
+    },
+    "ideIntegration": {
+      "score": 9,
+      "evidence": "Direct Muse Code terminal client integration with workspace tools.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "jetbrainsSupport": {
+      "score": 0,
+      "evidence": "Client delivered via standalone Muse Code CLI and Meta Model API.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "vscodeSupport": {
+      "score": 0,
+      "evidence": "Client delivered via standalone Muse Code CLI and Meta Model API.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "githubIntegration": {
+      "score": 8,
+      "evidence": "Git version control operations executed directly through Muse Code CLI.",
+      "source": "https://muse.meta.ai/code",
+      "lastVerified": "2026-09-12"
+    },
+    "googleWorkspaceIntegration": {
+      "score": 0,
+      "evidence": "Independent developer platform without native Google Workspace hooks.",
+      "source": "https://about.fb.com/news/2026/09/meta-muse-ai/",
+      "lastVerified": "2026-09-12"
+    },
+    "microsoftIntegration": {
+      "score": 0,
+      "evidence": "Independent developer platform without native Microsoft 365 hooks.",
+      "source": "https://about.fb.com/news/2026/09/meta-muse-ai/",
+      "lastVerified": "2026-09-12"
+    },
+    "latency": {
+      "score": 8,
+      "evidence": "Fast streaming token generation with low-latency prompt caching acceleration.",
+      "source": "https://dev.meta.ai/docs/pricing-rate-limits",
+      "lastVerified": "2026-09-12"
+    },
+    "reliability": {
+      "score": 8,
+      "evidence": "High-availability global cloud infrastructure managed by Meta.",
+      "source": "https://dev.meta.ai/docs/pricing-rate-limits",
+      "lastVerified": "2026-09-12"
+    },
+    "offlineSupport": {
+      "score": 0,
+      "evidence": "Requires active internet connectivity to Meta model inference endpoints.",
+      "source": "https://dev.meta.ai/docs/pricing-rate-limits",
+      "lastVerified": "2026-09-12"
+    }
+  },
+  "benchmarks": {},
+  "productivityScores": {
+    "reasoning": 9,
+    "coding": 9,
+    "planning": 9,
+    "velocity": 8,
+    "developerExperience": 8,
+    "enterpriseReadiness": 5,
+    "maintainability": 8,
+    "learningCurve": "Low",
+    "migrationCost": "Low",
+    "risk": "Low"
+  },
+  "developerExperience": {
+    "reasoning": 9,
+    "coding": 9,
+    "planning": 9,
+    "velocity": 8,
+    "developerExperience": 8,
+    "enterpriseReadiness": 5,
+    "maintainability": 8,
+    "learningCurve": "Low",
+    "migrationCost": "Low",
+    "risk": "Low"
+  }
+}

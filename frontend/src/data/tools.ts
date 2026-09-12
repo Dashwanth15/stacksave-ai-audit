@@ -879,6 +879,75 @@ export const TOOLS: ToolInfo[] = [
       },
     ],
   },
+  // ──────────────────────────────────────────────
+  // MUSE (META) — https://dev.meta.ai/docs/pricing-rate-limits
+  // ──────────────────────────────────────────────
+  {
+    id: 'muse',
+    name: 'Muse (Meta)',
+    icon: '♾️',
+    category: 'AI IDE',
+    description: 'Autonomous coding agent, Meta Model API & multimodal intelligence powered by Muse Spark 1.3',
+    defaultPlan: 'muse-code-cli',
+    plans: [
+      {
+        id: 'muse-code-cli',
+        label: 'Muse Code CLI',
+        tagline: 'Free terminal coding agent & client',
+        monthlyPricePerSeat: 0,
+        billingType: 'per-seat',
+        features: [
+          'Free official terminal coding agent and developer client',
+          'Autonomous multi-file editing and repository indexing',
+          'Integration with Muse Spark 1.3 and Muse Spark 1.2',
+          'Zero monthly subscription fee',
+        ],
+      },
+      {
+        id: 'model-api-standard',
+        label: 'Meta Model API (Standard)',
+        tagline: 'Pay-per-use token API with standard data policy',
+        monthlyPricePerSeat: 0,
+        billingType: 'usage-based',
+        isPayPerUse: true,
+        features: [
+          'Pay-per-use token inference for Muse Spark 1.3',
+          'Input: $1.25 / 1M tokens, Cached: $0.15 / 1M tokens',
+          'Output: $4.25 / 1M tokens',
+          'Standard policy: prompts and completions not used to train models',
+          'No monthly seat fee',
+        ],
+      },
+      {
+        id: 'model-api-contributor',
+        label: 'Meta Model API (Contributor)',
+        tagline: 'Discounted token API with contributor training policy',
+        monthlyPricePerSeat: 0,
+        billingType: 'usage-based',
+        isPayPerUse: true,
+        features: [
+          'Discounted pay-per-use token inference for Muse Spark 1.3',
+          'Input: $0.10 / 1M tokens, Cached: $0.002 / 1M tokens',
+          'Output: $0.20 / 1M tokens',
+          'Contributor policy: data may train future Meta models',
+          'No monthly seat fee',
+        ],
+      },
+      {
+        id: 'muse-free',
+        label: 'Muse Personal Agent Free',
+        tagline: 'Free web and personal AI assistant',
+        monthlyPricePerSeat: 0,
+        billingType: 'per-seat',
+        features: [
+          'Free web and personal AI assistant interface',
+          'Multimodal reasoning, text, vision, and planning',
+          'Powered by Muse Spark models',
+          'Zero subscription cost',
+        ],
+      },
+    ],
+  },
 ];
 
 export const USE_CASES = [

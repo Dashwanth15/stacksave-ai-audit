@@ -40,6 +40,7 @@ export const CANONICAL_PLAN_IDS: Record<string, ReadonlySet<string>> = {
   codex: new Set(['api']),
   'github-models': new Set(['free', 'pro']),
   glm: new Set(['lite', 'pro', 'max', 'enterprise', 'api']),
+  muse: new Set(['muse-code-cli', 'model-api-standard', 'model-api-contributor', 'muse-free']),
 };
 
 /**
