@@ -2689,8 +2689,8 @@ export async function extractOfficialPartnerOffers(browser: Browser): Promise<No
       activationMethod: 'Claim through ASUS Member / MyASUS app',
       country: 'GLOBAL',
       region: 'Global',
-      officialSourceUrl: 'https://www.asus.com/campaign/google-one-ai-premium/',
-      expectedKeywords: ['ASUS', 'Google One', 'AI Premium', 'Gemini'],
+      officialSourceUrl: 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+      expectedKeywords: ['ASUS', 'Google One', 'AI Premium', 'Gemini', 'Chromebook'],
       fallbackEvidence: 'Purchase an eligible ASUS AI PC and receive complimentary Google One AI Premium (Gemini Advanced) for 3 months to 1 year.',
     },
   ];
@@ -3147,7 +3147,18 @@ export async function runOfficialExtraction(syncTarget: string = 'both'): Promis
   }
   console.log('========================================================================================================================');
   console.log(`TOTAL EXTRACTION RESULT: ${totalExtracted} offers extracted across ${extractedProviders.length} providers`);
-  console.log('========================================================================================================================\n');
+  console.log('========================================================================================================================');
+  console.log('');
+  console.log('📊 IMPORTANT: Understanding Offer Counts');
+  console.log('─────────────────────────────────────────────────────────────────────────────────────────');
+  console.log('• THIS RUN: Extracted ' + totalExtracted + ' NEW/UPDATED offers from ' + extractedProviders.length + ' providers');
+  console.log('• DATABASE: Contains CUMULATIVE active offers from multiple extraction runs');
+  console.log('• FRONTEND: Displays ALL currently active offers (current + previous runs)');
+  console.log('• LIFECYCLE: Old offer versions are automatically deactivated when updated');
+  console.log('');
+  console.log('Example: If this run extracts 13 offers, but 30 other offers remain active from');
+  console.log('         previous runs, the frontend will show 43 total active offers.');
+  console.log('─────────────────────────────────────────────────────────────────────────────────────────\n');
 
   if (syncTarget === 'pricing') {
     for (const p of payload.providers) {
@@ -3304,7 +3315,12 @@ export async function main() {
     );
   }
   console.log('========================================================================================================================');
-  console.log(`TOTAL OFFERS DISCOVERED: ${totalOffersCount} active promotions across all monitored official surfaces`);
+  console.log(`TOTAL OFFERS DISCOVERED: ${totalOffersCount} NEW/UPDATED offers in this extraction run`);
+  console.log('========================================================================================================================');
+  console.log('');
+  console.log('ℹ️  CONTEXT: This count represents offers found in THIS extraction run.');
+  console.log('   The Offers Dashboard displays ALL currently active offers (cumulative from all runs).');
+  console.log('   See OFFER_DATA_FLOW_FORENSIC_REPORT.md for complete pipeline documentation.');
   console.log('========================================================================================================================\n');
 
   if (payload.providers.length < 26) {

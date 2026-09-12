@@ -8,6 +8,7 @@ import { AIStackIntelligenceService } from '../audit-engine/services/AIStackInte
 import { PricingSourceModel, NotificationEventModel, SyncLogModel } from '../services/dbService';
 import { PricingOverlayService } from '../pricing/pricingOverlay';
 import { isRegisteredOfficialSource, canPublishOffer } from '../pricing/offerTrust';
+import { resolveCanonicalOfferUrl } from '../pricing/partnerSourceRegistry';
 import { PlatformRankingEngine, RankingCategory } from '../audit-engine/services/PlatformRankingEngine';
 import { ProviderDiscoveryService } from '../pricing/providerDiscoveryService';
 
@@ -459,7 +460,7 @@ router.get('/offers', async (_req: Request, res: Response) => {
           evidenceText: e.evidenceText || null,
           detectionMethod: e.detectionMethod || 'PLAYWRIGHT_DOM',
           sourceStatus: e.sourceStatus,
-          sourceUrl: e.sourceUrl,
+          sourceUrl: resolveCanonicalOfferUrl(e.sourceUrl),
           sourceDomain: (e as any).sourceDomain || null,
           providerOfficialUrl: (e as any).providerOfficialUrl || null,
           sourceFetchedAt: (e as any).sourceFetchedAt,

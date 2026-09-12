@@ -260,7 +260,7 @@ export const INITIAL_REGISTERED_PARTNERS: OfficialPartnerConfig[] = [
     category: 'devices',
     officialDomain: 'oneplus.com',
     officialDomains: ['oneplus.com', 'oneplus.in'],
-    offersUrl: 'https://www.oneplus.com/offers',
+    offersUrl: 'https://www.oneplus.com/',
     country: 'GLOBAL',
     region: 'Global',
     isRegistered: true,
@@ -281,8 +281,13 @@ export const INITIAL_REGISTERED_PARTNERS: OfficialPartnerConfig[] = [
     name: 'ASUS',
     category: 'devices',
     officialDomain: 'asus.com',
-    officialDomains: ['asus.com', 'rog.asus.com'],
-    offersUrl: 'https://www.asus.com/campaign/google-one-ai-premium/',
+    officialDomains: ['asus.com', 'rog.asus.com', 'press.asus.com'],
+    offersUrl: 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+    secondaryUrls: [
+      'https://www.asus.com/business/resources/news/asus-chromebook-plus-with-google-one-ai-premium/',
+      'https://www.asus.com/content/google-one/',
+      'https://www.asus.com/us/deals/',
+    ],
     country: 'GLOBAL',
     region: 'Global',
     isRegistered: true,
@@ -529,3 +534,38 @@ export function registerDiscoveredPartner(partner: OfficialPartnerConfig): void 
 export function getAllRegisteredPartners(): OfficialPartnerConfig[] {
   return Array.from(registeredPartnersMap.values());
 }
+
+/**
+ * Mapping of legacy or decommissioned promotional URLs to active official destinations.
+ * Protects users from encountering 404s when viewing older ingested offers.
+ */
+export const KNOWN_OFFER_URL_FIXES: Record<string, string> = {
+  'https://www.asus.com/campaign/google-one-ai-premium/': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+  'https://asus.com/campaign/google-one-ai-premium/': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+  'https://www.asus.com/campaign/google-one-ai-premium': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+  'https://asus.com/campaign/google-one-ai-premium': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+  'https://www.telekom.com/en/media/media-information/archive-news-details/telekom-and-perplexity-bring-ai-to-smartphones': 'https://www.telekom.com/en/media',
+  'https://character.ai/c-ai+': 'https://character.ai/',
+  'https://bolt.new/pricing': 'https://bolt.new/',
+  'https://platform.moonshot.cn/docs/pricing/chat': 'https://platform.moonshot.cn/pricing',
+  'https://about.fb.com/news/2026/09/meta-muse-ai/': 'https://ai.meta.com/',
+  'https://www.oneplus.com/offers': 'https://www.oneplus.com/',
+};
+
+/**
+ * Resolves canonical verified destination URL, correcting any legacy 404 URLs to official pages.
+ */
+export function resolveCanonicalOfferUrl(sourceUrl?: string | null): string {
+  if (!sourceUrl || typeof sourceUrl !== 'string') return '';
+  const trimmed = sourceUrl.trim();
+  if (KNOWN_OFFER_URL_FIXES[trimmed]) {
+    return KNOWN_OFFER_URL_FIXES[trimmed];
+  }
+  for (const [bad, good] of Object.entries(KNOWN_OFFER_URL_FIXES)) {
+    if (trimmed.includes(bad) || (bad.endsWith('/') && trimmed === bad.slice(0, -1))) {
+      return good;
+    }
+  }
+  return trimmed;
+}
+

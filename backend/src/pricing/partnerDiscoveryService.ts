@@ -22,9 +22,11 @@ import { createHash } from 'crypto';
 import {
   extractRootDomain,
   isAllowlistedPartnerDomain,
+  findPartnerByDomain,
   registerDiscoveredPartner,
   canonicalizeAiProvider,
-  findPartnerByDomain,
+  resolveCanonicalOfferUrl,
+  OfficialPartnerConfig,
   PartnerCategory,
 } from './partnerSourceRegistry';
 
@@ -303,9 +305,10 @@ export class PartnerDiscoveryService {
   public static ingestCandidate(
     raw: Partial<PartnerDiscoveryCandidate> & { sourceUrl: string; partnerName: string }
   ): PartnerDiscoveryCandidate {
-    const rootDomain = extractRootDomain(raw.sourceUrl);
+    const canonicalUrl = resolveCanonicalOfferUrl(raw.sourceUrl);
+    const rootDomain = extractRootDomain(canonicalUrl);
     const id = createHash('sha256')
-      .update(`${raw.partnerName}::${raw.sourceUrl}::${raw.possibleAiProvider || ''}`)
+      .update(`${raw.partnerName}::${canonicalUrl}::${raw.possibleAiProvider || ''}`)
       .digest('hex')
       .slice(0, 16);
 
@@ -319,7 +322,7 @@ export class PartnerDiscoveryService {
       benefit: raw.benefit,
       eligibility: raw.eligibility || 'All eligible customers',
       duration: raw.duration,
-      sourceUrl: raw.sourceUrl,
+      sourceUrl: canonicalUrl,
       sourceDomain: rootDomain,
       discoveryMethod: raw.discoveryMethod || 'SEARCH_SIGNAL',
       discoveredAt: raw.discoveredAt || new Date(),
@@ -451,7 +454,7 @@ export class PartnerDiscoveryService {
       {
         partnerName: 'Deutsche Telekom',
         category: 'telecom',
-        sourceUrl: 'https://www.telekom.com/en/media/media-information/archive-news-details/telekom-and-perplexity-bring-ai-to-smartphones',
+        sourceUrl: 'https://www.telekom.com/en/media',
         rawSnippet: 'Deutsche Telekom customers receive free Perplexity Pro access on select mobile contracts.',
         possibleAiProvider: 'perplexity',
         possibleAiPlan: 'Perplexity Pro',
@@ -484,7 +487,7 @@ export class PartnerDiscoveryService {
       {
         partnerName: 'ASUS',
         category: 'devices',
-        sourceUrl: 'https://www.asus.com/campaign/google-one-ai-premium/',
+        sourceUrl: 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
         rawSnippet: 'Purchase an eligible ASUS AI PC and receive complimentary Google One AI Premium (Gemini Advanced) for 3 months to 1 year.',
         possibleAiProvider: 'gemini',
         possibleAiPlan: 'Google One AI Premium (Gemini Advanced)',

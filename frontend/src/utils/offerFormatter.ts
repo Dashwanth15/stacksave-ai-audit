@@ -26,6 +26,33 @@ export function decodeHtmlEntities(text: string): string {
     .trim();
 }
 
+const KNOWN_OFFER_URL_FIXES: Record<string, string> = {
+  'https://www.asus.com/campaign/google-one-ai-premium/': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+  'https://asus.com/campaign/google-one-ai-premium/': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+  'https://www.asus.com/campaign/google-one-ai-premium': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+  'https://asus.com/campaign/google-one-ai-premium': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+  'https://www.telekom.com/en/media/media-information/archive-news-details/telekom-and-perplexity-bring-ai-to-smartphones': 'https://www.telekom.com/en/media',
+  'https://character.ai/c-ai+': 'https://character.ai/',
+  'https://bolt.new/pricing': 'https://bolt.new/',
+  'https://platform.moonshot.cn/docs/pricing/chat': 'https://platform.moonshot.cn/pricing',
+  'https://about.fb.com/news/2026/09/meta-muse-ai/': 'https://ai.meta.com/',
+  'https://www.oneplus.com/offers': 'https://www.oneplus.com/',
+};
+
+export function resolveCanonicalOfferUrl(sourceUrl?: string | null): string {
+  if (!sourceUrl || typeof sourceUrl !== 'string') return '';
+  const trimmed = sourceUrl.trim();
+  if (KNOWN_OFFER_URL_FIXES[trimmed]) {
+    return KNOWN_OFFER_URL_FIXES[trimmed];
+  }
+  for (const [bad, good] of Object.entries(KNOWN_OFFER_URL_FIXES)) {
+    if (trimmed.includes(bad) || (bad.endsWith('/') && trimmed === bad.slice(0, -1))) {
+      return good;
+    }
+  }
+  return trimmed;
+}
+
 export type OfferCategory = 'all' | 'partner' | 'student' | 'annual' | 'api' | 'trial' | 'startup' | 'free';
 
 export interface FormattedOffer {
@@ -424,7 +451,7 @@ export function formatOfferForDisplay(
     evidenceText: rawOffer.evidenceText || null,
     detectionMethod: rawOffer.detectionMethod || null,
     sourceStatus: rawOffer.sourceStatus || 'VERIFIED',
-    sourceUrl: rawOffer.sourceUrl,
+    sourceUrl: resolveCanonicalOfferUrl(rawOffer.sourceUrl),
     detectedAt: rawOffer.detectedAt,
     lastConfirmedAt: confirmedTimestamp,
     verificationStatusText: verification.text,

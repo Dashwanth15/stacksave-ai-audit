@@ -11,6 +11,8 @@
     "test:watch": "vitest",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
+    "diagnose:offers": "tsx scratch/forensic_offer_reconciliation.ts",
+    "extract:pricing": "tsx scripts/official_pricing_extractor.ts",
     "audit:offers:predeploy": "npm run build && tsx scripts/predeployment_offer_audit.ts",
     "audit:sync:path": "tsx scripts/verify_sync_reverification_path.ts",
     "audit:providers:dryrun": "tsx scripts/provider_dryrun.ts",

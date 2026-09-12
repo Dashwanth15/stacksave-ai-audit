@@ -171,7 +171,7 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
   {
     id: 'kimi',
     displayName: 'Kimi',
-    pricingUrl: 'https://platform.moonshot.cn/docs/pricing/chat',
+    pricingUrl: 'https://platform.moonshot.cn/pricing',
     offersUrl: 'https://platform.moonshot.cn/pricing',
     apiPromotionsUrl: 'https://platform.moonshot.cn/pricing',
     secondaryOfferUrls: [
@@ -246,8 +246,8 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
     offersUrl: 'https://z.ai/subscribe',
     secondaryOfferUrls: [
       { label: 'Z.ai Model API', url: 'https://z.ai/model-api', type: 'pricing' },
-      { label: 'Z.ai Developer Docs', url: 'https://docs.z.ai', type: 'pricing' },
-      { label: 'ZCode Official ADE', url: 'https://zcode.z.ai/en', type: 'pricing' },
+      { label: 'Z.ai Docs', url: 'https://docs.z.ai', type: 'pricing' },
+      { label: 'ZCode', url: 'https://zcode.z.ai/en', type: 'pricing' },
     ],
     strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
@@ -259,9 +259,10 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
     pricingUrl: 'https://dev.meta.ai/docs/pricing-rate-limits',
     offersUrl: 'https://dev.meta.ai/docs/pricing-rate-limits',
     secondaryOfferUrls: [
-      { label: 'Meta Muse Newsroom', url: 'https://about.fb.com/news/2026/09/meta-muse-ai/', type: 'pricing' },
+      { label: 'Meta Muse AI Announcement', url: 'https://about.fb.com/news/2026/09/meta-muse-ai/', type: 'pricing' },
       { label: 'Muse Code CLI', url: 'https://muse.meta.ai/code', type: 'pricing' },
-      { label: 'Muse Personal Agent', url: 'https://muse.meta.ai', type: 'pricing' },
+      { label: 'Muse Meta AI', url: 'https://muse.meta.ai', type: 'pricing' },
+      { label: 'Meta AI', url: 'https://ai.meta.com/', type: 'pricing' },
     ],
     strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
@@ -350,8 +351,8 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
   {
     id: 'character-ai',
     displayName: 'Character.AI',
-    pricingUrl: 'https://character.ai/c-ai+',
-    offersUrl: 'https://character.ai/c-ai+',
+    pricingUrl: 'https://character.ai/',
+    offersUrl: 'https://character.ai/',
     strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
       'Official Character.AI membership page. Source entry registers trust domain. No Playwright extractor currently active — offer created only if promotional evidence found in future cycles.',
@@ -361,9 +362,9 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
     displayName: 'Replit AI & Agent',
     pricingUrl: 'https://replit.com/pricing',
     offersUrl: 'https://replit.com/pricing',
-    educationUrl: 'https://replit.com/site/teams-for-education',
+    educationUrl: 'https://replit.com/pricing',
     secondaryOfferUrls: [
-      { label: 'Replit Teams for Education', url: 'https://replit.com/site/teams-for-education', type: 'education' },
+      { label: 'Replit Pricing & Plans', url: 'https://replit.com/pricing', type: 'education' },
     ],
     strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
@@ -390,8 +391,8 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
   {
     id: 'bolt-new',
     displayName: 'Bolt.new',
-    pricingUrl: 'https://bolt.new/pricing',
-    offersUrl: 'https://bolt.new/pricing',
+    pricingUrl: 'https://bolt.new/',
+    offersUrl: 'https://bolt.new/',
     strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:
       'Official Bolt.new (StackBlitz) pricing page. Source entry registers trust domain. Offer created only if promotional evidence is found on live page.',
