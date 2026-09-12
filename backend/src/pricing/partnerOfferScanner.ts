@@ -631,6 +631,73 @@ export class PartnerOfferScanner {
   }
 
   /**
+   * Reconciles stale partner offers by deactivating those not confirmed in the current scan.
+   * 
+   * CRITICAL: This prevents broken offers (404, expired) from remaining active indefinitely.
+   * Only deactivates offers after a grace period to avoid false positives from temporary scan issues.
+   * 
+   * @param confirmedFingerprints - Set of offer fingerprints confirmed in current scan
+   * @param scanSuccessful - Whether the scan completed successfully (false = network/rate limit issues)
+   * @returns Count of deactivated and preserved offers
+   */
+  public static async reconcileStaleOffers(
+    confirmedFingerprints: Set<string>,
+    scanSuccessful: boolean
+  ): Promise<{ deactivatedCount: number; preservedCount: number }> {
+    if (!scanSuccessful) {
+      console.log('[PartnerScanner:Reconcile] Scan failed — preserving all active offers');
+      return { deactivatedCount: 0, preservedCount: 0 };
+    }
+
+    // Find active partner offers NOT confirmed in this scan
+    const staleOffers = await NotificationEventModel.find({
+      isActive: true,
+      $or: [
+        { isPartnerOffer: true },
+        { offerType: { $in: ['TELECOM_BUNDLE', 'DEVICE_BUNDLE', 'BROADBAND_BUNDLE', 'BANKING_REWARD'] } },
+      ],
+      fingerprint: { $nin: Array.from(confirmedFingerprints) },
+    }).lean();
+
+    let deactivatedCount = 0;
+    let preservedCount = 0;
+
+    for (const offer of staleOffers) {
+      // Check if offer should be deactivated based on lastConfirmedAt age
+      const lastConfirmed = offer.lastConfirmedAt || offer.detectedAt;
+      const daysSinceConfirmation = (Date.now() - new Date(lastConfirmed).getTime()) / (1000 * 60 * 60 * 24);
+      
+      // Grace period: Only deactivate if unconfirmed for 7+ days
+      // This prevents false positives from temporary network issues, rate limits, or transient failures
+      if (daysSinceConfirmation > 7) {
+        // Offer hasn't been confirmed in 7+ days — mark as EXPIRED
+        await NotificationEventModel.updateOne(
+          { _id: offer._id },
+          {
+            $set: {
+              isActive: false,
+              status: 'EXPIRED',
+              lastCheckedAt: new Date(),
+            },
+            $inc: { consecutiveMisses: 1 },
+          }
+        );
+        
+        console.log(`   ⚠️ [Reconcile: DEACTIVATED] ${offer.partner} × ${offer.title} (${daysSinceConfirmation.toFixed(0)} days unconfirmed)`);
+        deactivatedCount++;
+      } else {
+        preservedCount++;
+      }
+    }
+
+    if (deactivatedCount > 0 || preservedCount > 0) {
+      console.log(`[PartnerScanner:Reconcile] Deactivated: ${deactivatedCount}, Preserved (within grace): ${preservedCount}`);
+    }
+
+    return { deactivatedCount, preservedCount };
+  }
+
+  /**
    * Executes the full ~24-hour offer discovery and synchronization cycle.
    *
    * Phase 1: Genuine commercial Partner Bundles (isPartnerOffer=true)
@@ -640,6 +707,7 @@ export class PartnerOfferScanner {
    * Phase 3: Startup Grant offers (isPartnerOffer=false)
    *          Microsoft Founders Hub, AWS Activate, Google Cloud — classified as Startup Grants.
    * Phase 4: Layer 2 Ecosystem Candidate signals
+   * Phase 5: Reconcile stale offers (deactivate unconfirmed offers after grace period)
    */
   public static async runFullScan(liveExtractedOffers?: NormalizedPartnerOffer[]): Promise<PartnerScanResult> {
     const result: PartnerScanResult = {
@@ -651,6 +719,10 @@ export class PartnerOfferScanner {
       errorsCount: 0,
       offers: [],
     };
+
+    // Track confirmed offer fingerprints for reconciliation
+    const confirmedFingerprints = new Set<string>();
+    let scanSuccessful = true;
 
     // ── Phase 0: Live Playwright Extracted Partner Offers (if provided) ──
     if (liveExtractedOffers && liveExtractedOffers.length > 0) {
@@ -670,10 +742,17 @@ export class PartnerOfferScanner {
           else if (res.status === 'UPDATED') result.updatedOffersCount++;
           else if (res.status === 'CONFIRMED') result.preservedActiveCount++;
           else if (res.status === 'EXPIRED') result.expiredOffersCount++;
+          
+          // Track confirmed offers for reconciliation
+          if (res.status !== 'EXPIRED') {
+            confirmedFingerprints.add(liveOffer.fingerprint);
+          }
+          
           result.offers.push(liveOffer);
         } catch (err) {
           console.error(`[PartnerScanner] Error persisting live Playwright offer (${liveOffer.partner}):`, err);
           result.errorsCount++;
+          scanSuccessful = false;
         }
       }
     }
@@ -689,10 +768,17 @@ export class PartnerOfferScanner {
         else if (res.status === 'UPDATED') result.updatedOffersCount++;
         else if (res.status === 'CONFIRMED') result.preservedActiveCount++;
         else if (res.status === 'EXPIRED') result.expiredOffersCount++;
+        
+        // Track confirmed offers for reconciliation
+        if (res.status !== 'EXPIRED') {
+          confirmedFingerprints.add(offer.fingerprint);
+        }
+        
         result.offers.push(offer);
       } catch (err) {
         console.error(`[PartnerScanner] Error persisting partner offer (${offer.partner}):`, err);
         result.errorsCount++;
+        scanSuccessful = false;
       }
     }
 
@@ -707,10 +793,17 @@ export class PartnerOfferScanner {
         else if (res.status === 'UPDATED') result.updatedOffersCount++;
         else if (res.status === 'CONFIRMED') result.preservedActiveCount++;
         else if (res.status === 'EXPIRED') result.expiredOffersCount++;
+        
+        // Track confirmed offers for reconciliation (student offers also need reconciliation)
+        if (res.status !== 'EXPIRED') {
+          confirmedFingerprints.add(offer.fingerprint);
+        }
+        
         result.offers.push(offer);
       } catch (err) {
         console.error(`[PartnerScanner] Error persisting student offer (${offer.partner}):`, err);
         result.errorsCount++;
+        scanSuccessful = false;
       }
     }
 
@@ -725,10 +818,17 @@ export class PartnerOfferScanner {
         else if (res.status === 'UPDATED') result.updatedOffersCount++;
         else if (res.status === 'CONFIRMED') result.preservedActiveCount++;
         else if (res.status === 'EXPIRED') result.expiredOffersCount++;
+        
+        // Track confirmed offers for reconciliation
+        if (res.status !== 'EXPIRED') {
+          confirmedFingerprints.add(offer.fingerprint);
+        }
+        
         result.offers.push(offer);
       } catch (err) {
         console.error(`[PartnerScanner] Error persisting startup offer (${offer.partner}):`, err);
         result.errorsCount++;
+        scanSuccessful = false;
       }
     }
 
@@ -745,12 +845,30 @@ export class PartnerOfferScanner {
           else if (res.status === 'UPDATED') result.updatedOffersCount++;
           else if (res.status === 'CONFIRMED') result.preservedActiveCount++;
           else if (res.status === 'EXPIRED') result.expiredOffersCount++;
+          
+          // Track confirmed offers for reconciliation
+          if (res.status !== 'EXPIRED') {
+            confirmedFingerprints.add(evalResult.offer.fingerprint);
+          }
+          
           result.offers.push(evalResult.offer);
         }
       } catch (err) {
         console.error(`[PartnerScanner] Error evaluating candidate (${candidate.partnerName}):`, err);
         result.errorsCount++;
+        scanSuccessful = false;
       }
+    }
+
+    // ── Phase 5: Reconcile Stale Offers ──────────────────────────
+    // Deactivate offers that were not confirmed in this scan cycle
+    // Grace period: 7 days (prevents false positives from temporary scan failures)
+    try {
+      const reconcileResult = await this.reconcileStaleOffers(confirmedFingerprints, scanSuccessful);
+      result.expiredOffersCount += reconcileResult.deactivatedCount;
+    } catch (reconcileErr) {
+      console.error('[PartnerScanner] Error during stale offer reconciliation:', reconcileErr);
+      result.errorsCount++;
     }
 
     return result;
