@@ -1,4 +1,6 @@
+import { createHash } from 'crypto';
 import { extractRootDomain, isAllowlistedPartnerDomain } from './partnerSourceRegistry';
+import { getProviderSource } from './sourceRegistry';
 import type { NormalizedOffer, SyncStatus } from './types';
 
 export interface OfferTrustContext {
