@@ -52,6 +52,7 @@ import {
   MultiSignalOfferScanner,
   ProviderExtractionDiagnostics,
 } from '../src/pricing/multiSignalOfferScanner';
+import { PlaywrightOfferResearchAgent } from '../src/pricing/offerResearchAgent';
 
 // ── Fingerprint Helper ────────────────────────────────────────
 
@@ -2601,7 +2602,7 @@ export async function scanGenericProvider(
  * using Playwright stealth browser contexts.
  */
 export async function extractOfficialPartnerOffers(browser: Browser): Promise<NormalizedPartnerOffer[]> {
-  console.log('\n[Tier 2: Playwright Live Partner Extraction] Scanning official commercial partner offer surfaces...');
+  console.log('\n[Tier 2: Playwright Live Partner Extraction] Scanning official commercial partner offer surfaces with Playwright Research Agent...');
   const partnerSources = [
     {
       partner: 'Jio',
@@ -2618,8 +2619,7 @@ export async function extractOfficialPartnerOffers(browser: Browser): Promise<No
       country: 'IN',
       region: 'India',
       officialSourceUrl: 'https://www.jio.com/en-in/google-one-offer',
-      expectedKeywords: ['Google', 'One', 'AI', 'Jio', '5G', 'Gemini'],
-      fallbackEvidence: 'Eligible Jio users receive 18 months of Google AI Pro complimentary with eligible Unlimited 5G plans.',
+      termsUrl: 'https://www.jio.com/terms',
     },
     {
       partner: 'Airtel',
@@ -2636,8 +2636,7 @@ export async function extractOfficialPartnerOffers(browser: Browser): Promise<No
       country: 'IN',
       region: 'India',
       officialSourceUrl: 'https://www.airtel.in/perplexity-pro',
-      expectedKeywords: ['Perplexity', 'Airtel', 'Pro', 'Thanks'],
-      fallbackEvidence: 'Airtel Thanks members enjoy 1 year of Perplexity Pro search intelligence free of charge.',
+      termsUrl: 'https://www.airtel.in/terms',
     },
     {
       partner: 'Google Pixel',
@@ -2654,8 +2653,7 @@ export async function extractOfficialPartnerOffers(browser: Browser): Promise<No
       country: 'GLOBAL',
       region: 'Global',
       officialSourceUrl: 'https://store.google.com/category/phones',
-      expectedKeywords: ['Pixel', 'Gemini', 'Google One', 'AI Premium'],
-      fallbackEvidence: 'Buy an eligible Pixel device and get 12 months of the Google One AI Premium plan at no extra charge.',
+      termsUrl: 'https://one.google.com/terms-of-service',
     },
     {
       partner: 'Samsung',
@@ -2672,8 +2670,7 @@ export async function extractOfficialPartnerOffers(browser: Browser): Promise<No
       country: 'GLOBAL',
       region: 'Global',
       officialSourceUrl: 'https://www.samsung.com/galaxy-ai/',
-      expectedKeywords: ['Galaxy AI', 'Gemini', 'Samsung', 'Intelligence'],
-      fallbackEvidence: 'Galaxy AI features powered by Google Gemini available at no extra cost on supported Samsung Galaxy devices.',
+      termsUrl: 'https://www.samsung.com/galaxy-ai/terms/',
     },
     {
       partner: 'ASUS',
@@ -2690,95 +2687,25 @@ export async function extractOfficialPartnerOffers(browser: Browser): Promise<No
       country: 'GLOBAL',
       region: 'Global',
       officialSourceUrl: 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
-      expectedKeywords: ['ASUS', 'Google One', 'AI Premium', 'Gemini', 'Chromebook'],
-      fallbackEvidence: 'Purchase an eligible ASUS AI PC and receive complimentary Google One AI Premium (Gemini Advanced) for 3 months to 1 year.',
+      termsUrl: 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
     },
   ];
 
   const extractedLiveOffers: NormalizedPartnerOffer[] = [];
-  const checkedAt = new Date();
 
   for (const src of partnerSources) {
-    let context: BrowserContext | null = null;
     try {
-      context = await createStealthContext(browser);
-      const page = await context.newPage();
-      console.log(`   [Partner Live] Scanning official partner source: ${src.officialSourceUrl}...`);
+      console.log(`   [Research Agent] Investigating partner bundle: ${src.partner} -> ${src.offerTitle}...`);
+      const researchRes = await PlaywrightOfferResearchAgent.researchPartnerBundle(browser, src);
 
-      let liveExtractedText = '';
-      try {
-        await page.goto(src.officialSourceUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        const rawText = await page.evaluate(() => document.body.innerText || '');
-        const text = typeof rawText === 'string' ? rawText : String(rawText || '');
-
-        const lines = text.split('\n').map((l) => l.trim()).filter((l) => l.length > 20);
-        const relevantLines = lines.filter((l) =>
-          src.expectedKeywords.some((kw) => l.toLowerCase().includes(kw.toLowerCase()))
-        );
-
-        if (relevantLines.length > 0) {
-          liveExtractedText = relevantLines.slice(0, 3).join(' ');
-        }
-      } catch (navErr: any) {
-        console.warn(`   ⚠️ [Partner Live Warning] ${src.partner} note: ${navErr?.message || navErr}`);
+      if (researchRes.status === 'CURRENT' && researchRes.verifiedOffer) {
+        extractedLiveOffers.push(researchRes.verifiedOffer);
+        console.log(`   ✅ [Research Agent: CURRENT] ${src.partner} -> ${src.aiPlan} (${researchRes.statusReason})`);
+      } else {
+        console.log(`   ❌ [Research Agent: REJECTED] ${src.partner} -> ${src.aiPlan} [Status: ${researchRes.status}] Reason: ${researchRes.statusReason}`);
       }
-
-      const evidenceText =
-        liveExtractedText && liveExtractedText.length >= 20 ? liveExtractedText : src.fallbackEvidence;
-      const contentHash = createHash('sha256')
-        .update(`${src.partner}::${src.aiProvider}::${evidenceText}`)
-        .digest('hex');
-
-      const liveOffer: NormalizedPartnerOffer = {
-        fingerprint: buildPartnerOfferFingerprint({
-          partner: src.partner,
-          aiProvider: src.aiProvider,
-          aiPlan: src.aiPlan,
-          offerType: 'TELECOM_BUNDLE',
-          region: src.region,
-        }),
-        partner: src.partner,
-        partnerType: src.partnerType,
-        aiProvider: src.aiProvider,
-        aiProviderDisplayName: src.aiProviderDisplayName,
-        isKnownAiProvider: true,
-        aiPlan: src.aiPlan,
-        offerTitle: src.offerTitle,
-        offerDescription: `${src.offerTitle} - ${src.benefit} for ${src.eligibility}.`,
-        offerType: 'TELECOM_BUNDLE',
-        benefit: src.benefit,
-        duration: src.duration,
-        value: src.value,
-        eligibility: src.eligibility,
-        activationMethod: src.activationMethod,
-        country: src.country,
-        region: src.region,
-        officialSourceUrl: src.officialSourceUrl,
-        sourceDomain: extractRootDomain(src.officialSourceUrl),
-        providerOfficialUrl: getProviderSource(src.aiProvider)?.pricingUrl || '',
-        sourceType: 'official',
-        sourceStatus: 'VERIFIED',
-        evidenceText,
-        contentHash,
-        detectionMethod: 'PLAYWRIGHT_LIVE',
-        extractorVersion: '4.0.0-playwright-partner-live',
-        detectedAt: checkedAt,
-        lastConfirmedAt: checkedAt,
-        lastCheckedAt: checkedAt,
-        lastSuccessfulCheckAt: checkedAt,
-        sourceFetchedAt: checkedAt,
-        status: 'ACTIVE',
-        isActive: true,
-        isPublic: true,
-      };
-
-      extractedLiveOffers.push(liveOffer);
-      console.log(`   ✅ [Partner Live Verified] ${src.partner} -> ${src.aiPlan} (Hash: ${contentHash.slice(0, 8)})`);
     } catch (err: any) {
-      console.error(`   ❌ [Partner Live Error] Failed extracting ${src.partner}:`, err?.message || err);
-    } finally {
-      if (context) await context.close().catch(() => null);
+      console.error(`   ❌ [Research Agent Error] Failed evaluating ${src.partner}:`, err?.message || err);
     }
   }
 

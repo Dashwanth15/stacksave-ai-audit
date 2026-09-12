@@ -13,13 +13,15 @@
 
 import { createHash } from 'crypto';
 import type { Page } from 'playwright';
-import type {
+import {
   NormalizedOffer,
   NormalizedPlan,
   ScannedSourcePage,
   SyncStatus,
   OfficialExtractedProviderData,
 } from './types';
+import { PlaywrightOfferResearchAgent } from './offerResearchAgent';
+import { checkOfferDestination, type OfferDestinationHealthResult } from './offerDestinationHealthCheck';
 
 export interface CandidateRejection {
   snippet: string;
@@ -215,7 +217,14 @@ export class MultiSignalOfferScanner {
       const discountLabel = pct ? `${pct}% Off Annual Billing` : 'Annual Billing Discount';
 
       const evidText = annualSnippets[0];
-      if (evidText.length >= 20) {
+      const negCheck = PlaywrightOfferResearchAgent.detectNegativeStatusLanguage(evidText);
+      const dateCheck = PlaywrightOfferResearchAgent.parseDatesAndCheckExpiry(evidText, new Date());
+
+      if (negCheck.hasNegativeSignal) {
+        rejectedCandidates.push({ snippet: evidText, reason: negCheck.reason || 'Negative status signal' });
+      } else if (dateCheck.isExpired) {
+        rejectedCandidates.push({ snippet: evidText, reason: dateCheck.expiredReason || 'Annual promo expired' });
+      } else if (evidText.length >= 20) {
         const title = `${displayName} Annual Subscription Savings`;
         const key = `${providerId}::annual`;
         if (!seenOfferKeys.has(key)) {
@@ -264,6 +273,18 @@ export class MultiSignalOfferScanner {
         discountLabel = '1 Month Free';
       }
 
+      const pNeg = PlaywrightOfferResearchAgent.detectNegativeStatusLanguage(pSnippet);
+      const pDate = PlaywrightOfferResearchAgent.parseDatesAndCheckExpiry(pSnippet, new Date());
+
+      if (pNeg.hasNegativeSignal) {
+        rejectedCandidates.push({ snippet: pSnippet, reason: pNeg.reason || 'Negative status signal' });
+        continue;
+      }
+      if (pDate.isExpired) {
+        rejectedCandidates.push({ snippet: pSnippet, reason: pDate.expiredReason || 'Promo expired' });
+        continue;
+      }
+
       if (pSnippet.length >= 20) {
         const title = `${displayName} Promotional Discount`;
         const key = `${providerId}::promo::${discountLabel}`;
@@ -306,6 +327,18 @@ export class MultiSignalOfferScanner {
       } else if (lower.includes('credits')) {
         title = `${displayName} Developer Free Credits Grant`;
         discountLabel = 'Free Platform Credits';
+      }
+
+      const tNeg = PlaywrightOfferResearchAgent.detectNegativeStatusLanguage(tSnippet);
+      const tDate = PlaywrightOfferResearchAgent.parseDatesAndCheckExpiry(tSnippet, new Date());
+
+      if (tNeg.hasNegativeSignal) {
+        rejectedCandidates.push({ snippet: tSnippet, reason: tNeg.reason || 'Negative status signal' });
+        continue;
+      }
+      if (tDate.isExpired) {
+        rejectedCandidates.push({ snippet: tSnippet, reason: tDate.expiredReason || 'Trial expired' });
+        continue;
       }
 
       if (tSnippet.length >= 20) {
@@ -432,9 +465,45 @@ export class MultiSignalOfferScanner {
       }
     }
 
+    // ── CRITICAL: Health Check All Offer Destinations ────────────────────
+    // Before publishing offers as ACTIVE, verify destination URLs are reachable
+    // and not 404/expired/unavailable pages
+    console.log(`   [${displayName}] Running destination health checks for ${qualifyingOffers.length} candidate offer(s)...`);
+    const healthCheckedOffers: NormalizedOffer[] = [];
+    
+    for (const offer of qualifyingOffers) {
+      try {
+        const healthCheck = await checkOfferDestination(page, offer.sourceUrl, 15000);
+        
+        if (healthCheck.status === 'VALID') {
+          // Offer destination is reachable and valid
+          healthCheckedOffers.push(offer);
+          console.log(`      ✅ ${offer.title} - Destination valid (HTTP ${healthCheck.finalStatus})`);
+        } else {
+          // Offer destination is dead/expired/unavailable
+          rejectedCandidates.push({
+            snippet: offer.title,
+            reason: `Destination health check failed: ${healthCheck.status} - ${healthCheck.statusReason || 'Unreachable'}`,
+          });
+          console.log(`      ❌ ${offer.title} - ${healthCheck.status}: ${healthCheck.statusReason}`);
+        }
+      } catch (healthErr: any) {
+        // Health check error - reject offer to be safe
+        rejectedCandidates.push({
+          snippet: offer.title,
+          reason: `Health check error: ${healthErr.message || 'Unknown error'}`,
+        });
+        console.log(`      ⚠️  ${offer.title} - Health check failed: ${healthErr.message}`);
+      }
+    }
+    
+    console.log(`   [${displayName}] Health check complete: ${healthCheckedOffers.length}/${qualifyingOffers.length} offers passed`);
+
     const status: SyncStatus = 'VERIFIED';
-    const statusReason = qualifyingOffers.length > 0
-      ? `VERIFIED_WITH_OFFERS (${qualifyingOffers.length} qualifying offer(s) found)`
+    const statusReason = healthCheckedOffers.length > 0
+      ? `VERIFIED_WITH_OFFERS (${healthCheckedOffers.length} qualifying offer(s) with valid destinations found)`
+      : qualifyingOffers.length > 0
+      ? `VERIFIED_NO_OFFER (${qualifyingOffers.length} candidate(s) found but all destinations unreachable/expired)`
       : `VERIFIED_NO_OFFER (Official page loaded successfully; no active promotional discounts found)`;
 
     return {
@@ -447,11 +516,11 @@ export class MultiSignalOfferScanner {
       bodyTextLength: bodyText.length,
       keywordsFound,
       candidatesFound: candidatesCount,
-      qualifyingOffers: qualifyingOffers.length,
+      qualifyingOffers: healthCheckedOffers.length,
       rejectedCandidates,
       status,
       statusReason,
-      offers: qualifyingOffers,
+      offers: healthCheckedOffers,
       plans: extractedPlans,
     };
   }
