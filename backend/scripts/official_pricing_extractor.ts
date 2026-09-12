@@ -2714,7 +2714,7 @@ export async function extractOfficialPartnerOffers(browser: Browser): Promise<No
 
 // ── Main Extractor Execution ──────────────────────────────────
 
-export async function runOfficialExtraction(syncTarget: string = 'both'): Promise<OfficialIngestPayload> {
+export async function runOfficialExtraction(syncTarget: string = 'both'): Promise<{ payload: OfficialIngestPayload; browser: any }> {
   console.log('========================================================================================');
   console.log('STACKSAVE AI AUDIT — OFFICIAL SOURCE EXTRACTION RUNNER (MULTI-PAGE PLAYWRIGHT + STATIC)');
   console.log('========================================================================================\n');
@@ -2875,7 +2875,8 @@ export async function runOfficialExtraction(syncTarget: string = 'both'): Promis
 
   // 2. TIER 2: PLAYWRIGHT HEADLESS MULTI-PAGE EXTRACTORS
   console.log('[Tier 2: Playwright Multi-Page Live DOM] Launching Chromium to extract dynamic SPAs, education & startup portals...');
-  const browser = await chromium.launch({ headless: true });
+  let browser = await chromium.launch({ headless: true });
+  let browserForPartnerScanner = browser; // Keep reference for partner scanner
 
   try {
     const claudeData = await extractClaude(browser);
@@ -2958,7 +2959,8 @@ export async function runOfficialExtraction(syncTarget: string = 'both'): Promis
       console.warn('⚠️ [Partner Live Extraction Warning] Non-blocking partner live extraction issue:', partnerLiveErr?.message || partnerLiveErr);
     }
   } finally {
-    await browser.close();
+    // Note: Browser closed after payload assembly and partner scanner (see below)
+    // Do NOT close browser here - needed for partner scanner health checks
   }
 
   // 3. TIER 3: LIVE-VERIFIED BASELINE (Codex, GitHub Models)
@@ -3093,7 +3095,7 @@ export async function runOfficialExtraction(syncTarget: string = 'both'): Promis
     }
   }
 
-  return payload;
+  return { payload, browser: browserForPartnerScanner };
 }
 
 // ── Environment Preflight & Ingestion Helpers ─────────────────
@@ -3214,7 +3216,7 @@ export async function main() {
 
   console.log(`[Config] Target: ${syncTarget} | Mode: ${isCI ? 'GitHub Actions Production' : 'Local Development'}`);
 
-  const payload = await runOfficialExtraction(syncTarget);
+  const { payload, browser: browserForPartnerScanner } = await runOfficialExtraction(syncTarget);
 
   console.log('\n========================================================================================================================');
   console.log(`OFFICIAL MULTI-PAGE SOURCE EXTRACTION SUMMARY (${payload.providers.length} PROVIDERS)`);
@@ -3298,6 +3300,11 @@ export async function main() {
     } catch (partnerErr) {
       console.warn(`⚠️ [PartnerSync Warning] Non-blocking partner scan call failed:`, partnerErr);
     }
+    
+    // Close browser after CI workflow completes
+    if (browserForPartnerScanner) {
+      await browserForPartnerScanner.close();
+    }
   } else {
     if (isCI) {
       console.error('❌ [Ingest Failure] Missing ADMIN_SECRET or BACKEND_URL in CI environment.');
@@ -3314,15 +3321,20 @@ export async function main() {
         const directResult = await ingestOfficialExtractedPricing(payload, 'local_playwright_runner');
         console.log(`✅ [Local Ingest Success] Ingested ${directResult.totalProviders} providers directly into MongoDB!`);
         
-        const localPartnerRes = await PartnerOfferScanner.runFullScan(payload.livePartnerOffers);
+        const localPartnerRes = await PartnerOfferScanner.runFullScan(payload.livePartnerOffers, browserForPartnerScanner);
         console.log(`✅ [Local PartnerSync] Partner scan completed: ${localPartnerRes.newOffersCount} new, ${localPartnerRes.preservedActiveCount} confirmed.`);
         
         await mongoose.default.disconnect();
+        await browserForPartnerScanner.close();  // Close browser after partner scanner completes
       } catch (dbErr) {
         console.error('⚠️ [Local Ingest Error] Direct DB ingestion failed:', dbErr);
       }
     } else {
       console.log('ℹ [Local Dev] ADMIN_SECRET and MONGODB_URI not set — skipping DB ingestion.');
+      // Close browser even when skipping ingestion
+      if (browserForPartnerScanner) {
+        await browserForPartnerScanner.close();
+      }
     }
   }
 

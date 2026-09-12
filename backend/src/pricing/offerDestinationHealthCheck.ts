@@ -146,6 +146,52 @@ function detectPageFailureSignals(content: string, title: string): {
     }
   }
   
+  // NEW: Access Denied / Permission patterns (403, 401)
+  const accessDeniedPatterns = [
+    'access denied',
+    'permission denied',
+    '403 forbidden',
+    'forbidden',
+    'you don\'t have permission',
+    'you do not have permission',
+    'unauthorized',
+    '401 unauthorized',
+    'authentication required',
+  ];
+  
+  for (const pattern of accessDeniedPatterns) {
+    if (combined.includes(pattern)) {
+      return {
+        pageNotFound: false,
+        unavailable: true,
+        expired: false,
+        matchedPhrase: pattern,
+      };
+    }
+  }
+  
+  // NEW: Server Error patterns (5xx)
+  const serverErrorPatterns = [
+    'server error',
+    'internal server error',
+    'service unavailable',
+    '502 bad gateway',
+    '503 service unavailable',
+    'temporarily unavailable',
+    'maintenance mode',
+  ];
+  
+  for (const pattern of serverErrorPatterns) {
+    if (combined.includes(pattern)) {
+      return {
+        pageNotFound: false,
+        unavailable: true,
+        expired: false,
+        matchedPhrase: pattern,
+      };
+    }
+  }
+  
   return {
     pageNotFound: false,
     unavailable: false,
@@ -236,6 +282,42 @@ export async function checkOfferDestination(
         redirectsToGenericHomepage: false,
         status: 'EXPIRED',
         statusReason: 'HTTP 410 Gone',
+      };
+    }
+    
+    // NEW: Check for access/permission errors (401, 403)
+    if (finalStatus === 401 || finalStatus === 403) {
+      return {
+        reachable: false,
+        initialStatus,
+        finalStatus,
+        finalUrl,
+        redirectCount,
+        pageNotFound: false,
+        unavailable: true,
+        expired: false,
+        redirectsToGenericHomepage: false,
+        status: 'UNAVAILABLE',
+        statusReason: finalStatus === 401 
+          ? 'HTTP 401 Unauthorized - Access requires authentication' 
+          : 'HTTP 403 Forbidden - Access denied',
+      };
+    }
+    
+    // NEW: Check for server errors (5xx)
+    if (finalStatus >= 500 && finalStatus < 600) {
+      return {
+        reachable: false,
+        initialStatus,
+        finalStatus,
+        finalUrl,
+        redirectCount,
+        pageNotFound: false,
+        unavailable: true,
+        expired: false,
+        redirectsToGenericHomepage: false,
+        status: 'UNAVAILABLE',
+        statusReason: `HTTP ${finalStatus} Server Error`,
       };
     }
     

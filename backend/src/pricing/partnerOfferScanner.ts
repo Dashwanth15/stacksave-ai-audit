@@ -127,6 +127,14 @@ export class PartnerOfferScanner {
       await existing.save();
       return { status: 'EXPIRED' };
     }
+    
+    // NEW: If existing offer is marked UNAVAILABLE (broken destination), do NOT reactivate it
+    // This prevents health-check-failed offers from being auto-reactivated
+    if (existing.status === 'UNAVAILABLE' && !existing.isActive) {
+      existing.lastCheckedAt = checkTime;
+      await existing.save();
+      return { status: 'EXPIRED' }; // Return EXPIRED to prevent reconciliation from preserving it
+    }
 
     // 2. Check if commercial terms or content hash changed
     const hasChanged =
@@ -141,6 +149,12 @@ export class PartnerOfferScanner {
     if (offer.lastSuccessfulCheckAt) existing.lastSuccessfulCheckAt = offer.lastSuccessfulCheckAt;
     existing.lastConfirmedAt = checkTime;
     existing.lastSeenAt = checkTime;
+    
+    // DEBUG: Log if we're reactivating a previously inactive offer
+    if (!existing.isActive) {
+      console.log(`   🔄 [Reactivating Previously Inactive Offer] ${offer.partner} (was: status=${existing.status}, isActive=${existing.isActive})`);
+    }
+    
     existing.isActive = true;
     existing.consecutiveMisses = 0;
     existing.status = 'ACTIVE';
@@ -706,10 +720,16 @@ export class PartnerOfferScanner {
    *          GitHub Student, UNiDAYS, etc. — classified as Student & Education.
    * Phase 3: Startup Grant offers (isPartnerOffer=false)
    *          Microsoft Founders Hub, AWS Activate, Google Cloud — classified as Startup Grants.
-   * Phase 4: Layer 2 Ecosystem Candidate signals
+   * Phase 4: Layer 2 Ecosystem Candidate signals (with destination health checks)
    * Phase 5: Reconcile stale offers (deactivate unconfirmed offers after grace period)
+   * 
+   * @param liveExtractedOffers - Pre-validated offers from Playwright research (optional)
+   * @param browser - Playwright browser instance for health checks (optional)
    */
-  public static async runFullScan(liveExtractedOffers?: NormalizedPartnerOffer[]): Promise<PartnerScanResult> {
+  public static async runFullScan(
+    liveExtractedOffers?: NormalizedPartnerOffer[],
+    browser?: any  // Browser from playwright
+  ): Promise<PartnerScanResult> {
     const result: PartnerScanResult = {
       totalScanned: 0,
       newOffersCount: 0,
@@ -726,9 +746,48 @@ export class PartnerOfferScanner {
 
     // ── Phase 0: Live Playwright Extracted Partner Offers (if provided) ──
     if (liveExtractedOffers && liveExtractedOffers.length > 0) {
+      // If browser available, create health check page for Phase 0
+      let phase0HealthCheckPage: any = null;
+      if (browser) {
+        try {
+          console.log(`[PartnerScanner:Phase0] Creating health check page (browser available)...`);
+          const context = await browser.newContext();
+          phase0HealthCheckPage = await context.newPage();
+          console.log(`[PartnerScanner:Phase0] Health check page created successfully`);
+        } catch (err) {
+          console.error('[PartnerScanner:Phase0] Failed to create health check page:', err);
+        }
+      } else {
+        console.log(`[PartnerScanner:Phase0] No browser available for health checks`);
+      }
+      
       for (const liveOffer of liveExtractedOffers) {
         result.totalScanned++;
         try {
+          // ✅ Health check Phase 0 live extracted offers BEFORE persisting
+          if (phase0HealthCheckPage && liveOffer.officialSourceUrl) {
+            const { checkOfferDestination } = await import('./offerDestinationHealthCheck');
+            
+            console.log(`   [Discovery Candidate] Validating destination: ${liveOffer.partner}`);
+            const healthCheck = await checkOfferDestination(
+              phase0HealthCheckPage,
+              liveOffer.officialSourceUrl,
+              15000
+            );
+            
+            if (healthCheck.status !== 'VALID') {
+              console.log(`   ❌ [Discovery Candidate REJECTED] ${liveOffer.partner}: ${healthCheck.statusReason || healthCheck.status}`);
+              result.errorsCount++;
+              continue; // Skip persistence - destination is broken
+            } else {
+              console.log(`   ✅ [Discovery Candidate VALIDATED] ${liveOffer.partner}: Destination reachable`);
+            }
+          } else if (!phase0HealthCheckPage && liveOffer.officialSourceUrl) {
+            // Skip persistence when browser is not available - cannot validate destination
+            // (No warning needed - already logged at Phase 0 start)
+            continue;
+          }
+          
           const res = await this.persistPartnerOffer(
             {
               ...liveOffer,
@@ -753,6 +812,15 @@ export class PartnerOfferScanner {
           console.error(`[PartnerScanner] Error persisting live Playwright offer (${liveOffer.partner}):`, err);
           result.errorsCount++;
           scanSuccessful = false;
+        }
+      }
+      
+      // Close Phase 0 health check page
+      if (phase0HealthCheckPage) {
+        try {
+          await phase0HealthCheckPage.close();
+        } catch (err) {
+          console.error('[PartnerScanner:Phase0] Error closing health check page:', err);
         }
       }
     }
@@ -833,13 +901,58 @@ export class PartnerOfferScanner {
     }
 
     // ── Phase 4: Layer 2 Discovered Candidates & Ecosystem Signals ──
+    // IMPORTANT: Discovery candidates now include destination health checks
+    // to prevent broken URLs (404, 403, expired) from being published as ACTIVE
     PartnerDiscoveryService.discoverEcosystemCandidates();
     const candidates = PartnerDiscoveryService.getAllCandidates();
+    
+    console.log(`[PartnerScanner:Phase4] Processing ${candidates.length} discovery candidates...`);
+    
+    // If browser is available, perform health checks on discovery candidates
+    let healthCheckPage: any = null;
+    if (browser) {
+      try {
+        console.log(`[PartnerScanner:Phase4] Creating health check page (browser available)...`);
+        const context = await browser.newContext();
+        healthCheckPage = await context.newPage();
+        console.log(`[PartnerScanner:Phase4] Health check page created successfully`);
+      } catch (err) {
+        console.error('[PartnerScanner] Failed to create health check page:', err);
+      }
+    } else {
+      console.log(`[PartnerScanner:Phase4] No browser available - discovery candidates will be skipped`);
+    }
+    
     for (const candidate of candidates) {
       result.totalScanned++;
       try {
         const evalResult = PartnerDiscoveryService.evaluateCandidate(candidate);
+        
         if (evalResult.promoted && evalResult.offer) {
+          // ✅ NEW: Health check discovery candidate destination BEFORE persisting
+          if (healthCheckPage && evalResult.offer.officialSourceUrl) {
+            const { checkOfferDestination } = await import('./offerDestinationHealthCheck');
+            
+            console.log(`   [Discovery Candidate] Validating destination: ${candidate.partnerName}`);
+            const healthCheck = await checkOfferDestination(
+              healthCheckPage,
+              evalResult.offer.officialSourceUrl,
+              15000
+            );
+            
+            if (healthCheck.status !== 'VALID') {
+              console.log(`   ❌ [Discovery Candidate REJECTED] ${candidate.partnerName}: ${healthCheck.statusReason || healthCheck.status}`);
+              result.errorsCount++;
+              continue; // Skip persistence - destination is broken
+            } else {
+              console.log(`   ✅ [Discovery Candidate VALIDATED] ${candidate.partnerName}: Destination reachable`);
+            }
+          } else if (!healthCheckPage && evalResult.offer.officialSourceUrl) {
+            // Skip persistence when browser is not available - cannot validate destination
+            // (No warning needed - already logged at Phase 4 start)
+            continue;
+          }
+          
           const res = await this.persistPartnerOffer(evalResult.offer, true);
           if (res.status === 'CREATED') result.newOffersCount++;
           else if (res.status === 'UPDATED') result.updatedOffersCount++;
@@ -857,6 +970,15 @@ export class PartnerOfferScanner {
         console.error(`[PartnerScanner] Error evaluating candidate (${candidate.partnerName}):`, err);
         result.errorsCount++;
         scanSuccessful = false;
+      }
+    }
+    
+    // Clean up health check page
+    if (healthCheckPage) {
+      try {
+        await healthCheckPage.close();
+      } catch (err) {
+        console.error('[PartnerScanner] Error closing health check page:', err);
       }
     }
 
