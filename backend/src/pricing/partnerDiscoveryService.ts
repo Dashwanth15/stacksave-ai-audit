@@ -473,17 +473,12 @@ export class PartnerDiscoveryService {
         duration: '12 Months',
         eligibility: 'Active SoftBank, Y!mobile, and LINEMO smartphone users',
       },
-      {
-        partnerName: 'Nothing Technology',
-        category: 'devices',
-        sourceUrl: 'https://nothing.tech/pages/news',
-        rawSnippet: 'Nothing Phone owners get bundled Perplexity Pro AI subscription with device registration.',
-        possibleAiProvider: 'perplexity',
-        possibleAiPlan: 'Perplexity Pro',
-        benefit: 'Free Perplexity Pro Access',
-        duration: '1 Year Free',
-        eligibility: 'Registered Nothing Phone (2)/(2a) device owners',
-      },
+      // Nothing Technology -> Perplexity Pro
+      // REMOVED: Destination returns HTTP 404
+      // Evidence: https://nothing.tech/pages/news returns 404
+      // Historical: Phone (2a) promotion ended April 30, 2024
+      // Status: DO NOT resurrect without fresh official evidence of current promotion
+      
       {
         partnerName: 'ASUS',
         category: 'devices',

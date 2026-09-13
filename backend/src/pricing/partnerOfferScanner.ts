@@ -225,43 +225,10 @@ export class PartnerOfferScanner {
       },
 
       // Airtel -> Perplexity Pro Bundle
-      {
-        fingerprint: buildPartnerOfferFingerprint({
-          partner: 'Airtel',
-          aiProvider: 'perplexity',
-          aiPlan: 'Perplexity Pro',
-          offerType: 'TELECOM_BUNDLE',
-          region: 'India',
-        }),
-        partner: 'Airtel',
-        partnerType: 'telecom',
-        aiProvider: 'perplexity',
-        aiProviderDisplayName: 'Perplexity',
-        isKnownAiProvider: true,
-        aiPlan: 'Perplexity Pro',
-        offerTitle: 'Perplexity Pro with Airtel Thanks',
-        offerDescription:
-          'Get 12 months of Perplexity Pro access complimentary with Airtel Thanks Gold & Platinum postpaid and broadband subscriptions.',
-        offerType: 'TELECOM_BUNDLE',
-        benefit: '1 Year FREE',
-        duration: '12 months',
-        value: '$200 value',
-        eligibility: 'Airtel Thanks Gold & Platinum Customers',
-        activationMethod: 'Claim via Airtel Thanks App',
-        country: 'IN',
-        region: 'India',
-        officialSourceUrl: 'https://www.airtel.in/perplexity-pro',
-        sourceType: 'official',
-        sourceStatus: 'VERIFIED',
-        evidenceText:
-          'Airtel Thanks members enjoy 1 year of Perplexity Pro search intelligence free of charge.',
-        detectedAt: new Date('2026-08-05T00:00:00Z'),
-        lastConfirmedAt: new Date(),
-        lastCheckedAt: new Date(),
-        status: 'ACTIVE',
-        isActive: true,
-        isPublic: true,
-      },
+      // REMOVED: Promotion officially ended January 16, 2026
+      // Evidence: https://www.perplexity.ai/help-center/en/articles/11842322-perplexity-pro-airtel-promo
+      // Verification: Page redirects to homepage, contains "expired" text
+      // Status: DO NOT resurrect without fresh official evidence of NEW promotion
 
       // Samsung -> Galaxy AI / Gemini Bundle
       {
@@ -474,44 +441,11 @@ export class PartnerOfferScanner {
       },
 
       // UNiDAYS -> Perplexity Pro Student
-      {
-        fingerprint: buildPartnerOfferFingerprint({
-          partner: 'UNiDAYS',
-          aiProvider: 'perplexity',
-          aiPlan: 'Perplexity Pro Student',
-          offerType: 'EDUCATION_BUNDLE',
-          region: 'Global',
-        }),
-        partner: 'UNiDAYS',
-        partnerType: 'education',
-        aiProvider: 'perplexity',
-        aiProviderDisplayName: 'Perplexity',
-        isKnownAiProvider: true,
-        aiPlan: 'Perplexity Pro',
-        offerTitle: 'Perplexity Pro Student Discount via UNiDAYS',
-        offerDescription:
-          'Special academic rates and trial months for Perplexity Pro research and AI citations for verified university students.',
-        offerType: 'EDUCATION_BUNDLE',
-        benefit: '50% OFF / Free Trial',
-        duration: 'Academic year',
-        value: '$100/year savings',
-        eligibility: 'Verified university students on UNiDAYS',
-        activationMethod: 'Generate promo voucher code via UNiDAYS app',
-        country: 'GLOBAL',
-        region: 'Global',
-        officialSourceUrl: 'https://www.myunidays.com/',
-        termsUrl: 'https://www.myunidays.com/terms',
-        sourceType: 'official',
-        sourceStatus: 'VERIFIED',
-        evidenceText:
-          'Students get exclusive discounts and free access periods to Perplexity Pro through verified student identity.',
-        detectedAt: new Date('2026-08-25T00:00:00Z'),
-        lastConfirmedAt: new Date(),
-        lastCheckedAt: new Date(),
-        status: 'ACTIVE',
-        isActive: true,
-        isPublic: true,
-      },
+      // REMOVED: No current UNiDAYS × Perplexity partnership found
+      // Evidence: UNiDAYS website search shows no Perplexity offer
+      // Note: Perplexity Education Pro IS a real offer, but it's a native Perplexity
+      // subscription plan with SheerID verification - NOT a UNiDAYS partner bundle
+      // Status: DO NOT resurrect without fresh official UNiDAYS partnership evidence
     ];
   }
 
