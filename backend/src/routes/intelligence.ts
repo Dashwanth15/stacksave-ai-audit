@@ -322,14 +322,22 @@ router.get('/offers/diagnostic', requireAdminSecret, async (_req: Request, res: 
 // Returns ALL qualifying offers across all validated providers.
 // Sorted by offerOpportunityScore DESC (strongest offers first).
 //
-// offerOpportunityScore formula:
-//   platformScore   * 0.30  — quality of the AI platform itself
-//   offerValue      * 0.25  — magnitude of the offer benefit
-//   freshness       * 0.15  — recency of last confirmed verification
-//   eligibility     * 0.15  — breadth of who can access it
-//   partnerStrength * 0.10  — weight of the non-AI partner (0 if no partner)
-//   evidenceConf    * 0.05  — quality of detection method
-//   × offerTypeWeight       — normalises by offer category importance
+// Scoring architecture:
+//
+//   platformIntelligenceScore — PlatformRankingEngine score for the canonical AI platform.
+//     Resolved via aiProvider (partner/bundle offers) or providerId (direct offers).
+//     ASUS Gemini offer → scored as Gemini; Pixel Gemini offer → scored as Gemini.
+//
+//   offerOpportunityScore — Offer-only signals (no platform component):
+//     offerValue       * 0.40  — magnitude of the offer benefit
+//     freshness        * 0.25  — recency of last confirmed verification
+//     eligibilityScore * 0.20  — breadth of who can access it
+//     partnerContrib   * 0.10  — strength of the non-AI commercial partner (0 if none)
+//     evidenceConf     * 0.05  — quality of detection method
+//     × offerTypeWeight        — normalises by offer category importance
+//
+//   finalRecommendedScore = platformIntelligenceScore * 0.60 + offerOpportunityScore * 0.40
+//     Platform quality carries 60% weight so major platforms appear first in Recommended.
 //
 // Response shape:
 //   { success: true, data: { offers: PublicOffer[], count: number } }
@@ -341,7 +349,7 @@ router.get('/offers', async (_req: Request, res: Response) => {
       isPublic: true,
     })
       .sort({ detectedAt: -1 })
-      .select('providerId providerName title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive isPublic lastSeenAt lastConfirmedAt isPartnerOffer partner partnerType aiProvider aiPlan offerType benefit duration value eligibility activationMethod country region termsUrl sourceType status')
+      .select('providerId providerName title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive isPublic lastSeenAt lastConfirmedAt isPartnerOffer partner partnerType aiProvider aiPlan offerType benefit duration value eligibility activationMethod country region termsUrl sourceType status category destinationUrl offerSubtype monthlyEquivalent annualPrice annualSavingsPercent annualSavingsAmount')
       .lean();
 
     // ── offerTypeWeight map ──────────────────────────────────────
@@ -376,22 +384,59 @@ router.get('/offers', async (_req: Request, res: Response) => {
     };
 
     // ── Helper: derive offer category from stored fields ─────────
-    function inferOfferCategory(e: typeof events[0]): string {
-      const combined = `${e.title} ${e.description} ${e.eligibility || ''} ${e.offerType || ''}`.toLowerCase();
-      if (e.partner && e.partnerType) return 'partner';
-      if (combined.includes('startup') || combined.includes('accelerator') || combined.includes('founder') || (e.offerType || '').toUpperCase().includes('STARTUP')) return 'startup';
-      if (combined.includes('student') || combined.includes('educat') || combined.includes('teacher') || combined.includes('.edu') || (e.offerType || '').toUpperCase().includes('EDUCATION')) return 'student';
-      if (combined.includes('api') || combined.includes('batch') || combined.includes('prompt caching') || combined.includes('off-peak')) return 'api';
-      if (combined.includes('annual') || combined.includes('billed annually')) return 'annual';
-      if (combined.includes('trial') || combined.includes('preview')) return 'trial';
+    function inferOfferCategory(e: typeof events[0]): 'partner' | 'student' | 'annual' | 'api' | 'trial' | 'startup' | 'free' {
+      const sub = (((e as any).offerSubtype || '') as string).toUpperCase();
+      if (sub === 'STUDENT_DISCOUNT' || sub === 'ACADEMIC_FREE') return 'student';
+      if (sub === 'STARTUP_GRANT') return 'startup';
+      if (sub === 'API_DISCOUNT' || sub === 'API_RATE_DISCOUNT' || sub === 'API_CREDIT') return 'api';
+      if (sub === 'ANNUAL_DISCOUNT') return 'annual';
+      if (sub === 'PARTNER_BUNDLE') return 'partner';
+      if (sub === 'FREE_TRIAL') return 'trial';
+      if (sub === 'FREE_PLAN' || sub === 'PROMOTIONAL_FREE') return 'free';
+
+      const pType = (e.partnerType || '').toLowerCase();
+      const oType = (e.offerType || '').toUpperCase();
+      const combined = `${e.title || ''} ${e.description || ''} ${e.eligibility || ''} ${oType}`.toLowerCase();
+
+      // Student / Education
+      if (pType === 'education' || oType.includes('EDUCATION') || combined.includes('student') || combined.includes('educat') || combined.includes('teacher') || combined.includes('.edu')) {
+        return 'student';
+      }
+      // Startup Grants
+      if (pType === 'cloud' || oType.includes('STARTUP') || oType === 'CLOUD_BUNDLE' || combined.includes('startup') || combined.includes('founder') || combined.includes('accelerator')) {
+        return 'startup';
+      }
+      // API Discounts
+      if (combined.includes('prompt caching') || combined.includes('off-peak') || combined.includes('batch processing') || combined.includes('message batches') || combined.includes('api developer') || combined.includes('api pricing') || (e.title || '').toLowerCase().includes('api')) {
+        return 'api';
+      }
+      // Annual Savings
+      if (combined.includes('annual') || combined.includes('billed annually')) {
+        return 'annual';
+      }
+      // Commercial Partner Bundles
+      if (e.isPartnerOffer || (e.partner && ['telecom', 'devices', 'banking', 'broadband', 'credit_card', 'membership'].includes(pType))) {
+        return 'partner';
+      }
+      if (combined.includes('trial') || combined.includes('preview')) {
+        return 'trial';
+      }
       return 'free';
     }
 
-    // ── Helper: compute offerOpportunityScore ────────────────────
-    function computeOpportunityScore(e: typeof events[0], category: string): number {
-      // platformScore from PlatformRankingEngine (0–100)
-      const platformScore = PlatformRankingEngine.getScoreForProvider(e.providerId);
+    // ── Helper: compute platformIntelligenceScore ─────────────────
+    // Uses the canonical AI platform identity (aiProvider for partner/bundle
+    // offers, providerId for direct offers). This ensures ASUS Gemini offer
+    // is scored as Gemini, not ASUS; Pixel Gemini → Gemini; Jio Perplexity → Perplexity.
+    function computePlatformIntelligenceScore(e: typeof events[0]): number {
+      const canonicalId = (e as any).aiProvider || e.providerId;
+      return PlatformRankingEngine.getScoreForProvider(canonicalId);
+    }
 
+    // ── Helper: compute offerOpportunityScore ────────────────────
+    // Pure offer-quality signals only — platform score is now separated.
+    // Weights renormalised to sum to 1.0 after removing platformScore (was 0.30).
+    function computeOpportunityScore(e: typeof events[0], category: string): number {
       // offerValue — estimate from discount text and category
       const discountText = (e.discount || e.benefit || e.evidenceText || '').toLowerCase();
       let offerValue = 50; // baseline
@@ -413,7 +458,6 @@ router.get('/offers', async (_req: Request, res: Response) => {
       const freshness = Math.max(0, 100 - Math.round(daysSince * 3));
 
       // eligibilityScore — global > regional > country-specific
-      const eligText = (e.eligibility || '').toLowerCase();
       let eligibilityScore = 100; // default global
       if (e.country && e.country !== 'GLOBAL' && e.country !== 'US') eligibilityScore = 50;
       else if (e.region) eligibilityScore = 75;
@@ -423,18 +467,16 @@ router.get('/offers', async (_req: Request, res: Response) => {
       if (e.partnerType) {
         partnerScore = PARTNER_STRENGTH[e.partnerType.toLowerCase()] ?? 70;
       }
-      // normalise partnerStrength weight: only 10% of score, so use 0–100 input
       const partnerContrib = partnerScore;
 
       // evidenceConfidence
       const evidenceConf = EVIDENCE_CONF[e.detectionMethod || 'PLAYWRIGHT_DOM'] ?? 60;
 
-      // Weighted raw score
+      // Offer-only weighted raw score (weights sum to 1.00, no platform component)
       const rawScore =
-        platformScore    * 0.30 +
-        offerValue       * 0.25 +
-        freshness        * 0.15 +
-        eligibilityScore * 0.15 +
+        offerValue       * 0.40 +
+        freshness        * 0.25 +
+        eligibilityScore * 0.20 +
         partnerContrib   * 0.10 +
         evidenceConf     * 0.05;
 
@@ -446,21 +488,36 @@ router.get('/offers', async (_req: Request, res: Response) => {
     const scoredOffers = events
       .filter((e) => e.isPublic === true && canPublishOffer(e))
       .map((e) => {
-        const category = inferOfferCategory(e);
+        const category = ((e as any).category as 'partner' | 'student' | 'annual' | 'api' | 'trial' | 'startup' | 'free') || inferOfferCategory(e);
+        // platformIntelligenceScore: canonical AI platform quality (aiProvider for bundle offers)
+        const platformIntelligenceScore = computePlatformIntelligenceScore(e);
+        // offerOpportunityScore: pure offer-quality signals (no platform component)
         const offerOpportunityScore = computeOpportunityScore(e, category);
+        // finalRecommendedScore: platform quality (60%) + offer quality (40%)
+        const finalRecommendedScore = Math.min(100, Math.round(
+          platformIntelligenceScore * 0.60 + offerOpportunityScore * 0.40
+        ));
+        const destinationUrl = resolveCanonicalOfferUrl((e as any).destinationUrl || e.sourceUrl);
         return {
           id: e.fingerprint || (e as { _id?: unknown })._id?.toString() || `${e.providerId}-${e.title}`,
           fingerprint: e.fingerprint,
           providerId: e.providerId,
           providerName: e.providerName || e.providerId,
           title: e.title,
+          category,
           description: e.description || null,
           discount: e.discount || null,
           discountType: e.discountType || null,
           evidenceText: e.evidenceText || null,
           detectionMethod: e.detectionMethod || 'PLAYWRIGHT_DOM',
           sourceStatus: e.sourceStatus,
-          sourceUrl: resolveCanonicalOfferUrl(e.sourceUrl),
+          sourceUrl: resolveCanonicalOfferUrl(e.sourceUrl || (e as any).destinationUrl),
+          destinationUrl,
+          offerSubtype: (e as any).offerSubtype || null,
+          monthlyEquivalent: (e as any).monthlyEquivalent ?? null,
+          annualPrice: (e as any).annualPrice ?? null,
+          annualSavingsPercent: (e as any).annualSavingsPercent ?? null,
+          annualSavingsAmount: (e as any).annualSavingsAmount ?? null,
           sourceDomain: (e as any).sourceDomain || null,
           providerOfficialUrl: (e as any).providerOfficialUrl || null,
           sourceFetchedAt: (e as any).sourceFetchedAt,
@@ -489,18 +546,20 @@ router.get('/offers', async (_req: Request, res: Response) => {
           sourceType: (e as any).sourceType || 'official',
           status: (e as any).status || 'ACTIVE',
           // Intelligence scoring fields
-          offerOpportunityScore,
+          platformIntelligenceScore,   // canonical AI platform quality (0–100)
+          offerOpportunityScore,        // offer-only signals (0–100)
+          finalRecommendedScore,        // platform (60%) + offer (40%) combined (0–100)
         };
       })
-      // Sort by offerOpportunityScore DESC — strongest offers first
-      .sort((a, b) => b.offerOpportunityScore - a.offerOpportunityScore);
+      // Sort by finalRecommendedScore DESC (platform quality dominates)
+      .sort((a, b) => b.finalRecommendedScore - a.finalRecommendedScore);
 
     return res.json({
       success: true,
       data: {
         offers: scoredOffers,
         count: scoredOffers.length,
-        note: 'Offers sorted by offerOpportunityScore (strongest first). All verified active offers across all validated AI providers.',
+        note: 'Offers sorted by finalRecommendedScore (platformIntelligenceScore×0.60 + offerOpportunityScore×0.40). Platform quality determines primary order; offer quality is secondary. All verified active offers across all validated AI providers.',
       },
     });
   } catch (err) {

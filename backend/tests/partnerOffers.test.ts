@@ -89,8 +89,9 @@ describe('Partner AI Offers System & Verification Suite', () => {
 
     expect(partners.some((p) => p.includes('jio'))).toBe(true);
     expect(partners.some((p) => p.includes('airtel'))).toBe(false);
-    expect(partners.some((p) => p.includes('samsung'))).toBe(true);
+    expect(partners.some((p) => p.includes('samsung'))).toBe(false); // Quarantined non-commercial feature
     expect(partners.some((p) => p.includes('google pixel'))).toBe(true);
+    expect(partners.some((p) => p.includes('american express'))).toBe(true);
 
     expect(aiProviders.some((p) => p.includes('gemini'))).toBe(true);
     expect(aiProviders.some((p) => p.includes('chatgpt'))).toBe(true);

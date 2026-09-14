@@ -638,7 +638,7 @@ describe('Production GitHub Actions Runner & Ingestion Verification', () => {
     global.fetch = mockFetch as any;
 
     const { runOfficialExtraction } = await import('../scripts/official_pricing_extractor');
-    const payload = await runOfficialExtraction('both');
+    const { payload } = await runOfficialExtraction('both');
 
     expect(payload.providers).toHaveLength(29);
     for (const p of payload.providers) {
@@ -683,7 +683,7 @@ describe('Production GitHub Actions Runner & Ingestion Verification', () => {
     global.fetch = mockFetch as any;
 
     const { runOfficialExtraction } = await import('../scripts/official_pricing_extractor');
-    const payload = await runOfficialExtraction('pricing');
+    const { payload } = await runOfficialExtraction('pricing');
 
     expect(payload.providers).toHaveLength(29);
     for (const p of payload.providers) {

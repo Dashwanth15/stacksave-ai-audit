@@ -184,10 +184,11 @@ export class PlaywrightOfferResearchAgent {
         : true;
 
       // Language detection
+      const safeLang = typeof htmlLang === 'string' ? htmlLang : '';
       const isNonEnglish =
-        htmlLang.startsWith('ja') ||
-        htmlLang.startsWith('zh') ||
-        htmlLang.startsWith('ko') ||
+        safeLang.startsWith('ja') ||
+        safeLang.startsWith('zh') ||
+        safeLang.startsWith('ko') ||
         /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/.test(title + bodyText.slice(0, 300));
 
       const detectedLanguage = isNonEnglish ? 'Non-English' : 'English';
@@ -943,6 +944,8 @@ export class PlaywrightOfferResearchAgent {
           country: partnerOffer.country,
           region: partnerOffer.region,
           officialSourceUrl: evalLog.finalDestinationUrl,
+          destinationUrl: evalLog.finalDestinationUrl,
+          offerSubtype: partnerOffer.partnerType === 'cloud' ? 'STARTUP_GRANT' : 'PARTNER_BUNDLE',
           termsUrl: partnerOffer.termsUrl,
           sourceType: 'official',
           sourceStatus: 'VERIFIED',

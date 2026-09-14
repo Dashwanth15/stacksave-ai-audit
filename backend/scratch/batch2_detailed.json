@@ -1,0 +1,396 @@
+[
+  {
+    "id": "notion-startups",
+    "name": "Notion for Startups",
+    "category": "Startup Grants",
+    "inputUrl": "https://www.notion.so/startups",
+    "finalUrl": "https://www.notion.com/startups",
+    "status": 200,
+    "reachable": true,
+    "title": "Your connected workspace for wiki, docs & projects | Notion",
+    "relevantEvidence": [
+      "The AI workspace from idea to exit. Get up to 6 months free on the Business plan with Notion AI included.",
+      "Go all-in-one with the AI workspace that scales with you. Get the Business plan free for up to 6 months and save $12,000.",
+      "Project Management Tool$24/user",
+      "The tool of choice for startups.",
+      "It’s powerful, flexible, and fast. That’s why startups all around the world choose to build on Notion."
+    ]
+  },
+  {
+    "id": "notion-education",
+    "name": "Notion for Education",
+    "category": "Student & Education",
+    "inputUrl": "https://www.notion.so/product/notion-for-education",
+    "finalUrl": "https://www.notion.com/product/notion-for-education",
+    "status": 200,
+    "reachable": true,
+    "title": "Notion for Education",
+    "relevantEvidence": [
+      "Run your student org, for free",
+      "Invite friends to collaborate on anything — from your group projects to organizing your student org’s events.",
+      "Loved by students globally",
+      "I use Notion as a digital workspace that seamlessly integrates into my daily routine. It’s an indispensable tool for orchestrating my academic and organizational activities.",
+      "Get in on our global community of Campus Leaders’ events on campus – including template build-a-thon, student org workshops, Notion tutorials, and more."
+    ]
+  },
+  {
+    "id": "notion-annual",
+    "name": "Notion AI Pricing",
+    "category": "Annual Savings",
+    "inputUrl": "https://www.notion.so/product/ai",
+    "finalUrl": "https://www.notion.com/product/ai",
+    "status": 200,
+    "reachable": true,
+    "title": "Meet your AI team | Notion",
+    "relevantEvidence": [
+      "AI that works where your team works. Try for free.",
+      "Set them up once, and the entire team benefits.",
+      "Track Notion credit usage, view detailed analytics and ROI insights.",
+      "How much does Notion AI cost? (and what are Notion credits)?"
+    ]
+  },
+  {
+    "id": "canva-education",
+    "name": "Canva for Education",
+    "category": "Student & Education",
+    "inputUrl": "https://www.canva.com/education/",
+    "finalUrl": "https://www.canva.com/education/",
+    "status": 200,
+    "reachable": true,
+    "title": "Education Solutions for K–12 & Higher Ed",
+    "relevantEvidence": [
+      "The 100% free interactive learning platform built for every classroom, across the globe.",
+      "Create lesson plans, bring topics to life, and build interactive games students can't wait to win.",
+      "Create visual lessons using whiteboards, presentations, and videos that students can explore at their own pace.",
+      "Sign up with your education email or upload proof of employment. We'll verify you within a few days and you're good to go.",
+      "Canva Education connects to all your classroom tools"
+    ]
+  },
+  {
+    "id": "canva-annual",
+    "name": "Canva Pro Pricing",
+    "category": "Annual Savings",
+    "inputUrl": "https://www.canva.com/pricing/",
+    "finalUrl": "https://www.canva.com/en_in/pricing/",
+    "status": 200,
+    "reachable": true,
+    "title": "Canva Pricing: Compare Free, Pro, Business and Enterprise plans",
+    "relevantEvidence": [
+      "10x more AI than Canva Free (Premium or Ultra AI)^",
+      "10% discount on print orders**",
+      "20x more AI than Canva Free (Premium or Ultra AI)^",
+      "10% discount on print orders**",
+      "20x more AI than Canva Free (Premium or Ultra AI)^"
+    ]
+  },
+  {
+    "id": "figma-education",
+    "name": "Figma for Education",
+    "category": "Student & Education",
+    "inputUrl": "https://www.figma.com/education/",
+    "finalUrl": "https://www.figma.com/education/",
+    "status": 200,
+    "reachable": true,
+    "title": "Figma for Education | Free Tools for the Classroom",
+    "relevantEvidence": [
+      "Free best-in-class tools for the classroom",
+      "Figma and FigJam are design and collaboration software used by professional designers, engineers, and makers of all kinds. Use them to ideate, create, and share work—all free, as a student or teacher.",
+      "FigJam is an online whiteboard where possibilities turn into plans. Teachers can facilitate collaborative group learning while encouraging active participation from students. It’s best suited for classroom discussions, brainstorms, and group work.",
+      "Figma is a multiplayer, intuitive design tool used by professionals. Create graphics, presentations, prototypes, and more—all with real-time collaboration and feedback. Figma and FigJam live side by side so that students can turn their ideas into reality, faster.",
+      "Dev Mode is a workspace in Figma to bring designs to production, faster. Students can inspect designs and get the details needed to build them. Dev Mode is great for learning how design concepts map to code concepts."
+    ]
+  },
+  {
+    "id": "grammarly-plans",
+    "name": "Grammarly AI",
+    "category": "Annual Savings",
+    "inputUrl": "https://www.grammarly.com/plans",
+    "finalUrl": "https://www.grammarly.com/plans",
+    "status": 200,
+    "reachable": true,
+    "title": "Grammarly Prices and Plans | Grammarly",
+    "relevantEvidence": [
+      "/ member / month, billed annually",
+      "₹1,000 when billed monthly",
+      "Everything in Free, and more:",
+      "2,000 prompts / member / month",
+      "Unlimited prompts / member / month"
+    ]
+  },
+  {
+    "id": "grammarly-education",
+    "name": "Grammarly for Education",
+    "category": "Student & Education",
+    "inputUrl": "https://www.grammarly.com/edu",
+    "finalUrl": "https://www.grammarly.com/edu",
+    "status": 200,
+    "reachable": true,
+    "title": "Grammarly for Education | Grammarly",
+    "relevantEvidence": [
+      "Grammarly unveils a bigger vision for AI in education",
+      "AI that supports educational excellence",
+      "Shape the future of AI-assisted education with a trusted partner that supports better writing and learning campus-wide.",
+      "Embrace innovation with transparent AI writing assistance that amplifies students’ creativity  and critical thinking.",
+      "Help students tackle the blank page"
+    ]
+  },
+  {
+    "id": "otter-pricing",
+    "name": "Otter.ai",
+    "category": "Annual Savings",
+    "inputUrl": "https://otter.ai/pricing",
+    "finalUrl": "https://otter.ai/pricing",
+    "status": 200,
+    "reachable": true,
+    "title": "Pricing | Otter.ai",
+    "relevantEvidence": [
+      "300 monthly transcription minutes",
+      "10 monthly audio/video file imports",
+      "*Offer valid only with an India-issued credit card.",
+      "Meeting & recording transcription monthly limit (no rollover)",
+      "Imported file transcription monthly limit (no rollover)"
+    ]
+  },
+  {
+    "id": "otter-education",
+    "name": "Otter for Education",
+    "category": "Student & Education",
+    "inputUrl": "https://otter.ai/edu",
+    "finalUrl": "https://otter.ai/education",
+    "status": 200,
+    "reachable": true,
+    "title": "Lecture Notes - Real-time for Students & Teachers | Otter.ai",
+    "relevantEvidence": [
+      "Help students succeed with AI",
+      "Otter provides faculty and students with real-time captions and notes for in-person and virtual lectures, classes or meetings.",
+      "Save time with Automated Lecture Notes",
+      "Otter records audio and automatically takes notes in real time, so that you can focus on the discussion. Highlight notes to reference anytime. In virtual sessions, Otter automatically captures lecture slides and adds them to the notes, helping students recall details with full context.",
+      "Ensure classes are accessible using Otter's real-time captions. Empower students with the ability to highlight, comment, and insert images within class notes and give them advanced study tools with stored transcripts, search capabilities, and keyword highlights.  All highlighted notes are reflected in the takeaways panel.  Students can tag others and ask questions, without interrupting the discussion."
+    ]
+  },
+  {
+    "id": "deepl-pricing",
+    "name": "DeepL Pro",
+    "category": "Annual Savings",
+    "inputUrl": "https://www.deepl.com/pro",
+    "finalUrl": "https://www.deepl.com/en/pro",
+    "status": 200,
+    "reachable": true,
+    "title": "DeepL Pro | Translate Text, Word Docs & Other Docs Securely",
+    "relevantEvidence": []
+  },
+  {
+    "id": "wandb-academic",
+    "name": "W&B Academic",
+    "category": "Student & Education",
+    "inputUrl": "https://wandb.ai/site/academic/",
+    "finalUrl": "https://wandb.ai/site/research/",
+    "status": 200,
+    "reachable": true,
+    "title": "Optimize academic research with Weights & Biases",
+    "relevantEvidence": [
+      "Free for students, educators, and academic researchers. Always.",
+      "W&B helps academics of every stripe collaborate on research, reproduce their models, share their newest insights, and build better models faster.",
+      "Resources for Educators, Teaching Assistants, and Students",
+      "We’ve included introductory content to help get you and your students started using Weights & Biases to enable collaborative, repeatable machine and deep learning in your classroom, research lab, or student-run organization.",
+      "CHECK OUT OUR FREE RESOURCES"
+    ]
+  },
+  {
+    "id": "elevenlabs-grants",
+    "name": "ElevenLabs Startup Grants",
+    "category": "Startup Grants",
+    "inputUrl": "https://elevenlabs.io/grants",
+    "finalUrl": "https://elevenlabs.io/startup-grants",
+    "status": 200,
+    "reachable": true,
+    "title": "Build AI voices into your product with our Grants program",
+    "relevantEvidence": [
+      "Build intelligent, real-time conversational AI agents into your startup for free with an ElevenLabs Grant.",
+      "That's over 680 hours of Agents usage. More than $5,500+ in value.",
+      "We believe voice is the most natural way to communicate, and the future of human-AI interaction depends on making those conversations feel real. The ElevenLabs Grants Program exists to give early-stage startups the tools they need to build the future of voice with the best tools available, without cost being a blocker.",
+      "Our platform supports full Conversational AI, Text to Speech, Speech to Text, and more. Whether you're building an AI sales agent, launching an AI banking assistant, or shipping a voice journaling app, this grant gives you 12 months of free access to the full ElevenLabs platform",
+      "Give your portfolio companies fast-tracked access to exclusive perks like ElevenLabs credits, access to events and product updates."
+    ]
+  },
+  {
+    "id": "vercel-startups",
+    "name": "Vercel for Startups (v0)",
+    "category": "Startup Grants",
+    "inputUrl": "https://vercel.com/startups",
+    "finalUrl": "https://vercel.com/startups",
+    "status": 200,
+    "reachable": true,
+    "title": "Vercel for Startups",
+    "relevantEvidence": [
+      "Vercel for Startups gives eligible teams up to $30,000 in Flexible Commitment Amount, Enterprise-tier access, and startup-focused support to build and scale on Vercel.",
+      "Someone adding a custom domain means they're truly invested in using our docs. Vercel's ability to manage custom domains and SSL certificates has been a major time-saver for us.",
+      "View select startups on Vercel",
+      "How Fern delivers 6M+ monthly views and 80% faster docs with Vercel",
+      "Interested in joining Vercel for Startups?"
+    ]
+  },
+  {
+    "id": "groq-pricing",
+    "name": "Groq API",
+    "category": "API Discounts",
+    "inputUrl": "https://groq.com/pricing/",
+    "finalUrl": "https://groq.com/",
+    "status": 200,
+    "reachable": true,
+    "title": "Groq is the premier neocloud for fast inference",
+    "relevantEvidence": [
+      "GROQ CLOSES $350 MILLION SERIES A, BUILDING THE WORLD'S LEADING AI INFERENCE CLOUD"
+    ]
+  },
+  {
+    "id": "together-pricing",
+    "name": "Together AI",
+    "category": "API Discounts",
+    "inputUrl": "https://www.together.ai/pricing",
+    "finalUrl": "https://www.together.ai/pricing",
+    "status": 200,
+    "reachable": true,
+    "title": "Pricing | Together AI",
+    "relevantEvidence": [
+      "Savings compare Together PTU cost against the selected commercial model's published list price ($/1M tokens) on the same traffic profile. Estimates assume continuous 24/7 provisioning (~43,800 min/mo)."
+    ]
+  },
+  {
+    "id": "fireworks-pricing",
+    "name": "Fireworks AI",
+    "category": "API Discounts",
+    "inputUrl": "https://fireworks.ai/pricing",
+    "finalUrl": "https://fireworks.ai/pricing",
+    "status": 200,
+    "reachable": true,
+    "title": "Fireworks - Pricing",
+    "relevantEvidence": [
+      "Pay per token, with high rate limits and postpaid billing. Get started with $1 in free credits. To view the current pricing for our most popular models across Standard, Priority, and Fast serverless tiers, visit our documentation.",
+      "BASE MODEL PARAMETER COUNT\t$ / 1M INPUT TOKENS",
+      "MODELS UP TO 16B PARAMETERS\t$0.50\t$1.00\t$1.00\t$2.00",
+      "MODELS 16.1B - 80B\t$3.00\t$6.00\t$6.00\t$12.00",
+      "MODELS 80B - 300B (E.G. QWEN3-235B, GPT-OSS-120B)\t$6.00\t$12.00\t$12.00\t$24.00"
+    ]
+  },
+  {
+    "id": "mistral-chat",
+    "name": "Mistral Le Chat",
+    "category": "Trials & Free",
+    "inputUrl": "https://chat.mistral.ai/",
+    "finalUrl": "https://chat.mistral.ai/chat",
+    "status": 200,
+    "reachable": true,
+    "title": "Vibe Chat",
+    "relevantEvidence": []
+  },
+  {
+    "id": "notebooklm",
+    "name": "Google NotebookLM",
+    "category": "Trials & Free",
+    "inputUrl": "https://notebooklm.google/",
+    "finalUrl": "https://notebook.google/",
+    "status": 200,
+    "reachable": true,
+    "title": "Gemini Notebook | AI Research Tool & Thinking Partner",
+    "relevantEvidence": []
+  },
+  {
+    "id": "bolt-pricing",
+    "name": "Bolt.new Pro",
+    "category": "Annual Savings",
+    "inputUrl": "https://bolt.new/pricing",
+    "finalUrl": "https://bolt.new/pricing",
+    "status": 200,
+    "reachable": true,
+    "title": "Plans & pricing: Bolt’s AI powered website and app builder",
+    "relevantEvidence": [
+      "Start for free. Upgrade as you go.",
+      "Save up to 28% with yearly billing",
+      "Start at 10M tokens per month",
+      "Unused tokens roll over to next month",
+      "Do tokens rollover from month to month?"
+    ]
+  },
+  {
+    "id": "runway-pricing",
+    "name": "Runway Gen-3",
+    "category": "Annual Savings",
+    "inputUrl": "https://runwayml.com/pricing",
+    "finalUrl": "https://runway.com/pricing",
+    "status": 200,
+    "reachable": true,
+    "title": "AI Image and Video Pricing from $12/month | Runway AI",
+    "relevantEvidence": [
+      "125 one-time credits to explore Runway's AI tools.",
+      "Billed annually. Save $36/year.",
+      "625 credits monthly = 52s of Gen-4.5, 104s of Gen-4 Turbo, or 78 Gen-4 Images (1080p).",
+      "Billed annually. Save $84/year.",
+      "2250 credits monthly = 187s of Gen-4.5, 375s of Gen-4 Turbo, or 281 Gen-4 Images (1080p)."
+    ]
+  },
+  {
+    "id": "suno-pricing",
+    "name": "Suno AI Music",
+    "category": "Annual Savings",
+    "inputUrl": "https://suno.com/pricing",
+    "finalUrl": "https://suno.com/pricing",
+    "status": 200,
+    "reachable": true,
+    "title": "Suno | Pricing",
+    "relevantEvidence": [
+      "Start making music for free",
+      "Credits included in subscriptions do not carry over from day to day or month to month. Purchased top up credits do not expire, but require an active subscription to use. See the terms of service for limitations on commercial use. Email us at billing@suno.com with any questions.",
+      "What happens if I exhaust my monthly credits?"
+    ]
+  },
+  {
+    "id": "synthesia-pricing",
+    "name": "Synthesia AI Video",
+    "category": "Annual Savings",
+    "inputUrl": "https://www.synthesia.io/pricing",
+    "finalUrl": "https://www.synthesia.io/pricing",
+    "status": 200,
+    "reachable": true,
+    "title": "Synthesia Pricing - Compare Free and Paid Plans",
+    "relevantEvidence": [
+      "Plans now starting from ₹1,499/month - Save 25%",
+      "Create engaging videos with AI avatars and voiceovers in 160+ languages. Save up to 90% of time and cost on video production.",
+      "Billed yearly. Pay monthly",
+      "Billed yearly. Pay monthly",
+      "10 minutes of video / month"
+    ]
+  },
+  {
+    "id": "ideogram-pricing",
+    "name": "Ideogram 2.0",
+    "category": "Annual Savings",
+    "inputUrl": "https://ideogram.ai/pricing",
+    "finalUrl": "https://ideogram.ai/pricing/",
+    "status": 200,
+    "reachable": true,
+    "title": "Pricing — Ideogram",
+    "relevantEvidence": [
+      "per month, $180 billed annually",
+      "Top up priority credits for $4",
+      "per month, $504 billed annually",
+      "Top up priority credits for $4",
+      "per user/month, billed annually"
+    ]
+  },
+  {
+    "id": "gamma-pricing",
+    "name": "Gamma AI",
+    "category": "Annual Savings",
+    "inputUrl": "https://gamma.app/pricing",
+    "finalUrl": "https://gamma.app/pricing",
+    "status": 200,
+    "reachable": true,
+    "title": "Plans and pricing | Gamma",
+    "relevantEvidence": [
+      "* Unlimited AI creations refers to everyday use under fair use. Premium features (Agent, advanced models, & API) require credits",
+      "How can I get more AI credits?",
+      "Is there a discount on annual billing?"
+    ]
+  }
+]

@@ -340,8 +340,9 @@ describe('Forensic Trust Remediation Tests (Tests A–I)', () => {
     };
 
     await ingestOfficialExtractedPricing(day0Payload);
-    expect(mockOffers[0].isActive).toBe(true);
-    expect(mockOffers[0].consecutiveMisses).toBe(0);
+    const targetOffer = () => mockOffers.find((o) => o.title === 'ChatGPT Summer Promo')!;
+    expect(targetOffer().isActive).toBe(true);
+    expect(targetOffer().consecutiveMisses).toBe(0);
 
     // Day 1 scan (VERIFIED absent) -> consecutiveMisses = 1, stays active (grace period)
     const day1Payload: OfficialIngestPayload = {
@@ -364,8 +365,8 @@ describe('Forensic Trust Remediation Tests (Tests A–I)', () => {
     };
 
     await ingestOfficialExtractedPricing(day1Payload);
-    expect(mockOffers[0].isActive).toBe(true);
-    expect(mockOffers[0].consecutiveMisses).toBe(1);
+    expect(targetOffer().isActive).toBe(true);
+    expect(targetOffer().consecutiveMisses).toBe(1);
 
     // Day 2 scan (VERIFIED absent) -> consecutiveMisses = 2 -> deactivated (isActive = false)
     const day2Payload: OfficialIngestPayload = {
@@ -388,8 +389,8 @@ describe('Forensic Trust Remediation Tests (Tests A–I)', () => {
     };
 
     await ingestOfficialExtractedPricing(day2Payload);
-    expect(mockOffers[0].isActive).toBe(false);
-    expect(mockOffers[0].consecutiveMisses).toBe(2);
+    expect(targetOffer().isActive).toBe(false);
+    expect(targetOffer().consecutiveMisses).toBe(2);
   });
 
   // ────────────────────────────────────────────────────────────

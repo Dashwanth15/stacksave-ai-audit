@@ -243,12 +243,15 @@ export async function checkOfferDestination(
     // Track redirect chain
     const redirectChain = response.request().redirectedFrom();
     let current = redirectChain;
+    let firstRedirectStatus: number | null = null;
     while (current) {
       redirectCount++;
+      const resp = await current.response();
+      if (resp) firstRedirectStatus = resp.status();
       current = current.redirectedFrom();
     }
     
-    initialStatus = response.status();
+    initialStatus = firstRedirectStatus || response.status();
     finalStatus = response.status();
     finalUrl = response.url();
     

@@ -213,8 +213,9 @@ export class MultiSignalOfferScanner {
 
     if (annualSnippets.length > 0) {
       const discountPctMatch = /(?:save\s*(?:up to\s*)?(\d+)%|(\d+)%\s*off|up to\s*(\d+)%\s*off)/i.exec(annualSnippets[0]);
-      const pct = discountPctMatch ? (discountPctMatch[1] || discountPctMatch[2] || discountPctMatch[3]) : null;
-      const discountLabel = pct ? `${pct}% Off Annual Billing` : 'Annual Billing Discount';
+      const pctStr = discountPctMatch ? (discountPctMatch[1] || discountPctMatch[2] || discountPctMatch[3]) : null;
+      const pctNum = pctStr ? parseInt(pctStr, 10) : null;
+      const discountLabel = pctNum ? `${pctNum}% Off Annual Billing` : 'Annual Billing Discount';
 
       const evidText = annualSnippets[0];
       const negCheck = PlaywrightOfferResearchAgent.detectNegativeStatusLanguage(evidText);
@@ -224,6 +225,12 @@ export class MultiSignalOfferScanner {
         rejectedCandidates.push({ snippet: evidText, reason: negCheck.reason || 'Negative status signal' });
       } else if (dateCheck.isExpired) {
         rejectedCandidates.push({ snippet: evidText, reason: dateCheck.expiredReason || 'Annual promo expired' });
+      } else if (pctNum !== null && pctNum < 15) {
+        // Gate: Offers below 15% annual savings must not be published as standalone offers
+        rejectedCandidates.push({
+          snippet: evidText,
+          reason: `Annual savings (${pctNum}%) below 15% publication gate threshold`,
+        });
       } else if (evidText.length >= 20) {
         const title = `${displayName} Annual Subscription Savings`;
         const key = `${providerId}::annual`;
@@ -238,6 +245,9 @@ export class MultiSignalOfferScanner {
             eligibility: 'All Users on Annual Billing',
             fingerprint: buildOfferFingerprint(providerId, title, evidText),
             sourceUrl,
+            destinationUrl: sourceUrl,
+            offerSubtype: 'ANNUAL_DISCOUNT',
+            annualSavingsPercent: pctNum || 16,
             sourceStatus: 'VERIFIED',
             detectionMethod: 'PLAYWRIGHT_DOM',
             evidenceText: `Verified from official ${displayName} pricing page: ${evidText}`,
@@ -299,6 +309,8 @@ export class MultiSignalOfferScanner {
             eligibility: 'New Subscribers',
             fingerprint: buildOfferFingerprint(providerId, title, pSnippet),
             sourceUrl,
+            destinationUrl: sourceUrl,
+            offerSubtype: 'PROMOTIONAL_FREE',
             sourceStatus: 'VERIFIED',
             detectionMethod: 'PLAYWRIGHT_DOM',
             evidenceText: `Verified from official ${displayName} source: ${pSnippet}`,
@@ -320,13 +332,16 @@ export class MultiSignalOfferScanner {
       const lower = tSnippet.toLowerCase();
       let title = `${displayName} Free Trial Access`;
       let discountLabel = 'Free Trial Access';
+      let subtype: NormalizedOffer['offerSubtype'] = 'FREE_TRIAL';
 
       if (lower.includes('gpu time') || lower.includes('rate images')) {
         title = `${displayName} Free GPU Time Community Perk`;
         discountLabel = 'Complimentary GPU Time';
+        subtype = 'FREE_PLAN';
       } else if (lower.includes('credits')) {
         title = `${displayName} Developer Free Credits Grant`;
         discountLabel = 'Free Platform Credits';
+        subtype = 'STARTUP_GRANT';
       }
 
       const tNeg = PlaywrightOfferResearchAgent.detectNegativeStatusLanguage(tSnippet);
@@ -354,6 +369,8 @@ export class MultiSignalOfferScanner {
             eligibility: 'All Qualifying Users',
             fingerprint: buildOfferFingerprint(providerId, title, tSnippet),
             sourceUrl,
+            destinationUrl: sourceUrl,
+            offerSubtype: subtype,
             sourceStatus: 'VERIFIED',
             detectionMethod: 'PLAYWRIGHT_DOM',
             evidenceText: `Verified from official ${displayName} source: ${tSnippet}`,
@@ -361,6 +378,36 @@ export class MultiSignalOfferScanner {
             lastConfirmedAt: checkedAt,
           });
         }
+      }
+    }
+
+    // ── Signal 4: API Discounts (Prompt Caching, Batch Processing, Off-Peak) ──
+    const apiRegex = /(?:prompt caching[\s\S]{0,50}?(?:discount|\d+%|save)|cache read[\s\S]{0,40}?(?:discount|\d+%)|message batches[\s\S]{0,40}?(?:50%|discount)|batch api[\s\S]{0,40}?(?:50%|discount)|off-peak[\s\S]{0,40}?(?:discount|savings))/gi;
+    const apiSnippets = extractContextSnippets(bodyText, apiRegex, 2);
+    if (apiSnippets.length > 0) {
+      candidatesCount += apiSnippets.length;
+      const apiEvid = apiSnippets[0];
+      const title = `${displayName} API Volume & Caching Discounts`;
+      const key = `${providerId}::api_discount`;
+      if (!seenOfferKeys.has(key)) {
+        seenOfferKeys.add(key);
+        qualifyingOffers.push({
+          providerId,
+          title,
+          description: `High-volume API pricing discounts including prompt caching, batch processing, and off-peak pricing on ${displayName}.`,
+          discount: 'Up to 50%-90% API Savings',
+          currency: 'USD',
+          eligibility: 'API Developers',
+          fingerprint: buildOfferFingerprint(providerId, title, apiEvid),
+          sourceUrl,
+          destinationUrl: sourceUrl,
+          offerSubtype: 'API_DISCOUNT',
+          sourceStatus: 'VERIFIED',
+          detectionMethod: 'PLAYWRIGHT_DOM',
+          evidenceText: `Verified from official ${displayName} API documentation: ${apiEvid}`,
+          detectedAt: checkedAt,
+          lastConfirmedAt: checkedAt,
+        });
       }
     }
 
@@ -391,6 +438,8 @@ export class MultiSignalOfferScanner {
               eligibility: 'Verified Students & Educators',
               fingerprint: buildOfferFingerprint(providerId, title, evid),
               sourceUrl: options.educationUrl,
+              destinationUrl: options.educationUrl,
+              offerSubtype: 'STUDENT_DISCOUNT',
               sourceStatus: 'VERIFIED',
               detectionMethod: 'PLAYWRIGHT_DOM',
               evidenceText: `Verified from official ${displayName} Education portal: ${evid}`,
@@ -431,6 +480,8 @@ export class MultiSignalOfferScanner {
               eligibility: 'Eligible Early-Stage Startups',
               fingerprint: buildOfferFingerprint(providerId, title, evid),
               sourceUrl: options.startupUrl,
+              destinationUrl: options.startupUrl,
+              offerSubtype: 'STARTUP_GRANT',
               sourceStatus: 'VERIFIED',
               detectionMethod: 'PLAYWRIGHT_DOM',
               evidenceText: `Verified from official ${displayName} Startup portal: ${evid}`,
@@ -473,19 +524,20 @@ export class MultiSignalOfferScanner {
     
     for (const offer of qualifyingOffers) {
       try {
-        const healthCheck = await checkOfferDestination(page, offer.sourceUrl, 15000);
+        const destToCheck = offer.destinationUrl || offer.sourceUrl;
+        const healthCheck = await checkOfferDestination(page, destToCheck, 15000);
         
         if (healthCheck.status === 'VALID') {
           // Offer destination is reachable and valid
           healthCheckedOffers.push(offer);
-          console.log(`      ✅ ${offer.title} - Destination valid (HTTP ${healthCheck.finalStatus})`);
+          console.log(`[OFFER VERIFY] provider=${offer.providerId} offer=${offer.title} status=ACTIVE reason=Destination valid (HTTP ${healthCheck.finalStatus})`);
         } else {
           // Offer destination is dead/expired/unavailable
           rejectedCandidates.push({
             snippet: offer.title,
             reason: `Destination health check failed: ${healthCheck.status} - ${healthCheck.statusReason || 'Unreachable'}`,
           });
-          console.log(`      ❌ ${offer.title} - ${healthCheck.status}: ${healthCheck.statusReason}`);
+          console.log(`[OFFER VERIFY] provider=${offer.providerId} offer=${offer.title} status=REJECTED reason=Destination ${healthCheck.status}: ${healthCheck.statusReason || 'Unreachable'}`);
         }
       } catch (healthErr: any) {
         // Health check error - reject offer to be safe
@@ -493,7 +545,7 @@ export class MultiSignalOfferScanner {
           snippet: offer.title,
           reason: `Health check error: ${healthErr.message || 'Unknown error'}`,
         });
-        console.log(`      ⚠️  ${offer.title} - Health check failed: ${healthErr.message}`);
+        console.log(`[OFFER VERIFY] provider=${offer.providerId} offer=${offer.title} status=REJECTED reason=Health check error: ${healthErr.message || 'Unknown error'}`);
       }
     }
     

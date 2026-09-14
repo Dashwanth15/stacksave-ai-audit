@@ -97,12 +97,30 @@ export interface NormalizedOffer {
   offerType?: string;
   benefit?: string;
   status?: string;
+  category?: 'partner' | 'student' | 'annual' | 'api' | 'trial' | 'startup' | 'free';
   isPartnerOffer?: boolean;
   partner?: string;
   partnerType?: string;
   activationMethod?: string;
   country?: string;
   region?: string;
+  offerSubtype?:
+    | 'FREE_PLAN'
+    | 'FREE_TRIAL'
+    | 'PROMOTIONAL_FREE'
+    | 'STUDENT_DISCOUNT'
+    | 'ACADEMIC_FREE'
+    | 'STARTUP_GRANT'
+    | 'API_RATE_DISCOUNT'
+    | 'API_CREDIT'
+    | 'API_DISCOUNT'
+    | 'ANNUAL_DISCOUNT'
+    | 'PARTNER_BUNDLE';
+  destinationUrl?: string;
+  monthlyEquivalent?: number;
+  annualPrice?: number;
+  annualSavingsPercent?: number;
+  annualSavingsAmount?: number;
 }
 
 // ── Multi-Page Scanned Source Status ──────────────────────────

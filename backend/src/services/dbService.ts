@@ -354,6 +354,13 @@ export interface NotificationEventDocument extends Document {
   status?: string;           // 'ACTIVE' | 'EXPIRED' | 'UPCOMING'
   isPartnerOffer?: boolean;  // Explicit flag: true for commercial partner bundles, false for native/student/startup offers
   lastCheckedAt?: Date;
+  offerSubtype?: string;     // 'FREE_PLAN' | 'FREE_TRIAL' | 'PROMOTIONAL_FREE' | 'STUDENT_DISCOUNT' | 'ACADEMIC_FREE' | 'STARTUP_GRANT' | 'API_RATE_DISCOUNT' | 'API_CREDIT' | 'ANNUAL_DISCOUNT' | 'PARTNER_BUNDLE'
+  category?: string;         // 'partner' | 'student' | 'annual' | 'api' | 'trial' | 'startup' | 'free'
+  destinationUrl?: string;   // Exact destination URL validated by Playwright for frontend "View Offer" action
+  monthlyEquivalent?: number;// Effective monthly cost when billed annually
+  annualPrice?: number;      // Upfront annual billing cost
+  annualSavingsPercent?: number; // Verified savings percentage vs monthly
+  annualSavingsAmount?: number;  // Absolute dollar savings per year
 }
 
 const NotificationEventSchema = new Schema<NotificationEventDocument>(
@@ -407,6 +414,13 @@ const NotificationEventSchema = new Schema<NotificationEventDocument>(
     sourceType:        { type: String, default: 'official' },
     status:            { type: String, default: 'ACTIVE' },
     lastCheckedAt:     { type: Date },
+    category:          { type: String, index: true },
+    offerSubtype:      { type: String, index: true },
+    destinationUrl:    { type: String },
+    monthlyEquivalent: { type: Number },
+    annualPrice:       { type: Number },
+    annualSavingsPercent: { type: Number },
+    annualSavingsAmount:  { type: Number },
   },
   { timestamps: false }
 );

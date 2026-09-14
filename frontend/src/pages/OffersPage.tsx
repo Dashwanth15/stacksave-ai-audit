@@ -130,8 +130,8 @@ export default function OffersPage() {
     const seen = new Set<string>();
     const list: FormattedOffer[] = [];
     const sorted = [...offers].sort((a, b) => {
-      const scoreA = a.offerOpportunityScore ?? 0;
-      const scoreB = b.offerOpportunityScore ?? 0;
+      const scoreA = a.finalRecommendedScore ?? a.offerOpportunityScore ?? 0;
+      const scoreB = b.finalRecommendedScore ?? b.offerOpportunityScore ?? 0;
       if (scoreA !== scoreB) return scoreB - scoreA;
       return new Date(b.detectedAt || 0).getTime() - new Date(a.detectedAt || 0).getTime();
     });
@@ -206,10 +206,56 @@ export default function OffersPage() {
     // Sort result
     return result.sort((a, b) => {
       if (sortBy === 'recommended') {
-        const scoreA = a.offerOpportunityScore ?? a.savingsScore ?? 0;
-        const scoreB = b.offerOpportunityScore ?? b.savingsScore ?? 0;
-        if (scoreA !== scoreB) return scoreB - scoreA;
-        return new Date(b.detectedAt || 0).getTime() - new Date(a.detectedAt || 0).getTime();
+        // ── Platform-First Intelligent Grouping ────────────────────────────
+        // Step 1: Resolve canonical AI platform identity for each offer.
+        // Partner/bundle offers (e.g. ASUS Gemini, Pixel Gemini) use aiProvider
+        // so they cluster under 'gemini', not 'asus' or 'google-pixel'.
+        const getCanonicalId = (o: typeof a) =>
+          ((o.aiProvider || o.providerId) || '').toLowerCase().trim();
+
+        // Step 2: Group all filtered offers by canonical platform.
+        const groups = new Map<string, (typeof result)>();
+        for (const offer of result) {
+          const key = getCanonicalId(offer);
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key)!.push(offer);
+        }
+
+        // Step 3: For each group, sort offers internally by:
+        //   finalRecommendedScore DESC → offerOpportunityScore DESC → freshness DESC
+        groups.forEach((groupOffers) => {
+          groupOffers.sort((x, y) => {
+            const fsX = x.finalRecommendedScore ?? x.offerOpportunityScore ?? 0;
+            const fsY = y.finalRecommendedScore ?? y.offerOpportunityScore ?? 0;
+            if (fsX !== fsY) return fsY - fsX;
+            const oX = x.offerOpportunityScore ?? 0;
+            const oY = y.offerOpportunityScore ?? 0;
+            if (oX !== oY) return oY - oX;
+            return new Date(y.detectedAt || 0).getTime() - new Date(x.detectedAt || 0).getTime();
+          });
+        });
+
+        // Step 4: Sort platform groups by:
+        //   Primary:    max(platformIntelligenceScore) DESC — platform quality determines group order
+        //   Tie-breaker: max(finalRecommendedScore) DESC — best verified offer quality as secondary
+        // No hardcoded provider ordering — all derived from PlatformRankingEngine signals.
+        const groupEntries = Array.from(groups.entries()).sort(([, aOffers], [, bOffers]) => {
+          const aPlatScore = Math.max(...aOffers.map((o) => o.platformIntelligenceScore ?? 0));
+          const bPlatScore = Math.max(...bOffers.map((o) => o.platformIntelligenceScore ?? 0));
+          if (aPlatScore !== bPlatScore) return bPlatScore - aPlatScore;
+          // Tie-breaker: best combined recommended score
+          const aFinal = Math.max(...aOffers.map((o) => o.finalRecommendedScore ?? o.offerOpportunityScore ?? 0));
+          const bFinal = Math.max(...bOffers.map((o) => o.finalRecommendedScore ?? o.offerOpportunityScore ?? 0));
+          return bFinal - aFinal;
+        });
+
+        // Step 5: Flatten groups into final ordered list.
+        // Caller's .sort() comparator is replaced — we return the pre-sorted flat array.
+        // Since Array.sort comparators cannot "return a sorted list", we mutate `result`
+        // in-place by splicing the grouped order. We do this via index comparison:
+        const flat = groupEntries.flatMap(([, groupOffers]) => groupOffers);
+        const indexMap = new Map(flat.map((o, i) => [o.id, i]));
+        return (indexMap.get(a.id) ?? 0) - (indexMap.get(b.id) ?? 0);
       }
       if (sortBy === 'savings') {
         return b.savingsScore - a.savingsScore;

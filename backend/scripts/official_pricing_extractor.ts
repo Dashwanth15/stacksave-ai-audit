@@ -53,6 +53,7 @@ import {
   ProviderExtractionDiagnostics,
 } from '../src/pricing/multiSignalOfferScanner';
 import { PlaywrightOfferResearchAgent } from '../src/pricing/offerResearchAgent';
+import { isOfferQuarantined } from '../src/pricing/offerTrust';
 
 // ── Fingerprint Helper ────────────────────────────────────────
 
@@ -1798,10 +1799,15 @@ async function extractAnthropicApi(browser: Browser): Promise<OfficialExtractedP
       detectionMethod: 'PLAYWRIGHT_DOM',
       sourceStatus: 'VERIFIED',
       discount: o.discount,
+      benefit: o.discount,
+      offerType: 'API_DISCOUNT',
+      offerSubtype: 'API_DISCOUNT',
+      category: 'api',
       eligibility: o.eligibility,
       currency: 'USD',
       fingerprint: buildFingerprint('anthropic-api', o.title, o.description),
       sourceUrl: o.sourceUrl || sourceUrl,
+      destinationUrl: o.sourceUrl || sourceUrl,
       detectedAt: checkedAt,
       lastConfirmedAt: checkedAt,
     }));
@@ -1923,10 +1929,15 @@ async function extractKimi(browser: Browser): Promise<OfficialExtractedProviderD
       detectionMethod: 'PLAYWRIGHT_DOM',
       sourceStatus: 'VERIFIED',
       discount: o.discount,
+      benefit: o.discount,
+      offerType: 'API_DISCOUNT',
+      offerSubtype: 'API_DISCOUNT',
+      category: 'api',
       eligibility: o.eligibility,
       currency: 'USD',
       fingerprint: buildFingerprint('kimi', o.title, o.description),
       sourceUrl: o.sourceUrl || sourceUrl,
+      destinationUrl: o.sourceUrl || sourceUrl,
       detectedAt: checkedAt,
       lastConfirmedAt: checkedAt,
     }));
@@ -2669,21 +2680,20 @@ export async function extractOfficialPartnerOffers(browser: Browser): Promise<No
       activationMethod: 'Activate via MyJio App',
       country: 'IN',
       region: 'India',
-      officialSourceUrl: 'https://www.jio.com/en-in/google-one-offer',
+      officialSourceUrl: 'https://www.jio.com/google-gemini-offer/',
       termsUrl: 'https://www.jio.com/terms',
     },
-    // Airtel -> Perplexity Pro (EXPIRED: Promotion ended January 16, 2026 per official Perplexity Help Center)
     {
       partner: 'Google Pixel',
       partnerType: 'devices' as const,
       aiProvider: 'gemini',
       aiProviderDisplayName: 'Google Gemini',
       aiPlan: 'Google One AI Premium (Gemini Advanced)',
-      offerTitle: '1 Year Google One AI Premium with Google Pixel',
+      offerTitle: '1 Year Google One AI Premium with Google Pixel 10 Pro',
       benefit: '1 Year FREE',
       duration: '12 months',
       value: '$240 value',
-      eligibility: 'New Pixel 9 Pro & eligible Pixel hardware purchasers',
+      eligibility: 'New Pixel 10 Pro & 10 Pro XL hardware purchasers',
       activationMethod: 'Claim in Google One app on eligible device',
       country: 'GLOBAL',
       region: 'Global',
@@ -2691,21 +2701,38 @@ export async function extractOfficialPartnerOffers(browser: Browser): Promise<No
       termsUrl: 'https://one.google.com/terms-of-service',
     },
     {
-      partner: 'Samsung',
-      partnerType: 'devices' as const,
-      aiProvider: 'gemini',
-      aiProviderDisplayName: 'Google Gemini',
-      aiPlan: 'Galaxy AI & Google Gemini Pro',
-      offerTitle: 'Galaxy AI with Google Gemini on Galaxy Devices',
-      benefit: 'Free Access',
-      duration: 'Flagship device lifecycle',
-      value: 'Complimentary',
-      eligibility: 'Galaxy S24, Z Fold/Flip & Tab S9 owners',
-      activationMethod: 'Built-in Galaxy AI system settings',
-      country: 'GLOBAL',
-      region: 'Global',
-      officialSourceUrl: 'https://www.samsung.com/galaxy-ai/',
-      termsUrl: 'https://www.samsung.com/galaxy-ai/terms/',
+      partner: 'American Express',
+      partnerType: 'banking' as const,
+      aiProvider: 'openai',
+      aiProviderDisplayName: 'OpenAI',
+      aiPlan: 'ChatGPT Business / Enterprise',
+      offerTitle: '$300 Annual Statement Credit for OpenAI ChatGPT',
+      benefit: '$300 Statement Credit',
+      duration: 'Annual',
+      value: '$300 annual value',
+      eligibility: 'US Business Platinum Card Members',
+      activationMethod: 'Enroll in Amex Card Benefits and pay for OpenAI with enrolled card',
+      country: 'US',
+      region: 'United States',
+      officialSourceUrl: 'https://global.americanexpress.com/card-benefits/detail/chatgpt-business-credit/business-platinum',
+      termsUrl: 'https://global.americanexpress.com/card-benefits/detail/chatgpt-business-credit/business-platinum',
+    },
+    {
+      partner: 'Deutsche Telekom',
+      partnerType: 'telecom' as const,
+      aiProvider: 'perplexity',
+      aiProviderDisplayName: 'Perplexity',
+      aiPlan: 'Perplexity Pro',
+      offerTitle: '12 Months Perplexity Pro for Telekom Mobile Customers',
+      benefit: '12 Months FREE',
+      duration: '12 months',
+      value: '€240 value',
+      eligibility: 'Eligible Telekom mobile contract subscribers',
+      activationMethod: 'Activate via MeinTelekom App / Partner Portal',
+      country: 'DE',
+      region: 'Germany / Europe',
+      officialSourceUrl: 'https://www.telekom.com/en/newsroom/latest-updates/media-information/2024/11/ai-for-everyone',
+      termsUrl: 'https://www.telekom.com/en/newsroom/latest-updates/media-information/2024/11/ai-for-everyone',
     },
     {
       partner: 'ASUS',
@@ -2724,23 +2751,53 @@ export async function extractOfficialPartnerOffers(browser: Browser): Promise<No
       officialSourceUrl: 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
       termsUrl: 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
     },
+    // Samsung non-commercial feature candidate evaluated by fingerprint quarantine
+    {
+      partner: 'Samsung',
+      partnerType: 'devices' as const,
+      aiProvider: 'gemini',
+      aiProviderDisplayName: 'Google Gemini',
+      aiPlan: 'Galaxy AI built-in feature',
+      offerTitle: 'Galaxy AI with Google Gemini on Galaxy Devices',
+      benefit: 'Free Access',
+      duration: 'Flagship device lifecycle',
+      value: 'Complimentary',
+      eligibility: 'Galaxy S24, Z Fold/Flip & Tab S9 owners',
+      activationMethod: 'Built-in Galaxy AI system settings',
+      country: 'GLOBAL',
+      region: 'Global',
+      officialSourceUrl: 'https://www.samsung.com/galaxy-ai/',
+      termsUrl: 'https://www.samsung.com/galaxy-ai/terms/',
+    },
   ];
 
   const extractedLiveOffers: NormalizedPartnerOffer[] = [];
 
   for (const src of partnerSources) {
+    // 1. Quarantined fingerprint check (e.g. Samsung built-in OS feature, expired promotions)
+    const quarantine = isOfferQuarantined({
+      partner: src.partner,
+      title: src.offerTitle,
+      description: src.aiPlan,
+    });
+    if (quarantine.isQuarantined) {
+      console.log(`[OFFER VERIFY] provider=${src.aiProvider} offer=${src.offerTitle} status=QUARANTINED reason=${quarantine.reason}`);
+      continue;
+    }
+
     try {
       console.log(`   [Research Agent] Investigating partner bundle: ${src.partner} -> ${src.offerTitle}...`);
       const researchRes = await PlaywrightOfferResearchAgent.researchPartnerBundle(browser, src);
 
       if (researchRes.status === 'CURRENT' && researchRes.verifiedOffer) {
         extractedLiveOffers.push(researchRes.verifiedOffer);
-        console.log(`   ✅ [Research Agent: CURRENT] ${src.partner} -> ${src.aiPlan} (${researchRes.statusReason})`);
+        console.log(`[OFFER VERIFY] provider=${src.aiProvider} offer=${src.offerTitle} status=ACTIVE reason=${researchRes.statusReason}`);
       } else {
-        console.log(`   ❌ [Research Agent: REJECTED] ${src.partner} -> ${src.aiPlan} [Status: ${researchRes.status}] Reason: ${researchRes.statusReason}`);
+        console.log(`[OFFER VERIFY] provider=${src.aiProvider} offer=${src.offerTitle} status=REJECTED reason=${researchRes.statusReason}`);
       }
     } catch (err: any) {
       console.error(`   ❌ [Research Agent Error] Failed evaluating ${src.partner}:`, err?.message || err);
+      console.log(`[OFFER VERIFY] provider=${src.aiProvider} offer=${src.offerTitle} status=REJECTED reason=Playwright execution error: ${err?.message || err}`);
     }
   }
 
@@ -2883,10 +2940,15 @@ export async function runOfficialExtraction(syncTarget: string = 'both'): Promis
       title: 'DeepSeek Off-Peak 50% Discount',
       description: deepseekDescription,
       discount: '50% Off-Peak',
+      benefit: '50% Off-Peak',
+      offerType: 'API_DISCOUNT',
+      offerSubtype: 'API_DISCOUNT',
+      category: 'api',
       eligibility: 'All API Users',
       currency: 'USD',
       fingerprint: buildFingerprint('deepseek', 'DeepSeek Off-Peak 50% Discount', deepseekDescription),
       sourceUrl: deepseekRes.sourceUrl,
+      destinationUrl: deepseekRes.sourceUrl,
       sourceStatus: 'VERIFIED',
       detectionMethod: 'HTML_TABLE',
       evidenceText: deepseekDescription,

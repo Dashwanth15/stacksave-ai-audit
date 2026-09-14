@@ -576,6 +576,7 @@ export interface PublicOffer {
   lastConfirmedAt?: string;
   expiresAt: string | null;
   isVerified?: boolean;
+  category?: 'partner' | 'student' | 'annual' | 'api' | 'trial' | 'startup' | 'free';
 
   // Partner AI Offer fields
   partner?: string | null;
@@ -595,7 +596,17 @@ export interface PublicOffer {
   status?: string | null;
 
   // Intelligence scoring fields
-  offerOpportunityScore?: number;
+  platformIntelligenceScore?: number;  // canonical AI platform quality (0–100)
+  offerOpportunityScore?: number;       // offer-only signals (0–100)
+  finalRecommendedScore?: number;       // platform (60%) + offer (40%) combined (0–100)
+
+  // Exact Destination & Verified Savings fields
+  destinationUrl?: string | null;
+  offerSubtype?: string | null;
+  monthlyEquivalent?: number | null;
+  annualPrice?: number | null;
+  annualSavingsPercent?: number | null;
+  annualSavingsAmount?: number | null;
 }
 
 export type OfferFilterTab = 'all' | 'new' | 'active' | 'expired';

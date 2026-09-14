@@ -153,15 +153,14 @@ async function upsertOffer(
     );
   }
 
-  const existing = await NotificationEventModel.findOne({
-    $or: [
-      { fingerprint: fp },
-      ...(providerId === 'perplexity' && /education\s*pro/i.test(offer.title)
-        ? [{ providerId: 'perplexity', title: { $regex: /^perplexity\s+education\s+pro$/i } }]
-        : [{ providerId, title: offer.title, sourceUrl: offer.sourceUrl }]
-      ),
-    ],
-  });
+  let existing = await NotificationEventModel.findOne({ fingerprint: fp });
+  if (!existing) {
+    existing = await NotificationEventModel.findOne(
+      providerId === 'perplexity' && /education\s*pro/i.test(offer.title)
+        ? { providerId: 'perplexity', title: { $regex: /^perplexity\s+education\s+pro$/i }, isActive: true }
+        : { providerId, title: offer.title, sourceUrl: offer.sourceUrl, isActive: true }
+    );
+  }
 
   if (existing) {
     const setFields: Record<string, any> = {
@@ -191,7 +190,14 @@ async function upsertOffer(
       isPartnerOffer: offer.isPartnerOffer ?? false,
       aiProvider: providerId,
       sourceType: (offer as any).sourceType || 'official',
+      destinationUrl: offer.destinationUrl || existing.destinationUrl,
+      offerSubtype: offer.offerSubtype || existing.offerSubtype,
     };
+
+    if (offer.monthlyEquivalent !== undefined) setFields.monthlyEquivalent = offer.monthlyEquivalent;
+    if (offer.annualPrice !== undefined) setFields.annualPrice = offer.annualPrice;
+    if (offer.annualSavingsPercent !== undefined) setFields.annualSavingsPercent = offer.annualSavingsPercent;
+    if (offer.annualSavingsAmount !== undefined) setFields.annualSavingsAmount = offer.annualSavingsAmount;
 
     const unsetFields: Record<string, any> = {};
     if (!offer.partner) {
@@ -256,6 +262,12 @@ async function upsertOffer(
     isPartnerOffer: offer.isPartnerOffer ?? false,
     aiProvider: providerId,
     sourceType: (offer as any).sourceType || 'official',
+    destinationUrl: offer.destinationUrl,
+    offerSubtype: offer.offerSubtype,
+    monthlyEquivalent: offer.monthlyEquivalent,
+    annualPrice: offer.annualPrice,
+    annualSavingsPercent: offer.annualSavingsPercent,
+    annualSavingsAmount: offer.annualSavingsAmount,
   };
 
   if (offer.partner) {

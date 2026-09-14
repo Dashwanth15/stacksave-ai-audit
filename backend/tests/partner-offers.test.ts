@@ -166,13 +166,14 @@ describe('Partner AI Offers Architecture & Validation', () => {
       expect(types.includes('cloud')).toBe(false);
     });
 
-    it('contains Jio, Samsung, Google Pixel, American Express, JioFiber and does NOT contain expired Airtel', () => {
+    it('contains Jio, Google Pixel, American Express, JioFiber and does NOT contain expired Airtel or quarantined Samsung Galaxy AI', () => {
       const offers = PartnerOfferScanner.getKnownPartnerOffers();
       const partners = offers.map((o) => o.partner.toLowerCase());
       expect(partners.some((p) => p.includes('jio') && !p.includes('jiofiber'))).toBe(true);
       expect(partners.some((p) => p.includes('airtel'))).toBe(false);
-      expect(partners.some((p) => p.includes('samsung'))).toBe(true);
+      expect(partners.some((p) => p.includes('samsung'))).toBe(false); // Quarantined non-commercial feature
       expect(partners.some((p) => p.includes('google pixel'))).toBe(true);
+      expect(partners.some((p) => p.includes('american express'))).toBe(true);
       expect(partners.some((p) => p.includes('jiofiber'))).toBe(true);
     });
   });

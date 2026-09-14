@@ -31,7 +31,11 @@ const KNOWN_OFFER_URL_FIXES: Record<string, string> = {
   'https://asus.com/campaign/google-one-ai-premium/': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
   'https://www.asus.com/campaign/google-one-ai-premium': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
   'https://asus.com/campaign/google-one-ai-premium': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
-  'https://www.telekom.com/en/media/media-information/archive-news-details/telekom-and-perplexity-bring-ai-to-smartphones': 'https://www.telekom.com/en/media',
+  'https://www.telekom.com/en/media/media-information/archive-news-details/telekom-and-perplexity-bring-ai-to-smartphones': 'https://www.telekom.com/en/newsroom/latest-updates/media-information/2024/11/ai-for-everyone',
+  'https://www.jio.com/en-in/google-one-offer': 'https://www.jio.com/google-gemini-offer/',
+  'https://www.jio.com/en-in/google-one-offer/': 'https://www.jio.com/google-gemini-offer/',
+  'https://www.jio.com/en-in/fiber': 'https://www.jio.com/fiber/',
+  'https://www.jio.com/en-in/fiber/': 'https://www.jio.com/fiber/',
   'https://character.ai/c-ai+': 'https://character.ai/',
   'https://bolt.new/pricing': 'https://bolt.new/',
   'https://platform.moonshot.cn/docs/pricing/chat': 'https://platform.moonshot.cn/pricing',
@@ -46,7 +50,7 @@ export function resolveCanonicalOfferUrl(sourceUrl?: string | null): string {
     return KNOWN_OFFER_URL_FIXES[trimmed];
   }
   for (const [bad, good] of Object.entries(KNOWN_OFFER_URL_FIXES)) {
-    if (trimmed.includes(bad) || (bad.endsWith('/') && trimmed === bad.slice(0, -1))) {
+    if (trimmed.includes(bad) || (bad.endsWith('/') && trimmed === bad.slice(0, -1)) || (!bad.endsWith('/') && trimmed === bad + '/')) {
       return good;
     }
   }
@@ -76,7 +80,9 @@ export interface FormattedOffer {
   expiresAt: string | null;
   isUnread: boolean;
   savingsScore: number;
-  offerOpportunityScore?: number;
+  platformIntelligenceScore?: number;  // canonical AI platform quality (0–100)
+  offerOpportunityScore?: number;       // offer-only signals (0–100)
+  finalRecommendedScore?: number;       // platform (60%) + offer (40%) combined (0–100)
 
   // Partner AI Offer specific presentation fields
   partner?: string | null;
@@ -91,6 +97,14 @@ export interface FormattedOffer {
   country?: string | null;
   region?: string | null;
   termsUrl?: string | null;
+
+  // Exact Destination & Verified Savings fields
+  destinationUrl?: string | null;
+  offerSubtype?: string | null;
+  monthlyEquivalent?: number | null;
+  annualPrice?: number | null;
+  annualSavingsPercent?: number | null;
+  annualSavingsAmount?: number | null;
 }
 
 /**
@@ -200,8 +214,18 @@ export function deriveOfferCategory(
   eligibility: string,
   partner?: string | null,
   offerType?: string | null,
-  partnerType?: string | null
+  partnerType?: string | null,
+  offerSubtype?: string | null
 ): { category: FormattedOffer['category']; categoryLabel: string } {
+  // Explicit subtype overrides
+  if (offerSubtype === 'FREE_TRIAL') return { category: 'trial', categoryLabel: 'Free Trials' };
+  if (offerSubtype === 'ANNUAL_DISCOUNT') return { category: 'annual', categoryLabel: 'Annual Savings' };
+  if (offerSubtype === 'API_DISCOUNT') return { category: 'api', categoryLabel: 'API Discounts' };
+  if (offerSubtype === 'STUDENT_DISCOUNT' || offerSubtype === 'ACADEMIC_FREE') return { category: 'student', categoryLabel: 'Student & Education' };
+  if (offerSubtype === 'STARTUP_GRANT') return { category: 'startup', categoryLabel: 'Startup Grants' };
+  if (offerSubtype === 'PARTNER_BUNDLE') return { category: 'partner', categoryLabel: 'Partner AI Offers' };
+  if (offerSubtype === 'FREE_PLAN' || offerSubtype === 'PROMOTIONAL_FREE') return { category: 'free', categoryLabel: 'Free Access' };
+
   const combined = `${title} ${desc} ${eligibility}`.toLowerCase();
   const offerTypeUpper = (offerType || '').toUpperCase();
   const partnerTypeLower = (partnerType || '').toLowerCase();
@@ -426,17 +450,31 @@ export function formatOfferForDisplay(
     else discountBadge = 'Verified Offer';
   }
 
-  const { category, categoryLabel } = deriveOfferCategory(
-    title,
-    summary,
-    eligibility,
-    rawOffer.partner,
-    rawOffer.offerType,
-    rawOffer.partnerType
-  );
+  const CATEGORY_MAP: Record<string, { category: FormattedOffer['category']; categoryLabel: string }> = {
+    partner: { category: 'partner', categoryLabel: 'Partner Bundles' },
+    student: { category: 'student', categoryLabel: 'Student & Education' },
+    api: { category: 'api', categoryLabel: 'API Discounts' },
+    annual: { category: 'annual', categoryLabel: 'Annual Savings' },
+    startup: { category: 'startup', categoryLabel: 'Startup Grants' },
+    trial: { category: 'trial', categoryLabel: 'Free Trials' },
+    free: { category: 'free', categoryLabel: 'Free Access' },
+  };
+
+  const { category, categoryLabel } = (rawOffer.category && CATEGORY_MAP[rawOffer.category])
+    ? CATEGORY_MAP[rawOffer.category]
+    : deriveOfferCategory(
+        title,
+        summary,
+        eligibility,
+        rawOffer.partner,
+        rawOffer.offerType,
+        rawOffer.partnerType,
+        rawOffer.offerSubtype
+      );
   const savingsScore = computeSavingsScore(discountBadge, title, category);
   const confirmedTimestamp = rawOffer.lastConfirmedAt || rawOffer.detectedAt;
   const verification = formatVerificationStatus(confirmedTimestamp, rawOffer.sourceStatus);
+  const destinationUrl = resolveCanonicalOfferUrl(rawOffer.destinationUrl || rawOffer.sourceUrl);
 
   return {
     id: rawOffer.id,
@@ -451,7 +489,13 @@ export function formatOfferForDisplay(
     evidenceText: rawOffer.evidenceText || null,
     detectionMethod: rawOffer.detectionMethod || null,
     sourceStatus: rawOffer.sourceStatus || 'VERIFIED',
-    sourceUrl: resolveCanonicalOfferUrl(rawOffer.sourceUrl),
+    sourceUrl: destinationUrl,
+    destinationUrl,
+    offerSubtype: rawOffer.offerSubtype || null,
+    monthlyEquivalent: rawOffer.monthlyEquivalent ?? null,
+    annualPrice: rawOffer.annualPrice ?? null,
+    annualSavingsPercent: rawOffer.annualSavingsPercent ?? null,
+    annualSavingsAmount: rawOffer.annualSavingsAmount ?? null,
     detectedAt: rawOffer.detectedAt,
     lastConfirmedAt: confirmedTimestamp,
     verificationStatusText: verification.text,
@@ -473,6 +517,8 @@ export function formatOfferForDisplay(
     region: rawOffer.region || null,
     termsUrl: rawOffer.termsUrl || null,
     offerOpportunityScore: rawOffer.offerOpportunityScore,
+    platformIntelligenceScore: rawOffer.platformIntelligenceScore,
+    finalRecommendedScore: rawOffer.finalRecommendedScore,
   };
 }
 

@@ -128,25 +128,14 @@ export function canPublishOffer(offer: OfferPublicationCheckInput): boolean {
     return false;
   }
 
-  // 5. Perplexity-specific historical / misattributed promotion gates
-  if (offer.providerId === 'perplexity') {
-    const partnerLower = (offer.partner || '').toLowerCase();
-    const titleLower = (offer.title || '').toLowerCase();
-
-    // Airtel × Perplexity ended January 16, 2026
-    if (partnerLower.includes('airtel') || titleLower.includes('airtel')) {
-      return false;
-    }
-
-    // Nothing Technology Phone (2a) ended April 30, 2024 (and destination 404)
-    if (partnerLower.includes('nothing') || titleLower.includes('nothing')) {
-      return false;
-    }
-
-    // Perplexity Education Pro is a native subscription plan with SheerID — NOT a UNiDAYS bundle
-    if (partnerLower.includes('unidays') || titleLower.includes('unidays')) {
-      return false;
-    }
+  // 5. Explicit fingerprint & offer pattern quarantine
+  const quarantineCheck = isOfferQuarantined({
+    partner: offer.partner,
+    title: offer.title,
+    description: offer.description,
+  });
+  if (quarantineCheck.isQuarantined) {
+    return false;
   }
 
   // 6. Commercial Partner Bundle check if partner is specified
@@ -155,6 +144,81 @@ export function canPublishOffer(offer: OfferPublicationCheckInput): boolean {
   }
 
   return true;
+}
+
+export interface QuarantinedPattern {
+  id: string;
+  reason: string;
+  matches: (o: { partner?: string | null; title?: string | null; description?: string | null }) => boolean;
+}
+
+export const QUARANTINED_OFFER_PATTERNS: QuarantinedPattern[] = [
+  {
+    id: 'samsung-galaxy-ai-built-in-non-commercial',
+    reason: 'Built-in OS software feature, not a separate commercial AI subscription entitlement',
+    matches: (o) => {
+      const p = (o.partner || '').toLowerCase();
+      const t = (o.title || '').toLowerCase();
+      const d = (o.description || '').toLowerCase();
+      return (
+        (p.includes('samsung') || t.includes('samsung')) &&
+        (t.includes('galaxy ai') || d.includes('galaxy ai')) &&
+        !t.includes('google ai pro') &&
+        !t.includes('chatgpt') &&
+        !t.includes('perplexity') &&
+        !d.includes('google one')
+      );
+    },
+  },
+  {
+    id: 'airtel-perplexity-expired-2026',
+    reason: 'Airtel × Perplexity partnership ended January 16, 2026 per official Perplexity Help Center',
+    matches: (o) => {
+      const p = (o.partner || '').toLowerCase();
+      const t = (o.title || '').toLowerCase();
+      return (p.includes('airtel') || t.includes('airtel')) && (p.includes('perplexity') || t.includes('perplexity'));
+    },
+  },
+  {
+    id: 'softbank-perplexity-expired',
+    reason: 'SoftBank 1-Year Perplexity campaign expired (destination 404)',
+    matches: (o) => {
+      const p = (o.partner || '').toLowerCase();
+      const t = (o.title || '').toLowerCase();
+      return p.includes('softbank') || t.includes('softbank');
+    },
+  },
+  {
+    id: 'nothing-phone2a-perplexity-expired',
+    reason: 'Nothing Technology Phone (2a) campaign ended April 30, 2024 (destination 404)',
+    matches: (o) => {
+      const p = (o.partner || '').toLowerCase();
+      const t = (o.title || '').toLowerCase();
+      return (p.includes('nothing') || t.includes('nothing')) && (p.includes('perplexity') || t.includes('perplexity'));
+    },
+  },
+  {
+    id: 'perplexity-unidays-misattributed',
+    reason: 'Perplexity Education Pro is native subscription plan with SheerID verification, not a UNiDAYS bundle',
+    matches: (o) => {
+      const p = (o.partner || '').toLowerCase();
+      const t = (o.title || '').toLowerCase();
+      return p.includes('unidays') || t.includes('unidays');
+    },
+  },
+];
+
+export function isOfferQuarantined(offer: {
+  partner?: string | null;
+  title?: string | null;
+  description?: string | null;
+}): { isQuarantined: boolean; reason?: string } {
+  for (const q of QUARANTINED_OFFER_PATTERNS) {
+    if (q.matches(offer)) {
+      return { isQuarantined: true, reason: q.reason };
+    }
+  }
+  return { isQuarantined: false };
 }
 
 export function isPubliclyVerifiablePartnerOffer(

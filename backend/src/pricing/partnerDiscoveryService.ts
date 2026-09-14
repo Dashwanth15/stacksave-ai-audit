@@ -92,6 +92,9 @@ export interface NormalizedPartnerOffer {
   status: 'ACTIVE' | 'EXPIRED' | 'UPCOMING';
   isActive: boolean;
   isPublic: boolean;
+  destinationUrl?: string;
+  offerSubtype?: string;
+  category?: 'partner' | 'student' | 'annual' | 'api' | 'trial' | 'startup' | 'free';
 }
 
 // ── Known Aggregator / Coupon / Third-Party Blocklist ─────────

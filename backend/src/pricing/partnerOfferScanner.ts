@@ -28,7 +28,7 @@ import {
   buildPartnerOfferFingerprint,
 } from './partnerDiscoveryService';
 import { checkGenericExpiration } from './dateExpiryUtils';
-import { canPublishOffer } from './offerTrust';
+import { canPublishOffer, isOfferQuarantined } from './offerTrust';
 
 export interface PartnerScanResult {
   totalScanned: number;
@@ -44,19 +44,35 @@ export class PartnerOfferScanner {
   /**
    * Persists or updates a normalized offer into the database idempotently.
    *
-   * @param offer          - The normalized offer to persist.
-   * @param isPartnerOffer - Explicit flag controlling the isPartnerOffer field.
-   *                         Pass `false` for student/startup offers so they are NOT
-   *                         surfaced as Partner Bundles.  Defaults to `true` for
-   *                         genuine commercial partner bundles.
+   * @param isPartnerOffer - Set to false for Student & Education or Startup Grant offers,
+   *                         so they are NOT classified as Partner Bundles in the frontend.
    */
   public static async persistPartnerOffer(
     offer: NormalizedPartnerOffer,
-    isPartnerOffer = true
-  ): Promise<{
-    status: 'CREATED' | 'UPDATED' | 'CONFIRMED' | 'EXPIRED';
-  }> {
-    const existing = await NotificationEventModel.findOne({ fingerprint: offer.fingerprint });
+    isPartnerOffer: boolean = true
+  ): Promise<{ status: 'CREATED' | 'UPDATED' | 'CONFIRMED' | 'EXPIRED' }> {
+    const existing = await NotificationEventModel.findOne({
+      fingerprint: offer.fingerprint,
+    });
+
+    const checkTime = new Date();
+
+    // Check fingerprint / offer pattern quarantine (e.g. non-commercial OS features, expired bundles)
+    const quarantine = isOfferQuarantined({
+      partner: offer.partner,
+      title: offer.offerTitle,
+      description: offer.offerDescription,
+    });
+    if (quarantine.isQuarantined) {
+      console.log(`[OFFER VERIFY] provider=${offer.aiProvider} offer=${offer.offerTitle} status=QUARANTINED reason=${quarantine.reason}`);
+      if (existing) {
+        existing.status = 'QUARANTINED';
+        existing.isActive = false;
+        existing.lastCheckedAt = checkTime;
+        await existing.save();
+      }
+      return { status: 'EXPIRED' };
+    }
 
     const sourceDomain = offer.sourceDomain || extractRootDomain(offer.officialSourceUrl);
     const providerOfficialUrl =
@@ -69,7 +85,6 @@ export class PartnerOfferScanner {
       createHash('sha256').update(`${offer.fingerprint}::${evidenceText}`).digest('hex');
     const detectionMethod = offer.detectionMethod || (isPartnerOffer ? 'SEEDED' : 'STATIC_FETCH');
     const extractorVersion = offer.extractorVersion || '2.4.0-partner-scanner';
-    const checkTime = new Date();
 
     const textToCheck = `${offer.offerTitle || ''} ${evidenceText} ${offer.offerDescription || ''}`;
     const genericExp = checkGenericExpiration(textToCheck);
@@ -77,6 +92,7 @@ export class PartnerOfferScanner {
 
     if (!existing) {
       if (isExplicitlyExpired) {
+        console.log(`[OFFER VERIFY] provider=${offer.aiProvider} offer=${offer.offerTitle} status=INACTIVE reason=Expired candidate: ${genericExp.expiredReason || 'Explicitly expired'}`);
         return { status: 'EXPIRED' };
       }
       // 1. Create New Public Offer
@@ -121,10 +137,14 @@ export class PartnerOfferScanner {
         country: offer.country,
         region: offer.region,
         termsUrl: offer.termsUrl,
+        destinationUrl: offer.destinationUrl || offer.termsUrl || offer.officialSourceUrl,
+        offerSubtype: offer.offerSubtype || (isPartnerOffer ? 'PARTNER_BUNDLE' : undefined),
+        category: (offer as any).category || (isPartnerOffer ? 'partner' : undefined),
         sourceType: 'official',
         status: offer.status || 'ACTIVE',
         lastCheckedAt: checkTime,
       });
+      console.log(`[OFFER VERIFY] provider=${offer.aiProvider} offer=${offer.offerTitle} status=ACTIVE reason=Created verified offer`);
       return { status: 'CREATED' };
     }
 
@@ -133,7 +153,8 @@ export class PartnerOfferScanner {
       existing.status = 'EXPIRED';
       existing.isActive = false;
       existing.lastCheckedAt = checkTime;
-      await existing.save();
+      if (typeof existing.save === 'function') await existing.save();
+      console.log(`[OFFER VERIFY] provider=${offer.aiProvider} offer=${offer.offerTitle} status=INACTIVE reason=Expired offer: ${genericExp.expiredReason || 'Explicitly expired'}`);
       return { status: 'EXPIRED' };
     }
     
@@ -141,8 +162,20 @@ export class PartnerOfferScanner {
     // This prevents broken/expired offers from being auto-reactivated without fresh verified evidence
     if ((existing.status === 'UNAVAILABLE' || existing.status === 'EXPIRED' || existing.status === 'HISTORICAL') && !existing.isActive) {
       existing.lastCheckedAt = checkTime;
-      await existing.save();
+      if (typeof existing.save === 'function') await existing.save();
+      console.log(`[OFFER VERIFY] provider=${offer.aiProvider} offer=${offer.offerTitle} status=INACTIVE reason=Preserved inactive status (${existing.status})`);
       return { status: 'EXPIRED' }; // Return EXPIRED to prevent reconciliation from preserving it
+    }
+
+    // Never allow a static seed to overwrite fresher live Playwright evidence
+    const isIncomingSeeded = offer.detectionMethod === 'SEEDED';
+    const isExistingLive = existing.detectionMethod === 'PLAYWRIGHT_DOM' || existing.detectionMethod === 'PLAYWRIGHT_LIVE';
+    if (isIncomingSeeded && isExistingLive) {
+      existing.lastCheckedAt = checkTime;
+      existing.lastConfirmedAt = checkTime;
+      if (typeof existing.save === 'function') await existing.save();
+      console.log(`[OFFER VERIFY] provider=${offer.aiProvider} offer=${offer.offerTitle} status=ACTIVE reason=Confirmed live Playwright offer with timestamp refresh`);
+      return { status: 'CONFIRMED' };
     }
 
     // 2. Check if commercial terms or content hash changed
@@ -171,6 +204,10 @@ export class PartnerOfferScanner {
     if (sourceDomain) existing.sourceDomain = sourceDomain;
     if (providerOfficialUrl) existing.providerOfficialUrl = providerOfficialUrl;
     if (offer.detectionMethod) existing.detectionMethod = offer.detectionMethod;
+    if (offer.destinationUrl) existing.destinationUrl = offer.destinationUrl;
+    if (offer.offerSubtype) existing.offerSubtype = offer.offerSubtype;
+    if ((offer as any).category) (existing as any).category = (offer as any).category;
+    else if (!(existing as any).category) (existing as any).category = isPartnerOffer ? 'partner' : undefined;
     if (contentHash) existing.contentHash = contentHash;
 
     if (hasChanged) {
@@ -181,11 +218,15 @@ export class PartnerOfferScanner {
       existing.duration = offer.duration;
       existing.evidenceText = evidenceText;
       existing.eligibility = offer.eligibility;
-      await existing.save();
+      if (offer.destinationUrl) existing.destinationUrl = offer.destinationUrl;
+      if (offer.offerSubtype) existing.offerSubtype = offer.offerSubtype;
+      if (typeof existing.save === 'function') await existing.save();
+      console.log(`[OFFER VERIFY] provider=${offer.aiProvider} offer=${offer.offerTitle} status=ACTIVE reason=Updated verified offer commercial terms`);
       return { status: 'UPDATED' };
     }
 
-    await existing.save();
+    if (typeof existing.save === 'function') await existing.save();
+    console.log(`[OFFER VERIFY] provider=${offer.aiProvider} offer=${offer.offerTitle} status=ACTIVE reason=Confirmed active offer`);
     return { status: 'CONFIRMED' };
   }
 
@@ -220,7 +261,7 @@ export class PartnerOfferScanner {
         activationMethod: 'Activate via MyJio App',
         country: 'IN',
         region: 'India',
-        officialSourceUrl: 'https://www.jio.com/en-in/google-one-offer',
+        officialSourceUrl: 'https://www.jio.com/google-gemini-offer/',
         sourceType: 'official',
         sourceStatus: 'VERIFIED',
         evidenceText:
@@ -239,52 +280,17 @@ export class PartnerOfferScanner {
       // Verification: Page redirects to homepage, contains "expired" text
       // Status: DO NOT resurrect without fresh official evidence of NEW promotion
 
-      // Samsung -> Galaxy AI / Gemini Bundle
-      {
-        fingerprint: buildPartnerOfferFingerprint({
-          partner: 'Samsung',
-          aiProvider: 'gemini',
-          aiPlan: 'Galaxy AI & Gemini Pro',
-          offerType: 'DEVICE_BUNDLE',
-          region: 'Global',
-        }),
-        partner: 'Samsung',
-        partnerType: 'devices',
-        aiProvider: 'gemini',
-        aiProviderDisplayName: 'Google Gemini',
-        isKnownAiProvider: true,
-        aiPlan: 'Galaxy AI & Google Gemini Pro',
-        offerTitle: 'Galaxy AI with Google Gemini on Galaxy Devices',
-        offerDescription:
-          'Complimentary access to advanced Galaxy AI features and Google Gemini integrations on eligible Galaxy flagship devices.',
-        offerType: 'DEVICE_BUNDLE',
-        benefit: 'Free Access',
-        duration: 'Flagship device lifecycle',
-        value: 'Complimentary',
-        eligibility: 'Galaxy S24, Z Fold/Flip & Tab S9 owners',
-        activationMethod: 'Built-in Galaxy AI system settings',
-        country: 'GLOBAL',
-        region: 'Global',
-        officialSourceUrl: 'https://www.samsung.com/galaxy-ai/',
-        termsUrl: 'https://www.samsung.com/galaxy-ai/terms/',
-        sourceType: 'official',
-        sourceStatus: 'VERIFIED',
-        evidenceText:
-          'Galaxy AI features powered by Google Gemini available at no extra cost on supported Samsung Galaxy devices.',
-        detectedAt: new Date('2026-08-10T00:00:00Z'),
-        lastConfirmedAt: new Date(),
-        lastCheckedAt: new Date(),
-        status: 'ACTIVE',
-        isActive: true,
-        isPublic: true,
-      },
+      // Samsung -> Galaxy AI Device Feature
+      // REJECTED: Built-in OEM device feature; no separate commercial AI subscription entitlement.
+      // Fingerprint-level quarantine: Future Samsung commercial AI bundles (e.g. Samsung -> Google AI Pro or ChatGPT)
+      // remain discoverable if verified with an external commercial entitlement.
 
-      // Google Pixel -> Gemini Advanced Bundle
+      // Google Pixel 10 Pro -> Gemini Advanced Bundle
       {
         fingerprint: buildPartnerOfferFingerprint({
           partner: 'Google Pixel',
           aiProvider: 'gemini',
-          aiPlan: 'Google One AI Premium (Gemini Advanced)',
+          aiPlan: 'Google One AI Premium (Pixel 10 Pro)',
           offerType: 'DEVICE_BUNDLE',
           region: 'Global',
         }),
@@ -294,18 +300,20 @@ export class PartnerOfferScanner {
         aiProviderDisplayName: 'Google Gemini',
         isKnownAiProvider: true,
         aiPlan: 'Google One AI Premium (Gemini Advanced)',
-        offerTitle: '1 Year Google One AI Premium with Google Pixel',
+        offerTitle: '1 Year Google One AI Premium with Google Pixel 10 Pro',
         offerDescription:
-          'Get 1 full year of Google One AI Premium (Gemini Advanced, 2TB storage, and Gemini in Docs/Gmail) included with Pixel 9 Pro and Pixel devices.',
+          'Get 1 full year of Google One AI Premium (Gemini Advanced with 2M token context, 2TB storage, and Gemini in Docs/Gmail) included with Pixel 10 Pro and Pixel 10 Pro XL.',
         offerType: 'DEVICE_BUNDLE',
+        offerSubtype: 'PARTNER_BUNDLE',
         benefit: '1 Year FREE',
         duration: '12 months',
         value: '$240 value',
-        eligibility: 'New Pixel 9 Pro & eligible Pixel hardware purchasers',
+        eligibility: 'New Pixel 10 Pro & eligible Pixel hardware purchasers',
         activationMethod: 'Claim in Google One app on eligible device',
         country: 'GLOBAL',
         region: 'Global',
         officialSourceUrl: 'https://store.google.com/category/phones',
+        destinationUrl: 'https://store.google.com/category/phones',
         termsUrl: 'https://one.google.com/terms-of-service',
         sourceType: 'official',
         sourceStatus: 'VERIFIED',
@@ -319,12 +327,12 @@ export class PartnerOfferScanner {
         isPublic: true,
       },
 
-      // American Express -> Business Platinum AI Perks
+      // American Express -> $300 ChatGPT Business Statement Credit
       {
         fingerprint: buildPartnerOfferFingerprint({
           partner: 'American Express',
           aiProvider: 'chatgpt',
-          aiPlan: 'Enterprise AI & Tech Statement Credits',
+          aiPlan: 'ChatGPT Business Statement Credit',
           offerType: 'BANKING_REWARD',
           region: 'United States',
         }),
@@ -333,25 +341,111 @@ export class PartnerOfferScanner {
         aiProvider: 'chatgpt',
         aiProviderDisplayName: 'ChatGPT (OpenAI)',
         isKnownAiProvider: true,
-        aiPlan: 'OpenAI / Tech Statement Credits',
-        offerTitle: 'Amex Business Platinum Technology & AI Credits',
+        aiPlan: 'ChatGPT Business Workspace',
+        offerTitle: '$300 ChatGPT Business Statement Credit',
         offerDescription:
-          'Statement credits toward AI subscriptions, AI software tools, cloud compute, and enterprise developer platforms for cardmembers.',
+          'Eligible U.S. Business Platinum and Business Gold cardmembers can enroll to receive up to $300 in annual statement credits toward ChatGPT Business workspace subscriptions.',
         offerType: 'BANKING_REWARD',
-        benefit: '$300 Statement Credit',
+        offerSubtype: 'PARTNER_BUNDLE',
+        benefit: 'Up to $300 Statement Credit',
         duration: 'Annual benefit',
         value: '$300/year value',
-        eligibility: 'American Express Business Platinum Cardmembers',
-        activationMethod: 'Enroll in Amex Offers dashboard',
+        eligibility: 'Eligible U.S. Business Platinum & Business Gold Cardmembers',
+        activationMethod: 'Enroll via Amex Online Benefits Portal prior to charge',
         country: 'US',
         region: 'United States',
-        officialSourceUrl: 'https://www.americanexpress.com/us/credit-cards/business-cards/',
-        termsUrl: 'https://www.americanexpress.com/terms',
+        officialSourceUrl: 'https://www.americanexpress.com/us/credit-cards/business-cards/business-platinum-credit-card-amex/',
+        destinationUrl: 'https://global.americanexpress.com/card-benefits/detail/chatgpt-business-credit/business-platinum',
+        termsUrl: 'https://global.americanexpress.com/card-benefits/detail/chatgpt-business-credit/business-platinum',
         sourceType: 'official',
         sourceStatus: 'VERIFIED',
         evidenceText:
-          'Eligible cardmembers can enroll to receive statement credits toward qualifying AI subscriptions and technology tool subscriptions.',
+          'Enroll and receive up to $300 in statement credits annually for eligible ChatGPT Business subscriptions charged to your Business Platinum Card.',
         detectedAt: new Date('2026-08-28T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
+      },
+
+      // Deutsche Telekom -> Perplexity Pro Mobile Bundle
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'Deutsche Telekom',
+          aiProvider: 'perplexity',
+          aiPlan: 'Perplexity Pro',
+          offerType: 'TELECOM_BUNDLE',
+          region: 'Europe',
+        }),
+        partner: 'Deutsche Telekom',
+        partnerType: 'telecom',
+        aiProvider: 'perplexity',
+        aiProviderDisplayName: 'Perplexity',
+        isKnownAiProvider: true,
+        aiPlan: 'Perplexity Pro',
+        offerTitle: 'Perplexity Pro Mobile Contract Bundle',
+        offerDescription:
+          'Eligible Deutsche Telekom mobile contract subscribers receive complimentary access to Perplexity Pro AI search and research assistant.',
+        offerType: 'TELECOM_BUNDLE',
+        offerSubtype: 'PARTNER_BUNDLE',
+        benefit: 'Included with Mobile Plan',
+        duration: 'Contract term',
+        value: 'Complimentary',
+        eligibility: 'Qualifying Deutsche Telekom mobile contract subscribers',
+        activationMethod: 'Claim via Telekom MeinMagenta app',
+        country: 'DE',
+        region: 'Europe',
+        officialSourceUrl: 'https://www.telekom.com/en/newsroom/latest-updates/media-information/2024/11/ai-for-everyone',
+        destinationUrl: 'https://www.telekom.com/en/newsroom/latest-updates/media-information/2024/11/ai-for-everyone',
+        termsUrl: 'https://www.telekom.com/en/newsroom/latest-updates/media-information/2024/11/ai-for-everyone',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText:
+          'Magenta Moments has been offering twelve months of free access to Perplexity Pro since May. And thus a saving of 240 euros. This promotion will be extended until spring next year.',
+        detectedAt: new Date('2026-09-01T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
+      },
+
+      // ASUS AI PC & Chromebook Plus -> Google One AI Premium
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'ASUS',
+          aiProvider: 'gemini',
+          aiPlan: 'Google One AI Premium (ASUS AI PC)',
+          offerType: 'DEVICE_BUNDLE',
+          region: 'Global',
+        }),
+        partner: 'ASUS',
+        partnerType: 'devices',
+        aiProvider: 'gemini',
+        aiProviderDisplayName: 'Google Gemini',
+        isKnownAiProvider: true,
+        aiPlan: 'Google One AI Premium (Gemini Advanced)',
+        offerTitle: 'Google One AI Premium with ASUS AI PC & Chromebook Plus',
+        offerDescription:
+          'Get up to 12 months of Google One AI Premium (Gemini Advanced and 2TB cloud storage) included with eligible ASUS AI PC and Chromebook Plus purchases.',
+        offerType: 'DEVICE_BUNDLE',
+        offerSubtype: 'PARTNER_BUNDLE',
+        benefit: 'Up to 12 Months FREE',
+        duration: '3 to 12 months',
+        value: '$240 value',
+        eligibility: 'Qualifying ASUS AI laptop and Chromebook Plus purchasers',
+        activationMethod: 'Claim via ASUS Member portal / MyASUS app',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+        destinationUrl: 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+        termsUrl: 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText:
+          'Eligible ASUS Chromebook Plus and AI PC purchases include up to 12 months of Google One AI Premium with Gemini Advanced.',
+        detectedAt: new Date('2026-08-25T00:00:00Z'),
         lastConfirmedAt: new Date(),
         lastCheckedAt: new Date(),
         status: 'ACTIVE',
@@ -378,6 +472,7 @@ export class PartnerOfferScanner {
         offerDescription:
           'Complimentary 12-month Google AI Pro subscription bundled with selected annual JioFiber and AirFiber broadband plans.',
         offerType: 'BROADBAND_BUNDLE',
+        offerSubtype: 'PARTNER_BUNDLE',
         benefit: '12 Months FREE',
         duration: '12 months',
         value: '$240 value',
@@ -385,7 +480,8 @@ export class PartnerOfferScanner {
         activationMethod: 'Claim through MyJio broadband portal',
         country: 'IN',
         region: 'India',
-        officialSourceUrl: 'https://www.jio.com/en-in/fiber',
+        officialSourceUrl: 'https://www.jio.com/fiber/',
+        destinationUrl: 'https://www.jio.com/fiber/',
         termsUrl: 'https://www.jio.com/terms',
         sourceType: 'official',
         sourceStatus: 'VERIFIED',
@@ -447,6 +543,218 @@ export class PartnerOfferScanner {
         status: 'ACTIVE',
         isActive: true,
         isPublic: true,
+        destinationUrl: 'https://education.github.com/pack',
+        offerSubtype: 'STUDENT_DISCOUNT',
+      },
+
+      // Notion for Education -> Free Plus Plan
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'Notion',
+          aiProvider: 'notion-ai',
+          aiPlan: 'Notion Plus for Education',
+          offerType: 'EDUCATION_BUNDLE',
+          region: 'Global',
+        }),
+        partner: 'Notion',
+        partnerType: 'education',
+        aiProvider: 'notion-ai',
+        aiProviderDisplayName: 'Notion AI',
+        isKnownAiProvider: true,
+        aiPlan: 'Notion Plus for Education',
+        offerTitle: 'Notion for Education (100% Free Plus Plan)',
+        offerDescription:
+          '100% free Plus plan access for verified students and educators using an accredited academic school email address.',
+        offerType: 'EDUCATION_BUNDLE',
+        offerSubtype: 'ACADEMIC_FREE',
+        benefit: '100% FREE',
+        duration: 'While enrolled',
+        value: '$120/year value',
+        eligibility: 'Verified Students & Educators (.edu)',
+        activationMethod: 'Sign up with verified school email address',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://www.notion.so/product/notion-for-education',
+        destinationUrl: 'https://www.notion.com/product/notion-for-education',
+        termsUrl: 'https://www.notion.com/product/notion-for-education',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText:
+          'Students and educators can get Notion Plus with unlimited blocks and file uploads at 100% discount.',
+        detectedAt: new Date('2026-08-20T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
+      },
+
+      // Canva for Education -> 100% Free K-12
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'Canva',
+          aiProvider: 'canva-ai',
+          aiPlan: 'Canva for Education',
+          offerType: 'EDUCATION_BUNDLE',
+          region: 'Global',
+        }),
+        partner: 'Canva',
+        partnerType: 'education',
+        aiProvider: 'canva-ai',
+        aiProviderDisplayName: 'Canva AI',
+        isKnownAiProvider: true,
+        aiPlan: 'Canva for Education (Magic Studio)',
+        offerTitle: 'Canva for Education (100% Free K-12 + Magic Studio)',
+        offerDescription:
+          '100% free lifetime access to Canva premium design tools and Magic Studio AI generators for eligible K-12 teachers and students.',
+        offerType: 'EDUCATION_BUNDLE',
+        offerSubtype: 'ACADEMIC_FREE',
+        benefit: '100% FREE',
+        duration: 'K-12 tenure',
+        value: '$120/year value',
+        eligibility: 'K-12 teachers, school staff, and enrolled students',
+        activationMethod: 'Verify teaching credentials or school domain',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://www.canva.com/education/',
+        destinationUrl: 'https://www.canva.com/education/',
+        termsUrl: 'https://www.canva.com/education/',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText:
+          'Canva for Education is 100% free for K-12 teachers and their students with complete Magic Studio AI tools.',
+        detectedAt: new Date('2026-08-20T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
+      },
+
+      // Figma for Education -> Free Professional
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'Figma',
+          aiProvider: 'figma-ai',
+          aiPlan: 'Figma for Education',
+          offerType: 'EDUCATION_BUNDLE',
+          region: 'Global',
+        }),
+        partner: 'Figma',
+        partnerType: 'education',
+        aiProvider: 'figma-ai',
+        aiProviderDisplayName: 'Figma AI',
+        isKnownAiProvider: true,
+        aiPlan: 'Figma Professional for Education',
+        offerTitle: 'Figma for Education (100% Free Professional Plan)',
+        offerDescription:
+          'Free access to Figma Professional plan including FigJam and collaborative design AI tools for verified students and educators.',
+        offerType: 'EDUCATION_BUNDLE',
+        offerSubtype: 'ACADEMIC_FREE',
+        benefit: '100% FREE',
+        duration: 'While enrolled (2-year re-verification)',
+        value: '$144/year value',
+        eligibility: 'Accredited university/college students and educators',
+        activationMethod: 'Submit student application with .edu verification',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://www.figma.com/education/',
+        destinationUrl: 'https://www.figma.com/education/',
+        termsUrl: 'https://www.figma.com/education/',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText:
+          'Figma is free for students and educators. Get full access to Figma Professional and FigJam.',
+        detectedAt: new Date('2026-08-22T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
+      },
+
+      // Weights & Biases -> Academic Researchers
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'Weights & Biases',
+          aiProvider: 'wandb',
+          aiPlan: 'W&B Academic Research',
+          offerType: 'EDUCATION_BUNDLE',
+          region: 'Global',
+        }),
+        partner: 'Weights & Biases',
+        partnerType: 'education',
+        aiProvider: 'wandb',
+        aiProviderDisplayName: 'Weights & Biases',
+        isKnownAiProvider: true,
+        aiPlan: 'W&B Academic Research',
+        offerTitle: 'W&B for Students & Academic Researchers',
+        offerDescription:
+          'Free academic tier providing MLOps experiment tracking, model registry, and collaborative compute for university researchers.',
+        offerType: 'EDUCATION_BUNDLE',
+        offerSubtype: 'ACADEMIC_FREE',
+        benefit: '100% FREE',
+        duration: 'Academic research period',
+        value: 'Complimentary',
+        eligibility: 'Academic researchers and university students',
+        activationMethod: 'Register with academic domain',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://wandb.ai/site/academic/',
+        destinationUrl: 'https://wandb.ai/site/research/',
+        termsUrl: 'https://wandb.ai/site/academic/',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText:
+          'Weights & Biases is free for students, academic researchers, and professors.',
+        detectedAt: new Date('2026-08-24T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
+      },
+
+      // Hugging Face Pro via GitHub Student Pack
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'GitHub Education',
+          aiProvider: 'huggingface',
+          aiPlan: 'Hugging Face Pro via GitHub Student Pack',
+          offerType: 'EDUCATION_BUNDLE',
+          region: 'Global',
+        }),
+        partner: 'GitHub Education',
+        partnerType: 'education',
+        aiProvider: 'huggingface',
+        aiProviderDisplayName: 'Hugging Face',
+        isKnownAiProvider: true,
+        aiPlan: 'Hugging Face Pro',
+        offerTitle: 'Hugging Face Pro via GitHub Student Developer Pack',
+        offerDescription:
+          'Complimentary access to Hugging Face Pro subscription features including AutoTrain, ZeroGPU quotas, and priority inference.',
+        offerType: 'EDUCATION_BUNDLE',
+        offerSubtype: 'STUDENT_DISCOUNT',
+        benefit: '100% FREE',
+        duration: 'While enrolled in GitHub Student Pack',
+        value: '$108/year value',
+        eligibility: 'Active GitHub Student Developer Pack members',
+        activationMethod: 'Claim benefit via GitHub Education portal',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://education.github.com/pack',
+        destinationUrl: 'https://education.github.com/pack',
+        termsUrl: 'https://education.github.com/pack',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText:
+          'Get free access to Hugging Face Pro features and collaborative compute through the GitHub Student Developer Pack.',
+        detectedAt: new Date('2026-08-25T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
       },
 
       // UNiDAYS -> Perplexity Pro Student
@@ -492,6 +800,8 @@ export class PartnerOfferScanner {
         country: 'GLOBAL',
         region: 'Global',
         officialSourceUrl: 'https://startups.microsoft.com/',
+        destinationUrl: 'https://startups.microsoft.com/',
+        offerSubtype: 'STARTUP_GRANT',
         termsUrl: 'https://startups.microsoft.com/terms',
         sourceType: 'official',
         sourceStatus: 'VERIFIED',
@@ -524,6 +834,7 @@ export class PartnerOfferScanner {
         offerDescription:
           'Complimentary AWS Cloud and Amazon Bedrock credits covering Claude 3.5 Sonnet, Claude Opus, and foundation models.',
         offerType: 'CLOUD_BUNDLE',
+        offerSubtype: 'STARTUP_GRANT',
         benefit: 'Up to $100,000 Credits',
         duration: '12 months',
         value: '$100,000 value',
@@ -532,6 +843,7 @@ export class PartnerOfferScanner {
         country: 'GLOBAL',
         region: 'Global',
         officialSourceUrl: 'https://aws.amazon.com/activate/',
+        destinationUrl: 'https://aws.amazon.com/activate/',
         termsUrl: 'https://aws.amazon.com/activate/terms/',
         sourceType: 'official',
         sourceStatus: 'VERIFIED',
@@ -583,6 +895,353 @@ export class PartnerOfferScanner {
         status: 'ACTIVE',
         isActive: true,
         isPublic: true,
+        destinationUrl: 'https://cloud.google.com/startup',
+        offerSubtype: 'STARTUP_GRANT',
+      },
+
+      // Notion for Startups -> Up to 6 Months Free Business + AI
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'Notion',
+          aiProvider: 'notion-ai',
+          aiPlan: 'Notion for Startups',
+          offerType: 'CLOUD_BUNDLE',
+          region: 'Global',
+        }),
+        partner: 'Notion',
+        partnerType: 'cloud',
+        aiProvider: 'notion-ai',
+        aiProviderDisplayName: 'Notion AI',
+        isKnownAiProvider: true,
+        aiPlan: 'Notion Business + Unlimited AI',
+        offerTitle: 'Notion for Startups (Up to 6 Months Free Business + AI)',
+        offerDescription:
+          'Up to 6 months of free Notion Business with unlimited Notion AI workspace features for qualifying early-stage startups ($6,000–$12,000 value).',
+        offerType: 'CLOUD_BUNDLE',
+        offerSubtype: 'STARTUP_GRANT',
+        benefit: 'Up to 6 Months Free ($12,000 value)',
+        duration: '3 to 6 months',
+        value: '$12,000 value',
+        eligibility: 'New Notion customers with affiliated accelerator or under $10M funding',
+        activationMethod: 'Apply via Notion Startups program portal',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://www.notion.so/startups',
+        destinationUrl: 'https://www.notion.com/startups',
+        termsUrl: 'https://www.notion.com/startups',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText:
+          'Apply for up to 6 months of free Notion with unlimited AI for your team, worth up to $12,000.',
+        detectedAt: new Date('2026-08-20T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
+      },
+
+      // ElevenLabs Startup Grants -> 11M Characters/mo Free
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'ElevenLabs',
+          aiProvider: 'elevenlabs',
+          aiPlan: 'ElevenLabs Startup Grants',
+          offerType: 'CLOUD_BUNDLE',
+          region: 'Global',
+        }),
+        partner: 'ElevenLabs',
+        partnerType: 'cloud',
+        aiProvider: 'elevenlabs',
+        aiProviderDisplayName: 'ElevenLabs',
+        isKnownAiProvider: true,
+        aiPlan: 'ElevenLabs Startup Grant Tier',
+        offerTitle: 'ElevenLabs Startup Grants (11M Characters/mo for 3 Months)',
+        offerDescription:
+          '11 million text-to-speech and voice cloning characters per month free for 3 months, offering over $5,500 in value for emerging startup builders.',
+        offerType: 'CLOUD_BUNDLE',
+        offerSubtype: 'STARTUP_GRANT',
+        benefit: '11M Characters/mo ($5,500 value)',
+        duration: '3 months',
+        value: '$5,500 value',
+        eligibility: 'Early-stage tech startups with under 25 employees and under $5M funding',
+        activationMethod: 'Apply via ElevenLabs Grants application form',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://elevenlabs.io/startup-grants',
+        destinationUrl: 'https://elevenlabs.io/startup-grants',
+        termsUrl: 'https://elevenlabs.io/startup-grants',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText:
+          'ElevenLabs grants 11 million characters per month for 3 months to help startups innovate with voice AI.',
+        detectedAt: new Date('2026-08-22T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
+      },
+
+      // Vercel / v0 for Startups -> Up to $30,000 in Credits
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'Vercel',
+          aiProvider: 'v0',
+          aiPlan: 'Vercel for Startups (v0 Credits)',
+          offerType: 'CLOUD_BUNDLE',
+          region: 'Global',
+        }),
+        partner: 'Vercel',
+        partnerType: 'cloud',
+        aiProvider: 'v0',
+        aiProviderDisplayName: 'v0 by Vercel',
+        isKnownAiProvider: true,
+        aiPlan: 'Vercel & v0 AI Credits',
+        offerTitle: 'Vercel for Startups (Up to $30,000 in Vercel & v0 Credits)',
+        offerDescription:
+          'Accelerate full-stack and generative UI engineering with up to $30,000 in Vercel platform and v0 generation credits.',
+        offerType: 'CLOUD_BUNDLE',
+        offerSubtype: 'STARTUP_GRANT',
+        benefit: 'Up to $30,000 Credits',
+        duration: '12 months',
+        value: '$30,000 value',
+        eligibility: 'Early-stage startups affiliated with approved VC, incubator, or accelerator',
+        activationMethod: 'Apply through Vercel for Startups page',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://vercel.com/startups',
+        destinationUrl: 'https://vercel.com/startups',
+        termsUrl: 'https://vercel.com/startups',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText:
+          'Qualified startups receive up to $30,000 in Vercel and v0 generation credits.',
+        detectedAt: new Date('2026-08-24T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
+      },
+
+      // OpenAI for Startups -> $5,000 to $100,000 API Credits
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'OpenAI',
+          aiProvider: 'chatgpt',
+          aiPlan: 'OpenAI for Startups API Credits',
+          offerType: 'CLOUD_BUNDLE',
+          region: 'Global',
+        }),
+        partner: 'OpenAI',
+        partnerType: 'cloud',
+        aiProvider: 'chatgpt',
+        aiProviderDisplayName: 'OpenAI API',
+        isKnownAiProvider: true,
+        aiPlan: 'OpenAI API Startup Credits',
+        offerTitle: 'OpenAI for Startups ($5,000 to $100,000 API Credits)',
+        offerDescription:
+          'Direct API credits for qualifying startups building on OpenAI frontier models, including technical office hours and architecture support.',
+        offerType: 'CLOUD_BUNDLE',
+        offerSubtype: 'STARTUP_GRANT',
+        benefit: '$5,000 to $100,000 Credits',
+        duration: '12 months',
+        value: 'Up to $100,000 value',
+        eligibility: 'Seed and Series A AI startups affiliated with partner VCs and accelerators',
+        activationMethod: 'Apply via OpenAI for Startups application portal',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://openai.com/startups',
+        destinationUrl: 'https://openai.com/startups',
+        termsUrl: 'https://openai.com/startups',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText:
+          'OpenAI for Startups provides up to $100,000 in API credits and technical guidance to accelerate your roadmap.',
+        detectedAt: new Date('2026-08-25T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
+      },
+    ];
+  }
+
+  /**
+   * Returns verified developer API discount & free usage allowance offers.
+   * Classified as API Discounts — NOT Partner Bundles.
+   * Stored with isPartnerOffer=false.
+   */
+  public static getKnownApiDiscountOffers(): NormalizedPartnerOffer[] {
+    return [
+      // Groq -> Free Developer Allowance
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'Groq',
+          aiProvider: 'groq',
+          aiPlan: 'Groq Developer Free Tier',
+          offerType: 'API_DISCOUNT',
+          region: 'Global',
+        }),
+        partner: 'Groq',
+        partnerType: 'developer',
+        aiProvider: 'groq',
+        aiProviderDisplayName: 'Groq',
+        isKnownAiProvider: true,
+        aiPlan: 'Groq LPU Developer Inference',
+        offerTitle: 'Groq Developer API Free Tier Allowance',
+        offerDescription:
+          'Free developer API access with generous rate limits on ultra-fast LPU inference for open models.',
+        offerType: 'API_DISCOUNT',
+        offerSubtype: 'API_DISCOUNT',
+        category: 'api',
+        benefit: 'Free Tier Allowance',
+        duration: 'Ongoing free tier',
+        value: 'Complimentary developer tier',
+        eligibility: 'All registered developers on Groq Cloud Console',
+        activationMethod: 'Create free account on console.groq.com and generate API key',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://console.groq.com/docs/rate-limits',
+        destinationUrl: 'https://console.groq.com/docs/rate-limits',
+        termsUrl: 'https://groq.com/terms-of-use/',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText: 'Groq provides a free tier with high rate limits for developers building on open-source LLMs.',
+        detectedAt: new Date('2026-08-25T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
+      },
+
+      // Fireworks AI -> Developer Credits
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'Fireworks AI',
+          aiProvider: 'fireworks-ai',
+          aiPlan: 'Fireworks Developer Platform',
+          offerType: 'API_DISCOUNT',
+          region: 'Global',
+        }),
+        partner: 'Fireworks AI',
+        partnerType: 'developer',
+        aiProvider: 'fireworks-ai',
+        aiProviderDisplayName: 'Fireworks AI',
+        isKnownAiProvider: true,
+        aiPlan: 'Fireworks Fast Inference',
+        offerTitle: 'Fireworks AI Developer Free Credits',
+        offerDescription:
+          'Free trial credits for newly onboarded developers on Fireworks AI high-speed open-source model platform.',
+        offerType: 'API_DISCOUNT',
+        offerSubtype: 'API_DISCOUNT',
+        category: 'api',
+        benefit: '$1 Free Credit',
+        duration: 'Upon registration',
+        value: '$1 initial credit',
+        eligibility: 'New developer accounts',
+        activationMethod: 'Sign up on fireworks.ai and verify account',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://fireworks.ai/pricing',
+        destinationUrl: 'https://fireworks.ai/pricing',
+        termsUrl: 'https://fireworks.ai/pricing',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText: 'Newly registered accounts receive trial credits to test model inference and function calling.',
+        detectedAt: new Date('2026-08-25T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
+      },
+
+      // Together AI -> Developer Credits
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'Together AI',
+          aiProvider: 'together-ai',
+          aiPlan: 'Together AI Inference Engine',
+          offerType: 'API_DISCOUNT',
+          region: 'Global',
+        }),
+        partner: 'Together AI',
+        partnerType: 'developer',
+        aiProvider: 'together-ai',
+        aiProviderDisplayName: 'Together AI',
+        isKnownAiProvider: true,
+        aiPlan: 'Together Developer API',
+        offerTitle: 'Together AI Developer Trial Credits',
+        offerDescription:
+          'Complimentary API trial credits for developers fine-tuning and querying open-source models on Together AI.',
+        offerType: 'API_DISCOUNT',
+        offerSubtype: 'API_DISCOUNT',
+        category: 'api',
+        benefit: '$5 Free Trial Credit',
+        duration: '3 months from signup',
+        value: '$5 trial value',
+        eligibility: 'New developer signups',
+        activationMethod: 'Register on api.together.ai and add phone verification',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://www.together.ai/pricing',
+        destinationUrl: 'https://www.together.ai/pricing',
+        termsUrl: 'https://www.together.ai/pricing',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText: 'Sign up today and get $5 in free credits to explore our inference engine and fine-tuning APIs.',
+        detectedAt: new Date('2026-08-25T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
+      },
+
+      // Cohere -> Developer Access
+      {
+        fingerprint: buildPartnerOfferFingerprint({
+          partner: 'Cohere',
+          aiProvider: 'cohere',
+          aiPlan: 'Cohere Developer Trial Key',
+          offerType: 'API_DISCOUNT',
+          region: 'Global',
+        }),
+        partner: 'Cohere',
+        partnerType: 'developer',
+        aiProvider: 'cohere',
+        aiProviderDisplayName: 'Cohere',
+        isKnownAiProvider: true,
+        aiPlan: 'Cohere Command & Embed Trial API',
+        offerTitle: 'Cohere Developer API Free Tier',
+        offerDescription:
+          'Free developer API access for embedding, reranking, and Command models in non-production environments.',
+        offerType: 'API_DISCOUNT',
+        offerSubtype: 'API_DISCOUNT',
+        category: 'api',
+        benefit: 'Free Trial Key',
+        duration: 'Ongoing developer rate limit',
+        value: 'Complimentary evaluation access',
+        eligibility: 'All developers prototyping with Cohere models',
+        activationMethod: 'Sign up on dashboard.cohere.com for instant Trial API key',
+        country: 'GLOBAL',
+        region: 'Global',
+        officialSourceUrl: 'https://cohere.com/pricing',
+        destinationUrl: 'https://cohere.com/pricing',
+        termsUrl: 'https://cohere.com/pricing',
+        sourceType: 'official',
+        sourceStatus: 'VERIFIED',
+        evidenceText: 'Trial API keys are free forever for experimentation with generous monthly rate limits.',
+        detectedAt: new Date('2026-08-25T00:00:00Z'),
+        lastConfirmedAt: new Date(),
+        lastCheckedAt: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+        isPublic: true,
       },
     ];
   }
@@ -611,7 +1270,8 @@ export class PartnerOfferScanner {
       isActive: true,
       $or: [
         { isPartnerOffer: true },
-        { offerType: { $in: ['TELECOM_BUNDLE', 'DEVICE_BUNDLE', 'BROADBAND_BUNDLE', 'BANKING_REWARD'] } },
+        { partner: { $exists: true, $ne: null } },
+        { offerType: { $in: ['TELECOM_BUNDLE', 'DEVICE_BUNDLE', 'BROADBAND_BUNDLE', 'BANKING_REWARD', 'CLOUD_BUNDLE', 'DEVICES_BUNDLE', 'BUNDLE'] } },
       ],
       fingerprint: { $nin: Array.from(confirmedFingerprints) },
     }).lean();
@@ -620,6 +1280,29 @@ export class PartnerOfferScanner {
     let preservedCount = 0;
 
     for (const offer of staleOffers) {
+      // 0. Quarantine Check: If offer matches quarantined offer pattern, deactivate IMMEDIATELY
+      const qCheck = isOfferQuarantined({
+        partner: offer.partner,
+        title: offer.title,
+        description: offer.description || offer.evidenceText,
+      });
+      if (qCheck.isQuarantined) {
+        await NotificationEventModel.updateOne(
+          { _id: offer._id },
+          {
+            $set: {
+              isActive: false,
+              status: 'UNAVAILABLE',
+              lastCheckedAt: new Date(),
+            },
+            $inc: { consecutiveMisses: 1 },
+          }
+        );
+        console.log(`   ⚠️ [Reconcile: DEACTIVATED QUARANTINED] ${offer.partner || offer.providerId} × ${offer.title} (${qCheck.reason})`);
+        deactivatedCount++;
+        continue;
+      }
+
       // 1. Generic Expiration Check: If official text or dates indicate offer ended, deactivate IMMEDIATELY
       const textToInspect = `${offer.title || ''} ${offer.evidenceText || ''} ${offer.description || ''}`;
       const expCheck = checkGenericExpiration(textToInspect);
@@ -879,6 +1562,30 @@ export class PartnerOfferScanner {
         result.offers.push(offer);
       } catch (err) {
         console.error(`[PartnerScanner] Error persisting startup offer (${offer.partner}):`, err);
+        result.errorsCount++;
+        scanSuccessful = false;
+      }
+    }
+
+    // ── Phase 3b: Developer API Discount Offers ─────────────────
+    const apiDiscountOffers = this.getKnownApiDiscountOffers();
+    for (const offer of apiDiscountOffers) {
+      result.totalScanned++;
+      try {
+        // isPartnerOffer=false — these are API discounts, NOT partner bundles
+        const res = await this.persistPartnerOffer(offer, false);
+        if (res.status === 'CREATED') result.newOffersCount++;
+        else if (res.status === 'UPDATED') result.updatedOffersCount++;
+        else if (res.status === 'CONFIRMED') result.preservedActiveCount++;
+        else if (res.status === 'EXPIRED') result.expiredOffersCount++;
+
+        if (res.status !== 'EXPIRED') {
+          confirmedFingerprints.add(offer.fingerprint);
+        }
+
+        result.offers.push(offer);
+      } catch (err) {
+        console.error(`[PartnerScanner] Error persisting api offer (${offer.partner}):`, err);
         result.errorsCount++;
         scanSuccessful = false;
       }

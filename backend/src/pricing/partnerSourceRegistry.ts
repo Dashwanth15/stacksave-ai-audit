@@ -95,6 +95,43 @@ const CANONICAL_PROVIDER_ALIAS_MAP: Record<string, { providerId: string; display
   'z.ai': { providerId: 'glm', displayName: 'GLM (Z.ai)' },
   muse: { providerId: 'muse', displayName: 'Muse (Meta)' },
   meta: { providerId: 'muse', displayName: 'Muse (Meta)' },
+
+  // Phase 2 Expansion Provider Aliases
+  notion: { providerId: 'notion-ai', displayName: 'Notion AI' },
+  'notion ai': { providerId: 'notion-ai', displayName: 'Notion AI' },
+  canva: { providerId: 'canva-ai', displayName: 'Canva AI' },
+  'canva ai': { providerId: 'canva-ai', displayName: 'Canva AI' },
+  figma: { providerId: 'figma-ai', displayName: 'Figma AI' },
+  'figma ai': { providerId: 'figma-ai', displayName: 'Figma AI' },
+  elevenlabs: { providerId: 'elevenlabs', displayName: 'ElevenLabs' },
+  groq: { providerId: 'groq', displayName: 'Groq' },
+  together: { providerId: 'together-ai', displayName: 'Together AI' },
+  'together ai': { providerId: 'together-ai', displayName: 'Together AI' },
+  fireworks: { providerId: 'fireworks-ai', displayName: 'Fireworks AI' },
+  'fireworks ai': { providerId: 'fireworks-ai', displayName: 'Fireworks AI' },
+  cohere: { providerId: 'cohere', displayName: 'Cohere' },
+  grammarly: { providerId: 'grammarly', displayName: 'Grammarly AI' },
+  'grammarly ai': { providerId: 'grammarly', displayName: 'Grammarly AI' },
+  otter: { providerId: 'otter-ai', displayName: 'Otter.ai' },
+  'otter.ai': { providerId: 'otter-ai', displayName: 'Otter.ai' },
+  deepl: { providerId: 'deepl', displayName: 'DeepL Pro' },
+  'deepl pro': { providerId: 'deepl', displayName: 'DeepL Pro' },
+  descript: { providerId: 'descript', displayName: 'Descript' },
+  synthesia: { providerId: 'synthesia', displayName: 'Synthesia' },
+  ideogram: { providerId: 'ideogram', displayName: 'Ideogram' },
+  leonardo: { providerId: 'leonardo-ai', displayName: 'Leonardo AI' },
+  'leonardo ai': { providerId: 'leonardo-ai', displayName: 'Leonardo AI' },
+  suno: { providerId: 'suno', displayName: 'Suno' },
+  gamma: { providerId: 'gamma', displayName: 'Gamma' },
+  bolt: { providerId: 'bolt-new', displayName: 'Bolt.new' },
+  'bolt.new': { providerId: 'bolt-new', displayName: 'Bolt.new' },
+  notebooklm: { providerId: 'notebooklm', displayName: 'Google NotebookLM' },
+  'google notebooklm': { providerId: 'notebooklm', displayName: 'Google NotebookLM' },
+  v0: { providerId: 'v0', displayName: 'v0 by Vercel' },
+  wandb: { providerId: 'wandb', displayName: 'Weights & Biases' },
+  'weights & biases': { providerId: 'wandb', displayName: 'Weights & Biases' },
+  huggingface: { providerId: 'huggingface', displayName: 'Hugging Face' },
+  'hugging face': { providerId: 'huggingface', displayName: 'Hugging Face' },
 };
 
 export function canonicalizeAiProvider(nameOrId: string): CanonicalAiProviderResolution {
@@ -132,8 +169,8 @@ export const INITIAL_REGISTERED_PARTNERS: OfficialPartnerConfig[] = [
     category: 'telecom',
     officialDomain: 'jio.com',
     officialDomains: ['jio.com', 'relianceretail.com', 'ril.com'],
-    offersUrl: 'https://www.jio.com/en-in/plans',
-    secondaryUrls: ['https://www.jio.com/en-in/5g', 'https://www.jio.com/en-in/google-one-offer'],
+    offersUrl: 'https://www.jio.com/google-gemini-offer/',
+    secondaryUrls: ['https://www.jio.com/5g', 'https://www.jio.com/google-gemini-offer/'],
     country: 'IN',
     region: 'India',
     isRegistered: true,
@@ -200,7 +237,7 @@ export const INITIAL_REGISTERED_PARTNERS: OfficialPartnerConfig[] = [
     category: 'telecom',
     officialDomain: 'telekom.com',
     officialDomains: ['telekom.com', 'telekom.de'],
-    offersUrl: 'https://www.telekom.com/en/media',
+    offersUrl: 'https://www.telekom.com/en/newsroom/latest-updates/media-information/2024/11/ai-for-everyone',
     country: 'DE',
     region: 'Europe',
     isRegistered: true,
@@ -213,7 +250,7 @@ export const INITIAL_REGISTERED_PARTNERS: OfficialPartnerConfig[] = [
     category: 'broadband',
     officialDomain: 'jio.com',
     officialDomains: ['jio.com'],
-    offersUrl: 'https://www.jio.com/fiber/en-in/plans',
+    offersUrl: 'https://www.jio.com/fiber/',
     country: 'IN',
     region: 'India',
     isRegistered: true,
@@ -343,10 +380,14 @@ export const INITIAL_REGISTERED_PARTNERS: OfficialPartnerConfig[] = [
     name: 'American Express',
     category: 'banking',
     officialDomain: 'americanexpress.com',
-    officialDomains: ['americanexpress.com', 'amex.co'],
-    offersUrl: 'https://www.americanexpress.com/en-us/benefits/',
-    country: 'GLOBAL',
-    region: 'Global',
+    officialDomains: ['americanexpress.com', 'amex.co', 'global.americanexpress.com'],
+    offersUrl: 'https://global.americanexpress.com/card-benefits/detail/chatgpt-business-credit/business-platinum',
+    secondaryUrls: [
+      'https://www.americanexpress.com/us/credit-cards/business-cards/business-platinum-credit-card-amex/',
+      'https://www.americanexpress.com/en-us/benefits/',
+    ],
+    country: 'US',
+    region: 'United States',
     isRegistered: true,
   },
   {
@@ -544,7 +585,11 @@ export const KNOWN_OFFER_URL_FIXES: Record<string, string> = {
   'https://asus.com/campaign/google-one-ai-premium/': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
   'https://www.asus.com/campaign/google-one-ai-premium': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
   'https://asus.com/campaign/google-one-ai-premium': 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
-  'https://www.telekom.com/en/media/media-information/archive-news-details/telekom-and-perplexity-bring-ai-to-smartphones': 'https://www.telekom.com/en/media',
+  'https://www.telekom.com/en/media/media-information/archive-news-details/telekom-and-perplexity-bring-ai-to-smartphones': 'https://www.telekom.com/en/newsroom/latest-updates/media-information/2024/11/ai-for-everyone',
+  'https://www.jio.com/en-in/google-one-offer': 'https://www.jio.com/google-gemini-offer/',
+  'https://www.jio.com/en-in/google-one-offer/': 'https://www.jio.com/google-gemini-offer/',
+  'https://www.jio.com/en-in/fiber': 'https://www.jio.com/fiber/',
+  'https://www.jio.com/en-in/fiber/': 'https://www.jio.com/fiber/',
   'https://character.ai/c-ai+': 'https://character.ai/',
   'https://bolt.new/pricing': 'https://bolt.new/',
   'https://platform.moonshot.cn/docs/pricing/chat': 'https://platform.moonshot.cn/pricing',
@@ -562,7 +607,7 @@ export function resolveCanonicalOfferUrl(sourceUrl?: string | null): string {
     return KNOWN_OFFER_URL_FIXES[trimmed];
   }
   for (const [bad, good] of Object.entries(KNOWN_OFFER_URL_FIXES)) {
-    if (trimmed.includes(bad) || (bad.endsWith('/') && trimmed === bad.slice(0, -1))) {
+    if (trimmed.includes(bad) || (bad.endsWith('/') && trimmed === bad.slice(0, -1)) || (!bad.endsWith('/') && trimmed === bad + '/')) {
       return good;
     }
   }
