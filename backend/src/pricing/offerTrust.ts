@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { extractRootDomain, isAllowlistedPartnerDomain } from './partnerSourceRegistry';
 import { getProviderSource } from './sourceRegistry';
+import { checkGenericExpiration } from './dateExpiryUtils';
 import type { NormalizedOffer, SyncStatus } from './types';
 
 export interface OfferTrustContext {
@@ -82,6 +83,9 @@ export interface OfferPublicationCheckInput {
   partner?: string | null;
   partnerType?: string | null;
   detectedAt?: Date | null;
+  expiresAt?: Date | null;
+  title?: string | null;
+  description?: string | null;
 }
 
 /**
@@ -91,7 +95,8 @@ export interface OfferPublicationCheckInput {
  *   1. Official source exists & matches registered provider/partner domain
  *   2. Extracted content contains sufficient evidence (>=20 chars)
  *   3. Offer status is ACTIVE and isActive !== false
- *   4. Commercial Partner Bundle validation passes
+ *   4. Generic expiration check passes (no past end dates or ended promotion signals)
+ *   5. Commercial Partner Bundle validation passes
  */
 export function canPublishOffer(offer: OfferPublicationCheckInput): boolean {
   const sourceUrl = offer.sourceUrl || offer.officialSourceUrl;
@@ -109,7 +114,42 @@ export function canPublishOffer(offer: OfferPublicationCheckInput): boolean {
   if (offer.status && offer.status !== 'ACTIVE') return false;
   if (offer.isActive === false) return false;
 
-  // 4. Commercial Partner Bundle check if partner is specified
+  // 4. Generic date expiration check
+  if (offer.expiresAt) {
+    const expTime = new Date(offer.expiresAt).getTime();
+    if (!isNaN(expTime) && expTime < Date.now()) {
+      return false;
+    }
+  }
+
+  const combinedText = `${offer.title || ''} ${evidence} ${offer.description || ''}`;
+  const expiryCheck = checkGenericExpiration(combinedText);
+  if (expiryCheck.isExpired) {
+    return false;
+  }
+
+  // 5. Perplexity-specific historical / misattributed promotion gates
+  if (offer.providerId === 'perplexity') {
+    const partnerLower = (offer.partner || '').toLowerCase();
+    const titleLower = (offer.title || '').toLowerCase();
+
+    // Airtel × Perplexity ended January 16, 2026
+    if (partnerLower.includes('airtel') || titleLower.includes('airtel')) {
+      return false;
+    }
+
+    // Nothing Technology Phone (2a) ended April 30, 2024 (and destination 404)
+    if (partnerLower.includes('nothing') || titleLower.includes('nothing')) {
+      return false;
+    }
+
+    // Perplexity Education Pro is a native subscription plan with SheerID — NOT a UNiDAYS bundle
+    if (partnerLower.includes('unidays') || titleLower.includes('unidays')) {
+      return false;
+    }
+  }
+
+  // 6. Commercial Partner Bundle check if partner is specified
   if (offer.isPartnerOffer === true || Boolean(offer.partner)) {
     if (!offer.partner || offer.partner.trim().length === 0) return false;
   }

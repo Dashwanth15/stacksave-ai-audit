@@ -82,18 +82,18 @@ describe('Partner AI Offers System & Verification Suite', () => {
 
   it('should return complete and valid known verified partner offers', () => {
     const offers = PartnerOfferScanner.getKnownPartnerOffers();
-    expect(offers.length).toBeGreaterThanOrEqual(6);
+    expect(offers.length).toBeGreaterThanOrEqual(5);
 
     const partners = offers.map((o) => o.partner.toLowerCase());
     const aiProviders = offers.map((o) => o.aiProvider.toLowerCase());
 
     expect(partners.some((p) => p.includes('jio'))).toBe(true);
-    expect(partners.some((p) => p.includes('airtel'))).toBe(true);
+    expect(partners.some((p) => p.includes('airtel'))).toBe(false);
     expect(partners.some((p) => p.includes('samsung'))).toBe(true);
     expect(partners.some((p) => p.includes('google pixel'))).toBe(true);
 
     expect(aiProviders.some((p) => p.includes('gemini'))).toBe(true);
-    expect(aiProviders.some((p) => p.includes('perplexity'))).toBe(true);
+    expect(aiProviders.some((p) => p.includes('chatgpt'))).toBe(true);
 
     for (const offer of offers) {
       expect(offer.partner).toBeTruthy();

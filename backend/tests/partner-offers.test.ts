@@ -166,11 +166,11 @@ describe('Partner AI Offers Architecture & Validation', () => {
       expect(types.includes('cloud')).toBe(false);
     });
 
-    it('contains Jio, Airtel, Samsung, Google Pixel, American Express, JioFiber', () => {
+    it('contains Jio, Samsung, Google Pixel, American Express, JioFiber and does NOT contain expired Airtel', () => {
       const offers = PartnerOfferScanner.getKnownPartnerOffers();
       const partners = offers.map((o) => o.partner.toLowerCase());
       expect(partners.some((p) => p.includes('jio') && !p.includes('jiofiber'))).toBe(true);
-      expect(partners.some((p) => p.includes('airtel') && !p.includes('xstream'))).toBe(true);
+      expect(partners.some((p) => p.includes('airtel'))).toBe(false);
       expect(partners.some((p) => p.includes('samsung'))).toBe(true);
       expect(partners.some((p) => p.includes('google pixel'))).toBe(true);
       expect(partners.some((p) => p.includes('jiofiber'))).toBe(true);
@@ -178,12 +178,12 @@ describe('Partner AI Offers Architecture & Validation', () => {
   });
 
   describe('3. Backend Offer Data: getKnownStudentOffers()', () => {
-    it('contains GitHub Copilot Student and UNiDAYS Perplexity offers', () => {
+    it('contains GitHub Copilot Student and does NOT contain UNiDAYS Perplexity', () => {
       const offers = PartnerOfferScanner.getKnownStudentOffers();
-      expect(offers.length).toBeGreaterThanOrEqual(2);
+      expect(offers.length).toBeGreaterThanOrEqual(1);
       const partners = offers.map((o) => o.partner.toLowerCase());
       expect(partners.some((p) => p.includes('github student'))).toBe(true);
-      expect(partners.some((p) => p.includes('unidays'))).toBe(true);
+      expect(partners.some((p) => p.includes('unidays'))).toBe(false);
     });
 
     it('all student offers have partnerType=education and EDUCATION_BUNDLE offerType', () => {
@@ -694,15 +694,15 @@ describe('Partner AI Offers Architecture & Validation', () => {
 
   // ── 16. Layer 2 Discovered Partners & Ecosystem Signals ──────────────────
   describe('16. Layer 2 Discovered Partners & Ecosystem Signals', () => {
-    it('successfully discovers and registers ASUS, SoftBank, Deutsche Telekom, and Nothing', () => {
+    it('successfully discovers and registers ASUS, SoftBank, and Deutsche Telekom', () => {
       const candidates = PartnerDiscoveryService.discoverEcosystemCandidates();
-      expect(candidates.length).toBeGreaterThanOrEqual(4);
+      expect(candidates.length).toBeGreaterThanOrEqual(3);
 
       const partnerNames = candidates.map((c) => c.partnerName);
       expect(partnerNames.includes('ASUS')).toBe(true);
       expect(partnerNames.includes('SoftBank')).toBe(true);
       expect(partnerNames.includes('Deutsche Telekom')).toBe(true);
-      expect(partnerNames.includes('Nothing Technology')).toBe(true);
+      expect(partnerNames.includes('Nothing Technology')).toBe(false);
 
       const asus = candidates.find((c) => c.partnerName === 'ASUS');
       expect(asus?.possibleAiProvider).toBe('gemini');

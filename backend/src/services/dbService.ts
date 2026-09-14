@@ -352,6 +352,7 @@ export interface NotificationEventDocument extends Document {
   termsUrl?: string;
   sourceType?: string;       // 'official' | 'partner'
   status?: string;           // 'ACTIVE' | 'EXPIRED' | 'UPCOMING'
+  isPartnerOffer?: boolean;  // Explicit flag: true for commercial partner bundles, false for native/student/startup offers
   lastCheckedAt?: Date;
 }
 
@@ -388,6 +389,7 @@ const NotificationEventSchema = new Schema<NotificationEventDocument>(
     isPublic:          { type: Boolean, default: false },
 
     // ── Partner AI Offer Specific Fields ─────────────────────────
+    isPartnerOffer:    { type: Boolean, default: false },
     partner:           { type: String, index: true },
     partnerType:       { type: String },
     aiProvider:        { type: String, index: true },

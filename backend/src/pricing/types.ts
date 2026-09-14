@@ -94,6 +94,15 @@ export interface NormalizedOffer {
   promoCode?: string;
   isVerified?: boolean;
   isPublic?: boolean;
+  offerType?: string;
+  benefit?: string;
+  status?: string;
+  isPartnerOffer?: boolean;
+  partner?: string;
+  partnerType?: string;
+  activationMethod?: string;
+  country?: string;
+  region?: string;
 }
 
 // ── Multi-Page Scanned Source Status ──────────────────────────

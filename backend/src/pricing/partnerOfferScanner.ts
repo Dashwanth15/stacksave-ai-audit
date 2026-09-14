@@ -27,6 +27,8 @@ import {
   isAiBenefit,
   buildPartnerOfferFingerprint,
 } from './partnerDiscoveryService';
+import { checkGenericExpiration } from './dateExpiryUtils';
+import { canPublishOffer } from './offerTrust';
 
 export interface PartnerScanResult {
   totalScanned: number;
@@ -69,7 +71,14 @@ export class PartnerOfferScanner {
     const extractorVersion = offer.extractorVersion || '2.4.0-partner-scanner';
     const checkTime = new Date();
 
+    const textToCheck = `${offer.offerTitle || ''} ${evidenceText} ${offer.offerDescription || ''}`;
+    const genericExp = checkGenericExpiration(textToCheck);
+    const isExplicitlyExpired = offer.status === 'EXPIRED' || offer.isActive === false || genericExp.isExpired;
+
     if (!existing) {
+      if (isExplicitlyExpired) {
+        return { status: 'EXPIRED' };
+      }
       // 1. Create New Public Offer
       await NotificationEventModel.create({
         providerId: offer.aiProvider,
@@ -120,7 +129,7 @@ export class PartnerOfferScanner {
     }
 
     // Check if offer is expired
-    if (offer.status === 'EXPIRED' || !offer.isActive) {
+    if (isExplicitlyExpired) {
       existing.status = 'EXPIRED';
       existing.isActive = false;
       existing.lastCheckedAt = checkTime;
@@ -128,9 +137,9 @@ export class PartnerOfferScanner {
       return { status: 'EXPIRED' };
     }
     
-    // NEW: If existing offer is marked UNAVAILABLE (broken destination), do NOT reactivate it
-    // This prevents health-check-failed offers from being auto-reactivated
-    if (existing.status === 'UNAVAILABLE' && !existing.isActive) {
+    // If existing offer is marked UNAVAILABLE, EXPIRED, or HISTORICAL, do NOT reactivate it
+    // This prevents broken/expired offers from being auto-reactivated without fresh verified evidence
+    if ((existing.status === 'UNAVAILABLE' || existing.status === 'EXPIRED' || existing.status === 'HISTORICAL') && !existing.isActive) {
       existing.lastCheckedAt = checkTime;
       await existing.save();
       return { status: 'EXPIRED' }; // Return EXPIRED to prevent reconciliation from preserving it
@@ -611,6 +620,44 @@ export class PartnerOfferScanner {
     let preservedCount = 0;
 
     for (const offer of staleOffers) {
+      // 1. Generic Expiration Check: If official text or dates indicate offer ended, deactivate IMMEDIATELY
+      const textToInspect = `${offer.title || ''} ${offer.evidenceText || ''} ${offer.description || ''}`;
+      const expCheck = checkGenericExpiration(textToInspect);
+      if (expCheck.isExpired) {
+        await NotificationEventModel.updateOne(
+          { _id: offer._id },
+          {
+            $set: {
+              isActive: false,
+              status: 'EXPIRED',
+              lastCheckedAt: new Date(),
+            },
+            $inc: { consecutiveMisses: 1 },
+          }
+        );
+        console.log(`   ⚠️ [Reconcile: DEACTIVATED EXPIRED] ${offer.partner} × ${offer.title} (${expCheck.expiredReason})`);
+        deactivatedCount++;
+        continue;
+      }
+
+      // 2. Publication Gate Check: If unconfirmed offer fails publication criteria, deactivate immediately
+      if (!canPublishOffer(offer as any)) {
+        await NotificationEventModel.updateOne(
+          { _id: offer._id },
+          {
+            $set: {
+              isActive: false,
+              status: offer.status === 'EXPIRED' ? 'EXPIRED' : 'UNAVAILABLE',
+              lastCheckedAt: new Date(),
+            },
+            $inc: { consecutiveMisses: 1 },
+          }
+        );
+        console.log(`   ⚠️ [Reconcile: DEACTIVATED REJECTED] ${offer.partner || offer.providerId} × ${offer.title} (Failed publication gate)`);
+        deactivatedCount++;
+        continue;
+      }
+
       // Check if offer should be deactivated based on lastConfirmedAt age
       const lastConfirmed = offer.lastConfirmedAt || offer.detectedAt;
       const daysSinceConfirmation = (Date.now() - new Date(lastConfirmed).getTime()) / (1000 * 60 * 60 * 24);
@@ -685,7 +732,10 @@ export class PartnerOfferScanner {
       if (browser) {
         try {
           console.log(`[PartnerScanner:Phase0] Creating health check page (browser available)...`);
-          const context = await browser.newContext();
+          const context = await browser.newContext({
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+            locale: 'en-US',
+          });
           phase0HealthCheckPage = await context.newPage();
           console.log(`[PartnerScanner:Phase0] Health check page created successfully`);
         } catch (err) {
@@ -847,7 +897,10 @@ export class PartnerOfferScanner {
     if (browser) {
       try {
         console.log(`[PartnerScanner:Phase4] Creating health check page (browser available)...`);
-        const context = await browser.newContext();
+        const context = await browser.newContext({
+          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+          locale: 'en-US',
+        });
         healthCheckPage = await context.newPage();
         console.log(`[PartnerScanner:Phase4] Health check page created successfully`);
       } catch (err) {

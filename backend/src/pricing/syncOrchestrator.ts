@@ -131,31 +131,83 @@ async function upsertOffer(
   const confirmedAt = checkedAt;
   const contentHash = offer.contentHash || hashOfferEvidence(offer.evidenceText!.trim());
 
-  const existing = await NotificationEventModel.findOne({ fingerprint: fp });
-  if (existing) {
-    await NotificationEventModel.updateOne(
-      { _id: existing._id },
+  // Deduplication: If this is Perplexity Education Pro or native education offer,
+  // ensure any duplicate active student/education offers for Perplexity are deactivated
+  if (providerId === 'perplexity' && /education\s*pro/i.test(offer.title)) {
+    await NotificationEventModel.updateMany(
+      {
+        providerId: 'perplexity',
+        fingerprint: { $ne: fp },
+        isActive: true,
+        $or: [
+          { title: { $regex: /education\s*pro/i } },
+          { title: { $regex: /student/i } },
+        ],
+      },
       {
         $set: {
-          lastConfirmedAt: confirmedAt,
-          lastSeenAt: confirmedAt,
-          isActive: true,
-          consecutiveMisses: 0,
-          title: offer.title || existing.title,
-          description: offer.description || existing.description,
-          evidenceText: offer.evidenceText || existing.evidenceText,
-          detectionMethod: offer.detectionMethod || existing.detectionMethod,
-          sourceStatus: 'VERIFIED',
-          sourceFetchedAt: checkedAt,
-          lastSuccessfulCheckAt: checkedAt,
-          evidenceLocation: offer.evidenceLocation,
-          contentHash,
-          extractorVersion,
-          isPublic: true,
-          discount: typeof offer.discount === 'number' ? `${offer.discount}%` : String(offer.discount || existing.discount || ''),
+          isActive: false,
+          status: 'HISTORICAL',
         },
       }
     );
+  }
+
+  const existing = await NotificationEventModel.findOne({
+    $or: [
+      { fingerprint: fp },
+      ...(providerId === 'perplexity' && /education\s*pro/i.test(offer.title)
+        ? [{ providerId: 'perplexity', title: { $regex: /^perplexity\s+education\s+pro$/i } }]
+        : [{ providerId, title: offer.title, sourceUrl: offer.sourceUrl }]
+      ),
+    ],
+  });
+
+  if (existing) {
+    const setFields: Record<string, any> = {
+      fingerprint: fp,
+      lastConfirmedAt: confirmedAt,
+      lastSeenAt: confirmedAt,
+      isActive: true,
+      consecutiveMisses: 0,
+      title: offer.title || existing.title,
+      description: offer.description || existing.description,
+      evidenceText: offer.evidenceText || existing.evidenceText,
+      detectionMethod: offer.detectionMethod || existing.detectionMethod,
+      sourceStatus: 'VERIFIED',
+      sourceFetchedAt: checkedAt,
+      lastSuccessfulCheckAt: checkedAt,
+      evidenceLocation: offer.evidenceLocation,
+      contentHash,
+      extractorVersion,
+      isPublic: true,
+      sourceUrl: offer.sourceUrl || existing.sourceUrl,
+      discount: typeof offer.discount === 'number' ? `${offer.discount}%` : String(offer.discount || existing.discount || ''),
+      offerType: offer.offerType || existing.offerType,
+      benefit: offer.benefit || existing.benefit,
+      eligibility: (offer as any).eligibility || existing.eligibility,
+      activationMethod: offer.activationMethod || existing.activationMethod,
+      status: offer.status || existing.status || 'ACTIVE',
+      isPartnerOffer: offer.isPartnerOffer ?? false,
+      aiProvider: providerId,
+      sourceType: (offer as any).sourceType || 'official',
+    };
+
+    const unsetFields: Record<string, any> = {};
+    if (!offer.partner) {
+      unsetFields.partner = 1;
+      unsetFields.partnerType = 1;
+    } else {
+      setFields.partner = offer.partner;
+      if (offer.partnerType) setFields.partnerType = offer.partnerType;
+    }
+
+    const updateQuery: Record<string, any> = { $set: setFields };
+    if (Object.keys(unsetFields).length > 0) {
+      updateQuery.$unset = unsetFields;
+    }
+
+    await NotificationEventModel.updateOne({ _id: existing._id }, updateQuery);
     return { isNew: false };
   }
 
@@ -171,7 +223,7 @@ async function upsertOffer(
     { $set: { isActive: false } }
   );
 
-  await NotificationEventModel.create({
+  const newDoc: Record<string, any> = {
     providerId,
     providerName,
     eventType: 'NEW_OFFER',
@@ -196,7 +248,22 @@ async function upsertOffer(
     expiresAt: offer.expiresAt,
     discount: typeof offer.discount === 'number' ? `${offer.discount}%` : String(offer.discount || ''),
     discountType: 'PROMOTION',
-  });
+    offerType: offer.offerType,
+    benefit: offer.benefit,
+    eligibility: (offer as any).eligibility,
+    activationMethod: offer.activationMethod,
+    status: offer.status || 'ACTIVE',
+    isPartnerOffer: offer.isPartnerOffer ?? false,
+    aiProvider: providerId,
+    sourceType: (offer as any).sourceType || 'official',
+  };
+
+  if (offer.partner) {
+    newDoc.partner = offer.partner;
+    if (offer.partnerType) newDoc.partnerType = offer.partnerType;
+  }
+
+  await NotificationEventModel.create(newDoc);
   return { isNew: true };
 }
 

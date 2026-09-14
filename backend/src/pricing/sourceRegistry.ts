@@ -161,8 +161,10 @@ export const PROVIDER_SOURCE_REGISTRY: ProviderSourceConfig[] = [
     displayName: 'Perplexity',
     pricingUrl: 'https://perplexity.ai/hub/pricing',
     offersUrl: 'https://perplexity.ai/hub/pricing',
+    educationUrl: 'https://www.perplexity.ai/help-center/en/articles/12590157-what-is-education-pro',
     secondaryOfferUrls: [
       { label: 'Perplexity Enterprise', url: 'https://www.perplexity.ai/enterprise', type: 'education' },
+      { label: 'Perplexity Education Pro Guide', url: 'https://www.perplexity.ai/help-center/en/articles/12590157-what-is-education-pro', type: 'education' },
     ],
     strategy: 'PLAYWRIGHT_DOM',
     strategyNotes:

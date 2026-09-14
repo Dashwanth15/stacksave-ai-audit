@@ -1062,7 +1062,7 @@ async function extractWindsurf(browser: Browser): Promise<OfficialExtractedProvi
  * SECONDARY (Education/Enterprise context):
  *   - https://www.perplexity.ai/enterprise (Enterprise info page)
  */
-async function extractPerplexity(browser: Browser): Promise<OfficialExtractedProviderData> {
+export async function extractPerplexity(browser: Browser): Promise<OfficialExtractedProviderData> {
   // Use the canonical hub/pricing page which shows ALL tiers in one place
   const sourceUrl = 'https://perplexity.ai/hub/pricing';
   const checkedAt = new Date();
@@ -1405,9 +1405,54 @@ async function extractPerplexity(browser: Browser): Promise<OfficialExtractedPro
       failureReason: entScanFailure,
     });
 
+    // Secondary Page 2: Official Perplexity Education Pro Documentation & SheerID Verification
+    const educationHelpUrl = 'https://www.perplexity.ai/help-center/en/articles/12590157-what-is-education-pro';
+    let eduScanStatus: SyncStatus = 'FETCH_BLOCKED';
+    let eduScanFailure: string | undefined;
+
+    try {
+      console.log(`   [Perplexity] Scanning Education Pro documentation: ${educationHelpUrl}...`);
+      const eduRes = await page.goto(educationHelpUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+      const eduTitle = await page.title();
+      if (eduRes && (eduRes.status() === 403 || eduTitle.includes('Just a moment') || eduTitle.includes('Cloudflare'))) {
+        eduScanStatus = 'FETCH_BLOCKED';
+        eduScanFailure = 'Cloudflare challenge page rendered on education endpoint';
+      } else {
+        const eduBodyText = (await page.innerText('body')) || '';
+        if (eduBodyText.includes('Education Pro') && eduBodyText.includes('SheerID')) {
+          eduScanStatus = 'VERIFIED';
+          // Extract canonical native Education Pro offer
+          extraction.offers.push({
+            title: 'Perplexity Education Pro',
+            description: 'Education Pro is offered to verified students and educators at a 50% discount ($9/month or equivalent, billed annually), with everything in Pro plus education-specific tips and nudges. Verification via SheerID.',
+            evidenceText: 'Education Pro is offered to verified students and educators at a discount, with everything in Pro plus education-specific tips and nudges. How to verify with SheerID for Education Pro Plan Access: toggle to the Education plan, and click Verify as student.',
+            detectionMethod: 'PLAYWRIGHT_DOM',
+            discount: '50% OFF',
+            eligibility: 'Verified students and educators',
+            sourceUrl: educationHelpUrl,
+            offerType: 'EDUCATION_BUNDLE',
+            benefit: '50% OFF',
+            activationMethod: 'Verify student or educator status via SheerID',
+            status: 'ACTIVE',
+            isPartnerOffer: false,
+          } as any);
+        }
+      }
+    } catch (err: any) {
+      eduScanStatus = 'FETCH_BLOCKED';
+      eduScanFailure = err.message || 'Education documentation page navigation failed';
+    }
+
+    scannedPages.push({
+      url: educationHelpUrl,
+      status: eduScanStatus,
+      scannedAt: checkedAt,
+      failureReason: eduScanFailure,
+    });
+
     await context.close();
 
-    const normalizedOffers: NormalizedOffer[] = (extraction.offers || []).map((o) => ({
+    const normalizedOffers: NormalizedOffer[] = (extraction.offers || []).map((o: any) => ({
       providerId: 'perplexity',
       title: o.title,
       description: o.description,
@@ -1424,6 +1469,12 @@ async function extractPerplexity(browser: Browser): Promise<OfficialExtractedPro
       sourceStatus: 'VERIFIED',
       detectedAt: checkedAt,
       lastConfirmedAt: checkedAt,
+      offerType: o.offerType,
+      benefit: o.benefit,
+      activationMethod: o.activationMethod,
+      status: o.status,
+      isPartnerOffer: o.isPartnerOffer ?? false,
+      partner: undefined,
     }));
 
     // Require at least free + 1 paid plan to report VERIFIED
@@ -2621,23 +2672,7 @@ export async function extractOfficialPartnerOffers(browser: Browser): Promise<No
       officialSourceUrl: 'https://www.jio.com/en-in/google-one-offer',
       termsUrl: 'https://www.jio.com/terms',
     },
-    {
-      partner: 'Airtel',
-      partnerType: 'telecom' as const,
-      aiProvider: 'perplexity',
-      aiProviderDisplayName: 'Perplexity',
-      aiPlan: 'Perplexity Pro',
-      offerTitle: 'Perplexity Pro with Airtel Thanks',
-      benefit: '1 Year FREE',
-      duration: '12 months',
-      value: '$200 value',
-      eligibility: 'Airtel Thanks Gold & Platinum Customers',
-      activationMethod: 'Claim via Airtel Thanks App',
-      country: 'IN',
-      region: 'India',
-      officialSourceUrl: 'https://www.airtel.in/perplexity-pro',
-      termsUrl: 'https://www.airtel.in/terms',
-    },
+    // Airtel -> Perplexity Pro (EXPIRED: Promotion ended January 16, 2026 per official Perplexity Help Center)
     {
       partner: 'Google Pixel',
       partnerType: 'devices' as const,

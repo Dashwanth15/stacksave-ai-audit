@@ -341,7 +341,7 @@ router.get('/offers', async (_req: Request, res: Response) => {
       isPublic: true,
     })
       .sort({ detectedAt: -1 })
-      .select('providerId providerName title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive isPublic lastSeenAt lastConfirmedAt partner partnerType aiProvider aiPlan offerType benefit duration value eligibility activationMethod country region termsUrl sourceType status')
+      .select('providerId providerName title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive isPublic lastSeenAt lastConfirmedAt isPartnerOffer partner partnerType aiProvider aiPlan offerType benefit duration value eligibility activationMethod country region termsUrl sourceType status')
       .lean();
 
     // ── offerTypeWeight map ──────────────────────────────────────
@@ -472,6 +472,7 @@ router.get('/offers', async (_req: Request, res: Response) => {
           lastConfirmedAt: e.lastConfirmedAt,
           expiresAt: e.expiresAt || null,
           // Partner AI Offer fields
+          isPartnerOffer: e.isPartnerOffer ?? false,
           partner: e.partner || null,
           partnerType: e.partnerType || null,
           aiProvider: e.aiProvider || null,
