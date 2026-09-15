@@ -1,15 +1,27 @@
 <p align="center">
-  <img src="frontend/src/assets/logo/stacksave-logo.svg" alt="StackSave AI Logo" width="260" />
+  <a href="https://stacksaveai.com/">
+    <img src="frontend/src/assets/logo/stacksave-logo.svg" alt="StackSave AI Logo" width="280" />
+  </a>
 </p>
 
 <h1 align="center">StackSave AI</h1>
 
-<p align="center">
-  <strong>Enterprise AI Spend Intelligence & Autonomous Architecture Recommendation Platform</strong>
-</p>
+<h3 align="center">Enterprise AI Spend Intelligence & Autonomous Architecture Recommendation Platform</h3>
 
 <p align="center">
   Eliminate subscription waste, match multi-model capabilities to engineering workflows, and discover 100% verified provider discounts, credits, and partner programs.
+</p>
+
+<p align="center">
+  <a href="https://stacksaveai.com/"><strong>🌐 Visit Official Website: stacksaveai.com</strong></a>
+</p>
+
+<p align="center">
+  <a href="https://stacksaveai.com/">Official Website</a> •
+  <a href="#ai-offers--pricing-intelligence">AI Offers</a> •
+  <a href="#build-my-stack">Build My Stack</a> •
+  <a href="#audit-existing-stack">Audit Existing Stack</a> •
+  <a href="#analytics--product-intelligence">Analytics</a>
 </p>
 
 <p align="center">
@@ -25,17 +37,22 @@
 </p>
 
 <p align="center">
-  <a href="#overview">Overview</a> •
-  <a href="#why-stacksave">Why StackSave</a> •
-  <a href="#core-features">Core Features</a> •
-  <a href="#how-it-works">How It Works</a> •
-  <a href="#architecture">Architecture</a> •
-  <a href="#screenshots">Screenshots</a> •
-  <a href="#ai-offers--pricing-intelligence">AI Offers</a> •
-  <a href="#build-my-stack">Build My Stack</a> •
-  <a href="#audit-existing-stack">Audit Existing Stack</a> •
-  <a href="#technology-stack">Tech Stack</a> •
-  <a href="#getting-started">Getting Started</a> •
+  <a href="#overview">Overview</a> ·
+  <a href="#product-at-a-glance">Product at a Glance</a> ·
+  <a href="#why-stacksave">Why StackSave</a> ·
+  <a href="#core-features">Features</a> ·
+  <a href="#how-it-works">How It Works</a> ·
+  <a href="#architecture">Architecture</a><br>
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#ai-offers--pricing-intelligence">AI Offers</a> ·
+  <a href="#build-my-stack">Build My Stack</a> ·
+  <a href="#audit-existing-stack">Audit Existing Stack</a> ·
+  <a href="#intelligent-recommendation-system">Recommendation Engine</a><br>
+  <a href="#analytics--product-intelligence">Analytics</a> ·
+  <a href="#challenges--engineering-solutions">Challenges & Solutions</a> ·
+  <a href="#deployment">Deployment</a> ·
+  <a href="#technology-stack">Tech Stack</a> ·
+  <a href="#getting-started">Getting Started</a> ·
   <a href="#api-reference">API</a>
 </p>
 
@@ -43,13 +60,13 @@
 
 ## Overview
 
-**StackSave AI** is an intelligent AI procurement and spend optimization platform. It bridges the gap between fragmented AI pricing tiers, opaque model capabilities, and rapid vendor discount shifts.
+**StackSave AI** is a production AI procurement and spend intelligence platform. It bridges the gap between fragmented vendor pricing models, opaque model capabilities, and rapid promotional discount shifts.
 
-Modern engineering and product teams frequently overpay by **30% or more** on AI software due to overlapping tool capabilities, unoptimized tier allocations, forgotten seats, and missed partner grants. StackSave provides two primary intelligence workflows alongside a live promotion engine:
+Modern engineering and product teams frequently overpay by **30% or more** on AI software due to overlapping tool subscriptions, unoptimized tier allocations, idle seats, and missed partner programs. StackSave provides two primary intelligence workflows alongside a live promotion engine:
 
-1. **Build My Stack**: Guides teams through domain, budget, and operational requirement inputs to synthesize multi-tiered, cost-optimized AI architectures (Primary, Secondary Companion, and API layers) with ranked alternatives.
-2. **Audit Existing Stack**: Executes a deterministic, 7-rule mathematical audit against active subscriptions to identify immediate consolidation opportunities, tier downgrades, and annual run-rate savings.
-3. **AI Offers & Pricing Intelligence**: Tracks 29+ official AI provider feeds across 6 structured categories with automated Playwright scrapers and destination health checks to ensure zero broken links.
+1. **Build My Stack**: Guides teams through domain, budget, and operational requirement inputs to synthesize multi-tiered, cost-optimized AI architectures (Primary Core, Secondary Companion, and API layers) with ranked alternatives.
+2. **Audit Existing Stack**: Executes a deterministic, 7-rule mathematical audit against active subscriptions to identify immediate consolidation opportunities, tier downgrades, and annual run-rate savings without LLM math hallucinations.
+3. **AI Offers & Pricing Intelligence**: Tracks 29+ official AI provider feeds across 6 structured categories with automated Playwright scrapers and forensic destination health checks.
 
 ```
 ┌─────────────────────────┐     ┌─────────────────────────┐     ┌─────────────────────────┐
@@ -63,6 +80,19 @@ Modern engineering and product teams frequently overpay by **30% or more** on AI
 │   Annual Net Savings    │     │ Executive PDF Briefing  │     │ Recommendation Engine   │
 └─────────────────────────┘     └─────────────────────────┘     └─────────────────────────┘
 ```
+
+---
+
+## Product at a Glance
+
+| Capability | What StackSave Does | Key Mechanism / Implementation |
+| :--- | :--- | :--- |
+| **AI Platform Intelligence** | Evaluates AI platforms using multi-signal evidence scoring | `PlatformRankingEngine` (capability, maturity, momentum, value) |
+| **AI Offers & Pricing** | Tracks verified official offers, discounts, and credit programs | 29+ monitored providers across 6 structured categories |
+| **Build My Stack** | Recommends optimal multi-tier AI architectures based on requirements | Synthesizes Primary, Companion, and API layers with alternative suites |
+| **Audit Existing Stack** | Identifies subscription waste, idle seats, and consolidation savings | 7-rule deterministic mathematical audit engine (zero LLM hallucinations) |
+| **Analytics & Intelligence** | Monitors real-time product usage, engagement, and global adoption | Google Analytics 4 (Realtime + Historical) & Search Console integration |
+| **Offer Verification Pipeline** | Validates official offer origins, lifecycles, and destinations | Automated Playwright extraction, expiration detection & anti-404 health checks |
 
 ---
 
@@ -156,7 +186,7 @@ graph TD
     subgraph Client["Frontend (React 19 + Vite 8 + TailwindCSS v4)"]
         UI_Landing[Landing Page & Spend Simulator]
         UI_Builder[Build My Stack 4-Step Wizard]
-        UI_Results[Architecture Results & Comparison Carousel]
+        UI_Results[Architecture Results & Alternative Carousel]
         UI_Audit[Audit Input & Tool Selector]
         UI_Offers[AI Offers & Intelligence Directory]
         UI_Drawer[Procurement Intelligence Drawer]
@@ -170,6 +200,7 @@ graph TD
         API_Pricing["/api/pricing"]
         API_Chat["/api/chat"]
         API_Admin["/api/admin"]
+        API_Analytics["/api/analytics (GA4 + GSC + DB)"]
     end
 
     subgraph CoreEngines["Audit & Recommendation Core"]
@@ -183,7 +214,8 @@ graph TD
     subgraph Storage["Data & External Services"]
         DB[(MongoDB Atlas)]
         PW[Playwright Extraction Pipeline]
-        AI[Groq / OpenAI API]
+        GA4[Google Analytics 4 API]
+        GSC[Google Search Console API]
         RES[Resend Email Service]
     end
 
@@ -191,46 +223,82 @@ graph TD
     Server --> CoreEngines
     CoreEngines --> DB
     Server --> DB
-    Server --> AI
+    Server --> GA4
+    Server --> GSC
     Server --> RES
     PW -->|Automated Ingestion| DB
 ```
+
+### System Component Responsibilities
+
+| Component | Technology | Core Responsibility |
+| :--- | :--- | :--- |
+| **Frontend Client** | React 19, Vite 8, Tailwind CSS v4 | SPA rendering, interactive wizards, drag-to-scroll carousels, portal tooltips |
+| **Backend API** | Node.js 20+, Express, TypeScript, `tsx` | REST endpoints, rate limiting, request validation, engine orchestration |
+| **Recommendation Core** | Custom TypeScript Intelligence Engines | Domain suitability, capability dominance, multi-tier stack synthesis |
+| **Audit Engine** | 7-Rule Mathematical Business Logic | Deterministic spend analysis, idle seat detection, annual run-rate savings |
+| **Extraction Subsystem** | Playwright 1.62, cheerio | Headless browser extraction from official provider pricing pages |
+| **Analytics Subsystem** | `@google-analytics/data`, `googleapis` | Aggregates real-time users, 30-day retention curves, and search queries |
+| **Data Layer** | MongoDB Atlas, Mongoose 8.3 | Audits, lead captures, offer cache, and provider metadata persistence |
 
 ---
 
 ## Screenshots
 
+### Landing Experience
+*Clean hero experience featuring an interactive spend simulator that demonstrates real-time savings opportunities, plan upgrades, and duplicate subscription detection.*
+
+<a href="frontend/src/assets/landing%20page.png">
+  <img src="frontend/src/assets/landing%20page.png" alt="StackSave AI Landing Experience" width="100%" />
+</a>
+
+---
+
+### Build My Stack
+*Step 1 of the guided architecture wizard: selecting operating domains with a real-time stack brief sidebar updating team seat metrics and spend targets.*
+
+<a href="frontend/src/assets/build%20my%20stack.png">
+  <img src="frontend/src/assets/build%20my%20stack.png" alt="Build My Stack Flow" width="100%" />
+</a>
+
+---
+
+### Audit Existing Stack
+*Interactive tool selection matrix across AI IDEs, Chatbots, and APIs with seat counters, billing frequencies, and instant audit summaries.*
+
+<a href="frontend/src/assets/audit%20exisiting%20stack.png">
+  <img src="frontend/src/assets/audit%20exisiting%20stack.png" alt="Audit Existing Stack Matrix" width="100%" />
+</a>
+
+---
+
+### AI Offers & Pricing Intelligence
+*6-category verified promotion directory featuring provider filters, official verification timestamps, opportunity scoring badges, and direct vendor destinations.*
+
+<a href="frontend/src/assets/ai%20offers.png">
+  <img src="frontend/src/assets/ai%20offers.png" alt="AI Offers Directory" width="100%" />
+</a>
+
+---
+
+### Analytics Dashboard
+*StackSave integrates interactive analytics telemetry to monitor user adoption, global audience engagement, and platform retention curves via Google Analytics 4.*
+
 <table>
   <tr>
     <td width="50%">
-      <h3 align="center">Landing Page & Live Spend Simulator</h3>
-      <a href="frontend/src/assets/landing%20page.png">
-        <img src="frontend/src/assets/landing%20page.png" alt="StackSave AI Landing Page" />
+      <h4 align="center">User Activity & Engagement Telemetry</h4>
+      <a href="frontend/src/assets/user%20analytics.png">
+        <img src="frontend/src/assets/user%20analytics.png" alt="Google Analytics User Activity Over Time" />
       </a>
-      <p align="center"><em>Hero section with real-time interactive spend analysis widget demonstrating plan optimizations and subscription waste removal.</em></p>
+      <p align="center"><em>Active user trajectories (30-day, 7-day, 1-day), real-time concurrent sessions, and average engagement time per user (~2m 23s).</em></p>
     </td>
     <td width="50%">
-      <h3 align="center">Build My Stack (Architecture Wizard)</h3>
-      <a href="frontend/src/assets/build%20my%20stack.png">
-        <img src="frontend/src/assets/build%20my%20stack.png" alt="Build My Stack Flow" />
+      <h4 align="center">Global Active User Distribution</h4>
+      <a href="frontend/src/assets/world%20wide%20users.png">
+        <img src="frontend/src/assets/world%20wide%20users.png" alt="Active Users by Country Map" />
       </a>
-      <p align="center"><em>Step 1 of the guided architecture wizard: selecting operating domain with live stack brief and pricing updates.</em></p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <h3 align="center">Audit Existing Stack Configuration</h3>
-      <a href="frontend/src/assets/audit%20exisiting%20stack.png">
-        <img src="frontend/src/assets/audit%20exisiting%20stack.png" alt="Audit Existing Stack" />
-      </a>
-      <p align="center"><em>Tool selection matrix across IDEs, Chatbots, and APIs with seat counters, billing frequencies, and instant audit summaries.</em></p>
-    </td>
-    <td width="50%">
-      <h3 align="center">AI Offers & Pricing Intelligence</h3>
-      <a href="frontend/src/assets/ai%20offers.png">
-        <img src="frontend/src/assets/ai%20offers.png" alt="AI Offers Directory" />
-      </a>
-      <p align="center"><em>6-category verified promotion directory with provider filters, badge tags, official source timestamps, and verified destination links.</em></p>
+      <p align="center"><em>Live geographic audience breakdown monitoring user activity across India, Czechia, the United States, Netherlands, and globally.</em></p>
     </td>
   </tr>
 </table>
@@ -239,44 +307,69 @@ graph TD
 
 ## AI Offers & Pricing Intelligence
 
-The AI Offers directory (`/offers`) provides verified procurement opportunities directly from official AI platform ecosystems.
+The AI Offers directory (`/offers`) provides verified procurement opportunities derived directly from official AI platform ecosystems. StackSave **does not** scrape unverified coupon forums or affiliate aggregators.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  AI Offers & Pricing Intelligence                                      │
-│  50 Active Promotions · 29 AI Providers Monitored · 100% Official Sources│
-├────────────────────────────────────────────────────────────────────────┤
-│  [All Offers 50] [Partner Bundles 10] [Student 13] [API Discounts 8]   │
-│  [Annual Savings 7] [Startup Grants 9] [Trials & Free 3]              │
-└────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A[Official AI Provider Sources] --> B[Provider & Partner Source Registry]
+    B --> C[Playwright Automated Extraction]
+    C --> D[Offer Evidence & Plan Parser]
+    D --> E[Forensic Destination Health Check]
+    E --> F{HTTP Status & Destination Valid?}
+    F -- No / 404 / Broken --> G[Quarantine & Deactivate Offer]
+    F -- Yes --> H[Expiration & Lifecycle Gate]
+    H --> I[Trust & Opportunity Scorer]
+    I --> J[(MongoDB Atlas Persistence)]
+    J --> K[Public REST API: /api/intelligence/offers]
+    K --> L[Interactive Offers UI]
 ```
 
-- **Forensic URL Verification**: Every offer URL undergoes rigorous HTTP validation and redirect verification before being marked verified. Dead links and 404s are quarantined automatically.
-- **Provider-Grouped Ranking**: High-leverage official platforms are ranked by platform intelligence first, followed by the highest verified discount opportunity.
-- **Opportunity Scoring**: Weighs cash value, duration, tier entitlement, and verification freshness to highlight the most actionable savings.
+### Verification Pipeline Architecture
+1. **Source Registry & Official Feeds**: Monitors 29+ official vendor domains (OpenAI, Anthropic, Google Cloud, Cursor, Windsurf, Perplexity, DeepSeek, etc.).
+2. **Autonomous Playwright Extraction**: Headless browser workers navigate pricing tables and partner portals, capturing structured discounts, plan IDs, and eligibility terms.
+3. **Forensic Destination Health Check**: Automated HTTP pingers and redirect inspectors verify that every destination URL is active, eliminating 404s and expired promo landing pages.
+4. **Dynamic Expiration & Lifecycle Handling**: Parses natural language expiration dates (e.g. *"through June 2028"*, *"limited to Q3"*) and automatically retires expired offers.
+5. **Provider-Grouped Ranking**: Groups offers by canonical AI platform (`aiProvider`) sorted by platform intelligence first, then best verified discount, ensuring frontier platforms remain prominent.
+6. **Opportunity Scoring**: Calculates an evidence-based `offerOpportunityScore` weighing cash value, duration, tier entitlement, and verification freshness.
 
 ---
 
 ## Build My Stack
 
-The **Build My Stack** workflow (`/build-stack`) constructs production-ready AI software suites tailored to specific business workflows.
+The **Build My Stack** workflow (`/build-stack`) constructs production-grade AI software suites tailored to specific business workflows.
 
-### 4-Step Specification
-1. **Operating Domain**: Software Engineering, AI & Machine Learning, Research & Knowledge, Product & Design, Business Operations, Content & Communication, Enterprise Governance, or General Productivity.
-2. **Scale & Budget**: Team seat count, monthly spend target, and spending flexibility.
-3. **Capability Profile**: Granular operational requirements (e.g. multi-file refactoring, deep mathematical reasoning, document parsing, multimodal understanding).
-4. **Strategy Mandate**: Balanced Architecture, Maximum Performance Suite, or Best Value Suite.
+### 6-Step Generation Process
+1. **User Defines Specifications**: Operating domain, team scale, budget target, and granular feature requirements.
+2. **Capability Profiling**: Evaluates platform capability vectors across code generation, reasoning, multimodal analysis, and document parsing.
+3. **Domain Fit Computation**: `WorkflowEngine` calculates how naturally the platform's profile aligns with the selected industry vertical.
+4. **Requirement Matching**: Calculates exact feature satisfaction percentages against requested capabilities.
+5. **Candidate Architecture Ranking**: Synthesizes Primary Workhorses, Secondary Companions, and API Layers with alternative commercial configurations.
+6. **Inspection & Activation**: Users inspect detailed procurement drawers and activate alternative architectures with a single click.
 
 ### Metric Clarity: Domain Fit vs. Requirement Match
-To avoid confusion, the interface displays distinct, portal-rendered tooltips explaining metric calculations:
-- **Domain Fit**: Measures how well a platform's capabilities naturally match the macro work domain (e.g., AI & Machine Learning suitability).
-- **Requirement Match**: Measures the exact percentage of user-selected operational features satisfied by the platform.
+
+```
+┌──────────────────────────────────────┐     ┌──────────────────────────────────────┐
+│  Domain Fit                     78%  │     │  Requirement Match              91%  │
+│                                      │     │                                      │
+│  How well this platform's            │     │  How closely this platform satisfies │
+│  capabilities fit your selected      │     │  the specific requirements you       │
+│  work domain.                        │     │  provided.                           │
+│                                      │     │                                      │
+│  AI & Machine Learning               │     │  Selected Capabilities Match         │
+│  Strong fit for this domain.         │     │  Evaluates operational features met. │
+└──────────────────────────────────────┘     └──────────────────────────────────────┘
+```
+
+- **Domain Fit**: Measures macro industry suitability (e.g., how appropriate Cursor or Google Antigravity is for *Software Engineering* vs. *Content & Writing*).
+- **Requirement Match**: Measures micro feature satisfaction (e.g., how completely the platform satisfies *in-editor code generation*, *deep reasoning*, and *document processing*).
+- **Portal Tooltips**: Tooltips render via React Portals on `document.body` with fixed viewport clamping, eliminating clipping inside horizontal scroll carousels.
 
 ---
 
 ## Audit Existing Stack
 
-The **Audit Existing Stack** workflow (`/audit`) analyzes active subscriptions using deterministic rules rather than generative guesses:
+The **Audit Existing Stack** workflow (`/audit`) evaluates existing software subscriptions using a 7-rule deterministic audit engine:
 
 1. **Duplicate AI Tool Redundancy**: Identifies overlapping subscriptions across multiple vendors (e.g., paying for both Cursor Pro and GitHub Copilot for the same engineering seats).
 2. **Unused Tier Downgrade**: Flags team seats that do not consume enterprise-tier features and can safely transition to standard plans.
@@ -285,6 +378,104 @@ The **Audit Existing Stack** workflow (`/audit`) analyzes active subscriptions u
 5. **Annual Billing Optimization**: Calculates run-rate savings achieved by switching eligible monthly subscriptions to discounted annual agreements.
 6. **Partner Credits & Grants**: Surfaces eligible startup and corporate credits directly applicable to the audited stack.
 7. **Bundle Consolidation**: Discovers multi-tool vendor bundles that reduce total per-seat expense.
+
+---
+
+## Intelligent Recommendation System
+
+StackSave utilizes `PlatformRankingEngine` to compute deterministic, evidence-grounded competitive scores for all AI platforms in the ecosystem without hardcoded brand bias:
+
+| Ranking Signal | Weight | What It Measures |
+| :--- | :---: | :--- |
+| **Market Adoption** | **25%** | Active developer usage, enterprise deployment scale, and community sentiment |
+| **Product Capabilities** | **25%** | Frontier benchmark quality, reasoning depth, context windows, and code refactoring scores |
+| **Ecosystem Strength** | **15%** | IDE plugins, third-party integrations, SDK availability, and workflow interoperability |
+| **Growth Momentum** | **10%** | Velocity of frontier model releases, developer adoption trajectory, and update cadence |
+| **Reliability & Maturity** | **10%** | Enterprise uptime, SOC 2 / HIPAA compliance, zero data retention policies, and SLA stability |
+| **Value for Money** | **10%** | Price-to-performance ratio across seat costs, rate limits, and token pricing |
+| **Partner Offer Value** | **5%** | Active presence of verified credits, student programs, startup grants, or bundled savings |
+| **Confidence Score** | *Gate* | Completeness of verified pricing, benchmark data, and official documentation (0.0 – 1.0) |
+
+---
+
+## Analytics & Product Intelligence
+
+StackSave integrates multi-source analytics telemetry to monitor application performance, user acquisition, and intelligence throughput:
+
+```mermaid
+flowchart LR
+    A[Telemetry Sources] --> B[GA4 Realtime API]
+    A --> C[GA4 Historical Data API]
+    A --> D[Google Search Console API]
+    A --> E[MongoDB Audit & Lead Records]
+
+    B --> F[GoogleAnalyticsService]
+    C --> F
+    D --> F
+    E --> F
+
+    F --> G[Consolidated /api/analytics/overview]
+    G --> H[Live Operations & Monitoring Dashboard]
+```
+
+### Semantic Separation of Analytics Data
+To prevent misleading composite statistics, StackSave maintains strict semantic separation between data sources:
+- **Product & User Analytics (GA4)**: Real-time concurrent visitors, 30-day active user trajectories, and user engagement time (~2m 23s avg).
+- **Search & Discovery Analytics (GSC)**: Organic impressions, click-through rates, and keyword search performance (`GSC_SITE_URL`).
+- **Application & Database Metrics (MongoDB)**: Total audits executed, cumulative spend analyzed, net savings identified, and procurement briefs delivered.
+
+---
+
+## Challenges & Engineering Solutions
+
+### 1. Dynamic AI Offer Expiration & Phantom Deals
+- **Challenge**: AI vendor promotions, accelerator credits, and partner bundles expire or change terms without standard RSS feeds.
+- **Solution**: Built an autonomous Playwright extraction engine coupled with natural language expiration parsing and automated quarantine gates.
+
+### 2. Stale Destination URLs & 404 Prevention
+- **Challenge**: Partner promotion links (e.g. Gemini with hardware partners or Perplexity bundles) frequently change destinations, producing broken links.
+- **Solution**: Developed `offerDestinationHealthCheck.ts` to perform forensic HTTP pinging, redirect tracing, and automated destination reconciliation before surfacing offers.
+
+### 3. Canonical Provider vs. Commercial Partner Identity
+- **Challenge**: Multiple commercial partners offer the same platform (e.g., Gemini via ASUS, Pixel, and Jio), which risked cluttering rankings with duplicate platform entries.
+- **Solution**: Decoupled canonical AI provider identity (`aiProvider: 'gemini'`) from partner distributor identity (`partnerId`), grouping verified offers under unified platform banners.
+
+### 4. Fair Recommended Platform Ranking
+- **Challenge**: A minor platform offering a 90% discount could mathematically outrank a primary enterprise platform if sorting purely by discount magnitude.
+- **Solution**: Implemented a two-tier sorting algorithm: platform groups are sorted primarily by **Platform Intelligence Score**, with the top verified offer acting as a secondary tiebreaker.
+
+### 5. Analytics Semantic Integrity
+- **Challenge**: Combining Google Analytics sessions, Google Search Console clicks, and database audit records into a single metric creates misleading numbers.
+- **Solution**: Created `GoogleAnalyticsService` with distinct `MetricCardValue` models explicitly declaring `dataSource: 'GA4_REALTIME' | 'GA4_HISTORICAL' | 'GOOGLE_SEARCH_CONSOLE' | 'STACKSAVE_MONGODB'`.
+
+### 6. Zero-Friction Horizontal Card Dragging
+- **Challenge**: CSS `scroll-snap-type: x mandatory` fought mouse dragging on alternative architecture cards, and drag gestures accidentally triggered card clicks.
+- **Solution**: Implemented unified Pointer Events with `setPointerCapture`, dynamically disengaged snap during active dragging (`scrollSnapType: isGrabbing ? 'none' : 'x proximity'`), and added capture-phase click suppression.
+
+---
+
+## Deployment
+
+StackSave is deployed in production across Render, MongoDB Atlas, and GoDaddy:
+
+```mermaid
+flowchart LR
+    U[Public Users] --> D[stacksaveai.com / GoDaddy DNS]
+    D --> F[Render Frontend Service\nReact 19 SPA + server.js]
+    F -->|REST API Proxy| B[Render Backend Web Service\napi.stacksaveai.com]
+    B --> M[(MongoDB Atlas Cluster)]
+    B --> P[Official AI Provider Sources\nPlaywright Scrapers]
+```
+
+### Production Infrastructure
+
+| Layer | Service Provider | Production Hostname / Configuration |
+| :--- | :--- | :--- |
+| **Official Domain & DNS** | **GoDaddy** | `https://stacksaveai.com/` (Apex & CNAME routing) |
+| **Frontend Web Service** | **Render** | `stacksave-frontend` (`node server.js`, SPA history fallback, caching) |
+| **Backend API Service** | **Render** | `stacksave-backend` (`https://api.stacksaveai.com/`, health check `/api/health`) |
+| **Database** | **MongoDB Atlas** | Managed replica set with Mongoose connection pooling |
+| **Scheduled Sync** | **GitHub Actions** | Automated cron workflow executing pricing synchronization and dry-runs |
 
 ---
 
@@ -298,10 +489,11 @@ The **Audit Existing Stack** workflow (`/audit`) analyzes active subscriptions u
 | **Backend Runtime** | **Node.js 20+**, Express 4.18, `tsx` | REST API, rate-limiting, security middleware, and pipeline orchestration |
 | **Database & ORM** | **MongoDB Atlas**, Mongoose 8.3 | Document store for audits, provider knowledge, and offer registries |
 | **Automated Extraction** | **Playwright 1.62** | Automated browser scraping of official vendor pricing pages |
+| **Analytics Telemetry** | `@google-analytics/data`, `googleapis` | GA4 Realtime, Historical, and Search Console data integration |
 | **AI Summarization** | Groq API (`llama-3.3-70b`), OpenAI API | Natural language narrative generation for executive briefing notes |
 | **Email & Delivery** | Resend API 3.3 | Transactional audit reports and procurement brief delivery |
 | **Quality & Testing** | **Vitest 1.5**, ESLint 8 / typescript-eslint | 35 comprehensive unit and integration test suites |
-| **Hosting & CI/CD** | Render, GitHub Actions | Continuous deployment, automated dry-runs, scheduled pricing sync |
+| **Hosting & CI/CD** | Render, GoDaddy, GitHub Actions | Continuous deployment, automated dry-runs, scheduled pricing sync |
 
 ---
 
@@ -350,6 +542,7 @@ StackSave/
 │   │   │   ├── audit.ts                 # Audit submission, calculations, re-audits
 │   │   │   ├── stackBuilder.ts          # Recommendation synthesis endpoint
 │   │   │   ├── intelligence.ts          # Verified AI offers & ranking endpoint
+│   │   │   ├── analytics.ts             # GA4 & Search Console telemetry endpoint
 │   │   │   └── chat.ts                  # Spend assistant chat endpoint
 │   │   ├── services/                    # Database, email, analytics, and AI services
 │   │   └── app.ts                       # Express server initialization & middleware
@@ -371,6 +564,7 @@ StackSave/
 - **API Keys** (Optional for basic development, required for full features):
   - Groq API Key (for narrative summaries)
   - Resend API Key (for transactional emails)
+  - Google Service Account (for GA4 analytics integration)
 
 ### 1. Clone the Repository
 ```bash
@@ -385,7 +579,7 @@ cp .env.example .env
 npm install
 ```
 
-Configure your `backend/.env` with your database and service credentials:
+Configure your `backend/.env`:
 ```env
 PORT=5000
 NODE_ENV=development
@@ -438,6 +632,8 @@ npm run dev
 | `RESEND_API_KEY` | No | — | Resend API key for emailing audit reports |
 | `ADMIN_SECRET` | No | — | Bearer secret for protected `/api/admin/*` endpoints |
 | `GA4_PROPERTY_ID` | No | — | Google Analytics 4 property ID for live metrics |
+| `GOOGLE_SERVICE_ACCOUNT_KEY` | No | — | JSON service account credentials for Google APIs |
+| `GSC_SITE_URL` | No | — | Google Search Console site identifier |
 
 ### Frontend (`frontend/.env`)
 
@@ -461,6 +657,8 @@ npm run dev
 | `POST` | `/api/stack-builder/recommend` | Synthesize optimized multi-tier stack and ranked alternatives |
 | `GET` | `/api/intelligence/offers` | Fetch verified AI offers categorized, ranked, and verified |
 | `GET` | `/api/pricing/providers` | Retrieve dynamic count and status of all monitored AI vendors |
+| `GET` | `/api/analytics/overview` | Fetch consolidated GA4, Search Console, and database telemetry |
+| `GET` | `/api/analytics/realtime` | Fetch active user count in last 30 minutes from GA4 Realtime API |
 | `POST` | `/api/chat` | Contextual AI spend assistant conversation endpoint |
 | `POST` | `/api/leads` | Save verified procurement brief lead and trigger email delivery |
 
@@ -520,8 +718,9 @@ npm run build
 - [x] **Phase 3**: Multi-tier "Build My Stack" architecture recommendation engine.
 - [x] **Phase 4**: Dual-metric clarification tooltips (Domain Fit vs. Requirement Match).
 - [x] **Phase 5**: Interactive drag-to-scroll alternative commercial stack carousel.
-- [ ] **Phase 6**: Enterprise SSO / OAuth integration and automated Google Workspace / Okta seat auditor.
-- [ ] **Phase 7**: Real-time webhook alerts for provider price hikes and surprise renewals.
+- [x] **Phase 6**: Production deployment to Render with custom domain (`stacksaveai.com`) and GA4 integration.
+- [ ] **Phase 7**: Enterprise SSO / OAuth integration and automated Google Workspace / Okta seat auditor.
+- [ ] **Phase 8**: Real-time webhook alerts for provider price hikes and surprise renewals.
 
 ---
 
@@ -544,5 +743,5 @@ This project is licensed under the [MIT License](./LICENSE).
 ---
 
 <p align="center">
-  Built with precision for engineering leaders and AI procurement teams.
+  <a href="https://stacksaveai.com/"><strong>StackSave AI</strong></a> — Precision spend intelligence for engineering leaders and AI procurement teams.
 </p>
