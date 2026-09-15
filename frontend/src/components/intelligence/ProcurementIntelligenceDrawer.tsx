@@ -18,6 +18,7 @@ import type {
   RejectedAlternative
 } from '../../types';
 import ProviderLogo from '../ProviderLogo';
+import MetricTooltip, { MetricInfoIcon } from '../MetricTooltip';
 
 export type DrawerSelection =
   | {
@@ -480,19 +481,27 @@ function DrawerHeader({
         </div>
 
         <div className="px-5 py-4">
-          <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-slate-400 leading-none">
-            {selection.type === 'evaluated' ? 'Suitability' : 'Domain Fit'}
-          </p>
-          <div className="flex items-baseline gap-0.5 mt-2">
-            <span className={`text-[22px] font-black font-mono tracking-tight leading-none ${
-              fitScore >= 80 ? 'text-emerald-400' : fitScore >= 65 ? 'text-blue-400' : 'text-amber-400'
-            }`}>
-              {fitScore}%
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1 font-medium">
-            for your workflow
-          </p>
+          <MetricTooltip
+            type={selection.type === 'stack' ? 'requirementMatch' : 'domainFit'}
+            score={fitScore}
+          >
+            <div className="cursor-help">
+              <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-slate-400 leading-none flex items-center gap-1">
+                <span>{selection.type === 'stack' ? 'Requirement Match' : 'Domain Fit'}</span>
+                <MetricInfoIcon className="w-2.5 h-2.5 text-slate-400" />
+              </p>
+              <div className="flex items-baseline gap-0.5 mt-2">
+                <span className={`text-[22px] font-black font-mono tracking-tight leading-none ${
+                  fitScore >= 80 ? 'text-emerald-400' : fitScore >= 65 ? 'text-blue-400' : 'text-amber-400'
+                }`}>
+                  {fitScore}%
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1 font-medium">
+                {selection.type === 'stack' ? 'operational match' : 'for your workflow'}
+              </p>
+            </div>
+          </MetricTooltip>
         </div>
       </div>
     </div>
@@ -546,16 +555,19 @@ function ToolProcurementContent({ tool, teamSize }: { tool: ToolInStack; teamSiz
 
           {/* Domain fit metrics */}
           <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
-            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-              <span className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
-                Domain Fit
-              </span>
-              <span className={`text-[15px] font-black font-mono leading-none block ${
-                tool.workflowFitScore >= 80 ? 'text-emerald-600' : tool.workflowFitScore >= 65 ? 'text-indigo-600' : 'text-amber-600'
-              }`}>
-                {tool.workflowFitScore}%
-              </span>
-            </div>
+            <MetricTooltip type="domainFit" score={tool.workflowFitScore}>
+              <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 cursor-help hover:border-slate-200 transition-colors w-full h-full">
+                <span className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-slate-400 flex items-center gap-0.5 mb-1">
+                  <span>Domain Fit</span>
+                  <MetricInfoIcon />
+                </span>
+                <span className={`text-[15px] font-black font-mono leading-none block ${
+                  tool.workflowFitScore >= 80 ? 'text-emerald-600' : tool.workflowFitScore >= 65 ? 'text-indigo-600' : 'text-amber-600'
+                }`}>
+                  {tool.workflowFitScore}%
+                </span>
+              </div>
+            </MetricTooltip>
             <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
               <span className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1">
                 Seat Cost

@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { fetchPublicOffers, fetchPricingStatus, getCachedPublicOffers } from '../services/api';
+import { fetchPublicOffers, fetchPricingStatus, getCachedPublicOffers, type PublicOffersResponse } from '../services/api';
 import { useUserScopedStorage } from '../hooks/useUserScopedStorage';
 import Logo from '../components/Logo';
 import ProviderLogo from '../components/ProviderLogo';
@@ -89,7 +89,10 @@ export default function OffersPage() {
   const [selectedCategory, setSelectedCategory] = useState<OfferCategory>('all');
   const [sortBy, setSortBy] = useState<SortOption>('recommended');
   const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
-  const [vendorFeedCount, setVendorFeedCount] = useState<number | null>(null);
+  const [canonicalProviderCount, setCanonicalProviderCount] = useState<number | null>(() => {
+    const cached = getCachedPublicOffers();
+    return cached?.providerCount ?? null;
+  });
   // USER-SCOPED: read offer IDs are stored per user session
   const [readOfferIds, setReadOfferIds] = useUserScopedStorage<string[]>('read_offer_ids', []);
 
@@ -97,19 +100,19 @@ export default function OffersPage() {
     let isMounted = true;
 
     Promise.all([
-      fetchPublicOffers().catch(() => ({ offers: [], count: 0, note: '' })),
+      fetchPublicOffers().catch((): PublicOffersResponse => ({ offers: [], count: 0, note: '' })),
       fetchPricingStatus().catch(() => null),
     ])
       .then(([offersRes, statusRes]) => {
         if (isMounted) {
           if (offersRes && Array.isArray(offersRes.offers)) {
             setOffers(offersRes.offers);
+            if (offersRes.providerCount !== undefined) {
+              setCanonicalProviderCount(offersRes.providerCount);
+            }
           }
           if (statusRes?.summary?.lastSuccessfulSyncAt) {
             setLastSyncDate(statusRes.summary.lastSuccessfulSyncAt);
-          }
-          if (statusRes?.summary?.totalProviders !== undefined) {
-            setVendorFeedCount(statusRes.summary.totalProviders);
           }
         }
       })
@@ -148,11 +151,17 @@ export default function OffersPage() {
   }, [offers, readOfferIds]);
 
   const uniqueProviders = useMemo(() => {
-    const set = new Set<string>();
+    const map = new Map<string, { id: string; name: string }>();
     formattedOffers.forEach((o) => {
-      if (o.providerName) set.add(o.providerName);
+      const canonicalId = (o.canonicalProviderId || o.aiProvider || o.providerId || '').toLowerCase().trim();
+      if (canonicalId && !map.has(canonicalId)) {
+        map.set(canonicalId, {
+          id: canonicalId,
+          name: o.providerName || canonicalId,
+        });
+      }
     });
-    return Array.from(set).sort();
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [formattedOffers]);
 
   // Compute category counts for tab badges
@@ -173,8 +182,11 @@ export default function OffersPage() {
   const filteredAndSortedOffers = useMemo(() => {
     const result = formattedOffers.filter((offer) => {
       // Provider filter
-      if (selectedProvider !== 'all' && offer.providerName !== selectedProvider) {
-        return false;
+      if (selectedProvider !== 'all') {
+        const canonicalId = (offer.canonicalProviderId || offer.aiProvider || offer.providerId || '').toLowerCase().trim();
+        if (canonicalId !== selectedProvider && offer.providerName !== selectedProvider) {
+          return false;
+        }
       }
 
       // Category tab filter
@@ -340,8 +352,8 @@ export default function OffersPage() {
             </span>
             <span className="text-slate-300" aria-hidden="true">•</span>
             <span className="text-slate-600">
-              <span className="font-semibold">{vendorFeedCount ?? uniqueProviders.length}</span>{' '}
-              Official Vendor Feeds
+              <span className="font-semibold">{canonicalProviderCount ?? uniqueProviders.length}</span>{' '}
+              AI Providers Monitored
             </span>
           </div>
 
@@ -448,10 +460,10 @@ export default function OffersPage() {
                   onChange={(e) => setSelectedProvider(e.target.value)}
                   className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 transition-all focus:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 cursor-pointer"
                 >
-                  <option value="all">All Providers ({uniqueProviders.length})</option>
+                  <option value="all">All Providers ({canonicalProviderCount ?? uniqueProviders.length})</option>
                   {uniqueProviders.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
+                    <option key={p.id} value={p.id}>
+                      {p.name}
                     </option>
                   ))}
                 </select>

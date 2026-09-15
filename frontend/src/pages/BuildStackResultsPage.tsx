@@ -36,6 +36,7 @@ import { getProviderRole } from '../components/build-stack/wizardData';
 import { trackBuildStackCompleted } from '../utils/analytics';
 
 import ConfigurationReveal from '../components/build-stack/ConfigurationReveal';
+import MetricTooltip, { MetricInfoIcon } from '../components/MetricTooltip';
 
 type StrategyKey = 'bestOverall' | 'bestValue' | 'bestPerformance' | 'bestEnterprise';
 
@@ -182,6 +183,87 @@ export default function BuildStackResultsPage() {
       left: direction === 'left' ? -scrollAmount : scrollAmount,
       behavior: 'smooth'
     });
+  };
+
+  // Robust Pointer Events drag-to-scroll (Mouse, Touch, Stylus)
+  const isPointerDownRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftStartRef = useRef(0);
+  const hasDraggedRef = useRef(false);
+  const [isGrabbing, setIsGrabbing] = useState(false);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Only primary button (left click or touch contact)
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+
+    // Do not initiate drag if user clicked an explicit button, link, or tooltip
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, input, select, textarea, [role="button"]')) {
+      return;
+    }
+
+    isPointerDownRef.current = true;
+    hasDraggedRef.current = false;
+    startXRef.current = e.clientX;
+    if (altScrollRef.current) {
+      scrollLeftStartRef.current = altScrollRef.current.scrollLeft;
+    }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPointerDownRef.current || !altScrollRef.current) return;
+
+    const deltaX = e.clientX - startXRef.current;
+
+    // Once movement exceeds 4px, capture the pointer and scroll
+    if (Math.abs(deltaX) > 4) {
+      if (!hasDraggedRef.current) {
+        hasDraggedRef.current = true;
+        setIsGrabbing(true);
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          // fallback
+        }
+      }
+      altScrollRef.current.scrollLeft = scrollLeftStartRef.current - deltaX;
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isPointerDownRef.current) {
+      isPointerDownRef.current = false;
+      setIsGrabbing(false);
+      try {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+      } catch {
+        // fallback
+      }
+    }
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
+    isPointerDownRef.current = false;
+    setIsGrabbing(false);
+    try {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // fallback
+    }
+  };
+
+  const handleClickCapture = (e: React.MouseEvent) => {
+    if (hasDraggedRef.current) {
+      e.stopPropagation();
+      e.preventDefault();
+      setTimeout(() => {
+        hasDraggedRef.current = false;
+      }, 50);
+    }
   };
 
   const openToolDrawer = (tool: ToolInStack, isPrimary = false) => {
@@ -632,6 +714,7 @@ export default function BuildStackResultsPage() {
               <PrimaryRecommendationCard
                 tool={primaryTool}
                 teamSize={teamSize}
+                domainLabel={context?.domainLabel}
                 isActive={drawerSelection?.type === 'tool' && drawerSelection.tool.toolId === primaryTool.toolId}
                 onViewAnalysis={() => openToolDrawer(primaryTool, true)}
                 animationDelay={0.08}
@@ -642,6 +725,7 @@ export default function BuildStackResultsPage() {
               <SecondaryRecommendationCard
                 tool={secondaryTool}
                 teamSize={teamSize}
+                domainLabel={context?.domainLabel}
                 isActive={drawerSelection?.type === 'tool' && drawerSelection.tool.toolId === secondaryTool.toolId}
                 onViewAnalysis={() => openToolDrawer(secondaryTool, false)}
                 animationDelay={0.14}
@@ -654,6 +738,7 @@ export default function BuildStackResultsPage() {
                 tool={tool}
                 teamSize={teamSize}
                 roleIndex={3 + idx}
+                domainLabel={context?.domainLabel}
                 isActive={drawerSelection?.type === 'tool' && drawerSelection.tool.toolId === tool.toolId}
                 onViewAnalysis={() => openToolDrawer(tool, false)}
                 animationDelay={0.2 + idx * 0.05}
@@ -666,6 +751,7 @@ export default function BuildStackResultsPage() {
                 tool={tool}
                 teamSize={teamSize}
                 roleIndex={3 + optionalTools.length + idx}
+                domainLabel={context?.domainLabel}
                 isActive={drawerSelection?.type === 'tool' && drawerSelection.tool.toolId === tool.toolId}
                 onViewAnalysis={() => openToolDrawer(tool, false)}
                 animationDelay={0.25 + idx * 0.05}
@@ -728,8 +814,20 @@ export default function BuildStackResultsPage() {
 
             <div
               ref={altScrollRef}
-              className="alt-stack-scroll-area flex gap-4 overflow-x-auto pb-4 pt-1 -mx-1 px-1"
-              style={{ scrollbarWidth: 'thin', scrollSnapType: 'x mandatory' }}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerCancel}
+              onClickCapture={handleClickCapture}
+              className={`alt-stack-scroll-area flex gap-4 overflow-x-auto pb-4 pt-1 -mx-1 px-1 select-none ${
+                isGrabbing ? 'cursor-grabbing' : 'cursor-grab'
+              }`}
+              style={{
+                scrollbarWidth: 'thin',
+                touchAction: 'pan-x pan-y',
+                WebkitOverflowScrolling: 'touch',
+                scrollSnapType: isGrabbing ? 'none' : 'x proximity',
+              }}
             >
               {comparisons.map((alt, idx) => {
                 const matchedStack = alt.stack || (alt.rank === 1
@@ -744,9 +842,19 @@ export default function BuildStackResultsPage() {
                 return (
                   <div
                     key={alt.rank || idx}
-                    onClick={() => openStackDrawer(alt, matchedStack)}
-                    style={{ scrollSnapAlign: 'start' }}
-                    className={`alt-stack-card shrink-0 p-5 rounded-2xl border transition-all duration-200 group flex flex-col justify-between space-y-4 cursor-pointer min-w-[290px] sm:min-w-[330px] max-w-[370px] ${isCurrentActive
+                    draggable={false}
+                    onClick={() => {
+                      if (hasDraggedRef.current) {
+                        return;
+                      }
+                      openStackDrawer(alt, matchedStack);
+                    }}
+                    style={{
+                      scrollSnapAlign: isGrabbing ? 'none' : 'start',
+                      touchAction: 'pan-x pan-y',
+                      userSelect: 'none',
+                    }}
+                    className={`alt-stack-card shrink-0 p-5 rounded-2xl border transition-all duration-200 group flex flex-col justify-between space-y-4 cursor-pointer min-w-[290px] sm:min-w-[330px] max-w-[370px] select-none ${isCurrentActive
                         ? 'bg-white border-2 border-[#1E3A5F] ring-1 ring-[#1E3A5F]/15 shadow-sm'
                         : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-md shadow-xs'
                       }`}
@@ -765,10 +873,11 @@ export default function BuildStackResultsPage() {
                         </div>
 
                         {alt.budgetFit && alt.budgetFit !== 'no-limit' && (
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shrink-0 tabular-nums ${isAltOverBudget
-                              ? 'bg-rose-50 text-rose-700 border border-rose-200/80'
-                              : 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
+                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md shrink-0 tabular-nums border shadow-2xs ${isAltOverBudget
+                              ? 'bg-rose-50/80 text-rose-700 border-rose-200/80'
+                              : 'bg-slate-100/90 text-slate-800 border-slate-200/90'
                             }`}>
+                            {!isAltOverBudget && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />}
                             {isAltOverBudget ? 'Over Budget' : 'Within Budget'}
                           </span>
                         )}
@@ -800,9 +909,21 @@ export default function BuildStackResultsPage() {
                       </div>
 
                       <div className="flex items-center gap-2 text-xs py-1.5 px-2.5 rounded-lg bg-slate-50 border border-slate-100 text-slate-700 font-medium">
-                        <span>Domain: <strong className="text-slate-950 tabular-nums font-bold">{alt.domainFit || alt.matchScore}%</strong></span>
+                        <MetricTooltip type="domainFit" score={alt.domainFit || alt.matchScore} domainName={context?.domainLabel}>
+                          <span className="inline-flex items-center gap-1 hover:text-slate-950 transition-colors cursor-help">
+                            <span>Domain Fit</span>
+                            <MetricInfoIcon />
+                            <strong className="text-slate-950 tabular-nums font-bold">{alt.domainFit || alt.matchScore}%</strong>
+                          </span>
+                        </MetricTooltip>
                         <span className="text-slate-300">·</span>
-                        <span>Match: <strong className="text-emerald-700 tabular-nums font-bold">{alt.matchScore}%</strong></span>
+                        <MetricTooltip type="requirementMatch" score={alt.matchScore}>
+                          <span className="inline-flex items-center gap-1 hover:text-slate-950 transition-colors cursor-help">
+                            <span>Match</span>
+                            <MetricInfoIcon />
+                            <strong className="text-slate-950 tabular-nums font-black">{alt.matchScore}%</strong>
+                          </span>
+                        </MetricTooltip>
                       </div>
 
                       <div className="space-y-1.5 pt-1 text-[12.5px] text-slate-700 leading-relaxed font-normal">
@@ -858,11 +979,12 @@ export default function BuildStackResultsPage() {
                 <h3 className="text-sm font-bold text-slate-900 tracking-tight">Requirement Coverage Verification</h3>
                 <p className="text-xs text-slate-500 mt-0.5">Verification of requested operational capabilities</p>
               </div>
-              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border tabular-nums ${activeStack.coverageResult.coverageScore >= 80
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
-                  : 'bg-amber-50 text-amber-800 border-amber-200/80'
+              <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border tabular-nums shadow-2xs ${activeStack.coverageResult.coverageScore >= 80
+                  ? 'bg-slate-900 text-white border-slate-800'
+                  : 'bg-slate-100 text-slate-800 border-slate-200/90'
                 }`}>
-                {activeStack.coverageResult.coverageScore}% Satisfied
+                <span className={`w-1.5 h-1.5 rounded-full ${activeStack.coverageResult.coverageScore >= 80 ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                <span>{activeStack.coverageResult.coverageScore}% Satisfied</span>
               </span>
             </div>
 
@@ -875,7 +997,7 @@ export default function BuildStackResultsPage() {
                   <div key={f.featureKey} className="p-4 hover:bg-slate-50/70 transition-colors">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-2.5">
-                        <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                        <div className="w-5 h-5 rounded-full bg-[#1E3A5F]/10 text-[#1E3A5F] border border-[#1E3A5F]/15 flex items-center justify-center shrink-0 mt-0.5">
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
                           </svg>
@@ -896,7 +1018,7 @@ export default function BuildStackResultsPage() {
                           </div>
                         </div>
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 shrink-0">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200/90 shrink-0 font-mono">
                         {primaryCovered ? 'Direct' : 'Full'}
                       </span>
                     </div>
@@ -1013,7 +1135,7 @@ export default function BuildStackResultsPage() {
                     </div>
                     <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-300 ${item.val >= 80 ? 'bg-emerald-500' : item.val >= 60 ? 'bg-[#1E3A5F]' : 'bg-amber-500'
+                        className={`h-full rounded-full transition-all duration-300 ${item.val >= 80 ? 'bg-[#1E3A5F]' : item.val >= 60 ? 'bg-slate-700' : 'bg-amber-500'
                           }`}
                         style={{ width: `${item.val}%` }}
                       />
@@ -1239,12 +1361,14 @@ function PrimaryRecommendationCard({
   teamSize,
   isActive,
   onViewAnalysis,
+  domainLabel,
   animationDelay = 0,
 }: {
   tool: ToolInStack;
   teamSize: number;
   isActive: boolean;
   onViewAnalysis: () => void;
+  domainLabel?: string;
   animationDelay?: number;
 }) {
   const role = getProviderRole(tool.buyingPriority, 1);
@@ -1307,24 +1431,27 @@ function PrimaryRecommendationCard({
             </div>
 
             {/* Compact Inline Domain Fit Block */}
-            <div className="flex items-center gap-2 bg-white border border-slate-200/90 rounded-md px-2.5 py-1 shadow-2xs">
-              <span className="text-xs font-black text-slate-950 tabular-nums">
-                {fitScore}%
-              </span>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">
-                Domain Fit
-              </span>
-              <div className="w-10 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${fitScore >= 80 ? 'bg-emerald-500' : fitScore >= 65 ? 'bg-[#1E3A5F]' : 'bg-amber-500'
-                    }`}
-                  style={{ width: `${fitScore}%` }}
-                />
+            <MetricTooltip type="domainFit" score={fitScore} domainName={domainLabel} qualitativeFit={qualitativeFit}>
+              <div className="flex items-center gap-2 bg-white border border-slate-200/90 rounded-md px-2.5 py-1 shadow-2xs hover:border-slate-300 transition-colors cursor-help">
+                <span className="text-xs font-black text-slate-950 tabular-nums">
+                  {fitScore}%
+                </span>
+                <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-0.5">
+                  <span>Domain Fit</span>
+                  <MetricInfoIcon />
+                </span>
+                <div className="w-10 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${fitScore >= 80 ? 'bg-emerald-500' : fitScore >= 65 ? 'bg-[#1E3A5F]' : 'bg-amber-500'
+                      }`}
+                    style={{ width: `${fitScore}%` }}
+                  />
+                </div>
+                <span className="text-[10px] font-bold text-slate-600">
+                  {qualitativeFit}
+                </span>
               </div>
-              <span className="text-[10px] font-bold text-slate-600">
-                {qualitativeFit}
-              </span>
-            </div>
+            </MetricTooltip>
           </div>
 
           {tool.whyRecommended && (
@@ -1374,9 +1501,13 @@ function PrimaryRecommendationCard({
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
           </svg>
         </button>
-        <span className="text-xs font-bold text-slate-600 tabular-nums">
-          Domain Suitability: <strong className="text-slate-950 font-black">{fitScore}%</strong>
-        </span>
+        <MetricTooltip type="domainFit" score={fitScore} domainName={domainLabel} qualitativeFit={qualitativeFit}>
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors tabular-nums cursor-help">
+            <span>Domain Fit</span>
+            <MetricInfoIcon />
+            <strong className="text-slate-950 font-black">{fitScore}%</strong>
+          </span>
+        </MetricTooltip>
       </div>
     </m.div>
   );
@@ -1387,12 +1518,14 @@ function SecondaryRecommendationCard({
   teamSize,
   isActive,
   onViewAnalysis,
+  domainLabel,
   animationDelay = 0,
 }: {
   tool: ToolInStack;
   teamSize: number;
   isActive: boolean;
   onViewAnalysis: () => void;
+  domainLabel?: string;
   animationDelay?: number;
 }) {
   const role = getProviderRole(tool.buyingPriority, 2);
@@ -1452,24 +1585,27 @@ function SecondaryRecommendationCard({
             </div>
 
             {/* Compact Inline Domain Fit Block */}
-            <div className="flex items-center gap-2 bg-white border border-slate-200/90 rounded-md px-2.5 py-1 shadow-2xs">
-              <span className="text-xs font-black text-slate-950 tabular-nums">
-                {fitScore}%
-              </span>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">
-                Domain Fit
-              </span>
-              <div className="w-10 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${fitScore >= 80 ? 'bg-emerald-500' : fitScore >= 65 ? 'bg-[#1E3A5F]' : 'bg-amber-500'
-                    }`}
-                  style={{ width: `${fitScore}%` }}
-                />
+            <MetricTooltip type="domainFit" score={fitScore} domainName={domainLabel} qualitativeFit={qualitativeFit}>
+              <div className="flex items-center gap-2 bg-white border border-slate-200/90 rounded-md px-2.5 py-1 shadow-2xs hover:border-slate-300 transition-colors cursor-help">
+                <span className="text-xs font-black text-slate-950 tabular-nums">
+                  {fitScore}%
+                </span>
+                <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-0.5">
+                  <span>Domain Fit</span>
+                  <MetricInfoIcon />
+                </span>
+                <div className="w-10 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${fitScore >= 80 ? 'bg-emerald-500' : fitScore >= 65 ? 'bg-[#1E3A5F]' : 'bg-amber-500'
+                      }`}
+                    style={{ width: `${fitScore}%` }}
+                  />
+                </div>
+                <span className="text-[10px] font-bold text-slate-600">
+                  {qualitativeFit}
+                </span>
               </div>
-              <span className="text-[10px] font-bold text-slate-600">
-                {qualitativeFit}
-              </span>
-            </div>
+            </MetricTooltip>
           </div>
 
           {tool.whyRecommended && (
@@ -1519,9 +1655,13 @@ function SecondaryRecommendationCard({
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
           </svg>
         </button>
-        <span className="text-xs font-bold text-slate-600 tabular-nums">
-          Domain Suitability: <strong className="text-slate-950 font-black">{fitScore}%</strong>
-        </span>
+        <MetricTooltip type="domainFit" score={fitScore} domainName={domainLabel} qualitativeFit={qualitativeFit}>
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors tabular-nums cursor-help">
+            <span>Domain Fit</span>
+            <MetricInfoIcon />
+            <strong className="text-slate-950 font-black">{fitScore}%</strong>
+          </span>
+        </MetricTooltip>
       </div>
     </m.div>
   );
@@ -1533,6 +1673,7 @@ function SupportingToolCard({
   roleIndex,
   isActive,
   onViewAnalysis,
+  domainLabel,
   animationDelay = 0,
 }: {
   tool: ToolInStack;
@@ -1540,6 +1681,7 @@ function SupportingToolCard({
   roleIndex: number;
   isActive: boolean;
   onViewAnalysis: () => void;
+  domainLabel?: string;
   animationDelay?: number;
 }) {
   const role = getProviderRole(tool.buyingPriority, roleIndex);
@@ -1624,9 +1766,13 @@ function SupportingToolCard({
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
           </svg>
         </button>
-        <span className="text-xs font-bold text-slate-600 tabular-nums">
-          Domain Fit: <strong className="text-slate-950 font-black">{fitScore}%</strong>
-        </span>
+        <MetricTooltip type="domainFit" score={fitScore} domainName={domainLabel}>
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors tabular-nums cursor-help">
+            <span>Domain Fit</span>
+            <MetricInfoIcon />
+            <strong className="text-slate-950 font-black">{fitScore}%</strong>
+          </span>
+        </MetricTooltip>
       </div>
     </m.div>
   );

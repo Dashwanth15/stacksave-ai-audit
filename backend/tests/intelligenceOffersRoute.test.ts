@@ -31,27 +31,27 @@ vi.mock('../src/services/dbService', () => ({
         results = results.filter((r) => r.isPublic === query.isPublic);
       }
 
-      return {
-        sort: (_sortField: any) => ({
-          select: (fieldsStr: string) => {
-            const fields = fieldsStr.split(/\s+/).filter(Boolean);
-            return {
-              lean: async () => {
-                // Apply Mongoose-style projection whitelist
-                return results.map((doc) => {
-                  const projected: any = {};
-                  for (const f of fields) {
-                    if (doc[f] !== undefined) {
-                      projected[f] = doc[f];
-                    }
+      const chainable: any = {
+        lean: async () => [...results],
+        sort: (_sortField: any) => chainable,
+        select: (fieldsStr: string) => {
+          const fields = fieldsStr.split(/\s+/).filter(Boolean);
+          return {
+            lean: async () => {
+              return results.map((doc) => {
+                const projected: any = {};
+                for (const f of fields) {
+                  if (doc[f] !== undefined) {
+                    projected[f] = doc[f];
                   }
-                  return projected;
-                });
-              },
-            };
-          },
-        }),
+                }
+                return projected;
+              });
+            },
+          };
+        },
       };
+      return chainable;
     }),
     countDocuments: vi.fn().mockResolvedValue(0),
     aggregate: vi.fn().mockResolvedValue([]),
@@ -171,6 +171,99 @@ describe('GET /api/intelligence/offers regression test', () => {
       expect(json.success).toBe(true);
       expect(json.data.count).toBe(0);
       expect(json.data.offers).toHaveLength(0);
+    });
+  });
+
+  it('dynamically calculates canonical provider count without partner company inflation', async () => {
+    // 3 offers for Gemini: native, ASUS bundle, Google Pixel bundle
+    mockRecords.push(
+      {
+        _id: 'gemini_direct',
+        fingerprint: 'fp_gemini_1',
+        providerId: 'gemini',
+        providerName: 'Google Gemini',
+        title: 'Google One AI Premium (2 Months Free)',
+        evidenceText: 'Valid official offer evidence text with more than twenty characters.',
+        sourceStatus: 'VERIFIED',
+        sourceUrl: 'https://gemini.google.com/pricing',
+        detectedAt: new Date(),
+        isActive: true,
+        isPublic: true,
+        eventType: 'NEW_OFFER',
+      },
+      {
+        _id: 'gemini_asus',
+        fingerprint: 'fp_gemini_2',
+        providerId: 'asus',
+        providerName: 'ASUS',
+        aiProvider: 'gemini',
+        partner: 'ASUS',
+        title: 'ASUS Chromebook 12-Month Gemini Advanced',
+        evidenceText: 'Valid official offer evidence text with more than twenty characters.',
+        sourceStatus: 'VERIFIED',
+        sourceUrl: 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+        destinationUrl: 'https://press.asus.com/news/press-releases/chromebook-plus-google-one-ai-premium-offer/',
+        detectedAt: new Date(),
+        isActive: true,
+        isPublic: true,
+        eventType: 'NEW_OFFER',
+      },
+      {
+        _id: 'gemini_pixel',
+        fingerprint: 'fp_gemini_3',
+        providerId: 'google-pixel',
+        providerName: 'Google Pixel',
+        aiProvider: 'gemini',
+        partner: 'Google Pixel',
+        title: 'Pixel 9 Pro 12-Month Gemini Advanced Bundle',
+        evidenceText: 'Valid official offer evidence text with more than twenty characters.',
+        sourceStatus: 'VERIFIED',
+        sourceUrl: 'https://store.google.com/intl/en/google-one-ai-premium-terms/',
+        destinationUrl: 'https://store.google.com/intl/en/google-one-ai-premium-terms/',
+        detectedAt: new Date(),
+        isActive: true,
+        isPublic: true,
+        eventType: 'NEW_OFFER',
+      },
+      // 1 offer for ChatGPT (with Amex partner)
+      {
+        _id: 'chatgpt_amex',
+        fingerprint: 'fp_chatgpt_1',
+        providerId: 'american-express',
+        providerName: 'American Express',
+        aiProvider: 'chatgpt',
+        partner: 'American Express',
+        title: '$300 ChatGPT Business Statement Credit',
+        evidenceText: 'Valid official offer evidence text with more than twenty characters.',
+        sourceStatus: 'VERIFIED',
+        sourceUrl: 'https://www.americanexpress.com/en-us/benefits/business-card-benefits/chatgpt-credits/',
+        destinationUrl: 'https://www.americanexpress.com/en-us/benefits/business-card-benefits/chatgpt-credits/',
+        detectedAt: new Date(),
+        isActive: true,
+        isPublic: true,
+        eventType: 'NEW_OFFER',
+      }
+    );
+
+    await withIntelligenceApp(async (fetch) => {
+      // 1. Check GET /api/intelligence/providers
+      const provRes = await fetch('/api/intelligence/providers');
+      expect(provRes.status).toBe(200);
+      const provJson = await provRes.json();
+      expect(provJson.success).toBe(true);
+      // 4 offers from 2 unique canonical AI providers (gemini, chatgpt), NOT 4!
+      expect(provJson.data.count).toBe(2);
+      expect(provJson.data.providers).toHaveLength(2);
+      expect(provJson.data.providers.map((p: any) => p.providerId)).toEqual(['chatgpt', 'gemini']);
+
+      // 2. Check GET /api/intelligence/offers
+      const offersRes = await fetch('/api/intelligence/offers');
+      expect(offersRes.status).toBe(200);
+      const offersJson = await offersRes.json();
+      expect(offersJson.success).toBe(true);
+      expect(offersJson.data.count).toBe(4);
+      expect(offersJson.data.providerCount).toBe(2);
+      expect(offersJson.data.providers).toHaveLength(2);
     });
   });
 });

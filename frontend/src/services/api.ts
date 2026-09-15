@@ -308,10 +308,23 @@ export async function fetchProviderPricing(providerId: string): Promise<Provider
 }
 
 // ── Public Offers In-Flight Deduplication & Cache ────────────
+export interface CanonicalMonitoredProvider {
+  providerId: string;
+  displayName: string;
+  offerCount: number;
+}
+
 export interface PublicOffersResponse {
   offers: PublicOffer[];
   count: number;
+  providerCount?: number;
+  providers?: CanonicalMonitoredProvider[];
   note: string;
+}
+
+export interface MonitoredProvidersResponse {
+  count: number;
+  providers: CanonicalMonitoredProvider[];
 }
 
 let inFlightOffersPromise: Promise<PublicOffersResponse> | null = null;
@@ -413,6 +426,19 @@ export async function fetchPublicOffers(): Promise<PublicOffersResponse> {
   });
 
   return inFlightOffersPromise;
+}
+
+/**
+ * GET /api/intelligence/providers
+ * Returns the canonical list of unique AI providers monitored 24/7.
+ * Deduplicated by canonical AI platform identity.
+ */
+export async function fetchMonitoredProviders(): Promise<MonitoredProvidersResponse> {
+  const response = await api.get('/intelligence/providers', { timeout: 10_000 });
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.error ?? 'Failed to fetch monitored providers');
+  }
+  return response.data.data;
 }
 
 // ── Analytics & Statistics Endpoints ─────────────────────────

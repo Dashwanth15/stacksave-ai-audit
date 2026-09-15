@@ -9,8 +9,82 @@ import { PricingSourceModel, NotificationEventModel, SyncLogModel } from '../ser
 import { PricingOverlayService } from '../pricing/pricingOverlay';
 import { isRegisteredOfficialSource, canPublishOffer } from '../pricing/offerTrust';
 import { resolveCanonicalOfferUrl } from '../pricing/partnerSourceRegistry';
+import { getProviderSource } from '../pricing/sourceRegistry';
 import { PlatformRankingEngine, RankingCategory } from '../audit-engine/services/PlatformRankingEngine';
 import { ProviderDiscoveryService } from '../pricing/providerDiscoveryService';
+
+// ── Canonical AI Provider Names (Zero Hardcoded Redundancy) ──
+export const CANONICAL_AI_PROVIDER_NAMES: Record<string, string> = {
+  'anthropic-api': 'Anthropic API',
+  'antigravity': 'Google Antigravity',
+  'bolt-new': 'Bolt.new',
+  'canva-ai': 'Canva AI',
+  'character-ai': 'Character.ai',
+  'chatgpt': 'ChatGPT',
+  'claude': 'Claude',
+  'codex': 'OpenAI Codex',
+  'cohere': 'Cohere',
+  'cursor': 'Cursor',
+  'deepl': 'DeepL',
+  'deepseek': 'DeepSeek',
+  'descript': 'Descript',
+  'devin': 'Devin',
+  'elevenlabs': 'ElevenLabs',
+  'figma-ai': 'Figma AI',
+  'fireworks-ai': 'Fireworks AI',
+  'gamma': 'Gamma',
+  'gemini': 'Gemini',
+  'genspark': 'Genspark',
+  'github-copilot': 'GitHub Copilot',
+  'github-models': 'GitHub Models',
+  'glm': 'GLM',
+  'grammarly': 'Grammarly',
+  'grok': 'Grok',
+  'groq': 'Groq',
+  'heygen': 'HeyGen',
+  'huggingface': 'Hugging Face',
+  'ideogram': 'Ideogram',
+  'jetbrains': 'JetBrains',
+  'kimi': 'Kimi',
+  'leonardo-ai': 'Leonardo AI',
+  'lovable': 'Lovable',
+  'manus': 'Manus',
+  'midjourney': 'Midjourney',
+  'mistral': 'Mistral AI',
+  'muse': 'Muse',
+  'notebooklm': 'NotebookLM',
+  'notion-ai': 'Notion AI',
+  'openai-api': 'OpenAI API',
+  'otter-ai': 'Otter.ai',
+  'perplexity': 'Perplexity',
+  'poe': 'Poe',
+  'qwen': 'Qwen',
+  'replit-ai': 'Replit AI',
+  'runway': 'Runway',
+  'suno': 'Suno',
+  'synthesia': 'Synthesia',
+  'together-ai': 'Together AI',
+  'v0': 'v0 by Vercel',
+  'wandb': 'Weights & Biases',
+  'windsurf': 'Windsurf',
+};
+
+export function getCanonicalProviderName(providerId: string, fallbackName?: string): string {
+  const normId = providerId.toLowerCase().trim();
+  if (CANONICAL_AI_PROVIDER_NAMES[normId]) {
+    return CANONICAL_AI_PROVIDER_NAMES[normId];
+  }
+  const sourceConfig = getProviderSource(normId);
+  if (sourceConfig?.displayName) {
+    return sourceConfig.displayName;
+  }
+  if (fallbackName && typeof fallbackName === 'string') {
+    return fallbackName
+      .replace(/\s*\(OpenAI\)|\s*\(Anthropic\)|\s*\(Google\)/gi, '')
+      .trim();
+  }
+  return providerId;
+}
 
 const router = Router();
 
@@ -498,11 +572,14 @@ router.get('/offers', async (_req: Request, res: Response) => {
           platformIntelligenceScore * 0.60 + offerOpportunityScore * 0.40
         ));
         const destinationUrl = resolveCanonicalOfferUrl((e as any).destinationUrl || e.sourceUrl);
+        const canonicalId = ((e as any).aiProvider || e.providerId || '').toLowerCase().trim();
+        const canonicalDisplayName = getCanonicalProviderName(canonicalId, e.providerName || e.providerId);
         return {
           id: e.fingerprint || (e as { _id?: unknown })._id?.toString() || `${e.providerId}-${e.title}`,
           fingerprint: e.fingerprint,
           providerId: e.providerId,
-          providerName: e.providerName || e.providerId,
+          providerName: canonicalDisplayName,
+          canonicalProviderId: canonicalId,
           title: e.title,
           category,
           description: e.description || null,
@@ -554,11 +631,32 @@ router.get('/offers', async (_req: Request, res: Response) => {
       // Sort by finalRecommendedScore DESC (platform quality dominates)
       .sort((a, b) => b.finalRecommendedScore - a.finalRecommendedScore);
 
+    // ── Canonical AI Provider Grouping & Count ──────────────────
+    const canonicalProvidersMap = new Map<string, { providerId: string; displayName: string; offerCount: number }>();
+    for (const offer of scoredOffers) {
+      const canonicalId = ((offer.aiProvider || offer.providerId) || '').toLowerCase().trim();
+      const existing = canonicalProvidersMap.get(canonicalId);
+      if (existing) {
+        existing.offerCount++;
+      } else {
+        canonicalProvidersMap.set(canonicalId, {
+          providerId: canonicalId,
+          displayName: getCanonicalProviderName(canonicalId, offer.providerName),
+          offerCount: 1,
+        });
+      }
+    }
+
+    const providersList = Array.from(canonicalProvidersMap.values())
+      .sort((a, b) => a.displayName.localeCompare(b.displayName));
+
     return res.json({
       success: true,
       data: {
         offers: scoredOffers,
         count: scoredOffers.length,
+        providerCount: providersList.length,
+        providers: providersList,
         note: 'Offers sorted by finalRecommendedScore (platformIntelligenceScore×0.60 + offerOpportunityScore×0.40). Platform quality determines primary order; offer quality is secondary. All verified active offers across all validated AI providers.',
       },
     });
@@ -600,6 +698,53 @@ router.get('/discovered-providers', async (_req: Request, res: Response) => {
   } catch (err) {
     console.error('GET /api/intelligence/discovered-providers error:', err);
     return res.status(500).json({ success: false, error: 'Failed to fetch discovered providers' });
+  }
+});
+
+// ── GET /api/intelligence/providers ─────────────────────────
+// PUBLIC (no auth required) — Canonical list of unique AI providers monitored 24/7.
+// Deduplicated by canonical AI platform identity (aiProvider || providerId).
+// Commercial partner companies (Jio, ASUS, Amex, Pixel, etc.) do NOT inflate the count.
+router.get('/providers', async (_req: Request, res: Response) => {
+  try {
+    const events = await NotificationEventModel.find({
+      eventType: 'NEW_OFFER',
+      isActive: { $ne: false },
+      isPublic: true,
+    }).lean();
+
+    const canonicalProvidersMap = new Map<string, { providerId: string; displayName: string; offerCount: number }>();
+
+    for (const e of events) {
+      if (!canPublishOffer(e)) continue;
+      const canonicalId = ((e as any).aiProvider || e.providerId || '').toLowerCase().trim();
+      if (!canonicalId) continue;
+
+      const existing = canonicalProvidersMap.get(canonicalId);
+      if (existing) {
+        existing.offerCount++;
+      } else {
+        canonicalProvidersMap.set(canonicalId, {
+          providerId: canonicalId,
+          displayName: getCanonicalProviderName(canonicalId, e.providerName),
+          offerCount: 1,
+        });
+      }
+    }
+
+    const providers = Array.from(canonicalProvidersMap.values())
+      .sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+    return res.json({
+      success: true,
+      data: {
+        count: providers.length,
+        providers,
+      },
+    });
+  } catch (err) {
+    console.error('GET /api/intelligence/providers error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to fetch monitored providers' });
   }
 });
 

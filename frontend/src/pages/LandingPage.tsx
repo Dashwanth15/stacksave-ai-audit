@@ -6,6 +6,7 @@ import Logo from '../components/Logo';
 import OfferNotificationBell from '../components/OfferNotificationBell';
 import InteractiveBackground from '../components/InteractiveBackground';
 import { trackCtaClicked } from '../utils/analytics';
+import { fetchPublicOffers, getCachedPublicOffers } from '../services/api';
 
 import './LandingBackground.css';
 
@@ -495,8 +496,26 @@ export default function LandingPage() {
   const [activeSection, setActiveSection] = useState('features');
   const [hasScrolled, setHasScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [monitoredProviderCount, setMonitoredProviderCount] = useState<number | null>(() => {
+    const cached = getCachedPublicOffers();
+    return cached?.providerCount ?? null;
+  });
 
   const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), []);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchPublicOffers()
+      .then((res) => {
+        if (isMounted && res && typeof res.providerCount === 'number') {
+          setMonitoredProviderCount(res.providerCount);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Close mobile menu on route change or Escape key
   useEffect(() => {
@@ -944,12 +963,18 @@ export default function LandingPage() {
 
                     {/* Description */}
                     <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                      Track verified vendor discounts, promotions, and price shifts across 13 providers.
+                      Track verified vendor discounts, promotions, and price shifts across {monitoredProviderCount ? `${monitoredProviderCount} providers.` : 'monitored AI providers.'}
                     </p>
 
                     {/* Benefit Bullets */}
                     <ul className="mt-4 space-y-2">
-                      {['13 AI providers monitored 24/7', 'Live discounts & batch promotions', 'Direct official vendor feeds'].map((item) => (
+                      {[
+                        monitoredProviderCount
+                          ? `${monitoredProviderCount} AI providers monitored 24/7`
+                          : 'AI providers monitored 24/7',
+                        'Live discounts & batch promotions',
+                        'Direct official vendor feeds',
+                      ].map((item) => (
                         <li key={item} className="flex items-center gap-2 text-[11px] text-slate-600">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                           <span>{item}</span>

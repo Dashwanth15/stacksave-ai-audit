@@ -564,6 +564,7 @@ export interface PublicOffer {
   fingerprint?: string;
   providerId: string;
   providerName: string;
+  canonicalProviderId?: string;
   title: string;
   description: string | null;
   discount: string | null;

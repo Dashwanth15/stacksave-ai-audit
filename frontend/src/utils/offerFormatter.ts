@@ -62,6 +62,7 @@ export type OfferCategory = 'all' | 'partner' | 'student' | 'annual' | 'api' | '
 export interface FormattedOffer {
   id: string;
   providerId: string;
+  canonicalProviderId?: string;
   providerName: string;
   title: string;
   summary: string;
@@ -370,7 +371,10 @@ export function formatOfferForDisplay(
   readOfferIds: string[] = []
 ): FormattedOffer {
   const providerId = (rawOffer.providerId || '').toLowerCase();
-  const providerName = rawOffer.providerName || rawOffer.providerId;
+  const canonicalProviderId = (rawOffer.canonicalProviderId || rawOffer.aiProvider || rawOffer.providerId || '').toLowerCase().trim();
+  const providerName = (rawOffer.providerName || rawOffer.providerId)
+    .replace(/\s*\(OpenAI\)|\s*\(Anthropic\)|\s*\(Google\)/gi, '')
+    .trim();
   const rawTitle = decodeHtmlEntities(rawOffer.title || '');
   const rawDesc = decodeHtmlEntities(rawOffer.description || '');
   const rawDiscount = decodeHtmlEntities(String(rawOffer.discount || ''));
@@ -479,6 +483,7 @@ export function formatOfferForDisplay(
   return {
     id: rawOffer.id,
     providerId,
+    canonicalProviderId,
     providerName,
     title,
     summary,
