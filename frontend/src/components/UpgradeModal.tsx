@@ -28,6 +28,7 @@ export type UpgradeModalTrigger =
   | 'share'
   | 'audit'
   | 'stack'
+  | 'stack-save'
   | 'offers'
   | 'scroll'
   | 'general';
@@ -237,6 +238,133 @@ export default function UpgradeModal({
     },
   ];
 
+  // Contextual modal headings & copy based on trigger event
+  const isLimitAction = type === 'save' || type === 'share' || type === 'stack-save';
+
+  let eyebrowContent = null;
+  let headlineContent = null;
+  let subheadlineContent = null;
+
+  if (type === 'save') {
+    eyebrowContent = (
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200/80 text-[10.5px] font-bold text-amber-800 tracking-wider uppercase">
+        <span>FREE PLAN LIMIT REACHED</span>
+        <span className="text-amber-300 font-normal">|</span>
+        <span className="text-amber-700 font-semibold text-[10px]">2 SAVED AUDITS INCLUDED</span>
+      </div>
+    );
+    headlineContent = (
+      <>
+        Upgrade to <span className="text-emerald-600 font-black">Premium</span> for unlimited audit history
+      </>
+    );
+    subheadlineContent =
+      'Your Free plan includes 2 saved audits. Upgrade to Premium for unlimited audit history, version diffs, and automatic price change tracking.';
+  } else if (type === 'share') {
+    eyebrowContent = (
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200/80 text-[10.5px] font-bold text-amber-800 tracking-wider uppercase">
+        <span>FREE PLAN LIMIT REACHED</span>
+        <span className="text-amber-300 font-normal">|</span>
+        <span className="text-amber-700 font-semibold text-[10px]">5 SHARE LINKS INCLUDED</span>
+      </div>
+    );
+    headlineContent = (
+      <>
+        Upgrade to <span className="text-emerald-600 font-black">Premium</span> for unlimited audit sharing
+      </>
+    );
+    subheadlineContent =
+      'Your Free plan includes 5 audit share links. Upgrade to Premium for unlimited audit sharing, collaborative reports, and permanent links.';
+  } else if (type === 'stack-save') {
+    eyebrowContent = (
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200/80 text-[10.5px] font-bold text-amber-800 tracking-wider uppercase">
+        <span>FREE PLAN LIMIT REACHED</span>
+        <span className="text-amber-300 font-normal">|</span>
+        <span className="text-amber-700 font-semibold text-[10px]">3 SAVED STACKS INCLUDED</span>
+      </div>
+    );
+    headlineContent = (
+      <>
+        Upgrade to <span className="text-emerald-600 font-black">Premium</span> for unlimited AI stack history
+      </>
+    );
+    subheadlineContent =
+      'Your Free plan includes 3 saved AI stacks. Upgrade to Premium for unlimited stack history, architecture versioning, and automatic tool price drop alerts.';
+  } else if (type === 'audit') {
+    eyebrowContent = promoActive ? (
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200/80 text-[10.5px] font-bold text-emerald-800 tracking-wider uppercase">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+        <span>{PROMOTION_CONFIG.promotionLabel}</span>
+        <span className="text-emerald-300 font-normal">|</span>
+        <span className="text-emerald-600 font-semibold text-[10px]">UPGRADE SMARTER</span>
+      </div>
+    ) : (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 border border-slate-200">
+        <span>STACKSAVE PREMIUM</span>
+      </span>
+    );
+    headlineContent = promoActive && formatDiscountBadge('yearly') ? (
+      <>
+        Get <span className="text-emerald-600 font-black">{formatDiscountBadge('yearly').replace('OFF', 'Off')}</span> StackSave Premium
+      </>
+    ) : (
+      'StackSave Premium'
+    );
+    subheadlineContent =
+      'Save this audit, track pricing changes across your tools, and unlock deep intelligence.';
+  } else if (type === 'stack') {
+    eyebrowContent = promoActive ? (
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200/80 text-[10.5px] font-bold text-emerald-800 tracking-wider uppercase">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+        <span>{PROMOTION_CONFIG.promotionLabel}</span>
+        <span className="text-emerald-300 font-normal">|</span>
+        <span className="text-emerald-600 font-semibold text-[10px]">UPGRADE SMARTER</span>
+      </div>
+    ) : (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 border border-slate-200">
+        <span>STACKSAVE PREMIUM</span>
+      </span>
+    );
+    headlineContent = promoActive && formatDiscountBadge('yearly') ? (
+      <>
+        Get <span className="text-emerald-600 font-black">{formatDiscountBadge('yearly').replace('OFF', 'Off')}</span> StackSave Premium
+      </>
+    ) : (
+      'StackSave Premium'
+    );
+    subheadlineContent =
+      'Save your AI stack history, track multi-seat license negotiations, and never miss price drops.';
+  } else {
+    eyebrowContent = promoActive ? (
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200/80 text-[10.5px] font-bold text-emerald-800 tracking-wider uppercase">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+        <span>{PROMOTION_CONFIG.promotionLabel}</span>
+        <span className="text-emerald-300 font-normal">|</span>
+        <span className="text-emerald-600 font-semibold text-[10px]">UPGRADE SMARTER</span>
+      </div>
+    ) : (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 border border-slate-200">
+        <span>STACKSAVE PREMIUM</span>
+      </span>
+    );
+    headlineContent = promoActive && formatDiscountBadge('yearly') ? (
+      <>
+        Get <span className="text-emerald-600 font-black">{formatDiscountBadge('yearly').replace('OFF', 'Off')}</span> StackSave Premium
+      </>
+    ) : (
+      'StackSave Premium'
+    );
+    subheadlineContent = promoActive
+      ? PROMOTION_CONFIG.subheadline
+      : 'Get unlimited access, full history, and instant price intelligence.';
+  }
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
@@ -355,38 +483,17 @@ export default function UpgradeModal({
                 </span>
               </div>
 
-              {/* Editorial Eyebrow Tag: Subtle border & zap, NO red capsule */}
+              {/* Editorial Eyebrow Tag: Contextual or Promo */}
               <div className="flex items-center justify-between gap-2 pr-8">
-                {promoActive ? (
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200/80 text-[10.5px] font-bold text-emerald-800 tracking-wider uppercase">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                    </svg>
-                    <span>{PROMOTION_CONFIG.promotionLabel}</span>
-                    <span className="text-emerald-300 font-normal">|</span>
-                    <span className="text-emerald-600 font-semibold text-[10px]">UPGRADE SMARTER</span>
-                  </div>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 border border-slate-200">
-                    <span>STACKSAVE PREMIUM</span>
-                  </span>
-                )}
+                {eyebrowContent}
               </div>
 
               {/* Heading: Strong typographic emphasis with StackSave green */}
               <h3 id="upgrade-modal-title" className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight mt-3 leading-tight">
-                {promoActive && formatDiscountBadge('yearly') ? (
-                  <>
-                    Get <span className="text-emerald-600 font-black">{formatDiscountBadge('yearly').replace('OFF', 'Off')}</span> StackSave Premium
-                  </>
-                ) : (
-                  'StackSave Premium'
-                )}
+                {headlineContent}
               </h3>
               <p className="mt-1 text-xs sm:text-[13px] text-slate-500 leading-normal">
-                {promoActive
-                  ? PROMOTION_CONFIG.subheadline
-                  : 'Get unlimited access, full history, and instant price intelligence.'}
+                {subheadlineContent}
               </p>
 
               {/* 6 Feature Rows: Soft square containers with 1px border */}
@@ -553,7 +660,7 @@ export default function UpgradeModal({
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" className="text-amber-400">
                         <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
                       </svg>
-                      <span>Upgrade to Premium</span>
+                      <span>{isLimitAction ? 'Try Premium' : 'Upgrade to Premium'}</span>
                     </div>
                     <svg
                       width="15"
@@ -579,7 +686,7 @@ export default function UpgradeModal({
                 disabled={status === 'verifying' || status === 'creating'}
                 className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors duration-150 mt-2.5 mx-auto block cursor-pointer disabled:opacity-40"
               >
-                Maybe later
+                {isLimitAction ? 'Not now' : 'Maybe later'}
               </button>
             </div>
           </div>

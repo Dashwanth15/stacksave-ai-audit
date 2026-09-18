@@ -359,7 +359,8 @@ export default function ResultsPage() {
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [savingAudit, setSavingAudit] = useState<boolean>(false);
 
-  const { authenticated, openAuthModal, openUpgradeModal } = useAuth();
+  const { user, authenticated, openAuthModal, openUpgradeModal } = useAuth();
+  const isPremium = user?.plan === 'PREMIUM';
 
   // Check if current audit is already saved in session/local storage
   useEffect(() => {
@@ -855,7 +856,9 @@ export default function ResultsPage() {
             )}
 
             {/* ── Contextual Premium Upgrade Nudge ───────────────── */}
-            <PremiumUpgradeNudge variant="audit" id={audit?.auditId} />
+            {audit?.auditId && !isPremium && (
+              <PremiumUpgradeNudge variant="audit" id={audit.auditId} />
+            )}
           </div>
 
           {/* Right Column Area: Sticky KPI Card & Timeline Actions */}

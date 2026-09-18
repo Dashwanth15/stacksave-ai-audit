@@ -110,7 +110,8 @@ export default function BuildStackResultsPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const altScrollRef = useRef<HTMLDivElement>(null);
 
-  const { authenticated, openAuthModal } = useAuth();
+  const { user, authenticated, openAuthModal, openUpgradeModal } = useAuth();
+  const isPremium = user?.plan === 'PREMIUM';
   const [savingStack, setSavingStack] = useState(false);
   const [savedSignature, setSavedSignature] = useState<string | null>(null);
 
@@ -400,8 +401,13 @@ export default function BuildStackResultsPage() {
       setSavedSignature(sig);
       showToast('Stack saved to your account!');
     } catch (err: any) {
-      console.error('Failed to save stack:', err);
-      showToast(err?.message || 'Failed to save stack. Please try again.');
+      const errorCode = err?.response?.data?.code || err?.code;
+      if (errorCode === 'FREE_STACK_LIMIT_REACHED') {
+        openUpgradeModal('stack-save');
+      } else {
+        console.error('Failed to save stack:', err);
+        showToast(err?.response?.data?.error || err?.message || 'Failed to save stack. Please try again.');
+      }
     } finally {
       setSavingStack(false);
     }
@@ -1462,9 +1468,11 @@ export default function BuildStackResultsPage() {
         )}
 
         {/* ── Contextual Premium Upgrade Nudge ───────────────── */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <PremiumUpgradeNudge variant="stack" />
-        </div>
+        {rec && activeStack && !isPremium && (
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <PremiumUpgradeNudge variant="stack" />
+          </div>
+        )}
       </main>
     </div>
   );

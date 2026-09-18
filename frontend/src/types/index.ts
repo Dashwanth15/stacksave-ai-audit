@@ -661,6 +661,10 @@ export interface UserUsageResponse {
     current: number;
     limit: number | null;
   };
+  savedStacks?: {
+    current: number;
+    limit: number | null;
+  };
 }
 
 export interface AuditShareResponse {

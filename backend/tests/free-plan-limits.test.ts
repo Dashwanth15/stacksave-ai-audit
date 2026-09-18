@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import http from 'http';
 import app from '../src/app';
-import { UserModel, AuditModel, AuditShareLinkModel, connectDB } from '../src/services/dbService';
+import { UserModel, AuditModel, AuditShareLinkModel, SavedUserStackModel, connectDB } from '../src/services/dbService';
 import { generateSessionToken, SESSION_COOKIE_NAME } from '../src/utils/session';
 
 let server: http.Server;
@@ -59,10 +59,12 @@ afterAll(async () => {
   if (freeUser?._id) {
     await UserModel.deleteOne({ _id: freeUser._id });
     await AuditShareLinkModel.deleteMany({ userId: freeUser._id });
+    await SavedUserStackModel.deleteMany({ userId: freeUser._id });
   }
   if (premiumUser?._id) {
     await UserModel.deleteOne({ _id: premiumUser._id });
     await AuditShareLinkModel.deleteMany({ userId: premiumUser._id });
+    await SavedUserStackModel.deleteMany({ userId: premiumUser._id });
   }
   if (createdAuditIds.length > 0) {
     await AuditModel.deleteMany({ auditId: { $in: createdAuditIds } });
@@ -266,8 +268,132 @@ describe('StackSave Free-Plan Share Links Limits (Max 5, NO 5-minute timer)', ()
   });
 });
 
+describe('StackSave Free-Plan Saved Stacks Limits (Max 3)', () => {
+  it('allows a Free user to save their 1st AI stack (0/3 -> 1/3)', async () => {
+    const res = await fetch(`${baseUrl}/api/user/stack`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: `${SESSION_COOKIE_NAME}=${freeToken}`,
+      },
+      body: JSON.stringify({
+        name: 'Stack 1',
+        domain: 'marketing',
+        tools: [{ toolId: 'claude', toolName: 'Claude Pro', monthlyCost: 20 }],
+        totalMonthlySpend: 20,
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.success).toBe(true);
+    expect(json.data.name).toBe('Stack 1');
+
+    const count = await SavedUserStackModel.countDocuments({ userId: freeUser._id });
+    expect(count).toBe(1);
+  });
+
+  it('allows a Free user to save their 2nd AI stack (1/3 -> 2/3)', async () => {
+    const res = await fetch(`${baseUrl}/api/user/stack`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: `${SESSION_COOKIE_NAME}=${freeToken}`,
+      },
+      body: JSON.stringify({
+        name: 'Stack 2',
+        domain: 'engineering',
+        tools: [{ toolId: 'cursor', toolName: 'Cursor Pro', monthlyCost: 20 }],
+        totalMonthlySpend: 20,
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.success).toBe(true);
+
+    const count = await SavedUserStackModel.countDocuments({ userId: freeUser._id });
+    expect(count).toBe(2);
+  });
+
+  it('allows a Free user to save their 3rd AI stack (2/3 -> 3/3)', async () => {
+    const res = await fetch(`${baseUrl}/api/user/stack`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: `${SESSION_COOKIE_NAME}=${freeToken}`,
+      },
+      body: JSON.stringify({
+        name: 'Stack 3',
+        domain: 'design',
+        tools: [{ toolId: 'midjourney', toolName: 'Midjourney Standard', monthlyCost: 30 }],
+        totalMonthlySpend: 30,
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.success).toBe(true);
+
+    const count = await SavedUserStackModel.countDocuments({ userId: freeUser._id });
+    expect(count).toBe(3);
+  });
+
+  it('rejects a Free user attempting to save a 4th stack with FREE_STACK_LIMIT_REACHED', async () => {
+    const res = await fetch(`${baseUrl}/api/user/stack`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: `${SESSION_COOKIE_NAME}=${freeToken}`,
+      },
+      body: JSON.stringify({
+        name: 'Stack 4 (Over Limit)',
+        domain: 'sales',
+        tools: [{ toolId: 'chatgpt', toolName: 'ChatGPT Plus', monthlyCost: 20 }],
+        totalMonthlySpend: 20,
+      }),
+    });
+
+    expect(res.status).toBe(403);
+    const json = await res.json();
+    expect(json.success).toBe(false);
+    expect(json.code).toBe('FREE_STACK_LIMIT_REACHED');
+    expect(json.limit).toBe(3);
+    expect(json.current).toBe(3);
+    expect(json.upgradeRequired).toBe(true);
+
+    const count = await SavedUserStackModel.countDocuments({ userId: freeUser._id });
+    expect(count).toBe(3);
+  });
+
+  it('allows a Premium user to save unlimited AI stacks beyond 3', async () => {
+    for (let i = 1; i <= 5; i++) {
+      const res = await fetch(`${baseUrl}/api/user/stack`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `${SESSION_COOKIE_NAME}=${premiumToken}`,
+        },
+        body: JSON.stringify({
+          name: `Premium Stack ${i}`,
+          domain: 'enterprise',
+          tools: [{ toolId: `tool-${i}`, toolName: `Tool ${i}`, monthlyCost: 30 }],
+          totalMonthlySpend: 30,
+        }),
+      });
+
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.success).toBe(true);
+    }
+
+    const count = await SavedUserStackModel.countDocuments({ userId: premiumUser._id });
+    expect(count).toBe(5);
+  });
+});
+
 describe('StackSave User Usage API (GET /api/user/usage)', () => {
-  it('returns real database usage stats for Free user', async () => {
+  it('returns real database usage stats for Free user including savedStacks', async () => {
     const res = await fetch(`${baseUrl}/api/user/usage`, {
       method: 'GET',
       headers: {
@@ -283,9 +409,11 @@ describe('StackSave User Usage API (GET /api/user/usage)', () => {
     expect(json.data.savedAudits.limit).toBe(2);
     expect(json.data.shareLinks.current).toBe(5);
     expect(json.data.shareLinks.limit).toBe(5);
+    expect(json.data.savedStacks.current).toBe(3);
+    expect(json.data.savedStacks.limit).toBe(3);
   });
 
-  it('returns unlimited limits (null) for Premium user', async () => {
+  it('returns unlimited limits (null) for Premium user including savedStacks', async () => {
     const res = await fetch(`${baseUrl}/api/user/usage`, {
       method: 'GET',
       headers: {
@@ -301,5 +429,8 @@ describe('StackSave User Usage API (GET /api/user/usage)', () => {
     expect(json.data.savedAudits.limit).toBeNull();
     expect(json.data.shareLinks.current).toBe(6);
     expect(json.data.shareLinks.limit).toBeNull();
+    expect(json.data.savedStacks.current).toBe(5);
+    expect(json.data.savedStacks.limit).toBeNull();
   });
 });
+

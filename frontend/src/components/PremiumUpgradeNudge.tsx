@@ -47,66 +47,36 @@ export default function PremiumUpgradeNudge({
     return shouldShowUpgradePrompt(variant, id, isPremium);
   });
 
+  // Keep inline visibility updated when props (variant, id, isPremium) change
+  useEffect(() => {
+    if (isPremium || !isInline) {
+      setIsInlineVisible(false);
+      return;
+    }
+    setIsInlineVisible(shouldShowUpgradePrompt(variant, id, isPremium));
+  }, [variant, id, isPremium, isInline]);
+
   // ────────────────────────────────────────────────────────────
-  // 1. Landing / Public Scroll Trigger -> Centered Modal
-  // Minimum 5s delay AND meaningful user interaction (scroll >= 150px)
+  // 1. Landing Page Trigger ('scroll') -> Centered Modal after 5s
   // ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (variant !== 'scroll' || isPremium || hasTriggeredModalRef.current) return;
     if (!shouldShowUpgradePrompt('scroll', id, isPremium)) return;
 
-    let timerFired = false;
-    let scrolledEnough = false;
-
-    const getScrollY = () => {
-      return Math.max(
-        window.scrollY || 0,
-        document.documentElement?.scrollTop || 0,
-        document.body?.scrollTop || 0
-      );
-    };
-
-    const tryTriggerModal = () => {
-      if (timerFired && scrolledEnough && !hasTriggeredModalRef.current) {
-        if (shouldShowUpgradePrompt('scroll', id, isPremium)) {
-          hasTriggeredModalRef.current = true;
-          openUpgradeModal('scroll');
-        }
-      }
-    };
-
-    // 4-second dwell timer before trigger becomes eligible
     const timerId = window.setTimeout(() => {
-      timerFired = true;
-      if (getScrollY() >= 150) {
-        scrolledEnough = true;
+      if (!hasTriggeredModalRef.current && shouldShowUpgradePrompt('scroll', id, isPremium)) {
+        hasTriggeredModalRef.current = true;
+        openUpgradeModal('scroll');
       }
-      tryTriggerModal();
-    }, 4000);
-
-    // Meaningful scroll detection
-    const handleScroll = () => {
-      if (getScrollY() >= 150) {
-        scrolledEnough = true;
-        tryTriggerModal();
-      }
-    };
-
-    // Immediate check if page is already scrolled
-    if (getScrollY() >= 150) {
-      scrolledEnough = true;
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    }, 5000);
 
     return () => {
       window.clearTimeout(timerId);
-      window.removeEventListener('scroll', handleScroll);
     };
   }, [variant, id, isPremium, openUpgradeModal]);
 
   // ────────────────────────────────────────────────────────────
-  // 2. Offers Page Trigger -> Centered Modal (Once per session)
+  // 2. Offers Page Trigger ('offers') -> Centered Modal after 5s
   // ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (variant !== 'offers' || isPremium || hasTriggeredModalRef.current) return;
@@ -116,6 +86,44 @@ export default function PremiumUpgradeNudge({
       if (!hasTriggeredModalRef.current && shouldShowUpgradePrompt('offers', id, isPremium)) {
         hasTriggeredModalRef.current = true;
         openUpgradeModal('offers');
+      }
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [variant, id, isPremium, openUpgradeModal]);
+
+  // ────────────────────────────────────────────────────────────
+  // 3. Audit Results Trigger ('audit') -> Centered Modal after 5s
+  // ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (variant !== 'audit' || isPremium || hasTriggeredModalRef.current) return;
+    if (!shouldShowUpgradePrompt('audit', id, isPremium)) return;
+
+    const timerId = window.setTimeout(() => {
+      if (!hasTriggeredModalRef.current && shouldShowUpgradePrompt('audit', id, isPremium)) {
+        hasTriggeredModalRef.current = true;
+        openUpgradeModal('audit');
+      }
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [variant, id, isPremium, openUpgradeModal]);
+
+  // ────────────────────────────────────────────────────────────
+  // 4. Build My Stack Results Trigger ('stack') -> Centered Modal after 5s
+  // ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (variant !== 'stack' || isPremium || hasTriggeredModalRef.current) return;
+    if (!shouldShowUpgradePrompt('stack', id, isPremium)) return;
+
+    const timerId = window.setTimeout(() => {
+      if (!hasTriggeredModalRef.current && shouldShowUpgradePrompt('stack', id, isPremium)) {
+        hasTriggeredModalRef.current = true;
+        openUpgradeModal('stack');
       }
     }, 5000);
 

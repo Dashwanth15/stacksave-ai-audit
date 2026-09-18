@@ -258,6 +258,40 @@ export const AuditShareLinkModel = mongoose.model<AuditShareLinkDocument>(
   AuditShareLinkSchema
 );
 
+// ── Saved User Stack Schema ───────────────────────────────────
+// Tracks individually saved AI stacks per user.
+// Free limit: 3 saved stacks. Premium: unlimited.
+// Count-based tracking, no expiration.
+export interface SavedUserStackDocument extends Document {
+  userId: mongoose.Types.ObjectId | string;
+  name: string;
+  domain: string;
+  tools: object[];
+  totalMonthlySpend: number;
+  recommendation?: object;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const SavedUserStackSchema = new Schema<SavedUserStackDocument>(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    name: { type: String, default: 'My AI Stack' },
+    domain: { type: String, default: 'general-productivity' },
+    tools: { type: [Schema.Types.Mixed], default: [] },
+    totalMonthlySpend: { type: Number, default: 0 },
+    recommendation: { type: Schema.Types.Mixed },
+  },
+  { timestamps: true }
+);
+
+SavedUserStackSchema.index({ userId: 1, createdAt: -1 });
+
+export const SavedUserStackModel = mongoose.model<SavedUserStackDocument>(
+  'SavedUserStack',
+  SavedUserStackSchema
+);
+
 // ── Lead Schema ───────────────────────────────────────────────
 export interface LeadDocument extends Document {
   email: string;

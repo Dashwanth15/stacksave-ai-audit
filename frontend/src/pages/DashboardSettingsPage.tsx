@@ -320,7 +320,7 @@ export default function DashboardSettingsPage() {
                   <h4 className="text-xs font-semibold text-slate-700 mb-3">
                     Free Plan Usage
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {/* Metric 1: Saved Audits */}
                     <div className="p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/50">
                       <div className="flex items-center justify-between text-xs mb-1.5">
@@ -339,10 +339,28 @@ export default function DashboardSettingsPage() {
                       </div>
                     </div>
 
-                    {/* Metric 2: Audit Share Links */}
+                    {/* Metric 2: Saved AI Stacks */}
                     <div className="p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/50">
                       <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="font-medium text-slate-700">Audit share links</span>
+                        <span className="font-medium text-slate-700">Saved stacks</span>
+                        <span className="font-semibold text-slate-900">
+                          {usage?.savedStacks ? usage.savedStacks.current : 0} / 3
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                        <div
+                          className="h-full bg-slate-900 rounded-full transition-all duration-300"
+                          style={{
+                            width: `${Math.min(100, (((usage?.savedStacks?.current || 0) / 3) * 100))}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Metric 3: Audit Share Links */}
+                    <div className="p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/50">
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className="font-medium text-slate-700">Share links</span>
                         <span className="font-semibold text-slate-900">
                           {usage ? usage.shareLinks.current : 0} / 5
                         </span>

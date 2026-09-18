@@ -89,13 +89,13 @@ app.use(helmet());
 // ── Body Parsing & Cookie Parsing ────────────────────────────
 app.use(
   express.json({
-    limit: '50kb',
+    limit: '10mb',
     verify: (req: any, _res, buf) => {
       req.rawBody = buf;
     },
   })
 );
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Request Logging ──────────────────────────────────────────

@@ -40,9 +40,12 @@ export default function DashboardLayout({
   const isPremium = user?.plan === 'PREMIUM';
   const auditUsed = usage?.savedAudits?.current ?? 0;
   const auditLimit = usage?.savedAudits?.limit ?? 2;
+  const stackUsed = usage?.savedStacks?.current ?? 0;
+  const stackLimit = usage?.savedStacks?.limit ?? 3;
   const shareUsed = usage?.shareLinks?.current ?? 0;
   const shareLimit = usage?.shareLinks?.limit ?? 5;
   const auditPct = Math.min(100, Math.round((auditUsed / auditLimit) * 100));
+  const stackPct = Math.min(100, Math.round((stackUsed / stackLimit) * 100));
 
   const navLinks = [
     {
@@ -270,6 +273,36 @@ export default function DashboardLayout({
                                 : 'bg-indigo-400'
                             }`}
                             style={{ width: `${auditPct}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Saved stacks */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[12px] font-medium text-slate-600">Saved stacks</span>
+                          <span
+                            className={`text-[12px] font-bold tabular-nums ${
+                              stackPct >= 100
+                                ? 'text-rose-500'
+                                : stackPct >= 75
+                                ? 'text-amber-500'
+                                : 'text-slate-900'
+                            }`}
+                          >
+                            {stackUsed} / {stackLimit}
+                          </span>
+                        </div>
+                        <div className="h-[3px] rounded-full bg-slate-100">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              stackPct >= 100
+                                ? 'bg-rose-400'
+                                : stackPct >= 75
+                                ? 'bg-amber-400'
+                                : 'bg-indigo-400'
+                            }`}
+                            style={{ width: `${stackPct}%` }}
                           />
                         </div>
                       </div>
