@@ -18,7 +18,7 @@ import OfferNotificationBell from '../components/OfferNotificationBell';
 import AuditedConfigurationBadge from '../components/audit/AuditedConfigurationBadge';
 import { getUserScopedKey } from '../utils/userSession';
 import { trackAuditResultsViewed } from '../utils/analytics';
-import UpgradeModal from '../components/UpgradeModal';
+import PremiumUpgradeNudge from '../components/PremiumUpgradeNudge';
 
 
 
@@ -359,14 +359,7 @@ export default function ResultsPage() {
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [savingAudit, setSavingAudit] = useState<boolean>(false);
 
-  const { authenticated, openAuthModal } = useAuth();
-  const [upgradeModal, setUpgradeModal] = useState<{
-    isOpen: boolean;
-    type: 'save' | 'share';
-  }>({
-    isOpen: false,
-    type: 'save',
-  });
+  const { authenticated, openAuthModal, openUpgradeModal } = useAuth();
 
   // Check if current audit is already saved in session/local storage
   useEffect(() => {
@@ -393,7 +386,7 @@ export default function ResultsPage() {
           } catch (err: any) {
             const errorCode = err?.response?.data?.code;
             if (errorCode === 'FREE_AUDIT_LIMIT_REACHED') {
-              setUpgradeModal({ isOpen: true, type: 'save' });
+              openUpgradeModal('save');
             } else {
               console.error('Failed to save audit after login:', err);
             }
@@ -414,7 +407,7 @@ export default function ResultsPage() {
     } catch (err: any) {
       const errorCode = err?.response?.data?.code;
       if (errorCode === 'FREE_AUDIT_LIMIT_REACHED') {
-        setUpgradeModal({ isOpen: true, type: 'save' });
+        openUpgradeModal('save');
       } else {
         console.error('Failed to save audit:', err);
       }
@@ -502,7 +495,7 @@ export default function ResultsPage() {
           } catch (err: any) {
             const errorCode = err?.response?.data?.code;
             if (errorCode === 'FREE_SHARE_LIMIT_REACHED') {
-              setUpgradeModal({ isOpen: true, type: 'share' });
+              openUpgradeModal('share');
             } else {
               console.error('Failed to create share link after login:', err);
             }
@@ -523,7 +516,7 @@ export default function ResultsPage() {
     } catch (err: any) {
       const errorCode = err?.response?.data?.code;
       if (errorCode === 'FREE_SHARE_LIMIT_REACHED') {
-        setUpgradeModal({ isOpen: true, type: 'share' });
+        openUpgradeModal('share');
       } else {
         // Fallback to clipboard write of public URL on non-limit errors
         navigator.clipboard.writeText(audit.publicUrl);
@@ -861,9 +854,8 @@ export default function ResultsPage() {
               />
             )}
 
-
-
-
+            {/* ── Contextual Premium Upgrade Nudge ───────────────── */}
+            <PremiumUpgradeNudge variant="audit" id={audit?.auditId} />
           </div>
 
           {/* Right Column Area: Sticky KPI Card & Timeline Actions */}
@@ -1008,13 +1000,6 @@ export default function ResultsPage() {
         auditTools={audit?.tools}
         useCase={audit?.useCase}
         onClose={handleClosePanel}
-      />
-
-      {/* ── Reusable Premium Upgrade Modal ─────────────────── */}
-      <UpgradeModal
-        isOpen={upgradeModal.isOpen}
-        type={upgradeModal.type}
-        onClose={() => setUpgradeModal((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );

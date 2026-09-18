@@ -21,7 +21,8 @@ import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import ChatBot from './components/ChatBot';
 import AuthModal from './components/AuthModal';
-import { AuthProvider } from './context/AuthContext';
+import UpgradeModal from './components/UpgradeModal';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { initGA, trackPageView } from './utils/analytics';
 
 function PageTracker() {
@@ -43,6 +44,17 @@ function LegacyResultsRedirect() {
 function LegacyReauditRedirect() {
   const { id } = useParams();
   return <Navigate to={`/audit/${id}`} replace />;
+}
+
+function GlobalUpgradeModal() {
+  const { isUpgradeModalOpen, upgradeModalType, closeUpgradeModal } = useAuth();
+  return (
+    <UpgradeModal
+      isOpen={isUpgradeModalOpen}
+      type={upgradeModalType}
+      onClose={closeUpgradeModal}
+    />
+  );
 }
 
 export default function App() {
@@ -83,6 +95,7 @@ export default function App() {
           </Routes>
           <ChatBot />
           <AuthModal />
+          <GlobalUpgradeModal />
         </BrowserRouter>
       </AuthProvider>
     </LazyMotion>

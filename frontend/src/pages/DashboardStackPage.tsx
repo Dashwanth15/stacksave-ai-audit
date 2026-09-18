@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
+import PremiumUpgradeNudge from '../components/PremiumUpgradeNudge';
 import { useAuth } from '../context/AuthContext';
 import { fetchUserStack } from '../services/api';
 import type { SavedUserStack } from '../types';
@@ -262,6 +263,9 @@ export default function DashboardStackPage() {
           </div>
         </div>
       )}
+
+      {/* ── Contextual Premium Upgrade Nudge ───────────────── */}
+      <PremiumUpgradeNudge variant="stack" />
     </DashboardLayout>
   );
 }

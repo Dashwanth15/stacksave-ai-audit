@@ -755,12 +755,12 @@ export default function ChatBot() {
       {/* ── Floating Launcher Button ────────────────────── */}
       <m.button
         onClick={handleToggle}
-        className="chatbot-launcher-btn"
+        className="chatbot-launcher-btn min-h-0"
         style={{
           position: 'fixed',
           bottom: '24px',
           right: '24px',
-          zIndex: 50,
+          zIndex: 40,
           width: '48px',
           height: '48px',
           borderRadius: '50%',

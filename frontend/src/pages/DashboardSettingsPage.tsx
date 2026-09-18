@@ -21,6 +21,13 @@ import type {
   BillingStatusResponse,
   SubscriptionPlanKey,
 } from '../types';
+import {
+  formatDiscountBadge,
+  formatOriginalPrice,
+  formatCurrentPrice,
+  formatMonthlyBreakdown,
+  formatYearlySavingsBadge,
+} from '../utils/billingConstants';
 
 export default function DashboardSettingsPage() {
   const { user, authenticated, loading: authLoading, logout, refreshUser } = useAuth();
@@ -83,11 +90,6 @@ export default function DashboardSettingsPage() {
         year: 'numeric',
       })
     : null;
-
-  // Pricing constants for math
-  const quarterlyPrice = 59;
-  const yearlyPrice = 199;
-  const yearlySavings = quarterlyPrice * 4 - yearlyPrice; // ₹37
 
   const handleUpgradeCheckout = async () => {
     try {
@@ -381,14 +383,21 @@ export default function DashboardSettingsPage() {
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-slate-900">Quarterly</span>
-                        <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">3 Months</span>
+                        <span className="text-[10.5px] font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-1.5 py-0.2 rounded">
+                          {formatDiscountBadge('quarterly')}
+                        </span>
                       </div>
-                      <div className="mt-2 flex items-baseline gap-1">
-                        <span className="text-xl font-bold text-slate-900">₹{quarterlyPrice}</span>
+                      <div className="mt-2 flex items-baseline gap-1.5">
+                        <span className="text-xs text-slate-400 line-through">
+                          {formatOriginalPrice('quarterly')}
+                        </span>
+                        <span className="text-xl font-bold text-slate-900">
+                          {formatCurrentPrice('quarterly')}
+                        </span>
                         <span className="text-xs text-slate-500">/ 3 mo</span>
                       </div>
                       <p className="mt-1 text-[11px] text-slate-500">
-                        ₹19.67/month equivalent
+                        {formatMonthlyBreakdown('quarterly')}
                       </p>
                     </button>
 
@@ -405,15 +414,20 @@ export default function DashboardSettingsPage() {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-slate-900">Yearly</span>
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">
-                          Save ₹{yearlySavings}/yr
+                          {formatYearlySavingsBadge()}
                         </span>
                       </div>
-                      <div className="mt-2 flex items-baseline gap-1">
-                        <span className="text-xl font-bold text-slate-900">₹{yearlyPrice}</span>
+                      <div className="mt-2 flex items-baseline gap-1.5">
+                        <span className="text-xs text-slate-400 line-through">
+                          {formatOriginalPrice('yearly')}
+                        </span>
+                        <span className="text-xl font-bold text-slate-900">
+                          {formatCurrentPrice('yearly')}
+                        </span>
                         <span className="text-xs text-slate-500">/ year</span>
                       </div>
                       <p className="mt-1 text-[11px] text-slate-500">
-                        ₹16.58/month equivalent
+                        {formatMonthlyBreakdown('yearly')}
                       </p>
                     </button>
                   </div>
@@ -431,7 +445,7 @@ export default function DashboardSettingsPage() {
                       </>
                     ) : (
                       <span>
-                        Subscribe to Premium ({selectedPlan === 'quarterly' ? `Quarterly – ₹${quarterlyPrice}` : `Yearly – ₹${yearlyPrice}`})
+                        Subscribe to Premium ({selectedPlan === 'quarterly' ? `Quarterly – ${formatCurrentPrice('quarterly')}` : `Yearly – ${formatCurrentPrice('yearly')}`})
                       </span>
                     )}
                   </button>

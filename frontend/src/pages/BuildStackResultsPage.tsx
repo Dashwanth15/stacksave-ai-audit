@@ -40,6 +40,7 @@ import { fetchUserStack, saveUserStack } from '../services/api';
 
 import ConfigurationReveal from '../components/build-stack/ConfigurationReveal';
 import MetricTooltip, { MetricInfoIcon } from '../components/MetricTooltip';
+import PremiumUpgradeNudge from '../components/PremiumUpgradeNudge';
 
 type StrategyKey = 'bestOverall' | 'bestValue' | 'bestPerformance' | 'bestEnterprise';
 
@@ -1459,6 +1460,11 @@ export default function BuildStackResultsPage() {
             </AnimatePresence>
           </section>
         )}
+
+        {/* ── Contextual Premium Upgrade Nudge ───────────────── */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <PremiumUpgradeNudge variant="stack" />
+        </div>
       </main>
     </div>
   );

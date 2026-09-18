@@ -107,6 +107,8 @@ export default function AuthModal() {
           });
 
           officialButtonRef.current.innerHTML = '';
+          const containerWidth = officialButtonRef.current.parentElement?.clientWidth || (window.innerWidth - 64);
+          const computedWidth = Math.min(320, Math.max(220, Math.floor(containerWidth)));
           window.google.accounts.id.renderButton(officialButtonRef.current, {
             type: 'standard',
             theme: 'outline',
@@ -114,7 +116,7 @@ export default function AuthModal() {
             text: 'continue_with',
             shape: 'rectangular',
             logo_alignment: 'left',
-            width: 320,
+            width: computedWidth,
           });
 
           setTimeout(() => {
@@ -220,7 +222,7 @@ export default function AuthModal() {
     <AnimatePresence>
       {isAuthModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
           role="dialog"
           aria-modal="true"
           aria-labelledby="auth-modal-title"
@@ -236,19 +238,19 @@ export default function AuthModal() {
             aria-hidden="true"
           />
 
-          {/* Modal Card: Solid, confident enterprise surface (420px width) */}
+          {/* Modal Card: Solid, confident enterprise surface (390px responsive width) */}
           <m.div
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 6 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 6 }}
             transition={{ duration: shouldReduceMotion ? 0.05 : 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-[420px] rounded-[20px] bg-white p-6 sm:p-7 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.12),0_0_0_1px_rgba(15,23,42,0.03)] border border-slate-200/90 text-center z-10"
+            className="relative w-full max-w-[390px] rounded-2xl sm:rounded-[20px] bg-white p-5 sm:p-7 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.12),0_0_0_1px_rgba(15,23,42,0.03)] border border-slate-200/90 text-center z-10 max-h-[calc(100dvh-1.5rem)] overflow-y-auto"
           >
             {/* Minimalist Close Action */}
             <button
               type="button"
               onClick={closeAuthModal}
-              className="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-300"
+              className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 bg-slate-100/60 sm:bg-transparent hover:bg-slate-100 transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-300 min-h-0"
               aria-label="Close dialog"
             >
               <svg
@@ -268,18 +270,18 @@ export default function AuthModal() {
 
             {/* ── 1. Unified Brand & Header Section ── */}
             <div className="flex flex-col items-center">
-              <div className="mb-2.5">
+              <div className="mb-2 sm:mb-2.5">
                 <Logo size="sm" asDiv />
               </div>
 
               <h2
                 id="auth-modal-title"
-                className="text-[23px] sm:text-[24px] font-semibold text-slate-900 tracking-[-0.02em] leading-tight"
+                className="text-[22px] sm:text-[24px] font-semibold text-slate-900 tracking-[-0.02em] leading-tight"
               >
                 Sign in to StackSave
               </h2>
 
-              <p className="mt-1.5 text-[13.5px] text-slate-500 leading-normal max-w-[310px]">
+              <p className="mt-1.5 text-[13px] sm:text-[13.5px] text-slate-500 leading-normal max-w-[280px]">
                 Save your audits and personalize your AI intelligence.
               </p>
             </div>
@@ -295,9 +297,9 @@ export default function AuthModal() {
             )}
 
             {/* ── 2. Primary Action: Continue with Google (Hero CTA) ── */}
-            <div className="mt-5 flex flex-col items-center justify-center">
+            <div className="mt-4 sm:mt-5 flex flex-col items-center justify-center">
               {isProcessing ? (
-                <div className="w-full h-[50px] flex items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 text-sm font-medium text-slate-600">
+                <div className="w-full h-[46px] sm:h-[50px] flex items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 text-sm font-medium text-slate-600">
                   <div className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-slate-800 animate-spin" />
                   <span>Connecting with Google…</span>
                 </div>
@@ -315,7 +317,7 @@ export default function AuthModal() {
                       type="button"
                       onClick={handleDirectGoogleLogin}
                       disabled={isProcessing}
-                      className="group relative w-full h-[50px] flex items-center justify-center gap-2.5 px-4 rounded-xl border border-slate-200/90 bg-white hover:border-slate-400/80 hover:bg-slate-50/60 text-slate-800 hover:text-slate-950 font-medium text-[14.5px] transition-all duration-200 ease-out shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_6px_20px_-4px_rgba(15,23,42,0.12),0_2px_6px_-1px_rgba(15,23,42,0.06)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] active:shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="group relative w-full h-[46px] sm:h-[50px] flex items-center justify-center gap-2.5 px-3.5 sm:px-4 rounded-xl border border-slate-200/90 bg-white hover:border-slate-400/80 hover:bg-slate-50/60 text-slate-800 hover:text-slate-950 font-medium text-[13.5px] sm:text-[14.5px] transition-all duration-200 ease-out shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_6px_20px_-4px_rgba(15,23,42,0.12),0_2px_6px_-1px_rgba(15,23,42,0.06)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] active:shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 disabled:opacity-60 disabled:cursor-not-allowed min-h-0"
                     >
                       <svg
                         className="w-[18px] h-[18px] flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
@@ -354,7 +356,7 @@ export default function AuthModal() {
             </div>
 
             {/* ── 3. Subordinate Legal Microcopy ── */}
-            <p className="my-3 text-[11.5px] text-slate-400 text-center leading-normal">
+            <p className="my-2.5 sm:my-3 text-[11px] sm:text-[11.5px] text-slate-400 text-center leading-normal px-1">
               By continuing, you agree to our{' '}
               <Link
                 to="/terms"
@@ -378,7 +380,7 @@ export default function AuthModal() {
             <button
               type="button"
               onClick={closeAuthModal}
-              className="w-full h-[38px] rounded-lg border border-slate-200/60 hover:border-slate-300 bg-slate-50/70 hover:bg-slate-100/90 active:bg-slate-200/60 text-slate-500 hover:text-slate-800 text-[13px] font-medium transition-all duration-150 ease-out flex items-center justify-center cursor-pointer active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300"
+              className="w-full h-[36px] sm:h-[38px] min-h-0 rounded-lg border border-slate-200/60 hover:border-slate-300 bg-slate-50/70 hover:bg-slate-100/90 active:bg-slate-200/60 text-slate-500 hover:text-slate-800 text-[12.5px] sm:text-[13px] font-medium transition-all duration-150 ease-out flex items-center justify-center cursor-pointer active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300"
             >
               Continue without an account
             </button>

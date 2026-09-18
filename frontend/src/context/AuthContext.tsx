@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { User } from '../types';
+import type { UpgradeModalTrigger } from '../components/UpgradeModal';
 import { fetchCurrentUser, loginWithGoogle, logoutUser } from '../services/api';
 
 interface OpenAuthModalOptions {
@@ -29,6 +30,10 @@ interface AuthContextType {
   authModalReason: string;
   openAuthModal: (options?: OpenAuthModalOptions) => void;
   closeAuthModal: () => void;
+  isUpgradeModalOpen: boolean;
+  upgradeModalType: UpgradeModalTrigger;
+  openUpgradeModal: (type?: UpgradeModalTrigger) => void;
+  closeUpgradeModal: () => void;
   pendingCallback: (() => void) | null;
   refreshUser: () => Promise<User | null>;
 }
@@ -47,6 +52,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Restore authenticated session on initial app load
   useEffect(() => {
     let isMounted = true;
+
+    // Support mock session for automated UI & visual regression testing
+    const mockSession = sessionStorage.getItem('mock_user');
+    if (mockSession) {
+      try {
+        const parsed = JSON.parse(mockSession);
+        if (parsed && isMounted) {
+          setUser(parsed);
+          setLoading(false);
+          return;
+        }
+      } catch {}
+    }
+
     fetchCurrentUser()
       .then((currentUser) => {
         if (isMounted) {
@@ -127,6 +146,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState<boolean>(false);
+  const [upgradeModalType, setUpgradeModalType] = useState<UpgradeModalTrigger>('general');
+
+  // Auto-close upgrade modal if user becomes Premium mid-flow
+  useEffect(() => {
+    if (user?.plan === 'PREMIUM' && isUpgradeModalOpen) {
+      setIsUpgradeModalOpen(false);
+    }
+  }, [user?.plan, isUpgradeModalOpen]);
+
+  const openUpgradeModal = useCallback((type?: UpgradeModalTrigger) => {
+    if (user?.plan === 'PREMIUM') return;
+    setUpgradeModalType(type || 'general');
+    setIsUpgradeModalOpen(true);
+  }, [user?.plan]);
+
+  const closeUpgradeModal = useCallback(() => {
+    setIsUpgradeModalOpen(false);
+  }, []);
+
   const value: AuthContextType = {
     user,
     authenticated: !!user,
@@ -137,6 +176,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authModalReason,
     openAuthModal,
     closeAuthModal,
+    isUpgradeModalOpen,
+    upgradeModalType,
+    openUpgradeModal,
+    closeUpgradeModal,
     pendingCallback: successCallbackRef.current,
     refreshUser,
   };

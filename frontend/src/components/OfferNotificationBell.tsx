@@ -160,7 +160,7 @@ export default function OfferNotificationBell() {
       {/* ── Bell Icon Button (Clean SaaS Icon Trigger) ────── */}
       <button
         onClick={handleBellClick}
-        className={`relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl border transition-all duration-150 flex items-center justify-center cursor-pointer select-none ${
+        className={`relative w-9 h-9 sm:w-11 sm:h-11 min-h-0 rounded-lg sm:rounded-xl border transition-all duration-150 flex items-center justify-center cursor-pointer select-none shrink-0 ${
           isOpen
             ? 'bg-slate-100 border-slate-300 text-slate-950 shadow-2xs'
             : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-950 shadow-2xs hover:border-slate-300'
@@ -169,22 +169,22 @@ export default function OfferNotificationBell() {
         title="AI Offers & Pricing Intelligence"
       >
         <svg
-          width="18"
-          height="18"
+          width="17"
+          height="17"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="shrink-0"
+          className="shrink-0 sm:w-[18px] sm:h-[18px]"
         >
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
 
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1 text-[10px] font-bold leading-none text-white bg-emerald-600 rounded-full ring-2 ring-white shadow-xs tabular-nums">
+          <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] sm:min-w-[20px] h-4.5 sm:h-5 px-1 text-[9px] sm:text-[10px] font-bold leading-none text-white bg-emerald-600 rounded-full ring-2 ring-white shadow-xs tabular-nums">
             {unreadCount}
           </span>
         )}
@@ -199,7 +199,7 @@ export default function OfferNotificationBell() {
             exit={{ opacity: 0, y: -4, scale: 0.96 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
             onClick={handleHintClick}
-            className="absolute right-0 top-full mt-2 w-[228px] p-3 rounded-xl bg-white border border-slate-200/90 shadow-[0_12px_30px_-6px_rgba(15,23,42,0.14),0_0_0_1px_rgba(15,23,42,0.04)] z-50 cursor-pointer text-left select-none group transition-all hover:border-slate-300"
+            className="absolute right-0 top-full mt-2 w-[228px] max-w-[calc(100vw-24px)] p-3 rounded-xl bg-white border border-slate-200/90 shadow-[0_12px_30px_-6px_rgba(15,23,42,0.14),0_0_0_1px_rgba(15,23,42,0.04)] z-50 cursor-pointer text-left select-none group transition-all hover:border-slate-300"
           >
             {/* Triangular pointer / caret directed toward the bell */}
             <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white border-t border-l border-slate-200/90 rotate-45" />

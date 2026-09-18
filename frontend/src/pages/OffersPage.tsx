@@ -13,6 +13,7 @@ import Logo from '../components/Logo';
 import ProviderLogo from '../components/ProviderLogo';
 import OfferNotificationBell from '../components/OfferNotificationBell';
 import UserNavMenu from '../components/UserNavMenu';
+import PremiumUpgradeNudge from '../components/PremiumUpgradeNudge';
 import {
   formatOfferForDisplay,
   formatVerificationDate,
@@ -670,6 +671,9 @@ export default function OffersPage() {
           </div>
         )}
       </main>
+
+      {/* ── Contextual Offers Premium Upgrade Nudge ────────── */}
+      <PremiumUpgradeNudge variant="offers" />
     </div>
   );
 }

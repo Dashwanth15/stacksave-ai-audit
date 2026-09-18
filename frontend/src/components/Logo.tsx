@@ -13,8 +13,8 @@ export default function Logo({ size = 'md', className = '', asDiv = false }: Log
   if (size === 'sm') {
     imgSizeClass = 'h-6 md:h-7 lg:h-8 w-auto';
   } else if (size === 'lg') {
-    // Redesign specifications for the main header (44-52px)
-    imgSizeClass = 'h-[44px] md:h-[48px] lg:h-[52px] w-auto';
+    // Responsive logo sizing: compact on mobile to prevent header overflow, full height on desktop
+    imgSizeClass = 'h-7 sm:h-8 md:h-[48px] lg:h-[52px] w-auto';
   }
 
   const content = (
