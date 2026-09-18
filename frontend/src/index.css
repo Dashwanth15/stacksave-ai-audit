@@ -132,6 +132,10 @@ body {
   flex-direction: column;
 }
 
+button, [role="button"] {
+  cursor: pointer;
+}
+
 /* ── Scrollbar ─────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--color-bg-base); }

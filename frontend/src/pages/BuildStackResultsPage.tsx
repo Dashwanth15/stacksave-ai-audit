@@ -18,13 +18,14 @@ import type { ReactNode } from 'react';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
-import { getUserSessionItem } from '../utils/userSession';
+import { getUserSessionItem, setUserSessionItem } from '../utils/userSession';
 import type {
   StackRecommendation,
   CategoryResult,
   StructuredStack,
   ToolInStack,
-  AlternativeStackComparison
+  AlternativeStackComparison,
+  SavedUserStack
 } from '../types';
 import Logo from '../components/Logo';
 import ProviderLogo from '../components/ProviderLogo';
@@ -34,6 +35,8 @@ import type { DrawerSelection } from '../components/intelligence/ProcurementInte
 import RecommendationReveal from '../components/build-stack/RecommendationReveal';
 import { getProviderRole } from '../components/build-stack/wizardData';
 import { trackBuildStackCompleted } from '../utils/analytics';
+import { useAuth } from '../context/AuthContext';
+import { fetchUserStack, saveUserStack } from '../services/api';
 
 import ConfigurationReveal from '../components/build-stack/ConfigurationReveal';
 import MetricTooltip, { MetricInfoIcon } from '../components/MetricTooltip';
@@ -82,7 +85,7 @@ const STRATEGY_CONFIGS: StrategyTabConfig[] = [
 
 export default function BuildStackResultsPage() {
   const navigate = useNavigate();
-  const [rec] = useState<StackRecommendation | null>(() => {
+  const [rec, setRec] = useState<StackRecommendation | null>(() => {
     // Read from user-scoped session storage so it doesn't bleed across users
     const raw = getUserSessionItem('stackRecommendation');
     if (!raw) return null;
@@ -106,8 +109,37 @@ export default function BuildStackResultsPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const altScrollRef = useRef<HTMLDivElement>(null);
 
+  const { authenticated, openAuthModal } = useAuth();
+  const [savingStack, setSavingStack] = useState(false);
+  const [savedSignature, setSavedSignature] = useState<string | null>(null);
+
   useEffect(() => {
-    if (!rec) navigate('/build-stack', { replace: true });
+    if (rec) return;
+
+    let isMounted = true;
+    fetchUserStack()
+      .then((userStack) => {
+        if (!isMounted) return;
+        if (userStack?.recommendation) {
+          try {
+            setUserSessionItem('stackRecommendation', JSON.stringify(userStack.recommendation));
+          } catch {
+            // ignore storage errors
+          }
+          setRec(userStack.recommendation);
+        } else {
+          navigate('/build-stack', { replace: true });
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          navigate('/build-stack', { replace: true });
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [rec, navigate]);
 
   const showToast = (msg: string) => {
@@ -292,6 +324,104 @@ export default function BuildStackResultsPage() {
     });
   };
 
+  const activeStackSignature = useMemo(() => {
+    if (!activeStack) return '';
+    const toolIds = (activeStack.tools || [])
+      .map((t) => `${t.toolId}:${t.recommendedPlan || (t as any).plan || ''}`)
+      .sort()
+      .join('|');
+    return `${toolIds}::${Math.round(activeStack.estimatedMonthlyCost)}`;
+  }, [activeStack]);
+
+  const isSaved = Boolean(savedSignature && savedSignature === activeStackSignature);
+
+  // Check if current user already has a saved stack on mount / auth change
+  useEffect(() => {
+    if (!authenticated) {
+      setSavedSignature(null);
+      return;
+    }
+    let isMounted = true;
+    fetchUserStack()
+      .then((userStack) => {
+        if (!isMounted || !userStack || !userStack.tools || userStack.tools.length === 0) return;
+        const toolIds = (userStack.tools || [])
+          .map((t: any) => `${t.toolId || t.name || ''}:${t.recommendedPlan || t.plan || ''}`)
+          .sort()
+          .join('|');
+        const sig = `${toolIds}::${Math.round(userStack.totalMonthlySpend || 0)}`;
+        setSavedSignature(sig);
+      })
+      .catch((err) => {
+        console.warn('Failed to fetch saved stack status:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authenticated]);
+
+  const executeSave = async (stackToSave: StructuredStack) => {
+    setSavingStack(true);
+    try {
+      const toolsToSave = (stackToSave.tools || []).map((t) => ({
+        toolId: t.toolId,
+        name: t.toolName || t.toolId,
+        toolName: t.toolName || t.toolId,
+        plan: t.recommendedPlan || 'Default',
+        recommendedPlan: t.recommendedPlan || 'Default',
+        monthlyCost:
+          typeof t.estimatedMonthlyCostPerTeam === 'number'
+            ? t.estimatedMonthlyCostPerTeam
+            : t.monthlyCostPerSeat || 0,
+        estimatedMonthlyCostPerTeam: t.estimatedMonthlyCostPerTeam,
+        monthlyCostPerSeat: t.monthlyCostPerSeat,
+        category: t.category,
+        vendor: t.vendor,
+        buyingPriority: t.buyingPriority,
+      }));
+
+      const payload: Partial<SavedUserStack> = {
+        name: context?.domainLabel ? `${context.domainLabel} AI Stack` : 'Primary AI Stack',
+        domain: context?.domain || rec?.userContextSummary?.domain || 'general-productivity',
+        tools: toolsToSave,
+        totalMonthlySpend: stackToSave.estimatedMonthlyCost || 0,
+        recommendation: rec || undefined,
+      };
+
+      await saveUserStack(payload);
+
+      const sig =
+        (stackToSave.tools || [])
+          .map((t) => `${t.toolId}:${t.recommendedPlan || (t as any).plan || ''}`)
+          .sort()
+          .join('|') + `::${Math.round(stackToSave.estimatedMonthlyCost || 0)}`;
+      setSavedSignature(sig);
+      showToast('Stack saved to your account!');
+    } catch (err: any) {
+      console.error('Failed to save stack:', err);
+      showToast(err?.message || 'Failed to save stack. Please try again.');
+    } finally {
+      setSavingStack(false);
+    }
+  };
+
+  const handleSaveStack = () => {
+    if (!activeStack) return;
+
+    if (!authenticated) {
+      openAuthModal({
+        reason: 'Sign in to save your AI stack to your account',
+        onAuthSuccess: () => {
+          executeSave(activeStack);
+        },
+      });
+      return;
+    }
+
+    executeSave(activeStack);
+  };
+
   const copyExecutiveBrief = () => {
     const lines = [
       `============================================================`,
@@ -360,6 +490,33 @@ export default function BuildStackResultsPage() {
           </div>
 
           <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* Save Stack Action */}
+            {isSaved ? (
+              <button
+                onClick={() => navigate('/dashboard/stack')}
+                className="px-2.5 sm:px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer bg-emerald-50 text-emerald-700 border-emerald-300/80 shadow-2xs hover:bg-emerald-100/60"
+                title="View in My Stack"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>Stack Saved</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleSaveStack}
+                disabled={savingStack}
+                className="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer bg-slate-900 text-white hover:bg-slate-800 border border-slate-900 shadow-xs disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                  <polyline points="17 21 17 13 7 13 7 21" />
+                  <polyline points="7 3 7 8 15 8" />
+                </svg>
+                <span>{savingStack ? 'Saving…' : 'Save Stack'}</span>
+              </button>
+            )}
+
             <button
               onClick={copyExecutiveBrief}
               className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 transition-all bg-white shadow-2xs cursor-pointer"

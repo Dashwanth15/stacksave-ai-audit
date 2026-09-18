@@ -7,14 +7,55 @@ import crypto from 'crypto';
 import { AuditRequest } from '../types';
 import { runAudit } from '../audit-engine/engine';
 import { generateAuditSummary } from '../services/aiService';
-import { AuditModel, getFrontendUrl } from '../services/dbService';
+import { AuditModel, AuditShareLinkModel, getFrontendUrl } from '../services/dbService';
 import { validateAuditRequest } from '../middleware/validation';
 import { capturePricingSnapshot } from '../services/pricingService';
 import { scanAuditsForPricingChanges } from '../services/pricingChangeDetectionService';
 import { runReAudit, generateAuditDiff } from '../services/reAuditService';
 import { auditLimiter } from '../middleware/rateLimit';
+import { authenticate, optionalAuthenticate } from '../middleware/auth';
+import { isPremiumUser } from '../services/billingService';
 
 const router = Router();
+
+// ── GET /api/audits ──────────────────────────────────────────
+// Returns all explicitly saved audits belonging to the authenticated user
+router.get('/', authenticate, async (req: Request, res: Response) => {
+  try {
+    const user = req.user!;
+    const audits = await AuditModel.find({
+      userId: user._id,
+      isSaved: true,
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const formattedAudits = audits.map((a) => ({
+      auditId: a.auditId,
+      createdAt: a.createdAt,
+      totalMonthlySpend: a.totalMonthlySpend,
+      optimizedMonthlySpend: a.optimizedMonthlySpend,
+      estimatedMonthlySavings: a.estimatedMonthlySavings,
+      estimatedAnnualSavings: a.estimatedAnnualSavings,
+      savingsPercentage: a.savingsPercentage,
+      isAlreadyOptimal: a.isAlreadyOptimal,
+      teamSize: a.teamSize,
+      platformCount: Array.isArray(a.tools) ? a.tools.length : 0,
+      tools: a.tools,
+      publicUrl: a.publicUrl,
+      companyName: a.companyName,
+      isSaved: true,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: formattedAudits,
+    });
+  } catch (err) {
+    console.error('GET /api/audits error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to retrieve saved audits.' });
+  }
+});
 
 // ── Ownership token helper ─────────────────────────────────────
 // Generates a 32-byte (64 hex char) random token for audit creator identification.
@@ -53,8 +94,9 @@ async function verifyOwnerToken(auditId: string, req: Request): Promise<boolean>
 // ── POST /api/audits ─────────────────────────────────────────
 // Main audit endpoint. Runs the engine, generates AI summary,
 // saves to DB with pricing snapshot, returns full result.
-// Batch 1: Persistent audit storage with pricing snapshot
-router.post('/', auditLimiter, async (req: Request, res: Response) => {
+// Mandatory Correction 1 & 5: Audits are temporary (isSaved: false)
+// until explicitly saved by the user.
+router.post('/', auditLimiter, optionalAuthenticate, async (req: Request, res: Response) => {
   try {
     const body = req.body as AuditRequest & { email?: string };
 
@@ -146,15 +188,182 @@ router.post('/', auditLimiter, async (req: Request, res: Response) => {
       reAuditOf,                            // Parent audit link
       billingCycle: body.billingCycle || 'monthly', // Billing period selected by user
       ownerToken,                           // One-time creation token (select:false in schema)
+
+      // Mandatory Corrections 1 & 5: Not automatically saved. Temporary by default.
+      userId: req.user ? req.user._id : undefined,
+      isSaved: false,
     });
 
     // Return the audit result plus the ownerToken (returned ONLY once at creation).
     // The frontend stores this token in user-scoped localStorage and sends it
     // as X-Audit-Token on subsequent owner-only requests.
-    return res.status(201).json({ success: true, data: { ...auditResult, ownerToken } });
+    return res.status(201).json({ success: true, data: { ...auditResult, ownerToken, isSaved: false } });
   } catch (err) {
     console.error('POST /api/audits error:', err);
     return res.status(500).json({ success: false, error: 'Failed to process audit' });
+  }
+});
+
+// ── POST /api/audits/:id/save ────────────────────────────────
+// Explicitly saves an audit to the user's account with Free plan limit (max 2)
+router.post('/:id/save', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const user = req.user!;
+
+    const audit = await AuditModel.findOne({ auditId: id });
+    if (!audit) {
+      return res.status(404).json({ success: false, error: 'Audit not found.' });
+    }
+
+    // Audit Ownership Security — never allow User A to overwrite User B's audit
+    if (audit.userId && audit.userId.toString() !== user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: this audit belongs to another user account.',
+      });
+    }
+
+    // If already saved by this user, idempotent success
+    if (audit.isSaved && audit.userId && audit.userId.toString() === user._id.toString()) {
+      return res.status(200).json({
+        success: true,
+        message: 'Audit is already saved to your account.',
+        data: {
+          auditId: audit.auditId,
+          isSaved: true,
+          userId: user._id.toString(),
+        },
+      });
+    }
+
+    // Free Plan Limit Enforcement: Maximum 2 saved audits
+    const isPremium = isPremiumUser(user);
+    if (!isPremium) {
+      const savedAuditCount = await AuditModel.countDocuments({
+        userId: user._id,
+        isSaved: true,
+      });
+
+      if (savedAuditCount >= 2) {
+        return res.status(403).json({
+          success: false,
+          error: 'Your Free plan includes 2 saved audits. Try Premium for unlimited audit history.',
+          code: 'FREE_AUDIT_LIMIT_REACHED',
+          limit: 2,
+          current: savedAuditCount,
+          upgradeRequired: true,
+        });
+      }
+    }
+
+    audit.userId = user._id;
+    audit.isSaved = true;
+    audit.updatedAt = new Date();
+    await audit.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Audit saved to your account successfully.',
+      data: {
+        auditId: audit.auditId,
+        isSaved: true,
+        userId: user._id.toString(),
+      },
+    });
+  } catch (err) {
+    console.error(`POST /api/audits/${req.params.id}/save error:`, err);
+    return res.status(500).json({ success: false, error: 'Failed to save audit.' });
+  }
+});
+
+// ── POST /api/audits/:id/share ───────────────────────────────
+// Creates an authoritative audit share link for the authenticated user
+// Free limit: 5 share links. Premium: unlimited.
+// Strictly count-based, NO 5-minute timer or expiration.
+router.post('/:id/share', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const user = req.user!;
+
+    const audit = await AuditModel.findOne({ auditId: id });
+    if (!audit) {
+      return res.status(404).json({ success: false, error: 'Audit not found.' });
+    }
+
+    const isPremium = isPremiumUser(user);
+    if (!isPremium) {
+      const shareLinkCount = await AuditShareLinkModel.countDocuments({
+        userId: user._id,
+      });
+
+      if (shareLinkCount >= 5) {
+        return res.status(403).json({
+          success: false,
+          error: 'Your Free plan includes 5 audit share links. Try Premium for unlimited audit sharing.',
+          code: 'FREE_SHARE_LIMIT_REACHED',
+          limit: 5,
+          current: shareLinkCount,
+          upgradeRequired: true,
+        });
+      }
+    }
+
+    const shareUrl = audit.publicUrl || `${getFrontendUrl()}/audit/${audit.auditId}`;
+    await AuditShareLinkModel.create({
+      userId: user._id,
+      auditId: audit.auditId,
+      shareUrl,
+      createdAt: new Date(),
+    });
+
+    const newCount = await AuditShareLinkModel.countDocuments({ userId: user._id });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Share link created successfully.',
+      data: {
+        auditId: audit.auditId,
+        shareUrl,
+        shareLinkCount: newCount,
+      },
+    });
+  } catch (err) {
+    console.error(`POST /api/audits/${req.params.id}/share error:`, err);
+    return res.status(500).json({ success: false, error: 'Failed to create share link.' });
+  }
+});
+
+// ── DELETE /api/audits/:id ───────────────────────────────────
+// Removes an audit from the user's saved audits (strict ownership verified)
+router.delete('/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const user = req.user!;
+
+    const audit = await AuditModel.findOne({ auditId: id });
+    if (!audit) {
+      return res.status(404).json({ success: false, error: 'Audit not found.' });
+    }
+
+    if (!audit.userId || audit.userId.toString() !== user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: you do not have permission to delete this audit.',
+      });
+    }
+
+    audit.isSaved = false;
+    audit.updatedAt = new Date();
+    await audit.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Audit removed from your saved list.',
+    });
+  } catch (err) {
+    console.error(`DELETE /api/audits/${req.params.id} error:`, err);
+    return res.status(500).json({ success: false, error: 'Failed to delete audit.' });
   }
 });
 

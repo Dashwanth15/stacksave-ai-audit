@@ -85,6 +85,10 @@ export interface AuditDocument extends Document {
   // (re-audit, full private data retrieval).
   // NEVER included in public GET /api/audits/:id responses.
   ownerToken?: string;
+
+  // ── User association & explicit save state ──────────────
+  userId?: mongoose.Types.ObjectId | string;
+  isSaved?: boolean;
 }
 
 const AuditSchema = new Schema<AuditDocument>(
@@ -160,6 +164,10 @@ const AuditSchema = new Schema<AuditDocument>(
     // Random hex string issued once at creation, never returned on public GETs.
     // Owner presents it via X-Audit-Token header for privileged operations.
     ownerToken: { type: String, select: false }, // select:false = excluded from all queries by default
+
+    // ── StackSave User & Explicit Save State ──────────────────
+    userId: { type: Schema.Types.ObjectId, ref: 'User', index: true },
+    isSaved: { type: Boolean, default: false, index: true },
   },
   { 
     timestamps: false,
@@ -169,6 +177,86 @@ const AuditSchema = new Schema<AuditDocument>(
 );
 
 export const AuditModel = mongoose.model<AuditDocument>('Audit', AuditSchema);
+
+// ── User Schema ──────────────────────────────────────────────
+export interface UserDocument extends Document {
+  googleId: string;
+  email: string;
+  name: string;
+  avatarUrl?: string;
+  plan: 'FREE' | 'PREMIUM';
+  subscriptionStatus: 'NONE' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'PAUSED';
+  sessionVersion: number;
+  lastLoginAt: Date;
+  savedStack?: {
+    name?: string;
+    domain?: string;
+    tools: object[];
+    totalMonthlySpend: number;
+    recommendation?: object;
+    updatedAt: Date;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const UserSchema = new Schema<UserDocument>(
+  {
+    googleId: { type: String, required: true, unique: true, index: true },
+    email: { type: String, required: true, lowercase: true, trim: true, index: true },
+    name: { type: String, required: true, trim: true },
+    avatarUrl: { type: String },
+    plan: { type: String, enum: ['FREE', 'PREMIUM'], default: 'FREE', index: true },
+    subscriptionStatus: { 
+      type: String, 
+      enum: ['NONE', 'ACTIVE', 'PAST_DUE', 'CANCELED', 'PAUSED'], 
+      default: 'NONE' 
+    },
+    sessionVersion: { type: Number, default: 1, required: true },
+    lastLoginAt: { type: Date, default: Date.now },
+    savedStack: {
+      name: { type: String },
+      domain: { type: String },
+      tools: { type: [Schema.Types.Mixed], default: [] },
+      totalMonthlySpend: { type: Number, default: 0 },
+      recommendation: { type: Schema.Types.Mixed },
+      updatedAt: { type: Date, default: Date.now },
+    },
+  },
+  { 
+    timestamps: true 
+  }
+);
+
+export const UserModel = mongoose.model<UserDocument>('User', UserSchema);
+
+// ── Audit Share Link Schema ──────────────────────────────────
+// Tracks successfully created audit share links per user.
+// Free limit: 5 share links. Premium: unlimited.
+// Count-based tracking with NO 5-minute timer or expiration.
+export interface AuditShareLinkDocument extends Document {
+  userId: mongoose.Types.ObjectId | string;
+  auditId: string;
+  shareUrl: string;
+  createdAt: Date;
+}
+
+const AuditShareLinkSchema = new Schema<AuditShareLinkDocument>(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    auditId: { type: String, required: true, index: true },
+    shareUrl: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now, index: true },
+  },
+  { timestamps: false }
+);
+
+AuditShareLinkSchema.index({ userId: 1, createdAt: -1 });
+
+export const AuditShareLinkModel = mongoose.model<AuditShareLinkDocument>(
+  'AuditShareLink',
+  AuditShareLinkSchema
+);
 
 // ── Lead Schema ───────────────────────────────────────────────
 export interface LeadDocument extends Document {
@@ -428,6 +516,88 @@ const NotificationEventSchema = new Schema<NotificationEventDocument>(
 export const NotificationEventModel = mongoose.model<NotificationEventDocument>(
   'NotificationEvent',
   NotificationEventSchema
+);
+
+// ── Razorpay Subscription Schema ──────────────────────────────
+// Authoritative record of user subscriptions with Razorpay Live mode.
+export interface SubscriptionDocument extends Document {
+  userId: mongoose.Types.ObjectId | string;
+  provider: 'razorpay';
+  razorpaySubscriptionId: string;
+  razorpayPlanId: string;
+  razorpayCustomerId?: string;
+  planKey: 'quarterly' | 'yearly';
+  status: 'created' | 'authenticated' | 'active' | 'pending' | 'halted' | 'cancelled' | 'completed' | 'expired' | 'paused';
+  currentPeriodStart?: Date;
+  currentPeriodEnd?: Date;
+  chargeAt?: Date;
+  cancelAtPeriodEnd: boolean;
+  canceledAt?: Date;
+  lastPaymentId?: string;
+  lastWebhookEventId?: string;
+  lastSynchronizedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const SubscriptionSchema = new Schema<SubscriptionDocument>(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    provider: { type: String, enum: ['razorpay'], default: 'razorpay', required: true },
+    razorpaySubscriptionId: { type: String, required: true, unique: true, index: true },
+    razorpayPlanId: { type: String, required: true },
+    razorpayCustomerId: { type: String },
+    planKey: { type: String, enum: ['quarterly', 'yearly'], required: true },
+    status: {
+      type: String,
+      enum: ['created', 'authenticated', 'active', 'pending', 'halted', 'cancelled', 'completed', 'expired', 'paused'],
+      default: 'created',
+      index: true,
+    },
+    currentPeriodStart: { type: Date },
+    currentPeriodEnd: { type: Date, index: true },
+    chargeAt: { type: Date },
+    cancelAtPeriodEnd: { type: Boolean, default: false },
+    canceledAt: { type: Date },
+    lastPaymentId: { type: String },
+    lastWebhookEventId: { type: String },
+    lastSynchronizedAt: { type: Date, default: Date.now },
+  },
+  { timestamps: true }
+);
+
+SubscriptionSchema.index({ userId: 1, status: 1 });
+SubscriptionSchema.index({ userId: 1, createdAt: -1 });
+
+export const SubscriptionModel = mongoose.model<SubscriptionDocument>(
+  'Subscription',
+  SubscriptionSchema
+);
+
+// ── Webhook Event Schema (Durable Idempotency) ─────────────────
+// Ensures each x-razorpay-event-id is processed exactly once.
+export interface WebhookEventDocument extends Document {
+  eventId: string;
+  eventType: string;
+  subscriptionId?: string;
+  processedAt: Date;
+  payloadSummary?: any;
+}
+
+const WebhookEventSchema = new Schema<WebhookEventDocument>(
+  {
+    eventId: { type: String, required: true, unique: true, index: true },
+    eventType: { type: String, required: true },
+    subscriptionId: { type: String, index: true },
+    processedAt: { type: Date, default: Date.now },
+    payloadSummary: { type: Schema.Types.Mixed },
+  },
+  { timestamps: false }
+);
+
+export const WebhookEventModel = mongoose.model<WebhookEventDocument>(
+  'WebhookEvent',
+  WebhookEventSchema
 );
 
 

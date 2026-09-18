@@ -13,7 +13,15 @@ import ConsolidationDashboardPage from './pages/ConsolidationDashboardPage';
 import RemovalDashboardPage from './pages/RemovalDashboardPage';
 import OffersPage from './pages/OffersPage';
 import AnalyticsDashboardPage from './pages/AnalyticsDashboardPage';
+import DashboardPage from './pages/DashboardPage';
+import DashboardAuditsPage from './pages/DashboardAuditsPage';
+import DashboardStackPage from './pages/DashboardStackPage';
+import DashboardSettingsPage from './pages/DashboardSettingsPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
 import ChatBot from './components/ChatBot';
+import AuthModal from './components/AuthModal';
+import { AuthProvider } from './context/AuthContext';
 import { initGA, trackPageView } from './utils/analytics';
 
 function PageTracker() {
@@ -44,30 +52,39 @@ export default function App() {
 
   return (
     <LazyMotion features={domAnimation} strict>
-      <BrowserRouter>
-        <PageTracker />
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/audit" element={<AuditPage />} />
-          <Route path="/audit/:id" element={<ResultsPage />} />
-          <Route path="/audit/:id/diff" element={<ReAuditDiffPage />} />
-          <Route path="/audit/:id/replacements" element={<ReplacementsDashboardPage />} />
-          <Route path="/audit/:id/consolidation" element={<ConsolidationDashboardPage />} />
-          <Route path="/audit/:id/removal" element={<RemovalDashboardPage />} />
-          <Route path="/results/replacements" element={<ReplacementsDashboardPage />} />
-          <Route path="/results/consolidation" element={<ConsolidationDashboardPage />} />
-          <Route path="/results/removal" element={<RemovalDashboardPage />} />
-          <Route path="/build-stack" element={<BuildStackPage />} />
-          <Route path="/build-stack/results" element={<BuildStackResultsPage />} />
-          <Route path="/offers" element={<OffersPage />} />
-          <Route path="/analytics" element={<AnalyticsDashboardPage />} />
-          <Route path="/admin/analytics" element={<AnalyticsDashboardPage />} />
-          <Route path="/results/:id" element={<LegacyResultsRedirect />} />
-          <Route path="/reaudit/:id" element={<LegacyReauditRedirect />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-        <ChatBot />
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <PageTracker />
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/audit" element={<AuditPage />} />
+            <Route path="/audit/:id" element={<ResultsPage />} />
+            <Route path="/audit/:id/diff" element={<ReAuditDiffPage />} />
+            <Route path="/audit/:id/replacements" element={<ReplacementsDashboardPage />} />
+            <Route path="/audit/:id/consolidation" element={<ConsolidationDashboardPage />} />
+            <Route path="/audit/:id/removal" element={<RemovalDashboardPage />} />
+            <Route path="/results/replacements" element={<ReplacementsDashboardPage />} />
+            <Route path="/results/consolidation" element={<ConsolidationDashboardPage />} />
+            <Route path="/results/removal" element={<RemovalDashboardPage />} />
+            <Route path="/build-stack" element={<BuildStackPage />} />
+            <Route path="/build-stack/results" element={<BuildStackResultsPage />} />
+            <Route path="/offers" element={<OffersPage />} />
+            <Route path="/analytics" element={<AnalyticsDashboardPage />} />
+            <Route path="/admin/analytics" element={<AnalyticsDashboardPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard/audits" element={<DashboardAuditsPage />} />
+            <Route path="/dashboard/stack" element={<DashboardStackPage />} />
+            <Route path="/dashboard/settings" element={<DashboardSettingsPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/results/:id" element={<LegacyResultsRedirect />} />
+            <Route path="/reaudit/:id" element={<LegacyReauditRedirect />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+          <ChatBot />
+          <AuthModal />
+        </BrowserRouter>
+      </AuthProvider>
     </LazyMotion>
   );
 }

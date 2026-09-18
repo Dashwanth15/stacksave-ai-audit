@@ -12,6 +12,15 @@ import type {
   StackBuilderRequest,
   StackRecommendation,
   PublicOffer,
+  User,
+  SavedAuditSummary,
+  SavedUserStack,
+  UserUsageResponse,
+  AuditShareResponse,
+  SubscriptionPlanKey,
+  CreateSubscriptionResponse,
+  VerifySubscriptionPayload,
+  BillingStatusResponse,
 } from '../types';
 import { getUserScopedKey } from '../utils/userSession';
 
@@ -51,6 +60,7 @@ export const getBaseUrl = (): string => {
 const api = axios.create({
   baseURL: getBaseUrl(),
   timeout: 30000, // 30s — AI summary can take a few seconds
+  withCredentials: true, // Mandatory Correction 3: Transmit HttpOnly session cookies across origins
   headers: {
     'Content-Type': 'application/json',
   },
@@ -500,5 +510,186 @@ export async function fetchAnalyticsHealth(): Promise<AnalyticsHealthPayload> {
   }
   return response.data.data;
 }
+
+// ── Authentication API Functions ──────────────────────────────
+
+export async function loginWithGoogle(
+  params: string | { credential?: string; accessToken?: string }
+): Promise<User> {
+  const payload = typeof params === 'string' ? { credential: params } : params;
+  const response = await api.post<{ success: boolean; data: { user: User }; error?: string }>(
+    '/auth/google',
+    payload
+  );
+  if (!response?.data?.success || !response.data.data?.user) {
+    throw new Error(response?.data?.error || 'Google authentication failed.');
+  }
+  return response.data.data.user;
+}
+
+export async function fetchCurrentUser(): Promise<User | null> {
+  try {
+    const response = await api.get<{ success: boolean; data: { user: User }; error?: string }>(
+      '/auth/me'
+    );
+    if (response?.data?.success && response.data.data?.user) {
+      return response.data.data.user;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function logoutUser(): Promise<void> {
+  await api.post('/auth/logout');
+}
+
+// ── Saved Audits & Dashboard API Functions ─────────────────────
+
+export async function fetchUserAudits(): Promise<SavedAuditSummary[]> {
+  const response = await api.get<{ success: boolean; data: SavedAuditSummary[]; error?: string }>(
+    '/audits'
+  );
+  if (!response?.data?.success || !Array.isArray(response.data.data)) {
+    throw new Error(response?.data?.error || 'Failed to fetch saved audits.');
+  }
+  return response.data.data;
+}
+
+export async function saveAuditToAccount(auditId: string): Promise<{ auditId: string; isSaved: boolean }> {
+  const response = await api.post<{ success: boolean; data: { auditId: string; isSaved: boolean }; error?: string }>(
+    `/audits/${encodeURIComponent(auditId)}/save`
+  );
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.error || 'Failed to save audit to account.');
+  }
+  return response.data.data;
+}
+
+export async function deleteUserAudit(auditId: string): Promise<void> {
+  const response = await api.delete<{ success: boolean; error?: string }>(
+    `/audits/${encodeURIComponent(auditId)}`
+  );
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.error || 'Failed to delete audit.');
+  }
+}
+
+export async function fetchUserStack(): Promise<SavedUserStack | null> {
+  try {
+    const response = await api.get<{ success: boolean; data: SavedUserStack | null; error?: string }>(
+      '/user/stack'
+    );
+    if (response?.data?.success) {
+      return response.data.data;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveUserStack(stack: Partial<SavedUserStack>): Promise<SavedUserStack> {
+  const response = await api.post<{ success: boolean; data: SavedUserStack; error?: string }>(
+    '/user/stack',
+    stack
+  );
+  if (!response?.data?.success || !response.data.data) {
+    throw new Error(response?.data?.error || 'Failed to save stack.');
+  }
+  return response.data.data;
+}
+
+export async function fetchUserUsage(): Promise<UserUsageResponse> {
+  const response = await api.get<{ success: boolean; data: UserUsageResponse; error?: string }>(
+    '/user/usage'
+  );
+  if (!response?.data?.success || !response.data.data) {
+    throw new Error(response?.data?.error || 'Failed to fetch user usage metrics.');
+  }
+  return response.data.data;
+}
+
+export async function createAuditShareLink(auditId: string): Promise<AuditShareResponse> {
+  const response = await api.post<{
+    success: boolean;
+    data: AuditShareResponse;
+    error?: string;
+    code?: string;
+  }>(`/audits/${encodeURIComponent(auditId)}/share`);
+
+  if (!response?.data?.success || !response.data.data) {
+    throw new Error(response?.data?.error || 'Failed to create share link.');
+  }
+  return response.data.data;
+}
+
+// ── Razorpay Live Subscription Billing Endpoints ──────────────
+
+export async function createBillingSubscription(
+  plan: SubscriptionPlanKey
+): Promise<CreateSubscriptionResponse> {
+  const response = await api.post<{
+    success: boolean;
+    data: CreateSubscriptionResponse;
+    error?: string;
+    code?: string;
+  }>('/billing/create-subscription', { plan });
+
+  if (!response?.data?.success || !response.data.data) {
+    throw new Error(response?.data?.error || 'Failed to initialize subscription with payment provider.');
+  }
+  return response.data.data;
+}
+
+export async function verifyBillingPayment(
+  payload: VerifySubscriptionPayload
+): Promise<{ plan: 'FREE' | 'PREMIUM'; subscriptionStatus: string; billingInterval: string; currentPeriodEnd: string }> {
+  const response = await api.post<{
+    success: boolean;
+    message?: string;
+    data: { plan: 'FREE' | 'PREMIUM'; subscriptionStatus: string; billingInterval: string; currentPeriodEnd: string };
+    error?: string;
+    code?: string;
+  }>('/billing/verify', payload);
+
+  if (!response?.data?.success || !response.data.data) {
+    throw new Error(response?.data?.error || 'Payment signature verification failed.');
+  }
+  return response.data.data;
+}
+
+export async function fetchBillingStatus(): Promise<BillingStatusResponse> {
+  const response = await api.get<{
+    success: boolean;
+    data: BillingStatusResponse;
+    error?: string;
+  }>('/billing/status');
+
+  if (!response?.data?.success || !response.data.data) {
+    throw new Error(response?.data?.error || 'Failed to fetch billing status.');
+  }
+  return response.data.data;
+}
+
+export async function cancelBillingSubscription(
+  cancelAtCycleEnd: boolean = true
+): Promise<{ success: boolean; message: string; data: any }> {
+  const response = await api.post<{
+    success: boolean;
+    message: string;
+    data: any;
+    error?: string;
+    code?: string;
+  }>('/billing/cancel', { cancelAtCycleEnd });
+
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.error || 'Failed to cancel subscription.');
+  }
+  return response.data;
+}
+
+
 
 

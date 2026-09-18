@@ -6,8 +6,11 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 
 import { connectDB, getFrontendUrl } from './services/dbService';
+import authRouter from './routes/auth';
+import userRouter from './routes/user';
 import auditRouter from './routes/audit';
 import leadsRouter from './routes/leads';
 import healthRouter from './routes/health';
@@ -17,6 +20,7 @@ import intelligenceRouter from './routes/intelligence';
 import adminRouter from './routes/admin';
 import analyticsRouter from './routes/analytics';
 import pricingRouter from './routes/pricing';
+import billingRouter from './routes/billing';
 import { globalLimiter, leadLimiter } from './middleware/rateLimit';
 import { requestLogger } from './middleware/logger';
 import { findAvailablePort } from './utils/port';
@@ -81,9 +85,17 @@ app.use(
 // ── Security Headers ─────────────────────────────────────────
 app.use(helmet());
 
-// ── Body Parsing ─────────────────────────────────────────────
-app.use(express.json({ limit: '50kb' })); // 50kb — chat context + history can be large
+// ── Body Parsing & Cookie Parsing ────────────────────────────
+app.use(
+  express.json({
+    limit: '50kb',
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // ── Request Logging ──────────────────────────────────────────
 app.use(requestLogger);
@@ -92,6 +104,9 @@ app.use(requestLogger);
 app.use(globalLimiter);
 
 // ── Routes ────────────────────────────────────────────────────
+app.use('/api/auth', authRouter);
+app.use('/api/user', userRouter);
+app.use('/api/billing', billingRouter);
 app.use('/api/health', healthRouter);
 app.use('/api/audits', auditRouter);
 app.use('/api/leads', leadLimiter, leadsRouter);
@@ -132,7 +147,9 @@ async function start() {
   });
 }
 
-start();
+if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+  start();
+}
 
 export default app; // for testing
 

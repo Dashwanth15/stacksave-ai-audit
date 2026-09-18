@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import LogoLoop from '../components/LogoLoop';
 import Logo from '../components/Logo';
 import OfferNotificationBell from '../components/OfferNotificationBell';
+import UserNavMenu from '../components/UserNavMenu';
 import InteractiveBackground from '../components/InteractiveBackground';
 import { trackCtaClicked } from '../utils/analytics';
 import { fetchPublicOffers, getCachedPublicOffers } from '../services/api';
@@ -607,6 +608,7 @@ export default function LandingPage() {
           {/* Right actions */}
           <div className="ml-auto flex items-center gap-2 sm:gap-3.5">
             <OfferNotificationBell />
+            <UserNavMenu />
 
             {/* Hamburger — visible on mobile only */}
             <button

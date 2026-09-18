@@ -12,6 +12,7 @@ import { useUserScopedStorage } from '../hooks/useUserScopedStorage';
 import Logo from '../components/Logo';
 import ProviderLogo from '../components/ProviderLogo';
 import OfferNotificationBell from '../components/OfferNotificationBell';
+import UserNavMenu from '../components/UserNavMenu';
 import {
   formatOfferForDisplay,
   formatVerificationDate,
@@ -337,6 +338,7 @@ export default function OffersPage() {
 
           <div className="flex items-center gap-3.5">
             <OfferNotificationBell />
+            <UserNavMenu />
           </div>
         </div>
       </header>

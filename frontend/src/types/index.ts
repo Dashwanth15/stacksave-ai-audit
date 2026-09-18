@@ -611,3 +611,91 @@ export interface PublicOffer {
 }
 
 export type OfferFilterTab = 'all' | 'new' | 'active' | 'expired';
+
+// ── Authentication & User Types ──────────────────────────────
+export interface User {
+  id: string;
+  googleId: string;
+  email: string;
+  name: string;
+  avatarUrl?: string;
+  plan: 'FREE' | 'PREMIUM';
+  subscriptionStatus: 'NONE' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'PAUSED';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SavedAuditSummary {
+  auditId: string;
+  createdAt: string;
+  totalMonthlySpend: number;
+  optimizedMonthlySpend: number;
+  estimatedMonthlySavings: number;
+  estimatedAnnualSavings: number;
+  savingsPercentage: number;
+  isAlreadyOptimal: boolean;
+  teamSize: number;
+  platformCount: number;
+  tools?: any[];
+  publicUrl: string;
+  companyName?: string;
+  isSaved: boolean;
+}
+
+export interface SavedUserStack {
+  name: string;
+  domain: string;
+  tools: any[];
+  totalMonthlySpend: number;
+  recommendation?: any;
+  updatedAt: string;
+}
+
+export interface UserUsageResponse {
+  plan: 'FREE' | 'PREMIUM';
+  savedAudits: {
+    current: number;
+    limit: number | null;
+  };
+  shareLinks: {
+    current: number;
+    limit: number | null;
+  };
+}
+
+export interface AuditShareResponse {
+  auditId: string;
+  shareUrl: string;
+  shareLinkCount: number;
+}
+
+// ── Razorpay Live Subscription & Billing Types ────────────────
+export type SubscriptionPlanKey = 'quarterly' | 'yearly';
+
+export interface CreateSubscriptionResponse {
+  subscriptionId: string;
+  keyId: string;
+  plan: SubscriptionPlanKey;
+  amount: number; // in paise (₹5900 or ₹19900)
+  currency: string;
+  name: string;
+  description: string;
+}
+
+export interface VerifySubscriptionPayload {
+  razorpay_payment_id: string;
+  razorpay_subscription_id: string;
+  razorpay_signature: string;
+}
+
+export interface BillingStatusResponse {
+  plan: 'FREE' | 'PREMIUM';
+  subscriptionStatus: 'NONE' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'PAUSED';
+  billingInterval: SubscriptionPlanKey | null;
+  razorpaySubscriptionId: string | null;
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  isPremium: boolean;
+}
+

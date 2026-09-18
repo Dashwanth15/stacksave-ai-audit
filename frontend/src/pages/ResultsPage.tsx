@@ -3,19 +3,22 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';
 import type { AuditResult, Insight } from '../types';
 import type { StackIntelligenceResult } from '../types/intelligence';
-import { fetchAudit, triggerReAudit } from '../services/api';
+import { fetchAudit, triggerReAudit, saveAuditToAccount, createAuditShareLink } from '../services/api';
 import { fetchStackIntelligence } from '../services/intelligence';
 import { formatCurrencyFull, insightTypeLabel, formatRelativeTime } from '../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 import { generateAuditPDF } from '../services/pdfService';
 import ReAuditDiffPage from './ReAuditDiffPage';
 import Logo from '../components/Logo';
+import UserNavMenu from '../components/UserNavMenu';
+import { useAuth } from '../context/AuthContext';
 import StrategicGuidanceSection from '../components/intelligence/StrategicGuidanceSection';
 import ToolIntelligencePanel from '../components/ToolIntelligencePanel';
 import OfferNotificationBell from '../components/OfferNotificationBell';
 import AuditedConfigurationBadge from '../components/audit/AuditedConfigurationBadge';
 import { getUserScopedKey } from '../utils/userSession';
 import { trackAuditResultsViewed } from '../utils/analytics';
+import UpgradeModal from '../components/UpgradeModal';
 
 
 
@@ -353,6 +356,72 @@ export default function ResultsPage() {
   const [prevId, setPrevId] = useState<string | undefined>(id);
   const [intelligence, setIntelligence] = useState<StackIntelligenceResult | null>(null);
   const [activeInsight, setActiveInsight] = useState<Insight | null>(null);
+  const [isSaved, setIsSaved] = useState<boolean>(false);
+  const [savingAudit, setSavingAudit] = useState<boolean>(false);
+
+  const { authenticated, openAuthModal } = useAuth();
+  const [upgradeModal, setUpgradeModal] = useState<{
+    isOpen: boolean;
+    type: 'save' | 'share';
+  }>({
+    isOpen: false,
+    type: 'save',
+  });
+
+  // Check if current audit is already saved in session/local storage
+  useEffect(() => {
+    if (audit?.auditId) {
+      if ((audit as any).isSaved || localStorage.getItem(getUserScopedKey(`saved_${audit.auditId}`)) === 'true') {
+        setIsSaved(true);
+      }
+    }
+  }, [audit]);
+
+  const handleSaveAudit = async () => {
+    if (!audit?.auditId) return;
+
+    if (!authenticated) {
+      // Guest: open lightweight Google Auth modal with preserved callback
+      openAuthModal({
+        reason: 'Save your StackSave audit',
+        onAuthSuccess: async () => {
+          try {
+            setSavingAudit(true);
+            await saveAuditToAccount(audit.auditId);
+            setIsSaved(true);
+            localStorage.setItem(getUserScopedKey(`saved_${audit.auditId}`), 'true');
+          } catch (err: any) {
+            const errorCode = err?.response?.data?.code;
+            if (errorCode === 'FREE_AUDIT_LIMIT_REACHED') {
+              setUpgradeModal({ isOpen: true, type: 'save' });
+            } else {
+              console.error('Failed to save audit after login:', err);
+            }
+          } finally {
+            setSavingAudit(false);
+          }
+        },
+      });
+      return;
+    }
+
+    // Authenticated user: explicitly persist audit to MongoDB
+    try {
+      setSavingAudit(true);
+      await saveAuditToAccount(audit.auditId);
+      setIsSaved(true);
+      localStorage.setItem(getUserScopedKey(`saved_${audit.auditId}`), 'true');
+    } catch (err: any) {
+      const errorCode = err?.response?.data?.code;
+      if (errorCode === 'FREE_AUDIT_LIMIT_REACHED') {
+        setUpgradeModal({ isOpen: true, type: 'save' });
+      } else {
+        console.error('Failed to save audit:', err);
+      }
+    } finally {
+      setSavingAudit(false);
+    }
+  };
 
   const handleViewAnalysis = (insight: Insight) => {
     setActiveInsight((prev) =>
@@ -416,11 +485,52 @@ export default function ResultsPage() {
     }
   }, [audit]);
 
-  function copyShareUrl() {
+  async function handleShareAudit() {
     if (!audit) return;
-    navigator.clipboard.writeText(audit.publicUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+
+    if (!authenticated) {
+      openAuthModal({
+        reason: 'Sign in to share your audit report',
+        onAuthSuccess: async () => {
+          try {
+            const shareData = await createAuditShareLink(audit.auditId);
+            if (shareData.shareUrl) {
+              await navigator.clipboard.writeText(shareData.shareUrl);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }
+          } catch (err: any) {
+            const errorCode = err?.response?.data?.code;
+            if (errorCode === 'FREE_SHARE_LIMIT_REACHED') {
+              setUpgradeModal({ isOpen: true, type: 'share' });
+            } else {
+              console.error('Failed to create share link after login:', err);
+            }
+          }
+        },
+      });
+      return;
+    }
+
+    // Authenticated user: create authoritative share link with Free limit enforcement
+    try {
+      const shareData = await createAuditShareLink(audit.auditId);
+      if (shareData.shareUrl) {
+        await navigator.clipboard.writeText(shareData.shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err: any) {
+      const errorCode = err?.response?.data?.code;
+      if (errorCode === 'FREE_SHARE_LIMIT_REACHED') {
+        setUpgradeModal({ isOpen: true, type: 'share' });
+      } else {
+        // Fallback to clipboard write of public URL on non-limit errors
+        navigator.clipboard.writeText(audit.publicUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    }
   }
 
   async function handleDownloadPDF() {
@@ -523,6 +633,34 @@ export default function ResultsPage() {
 
           <div className="results-nav-actions flex items-center gap-2 sm:gap-2.5">
             <OfferNotificationBell />
+
+            {/* Save Audit Action */}
+            {isSaved ? (
+              <button
+                onClick={() => navigate('/dashboard/audits')}
+                className="px-2.5 sm:px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer bg-emerald-50 text-emerald-700 border-emerald-300 shadow-2xs hover:bg-emerald-100/80"
+                title="View in Dashboard"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>Saved</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleSaveAudit}
+                disabled={savingAudit}
+                className="px-2.5 sm:px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer bg-slate-900 text-white hover:bg-slate-800 border-slate-900 shadow-xs"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                  <polyline points="17 21 17 13 7 13 7 21" />
+                  <polyline points="7 3 7 8 15 8" />
+                </svg>
+                <span>{savingAudit ? 'Saving…' : 'Save Audit'}</span>
+              </button>
+            )}
+
             <button
               onClick={handleDownloadPDF}
               disabled={generatingPDF}
@@ -542,7 +680,7 @@ export default function ResultsPage() {
               <span className="hidden sm:inline">{generatingPDF ? '' : ' Export'}</span>
             </button>
             <button
-              onClick={copyShareUrl}
+              onClick={handleShareAudit}
               className="px-2.5 sm:px-3 py-1.5 rounded border text-xs font-semibold transition-all"
               style={{
                 background: 'var(--color-bg-surface)',
@@ -552,6 +690,8 @@ export default function ResultsPage() {
             >
               {copied ? 'Copied' : 'Share'}
             </button>
+
+            <UserNavMenu />
           </div>
         </div>
       </nav>
@@ -868,6 +1008,13 @@ export default function ResultsPage() {
         auditTools={audit?.tools}
         useCase={audit?.useCase}
         onClose={handleClosePanel}
+      />
+
+      {/* ── Reusable Premium Upgrade Modal ─────────────────── */}
+      <UpgradeModal
+        isOpen={upgradeModal.isOpen}
+        type={upgradeModal.type}
+        onClose={() => setUpgradeModal((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );
