@@ -7,6 +7,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import mongoose from 'mongoose';
 
 import { connectDB, getFrontendUrl } from './services/dbService';
 import authRouter from './routes/auth';
@@ -103,11 +104,37 @@ app.use(requestLogger);
 // ── Global Rate Limiting ─────────────────────────────────────
 app.use(globalLimiter);
 
-// ── Routes ────────────────────────────────────────────────────
+// ── Root & Health Check Endpoints (Render Health Probes & Root Pings) ──
+app.get('/', (_req, res) => {
+  const dbState = mongoose.connection.readyState;
+  res.status(200).json({
+    status: 'ok',
+    service: 'StackSave AI API',
+    environment: NODE_ENV,
+    timestamp: new Date().toISOString(),
+    db: dbState === 1 ? 'connected' : 'disconnected',
+    version: '1.0.0',
+  });
+});
+
+app.head('/', (_req, res) => {
+  res.status(200).end();
+});
+
+// Favicon handler to silence browser 404 log clutter
+app.get('/favicon.ico', (_req, res) => {
+  res.status(204).end();
+});
+
+// Health checks supported at multiple standard paths
+app.use('/health', healthRouter);
+app.use('/healthz', healthRouter);
+app.use('/api/health', healthRouter);
+
+// ── Feature Routes ────────────────────────────────────────────
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/billing', billingRouter);
-app.use('/api/health', healthRouter);
 app.use('/api/audits', auditRouter);
 app.use('/api/leads', leadLimiter, leadsRouter);
 app.use('/api/chat', chatRouter);
