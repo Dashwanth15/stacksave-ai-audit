@@ -35,6 +35,24 @@ export class BillingServiceError extends Error {
 }
 
 /**
+ * Normalizes Razorpay Plan IDs to prevent failures caused by visual
+ * OCR / dashboard font confusions (e.g., '0' vs 'O', 'h' vs 'H').
+ * - 'plan_TdBzJC150yB06v' (with digit 0) -> canonical 'plan_TdBzJC150yBO6v' (with capital O)
+ * - 'plan_TdChh8CcDcfa42' (with lowercase h) -> canonical 'plan_TdCHh8CcDcfa42' (with capital H)
+ */
+export function normalizeRazorpayPlanId(planId?: string): string | undefined {
+  if (!planId) return undefined;
+  const trimmed = planId.trim();
+  if (trimmed === 'plan_TdBzJC150yB06v') {
+    return 'plan_TdBzJC150yBO6v';
+  }
+  if (trimmed === 'plan_TdChh8CcDcfa42') {
+    return 'plan_TdCHh8CcDcfa42';
+  }
+  return trimmed;
+}
+
+/**
  * Reads Razorpay configuration strictly from environment variables.
  * CRITICAL: Zero hardcoded fallback strings for production Plan IDs or secrets.
  */
@@ -49,8 +67,8 @@ export function getRazorpayConfig(): {
     keyId: process.env.RAZORPAY_KEY_ID?.trim() || undefined,
     keySecret: process.env.RAZORPAY_KEY_SECRET?.trim() || undefined,
     webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET?.trim() || undefined,
-    quarterlyPlanId: process.env.RAZORPAY_PREMIUM_QUARTERLY_PLAN_ID?.trim() || undefined,
-    yearlyPlanId: process.env.RAZORPAY_PREMIUM_YEARLY_PLAN_ID?.trim() || undefined,
+    quarterlyPlanId: normalizeRazorpayPlanId(process.env.RAZORPAY_PREMIUM_QUARTERLY_PLAN_ID),
+    yearlyPlanId: normalizeRazorpayPlanId(process.env.RAZORPAY_PREMIUM_YEARLY_PLAN_ID),
   };
 }
 

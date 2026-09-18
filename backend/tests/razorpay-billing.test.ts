@@ -22,7 +22,7 @@ import {
   connectDB,
 } from '../src/services/dbService';
 import { generateSessionToken, SESSION_COOKIE_NAME } from '../src/utils/session';
-import { isPremiumUser, syncUserEntitlement } from '../src/services/billingService';
+import { isPremiumUser, syncUserEntitlement, normalizeRazorpayPlanId } from '../src/services/billingService';
 
 let server: http.Server;
 let baseUrl: string;
@@ -32,8 +32,8 @@ let testUserB: any;
 let tokenA: string;
 let tokenB: string;
 
-const TEST_QUARTERLY_PLAN_ID = 'plan_TdBzJC150yB06v';
-const TEST_YEARLY_PLAN_ID = 'plan_TdChh8CcDcfa42';
+const TEST_QUARTERLY_PLAN_ID = 'plan_TdBzJC150yBO6v';
+const TEST_YEARLY_PLAN_ID = 'plan_TdCHh8CcDcfa42';
 const TEST_KEY_ID = 'rzp_live_test_key_id';
 const TEST_KEY_SECRET = 'test_razorpay_key_secret_12345';
 const TEST_WEBHOOK_SECRET = 'test_razorpay_webhook_secret_67890';
@@ -211,6 +211,15 @@ describe('Razorpay Live Subscription Billing Suite', () => {
     const body = await res.json();
     expect(body.data.subscriptionId).toBe('sub_test_yearly_1');
     expect(body.data.amount).toBe(19900);
+  });
+
+  // ── 4b. Plan ID normalization (font / OCR defense-in-depth) ──
+  it('4b. normalizes typographical font confusions (0 to O, h to H) in plan IDs', () => {
+    expect(normalizeRazorpayPlanId('plan_TdBzJC150yB06v')).toBe('plan_TdBzJC150yBO6v');
+    expect(normalizeRazorpayPlanId('plan_TdChh8CcDcfa42')).toBe('plan_TdCHh8CcDcfa42');
+    expect(normalizeRazorpayPlanId('plan_TdBzJC150yBO6v')).toBe('plan_TdBzJC150yBO6v');
+    expect(normalizeRazorpayPlanId('plan_TdCHh8CcDcfa42')).toBe('plan_TdCHh8CcDcfa42');
+    expect(normalizeRazorpayPlanId(undefined)).toBeUndefined();
   });
 
   // ── 5. Frontend cannot inject Plan ID ───────────────────────
