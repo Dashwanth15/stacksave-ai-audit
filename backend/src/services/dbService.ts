@@ -205,7 +205,15 @@ export interface UserDocument extends Document {
   premiumEmailSentAt?: Date;       // Set after Premium activation email is sent
   // Digest deduplication & offer tracking
   lastOfferDigestAt?: Date;        // Timestamp of last successful digest delivery
-  sentOfferFingerprints?: string[];// Fingerprints of offers previously sent to this user
+  sentOfferFingerprints?: string[];// Long-term fingerprint history (cap 300) — used for 7-10 day recovery detection
+  // 5-day rolling digest history — each entry records one day's selected offer fingerprints.
+  // Capped at 5 entries. Offers in this window are excluded from repeat selection.
+  // Offers in sentOfferFingerprints but NOT in this window (i.e. >5 days old) become
+  // eligible for 7-10 day missed-offer resurfacing.
+  recentDailyDigestHistory?: {
+    date: Date;
+    fingerprints: string[];
+  }[];
   // Per-user email preferences
   emailPreferences?: {
     productEmails: boolean;         // Account / billing / security emails (default: true)
@@ -240,6 +248,16 @@ const UserSchema = new Schema<UserDocument>(
     premiumEmailSentAt: { type: Date },
     lastOfferDigestAt: { type: Date },
     sentOfferFingerprints: { type: [String], default: [] },
+    // 5-day rolling daily digest history — bounded at 5 entries
+    recentDailyDigestHistory: {
+      type: [
+        {
+          date: { type: Date, required: true },
+          fingerprints: { type: [String], default: [] },
+        },
+      ],
+      default: [],
+    },
     emailPreferences: {
       productEmails: { type: Boolean, default: true },
       premiumOfferDigest: { type: Boolean, default: true },
