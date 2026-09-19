@@ -30,7 +30,7 @@ import {
 } from '../utils/billingConstants';
 
 export default function DashboardSettingsPage() {
-  const { user, authenticated, loading: authLoading, logout, refreshUser } = useAuth();
+  const { user, authenticated, loading: authLoading, logout, refreshUser, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const [usage, setUsage] = useState<UserUsageResponse | null>(null);
   const [billing, setBilling] = useState<BillingStatusResponse | null>(null);
@@ -91,7 +91,7 @@ export default function DashboardSettingsPage() {
       })
     : null;
 
-  const handleUpgradeCheckout = async () => {
+  const startSubscriptionProcess = async (targetUser: { name: string; email: string }) => {
     try {
       setCheckoutLoading(true);
       setCheckoutError(null);
@@ -106,8 +106,8 @@ export default function DashboardSettingsPage() {
         subscriptionId: config.subscriptionId,
         name: config.name,
         description: config.description,
-        userName: user.name,
-        userEmail: user.email,
+        userName: targetUser.name,
+        userEmail: targetUser.email,
         onSuccess: async (rzpResponse) => {
           try {
             setCheckoutNotice('Verifying payment with bank...');
@@ -141,6 +141,24 @@ export default function DashboardSettingsPage() {
       setCheckoutError(err.message || 'Failed to start checkout. Please try again.');
       setCheckoutLoading(false);
     }
+  };
+
+  const handleUpgradeCheckout = async () => {
+    if (!authenticated || !user) {
+      openAuthModal({
+        reason: 'Sign in with Google to subscribe to StackSave Premium',
+        isPremiumIntent: true,
+        selectedPlan: selectedPlan,
+        onAuthSuccess: (authedUser) => {
+          if (authedUser) {
+            startSubscriptionProcess(authedUser);
+          }
+        },
+      });
+      return;
+    }
+
+    startSubscriptionProcess(user);
   };
 
   const handleConfirmCancel = async () => {

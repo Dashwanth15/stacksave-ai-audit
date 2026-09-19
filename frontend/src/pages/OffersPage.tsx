@@ -13,7 +13,9 @@ import Logo from '../components/Logo';
 import ProviderLogo from '../components/ProviderLogo';
 import OfferNotificationBell from '../components/OfferNotificationBell';
 import UserNavMenu from '../components/UserNavMenu';
+import { useAuth } from '../context/AuthContext';
 import PremiumUpgradeNudge from '../components/PremiumUpgradeNudge';
+import PremiumOffersGate from '../components/PremiumOffersGate';
 import {
   formatOfferForDisplay,
   formatVerificationDate,
@@ -95,6 +97,9 @@ export default function OffersPage() {
     const cached = getCachedPublicOffers();
     return cached?.providerCount ?? null;
   });
+  const { user } = useAuth();
+  const [isServerPremium, setIsServerPremium] = useState<boolean>(() => cachedOnMount?.isPremiumUser ?? false);
+  const isPremiumUser = user?.plan === 'PREMIUM' || isServerPremium;
   // USER-SCOPED: read offer IDs are stored per user session
   const [readOfferIds, setReadOfferIds] = useUserScopedStorage<string[]>('read_offer_ids', []);
 
@@ -107,10 +112,15 @@ export default function OffersPage() {
     ])
       .then(([offersRes, statusRes]) => {
         if (isMounted) {
-          if (offersRes && Array.isArray(offersRes.offers)) {
-            setOffers(offersRes.offers);
+          if (offersRes) {
+            if (Array.isArray(offersRes.offers)) {
+              setOffers(offersRes.offers);
+            }
             if (offersRes.providerCount !== undefined) {
               setCanonicalProviderCount(offersRes.providerCount);
+            }
+            if (offersRes.isPremiumUser !== undefined) {
+              setIsServerPremium(offersRes.isPremiumUser);
             }
           }
           if (statusRes?.summary?.lastSuccessfulSyncAt) {
@@ -669,6 +679,11 @@ export default function OffersPage() {
               ))}
             </AnimatePresence>
           </div>
+        )}
+
+        {/* ── Premium Locked Offers Preview Section (Always visible for Guest/Free users) ── */}
+        {!loading && !error && !isPremiumUser && (
+          <PremiumOffersGate previewCount={3} />
         )}
       </main>
 

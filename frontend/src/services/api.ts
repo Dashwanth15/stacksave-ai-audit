@@ -324,11 +324,18 @@ export interface CanonicalMonitoredProvider {
   offerCount: number;
 }
 
+export interface LockedOffersMetadata {
+  hasLockedOffers: boolean;
+  previewCount: number;
+}
+
 export interface PublicOffersResponse {
   offers: PublicOffer[];
   count: number;
   providerCount?: number;
   providers?: CanonicalMonitoredProvider[];
+  isPremiumUser?: boolean;
+  lockedMetadata?: LockedOffersMetadata;
   note: string;
 }
 

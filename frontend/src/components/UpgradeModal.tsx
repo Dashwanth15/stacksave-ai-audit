@@ -55,7 +55,7 @@ export default function UpgradeModal({
   type = 'general',
   onUpgradeSuccess,
 }: UpgradeModalProps) {
-  const { user, authenticated, openAuthModal, refreshUser } = useAuth();
+  const { user, authenticated, openAuthModal, refreshUser, startDirectSubscription } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanKey>('yearly');
   const [status, setStatus] = useState<CheckoutStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -94,24 +94,16 @@ export default function UpgradeModal({
     onClose();
   };
 
-  const handleSubscribe = async () => {
-    // 1. If guest, trigger authentication first and preserve intent
-    if (!authenticated || !user) {
-      openAuthModal({
-        reason: 'Sign in to subscribe to StackSave Premium',
-        onAuthSuccess: () => {
-          // Intent preserved in AuthContext
-        },
-      });
-      return;
-    }
-
+  const startSubscriptionCheckout = async (
+    targetUser: { name: string; email: string },
+    planToSubscribe: SubscriptionPlanKey = selectedPlan
+  ) => {
     try {
       setStatus('creating');
       setErrorMessage(null);
 
       // 2. Call backend to create Razorpay Subscription
-      const checkoutConfig = await createBillingSubscription(selectedPlan);
+      const checkoutConfig = await createBillingSubscription(planToSubscribe);
 
       setStatus('checkout_open');
 
@@ -121,8 +113,8 @@ export default function UpgradeModal({
         subscriptionId: checkoutConfig.subscriptionId,
         name: checkoutConfig.name,
         description: checkoutConfig.description,
-        userName: user.name,
-        userEmail: user.email,
+        userName: targetUser.name,
+        userEmail: targetUser.email,
         onSuccess: async (rzpResponse) => {
           try {
             setStatus('verifying');
@@ -165,6 +157,29 @@ export default function UpgradeModal({
       setStatus('error');
       setErrorMessage(err.message || 'Unable to launch checkout. Please try again.');
     }
+  };
+
+  const handleSubscribe = async () => {
+    // 1. If guest, close ads modal first, trigger Google authentication with warning notice, then redirect directly to payment
+    if (!authenticated || !user) {
+      const planToSubscribe = selectedPlan;
+      // Close the ads/upgrade modal first as requested
+      onClose();
+
+      openAuthModal({
+        reason: 'Sign in with Google to subscribe to StackSave Premium',
+        isPremiumIntent: true,
+        selectedPlan: planToSubscribe,
+        onAuthSuccess: async (authedUser) => {
+          if (authedUser) {
+            await startDirectSubscription(planToSubscribe, authedUser);
+          }
+        },
+      });
+      return;
+    }
+
+    startSubscriptionCheckout(user, selectedPlan);
   };
 
   // 6 Premium Features: Soft-square containers with restrained palette
@@ -312,8 +327,28 @@ export default function UpgradeModal({
     ) : (
       'StackSave Premium'
     );
+  } else if (type === 'offers') {
+    eyebrowContent = promoActive ? (
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200/80 text-[10.5px] font-bold text-emerald-800 tracking-wider uppercase">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+        <span>{PROMOTION_CONFIG.promotionLabel}</span>
+        <span className="text-emerald-300 font-normal">|</span>
+        <span className="text-emerald-600 font-semibold text-[10px]">PREMIUM OFFERS</span>
+      </div>
+    ) : (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 border border-slate-200">
+        <span>STACKSAVE PREMIUM</span>
+      </span>
+    );
+    headlineContent = (
+      <>
+        Unlock more AI savings with <span className="text-emerald-600 font-black">StackSave Premium</span>
+      </>
+    );
     subheadlineContent =
-      'Save this audit, track pricing changes across your tools, and unlock deep intelligence.';
+      'Discover additional verified AI offers, partner benefits, and pricing opportunities across 29+ AI platforms.';
   } else if (type === 'stack') {
     eyebrowContent = promoActive ? (
       <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200/80 text-[10.5px] font-bold text-emerald-800 tracking-wider uppercase">

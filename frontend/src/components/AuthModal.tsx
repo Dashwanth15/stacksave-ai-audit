@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { m, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
+import { formatCurrentPrice } from '../utils/billingConstants';
 
 declare global {
   interface Window {
@@ -52,7 +53,7 @@ declare global {
 }
 
 export default function AuthModal() {
-  const { isAuthModalOpen, closeAuthModal, loginWithGoogleToken } = useAuth();
+  const { isAuthModalOpen, closeAuthModal, loginWithGoogleToken, isPremiumIntent, selectedPlanIntent } = useAuth();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [hasOfficialButton, setHasOfficialButton] = useState<boolean>(false);
@@ -276,14 +277,60 @@ export default function AuthModal() {
 
               <h2
                 id="auth-modal-title"
-                className="text-[22px] sm:text-[24px] font-semibold text-slate-900 tracking-[-0.02em] leading-tight"
+                className="text-[21px] sm:text-[23px] font-bold text-slate-950 tracking-[-0.02em] leading-tight"
               >
-                Sign in to StackSave
+                {isPremiumIntent ? 'Sign in to Continue to Payment' : 'Sign in to StackSave'}
               </h2>
 
-              <p className="mt-1.5 text-[13px] sm:text-[13.5px] text-slate-500 leading-normal max-w-[280px]">
-                Save your audits and personalize your AI intelligence.
+              <p className="mt-1.5 text-[13px] text-slate-500 leading-normal max-w-[300px]">
+                {isPremiumIntent
+                  ? 'Link your Google account first. You will then proceed directly to secure checkout.'
+                  : 'Save your audits and personalize your AI intelligence.'}
               </p>
+
+              {/* Enterprise SaaS Order & Step Progression Surface */}
+              {isPremiumIntent && (
+                <div className="w-full mt-3.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 text-left shadow-2xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-6 h-6 rounded-md bg-slate-950 text-amber-400 flex items-center justify-center shrink-0 shadow-2xs">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-slate-900 leading-tight">
+                          StackSave Premium
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-0.5 font-medium">
+                          {selectedPlanIntent === 'quarterly' ? 'Quarterly Plan' : 'Yearly Plan (50% Off)'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs font-black text-slate-950 leading-tight">
+                        {selectedPlanIntent === 'quarterly'
+                          ? `${formatCurrentPrice('quarterly')}`
+                          : `${formatCurrentPrice('yearly')}`}
+                      </div>
+                      <div className="text-[10.5px] text-slate-400 font-medium">
+                        {selectedPlanIntent === 'quarterly' ? 'per 3 months' : 'per year'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-2.5 border-t border-slate-200/70 flex items-center justify-between text-[11px] text-slate-500">
+                    <span className="flex items-center gap-1.5 text-slate-900 font-semibold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                      1. Google Sign-in
+                    </span>
+                    <span className="text-slate-300">→</span>
+                    <span className="text-slate-400 font-medium">
+                      2. Payment
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Error Message (if any) */}
@@ -356,7 +403,7 @@ export default function AuthModal() {
             </div>
 
             {/* ── 3. Subordinate Legal Microcopy ── */}
-            <p className="my-2.5 sm:my-3 text-[11px] sm:text-[11.5px] text-slate-400 text-center leading-normal px-1">
+            <p className="my-2.5 text-[11px] text-slate-400 text-center leading-normal px-1">
               By continuing, you agree to our{' '}
               <Link
                 to="/terms"
@@ -382,7 +429,7 @@ export default function AuthModal() {
               onClick={closeAuthModal}
               className="w-full h-[36px] sm:h-[38px] min-h-0 rounded-lg border border-slate-200/60 hover:border-slate-300 bg-slate-50/70 hover:bg-slate-100/90 active:bg-slate-200/60 text-slate-500 hover:text-slate-800 text-[12.5px] sm:text-[13px] font-medium transition-all duration-150 ease-out flex items-center justify-center cursor-pointer active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300"
             >
-              Continue without an account
+              {isPremiumIntent ? 'Cancel & return to browsing' : 'Continue without an account'}
             </button>
           </m.div>
         </div>

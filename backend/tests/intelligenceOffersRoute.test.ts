@@ -264,6 +264,44 @@ describe('GET /api/intelligence/offers regression test', () => {
       expect(offersJson.data.count).toBe(4);
       expect(offersJson.data.providerCount).toBe(2);
       expect(offersJson.data.providers).toHaveLength(2);
+      expect(offersJson.data.isPremiumUser).toBe(false);
+      expect(offersJson.data.lockedMetadata).toEqual({
+        hasLockedOffers: true,
+        previewCount: 3,
+      });
+    });
+  });
+
+  it('correctly sets isPremiumUser and lockedMetadata for guest vs premium sessions', async () => {
+    mockRecords.push({
+      _id: 'test_offer_public',
+      fingerprint: 'fp_cursor_trial_public',
+      providerId: 'cursor',
+      providerName: 'Cursor',
+      title: 'Cursor Pro 14-Day Free Trial',
+      description: 'Public offer description.',
+      discount: '14-Day Free Trial',
+      evidenceText: 'Valid official offer evidence text with more than twenty characters.',
+      sourceStatus: 'VERIFIED',
+      sourceUrl: 'https://cursor.com/pricing',
+      detectedAt: new Date(),
+      isActive: true,
+      isPublic: true,
+      eventType: 'NEW_OFFER',
+    });
+
+    await withIntelligenceApp(async (fetch) => {
+      // 1. Guest request (no auth cookie/header)
+      const res = await fetch('/api/intelligence/offers');
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.success).toBe(true);
+      expect(json.data.isPremiumUser).toBe(false);
+      expect(json.data.lockedMetadata).toEqual({
+        hasLockedOffers: true,
+        previewCount: 3,
+      });
+      expect(json.data.offers).toHaveLength(1);
     });
   });
 });

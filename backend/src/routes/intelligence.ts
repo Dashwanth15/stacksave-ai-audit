@@ -5,13 +5,16 @@
 import { Router, Request, Response } from 'express';
 import { ToolEntry, UseCase } from '../types';
 import { AIStackIntelligenceService } from '../audit-engine/services/AIStackIntelligenceService';
-import { PricingSourceModel, NotificationEventModel, SyncLogModel } from '../services/dbService';
+import { PricingSourceModel, NotificationEventModel, SyncLogModel, SubscriptionModel } from '../services/dbService';
 import { PricingOverlayService } from '../pricing/pricingOverlay';
 import { isRegisteredOfficialSource, canPublishOffer } from '../pricing/offerTrust';
 import { resolveCanonicalOfferUrl } from '../pricing/partnerSourceRegistry';
 import { getProviderSource } from '../pricing/sourceRegistry';
 import { PlatformRankingEngine, RankingCategory } from '../audit-engine/services/PlatformRankingEngine';
 import { ProviderDiscoveryService } from '../pricing/providerDiscoveryService';
+import { optionalAuthenticate } from '../middleware/auth';
+import { isPremiumUser, syncUserEntitlement } from '../services/billingService';
+import { OFFERS_ACCESS_CONFIG } from '../config/offersConfig';
 
 // ── Canonical AI Provider Names (Zero Hardcoded Redundancy) ──
 export const CANONICAL_AI_PROVIDER_NAMES: Record<string, string> = {
@@ -414,9 +417,22 @@ router.get('/offers/diagnostic', requireAdminSecret, async (_req: Request, res: 
 //     Platform quality carries 60% weight so major platforms appear first in Recommended.
 //
 // Response shape:
-//   { success: true, data: { offers: PublicOffer[], count: number } }
-router.get('/offers', async (_req: Request, res: Response) => {
+//   { success: true, data: { offers: PublicOffer[], count: number, isPremiumUser: boolean, lockedMetadata: {...} } }
+router.get('/offers', optionalAuthenticate, async (req: Request, res: Response) => {
   try {
+    // 1. Authoritative entitlement check on backend (Server is source of truth)
+    let isPremium = false;
+    if (req.user) {
+      isPremium = isPremiumUser(req.user);
+      if (isPremium) {
+        const sub = await SubscriptionModel.findOne({ userId: req.user._id }).sort({ createdAt: -1 });
+        if (sub && !isPremiumUser(req.user, sub)) {
+          await syncUserEntitlement(req.user._id, sub);
+          isPremium = false;
+        }
+      }
+    }
+
     const events = await NotificationEventModel.find({
       eventType: 'NEW_OFFER',
       isActive: { $ne: false },
@@ -631,9 +647,66 @@ router.get('/offers', async (_req: Request, res: Response) => {
       // Sort by finalRecommendedScore DESC (platform quality dominates)
       .sort((a, b) => b.finalRecommendedScore - a.finalRecommendedScore);
 
+    // ── 2. Authoritative Access Control Filtering (Server is Source of Truth) ──
+    let visibleOffers = scoredOffers;
+    let lockedMetadata = {
+      hasLockedOffers: false,
+      previewCount: 0,
+    };
+
+    if (isPremium || !OFFERS_ACCESS_CONFIG.PREMIUM_OFFERS_ENABLED) {
+      // Premium users receive 100% of all eligible offers. Zero blur, zero lock gate.
+      visibleOffers = scoredOffers;
+      lockedMetadata = {
+        hasLockedOffers: false,
+        previewCount: 0,
+      };
+    } else {
+      // Free / Guest users:
+      // Filter out any offers strictly restricted to Premium by category or provider
+      const premiumCategoriesSet = new Set(
+        (OFFERS_ACCESS_CONFIG.PREMIUM_OFFER_CATEGORIES || []).map((c) => c.toLowerCase().trim())
+      );
+      const premiumProvidersSet = new Set(
+        (OFFERS_ACCESS_CONFIG.PREMIUM_PROVIDER_ACCESS || []).map((p) => p.toLowerCase().trim())
+      );
+
+      const freeEligibleOffers: typeof scoredOffers = [];
+      const categoryCountsMap = new Map<string, number>();
+
+      for (const offer of scoredOffers) {
+        const catKey = (offer.category || '').toLowerCase().trim();
+        const provKey = (offer.canonicalProviderId || offer.providerId || '').toLowerCase().trim();
+
+        // Check if strictly restricted to Premium
+        if (premiumCategoriesSet.has(catKey) || premiumProvidersSet.has(provKey)) {
+          continue; // Strip from Free payload completely
+        }
+
+        // Check category visibility limit if configured
+        const currentCatCount = categoryCountsMap.get(catKey) || 0;
+        if (
+          OFFERS_ACCESS_CONFIG.FREE_VISIBLE_OFFER_LIMIT !== null &&
+          OFFERS_ACCESS_CONFIG.FREE_VISIBLE_OFFER_LIMIT !== undefined &&
+          currentCatCount >= OFFERS_ACCESS_CONFIG.FREE_VISIBLE_OFFER_LIMIT
+        ) {
+          continue;
+        }
+
+        categoryCountsMap.set(catKey, currentCatCount + 1);
+        freeEligibleOffers.push(offer);
+      }
+
+      visibleOffers = freeEligibleOffers;
+      lockedMetadata = {
+        hasLockedOffers: true,
+        previewCount: OFFERS_ACCESS_CONFIG.PREMIUM_OFFER_PREVIEW_COUNT || 3,
+      };
+    }
+
     // ── Canonical AI Provider Grouping & Count ──────────────────
     const canonicalProvidersMap = new Map<string, { providerId: string; displayName: string; offerCount: number }>();
-    for (const offer of scoredOffers) {
+    for (const offer of visibleOffers) {
       const canonicalId = ((offer.aiProvider || offer.providerId) || '').toLowerCase().trim();
       const existing = canonicalProvidersMap.get(canonicalId);
       if (existing) {
@@ -653,11 +726,13 @@ router.get('/offers', async (_req: Request, res: Response) => {
     return res.json({
       success: true,
       data: {
-        offers: scoredOffers,
-        count: scoredOffers.length,
+        offers: visibleOffers,
+        count: visibleOffers.length,
         providerCount: providersList.length,
         providers: providersList,
-        note: 'Offers sorted by finalRecommendedScore (platformIntelligenceScore×0.60 + offerOpportunityScore×0.40). Platform quality determines primary order; offer quality is secondary. All verified active offers across all validated AI providers.',
+        isPremiumUser: isPremium,
+        lockedMetadata,
+        note: 'Offers sorted by finalRecommendedScore (platformIntelligenceScore×0.60 + offerOpportunityScore×0.40). Access control enforced on server.',
       },
     });
   } catch (err) {

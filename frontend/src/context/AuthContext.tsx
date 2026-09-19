@@ -11,13 +11,22 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import type { User } from '../types';
+import type { User, SubscriptionPlanKey } from '../types';
 import type { UpgradeModalTrigger } from '../components/UpgradeModal';
-import { fetchCurrentUser, loginWithGoogle, logoutUser } from '../services/api';
+import {
+  fetchCurrentUser,
+  loginWithGoogle,
+  logoutUser,
+  createBillingSubscription,
+  verifyBillingPayment,
+} from '../services/api';
+import { launchRazorpaySubscriptionCheckout } from '../utils/razorpay';
 
-interface OpenAuthModalOptions {
+export interface OpenAuthModalOptions {
   reason?: string;
-  onAuthSuccess?: () => void;
+  isPremiumIntent?: boolean;
+  selectedPlan?: SubscriptionPlanKey;
+  onAuthSuccess?: (user?: User) => void;
 }
 
 interface AuthContextType {
@@ -28,14 +37,17 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isAuthModalOpen: boolean;
   authModalReason: string;
+  isPremiumIntent: boolean;
+  selectedPlanIntent: SubscriptionPlanKey | null;
   openAuthModal: (options?: OpenAuthModalOptions) => void;
   closeAuthModal: () => void;
   isUpgradeModalOpen: boolean;
   upgradeModalType: UpgradeModalTrigger;
   openUpgradeModal: (type?: UpgradeModalTrigger) => void;
   closeUpgradeModal: () => void;
-  pendingCallback: (() => void) | null;
+  pendingCallback: ((user?: User) => void) | null;
   refreshUser: () => Promise<User | null>;
+  startDirectSubscription: (plan: SubscriptionPlanKey, targetUser?: User) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,9 +57,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState<boolean>(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalReason, setAuthModalReason] = useState<string>('Sign in to StackSave');
+  const [isPremiumIntent, setIsPremiumIntent] = useState<boolean>(false);
+  const [selectedPlanIntent, setSelectedPlanIntent] = useState<SubscriptionPlanKey | null>(null);
   
-  // Ref to hold the pending action callback (e.g. save audit) across authentication
-  const successCallbackRef = useRef<(() => void) | null>(null);
+  // Ref to hold the pending action callback (e.g. save audit or continue checkout) across authentication
+  const successCallbackRef = useRef<((user?: User) => void) | null>(null);
 
   // Restore authenticated session on initial app load
   useEffect(() => {
@@ -91,6 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       setAuthModalReason('Sign in to your StackSave account');
     }
+    setIsPremiumIntent(!!options?.isPremiumIntent);
+    setSelectedPlanIntent(options?.selectedPlan || null);
+
     if (options?.onAuthSuccess) {
       successCallbackRef.current = options.onAuthSuccess;
     } else {
@@ -101,6 +118,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const closeAuthModal = useCallback(() => {
     setIsAuthModalOpen(false);
+    setIsPremiumIntent(false);
+    setSelectedPlanIntent(null);
     // Note: Do not clear successCallbackRef immediately on close so if login just completed it can fire
   }, []);
 
@@ -109,11 +128,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const authenticatedUser = await loginWithGoogle(params);
       setUser(authenticatedUser);
       setIsAuthModalOpen(false);
+      setIsPremiumIntent(false);
+      setSelectedPlanIntent(null);
 
-      // Mandatory Correction 5: Execute preserved callback (e.g., save current audit)
+      // Execute preserved callback with the newly authenticated user
       if (successCallbackRef.current) {
         try {
-          successCallbackRef.current();
+          successCallbackRef.current(authenticatedUser);
         } catch (err) {
           console.error('Error running auth success callback:', err);
         } finally {
@@ -146,6 +167,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const startDirectSubscription = useCallback(
+    async (plan: SubscriptionPlanKey, targetUser?: User) => {
+      const effectiveUser = targetUser || user;
+      if (!effectiveUser) {
+        console.warn('Cannot start direct subscription without an authenticated user.');
+        return;
+      }
+      try {
+        const checkoutConfig = await createBillingSubscription(plan);
+        await launchRazorpaySubscriptionCheckout({
+          keyId: checkoutConfig.keyId,
+          subscriptionId: checkoutConfig.subscriptionId,
+          name: checkoutConfig.name,
+          description: checkoutConfig.description,
+          userName: effectiveUser.name,
+          userEmail: effectiveUser.email,
+          onSuccess: async (rzpResponse) => {
+            try {
+              await verifyBillingPayment({
+                razorpay_payment_id: rzpResponse.razorpay_payment_id,
+                razorpay_subscription_id: rzpResponse.razorpay_subscription_id,
+                razorpay_signature: rzpResponse.razorpay_signature,
+              });
+              await refreshUser();
+            } catch (verifyErr) {
+              console.error('Subscription verification error:', verifyErr);
+              setTimeout(async () => {
+                await refreshUser();
+              }, 3000);
+            }
+          },
+          onDismiss: () => {
+            console.log('Razorpay payment dismissed by user.');
+          },
+        });
+      } catch (err) {
+        console.error('Direct subscription launch failed:', err);
+      }
+    },
+    [user, refreshUser]
+  );
+
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState<boolean>(false);
   const [upgradeModalType, setUpgradeModalType] = useState<UpgradeModalTrigger>('general');
 
@@ -174,6 +237,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     isAuthModalOpen,
     authModalReason,
+    isPremiumIntent,
+    selectedPlanIntent,
     openAuthModal,
     closeAuthModal,
     isUpgradeModalOpen,
@@ -182,6 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     closeUpgradeModal,
     pendingCallback: successCallbackRef.current,
     refreshUser,
+    startDirectSubscription,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -3,7 +3,8 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';
 import type { AuditResult, Insight } from '../types';
 import type { StackIntelligenceResult } from '../types/intelligence';
-import { fetchAudit, triggerReAudit, saveAuditToAccount, createAuditShareLink } from '../services/api';
+import { fetchAudit, triggerReAudit, saveAuditToAccount, createAuditShareLink, fetchUserUsage } from '../services/api';
+import type { UserUsageResponse } from '../types';
 import { fetchStackIntelligence } from '../services/intelligence';
 import { formatCurrencyFull, insightTypeLabel, formatRelativeTime } from '../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
@@ -362,6 +363,19 @@ export default function ResultsPage() {
   const { user, authenticated, openAuthModal, openUpgradeModal } = useAuth();
   const isPremium = user?.plan === 'PREMIUM';
 
+  // Cache user usage for pre-action limit checks (backend remains authoritative)
+  const usageRef = useRef<UserUsageResponse | null>(null);
+
+  useEffect(() => {
+    if (!authenticated || isPremium) {
+      usageRef.current = null;
+      return;
+    }
+    fetchUserUsage()
+      .then((usage) => { usageRef.current = usage; })
+      .catch(() => { usageRef.current = null; });
+  }, [authenticated, isPremium]);
+
   // Check if current audit is already saved in session/local storage
   useEffect(() => {
     if (audit?.auditId) {
@@ -384,6 +398,8 @@ export default function ResultsPage() {
             await saveAuditToAccount(audit.auditId);
             setIsSaved(true);
             localStorage.setItem(getUserScopedKey(`saved_${audit.auditId}`), 'true');
+            // Refresh usage cache after successful save
+            fetchUserUsage().then((u) => { usageRef.current = u; }).catch(() => {});
           } catch (err: any) {
             const errorCode = err?.response?.data?.code;
             if (errorCode === 'FREE_AUDIT_LIMIT_REACHED') {
@@ -399,12 +415,23 @@ export default function ResultsPage() {
       return;
     }
 
+    // Pre-check: block immediately if Free plan limit is already reached
+    if (!isPremium && usageRef.current) {
+      const { savedAudits } = usageRef.current;
+      if (savedAudits.limit !== null && savedAudits.current >= savedAudits.limit) {
+        openUpgradeModal('save');
+        return;
+      }
+    }
+
     // Authenticated user: explicitly persist audit to MongoDB
     try {
       setSavingAudit(true);
       await saveAuditToAccount(audit.auditId);
       setIsSaved(true);
       localStorage.setItem(getUserScopedKey(`saved_${audit.auditId}`), 'true');
+      // Refresh usage cache after successful save
+      fetchUserUsage().then((u) => { usageRef.current = u; }).catch(() => {});
     } catch (err: any) {
       const errorCode = err?.response?.data?.code;
       if (errorCode === 'FREE_AUDIT_LIMIT_REACHED') {
@@ -492,6 +519,8 @@ export default function ResultsPage() {
               await navigator.clipboard.writeText(shareData.shareUrl);
               setCopied(true);
               setTimeout(() => setCopied(false), 2000);
+              // Refresh usage cache after successful share
+              fetchUserUsage().then((u) => { usageRef.current = u; }).catch(() => {});
             }
           } catch (err: any) {
             const errorCode = err?.response?.data?.code;
@@ -506,6 +535,15 @@ export default function ResultsPage() {
       return;
     }
 
+    // Pre-check: block immediately if Free plan share limit is already reached
+    if (!isPremium && usageRef.current) {
+      const { shareLinks } = usageRef.current;
+      if (shareLinks.limit !== null && shareLinks.current >= shareLinks.limit) {
+        openUpgradeModal('share');
+        return;
+      }
+    }
+
     // Authenticated user: create authoritative share link with Free limit enforcement
     try {
       const shareData = await createAuditShareLink(audit.auditId);
@@ -513,6 +551,8 @@ export default function ResultsPage() {
         await navigator.clipboard.writeText(shareData.shareUrl);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+        // Refresh usage cache after successful share
+        fetchUserUsage().then((u) => { usageRef.current = u; }).catch(() => {});
       }
     } catch (err: any) {
       const errorCode = err?.response?.data?.code;
