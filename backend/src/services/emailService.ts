@@ -68,24 +68,27 @@ const FONT_STACK = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 function renderEmailHeader(eyebrowBadgeHtml: string): string {
   return `
     <tr>
-      <td style="padding: 28px 32px 20px 32px; border-bottom: 1px solid #F1F5F9; background-color: #FFFFFF;">
+      <td style="padding: 0; background: linear-gradient(90deg, #10B981 0%, #00E599 100%); height: 3px; line-height: 3px; font-size: 3px;">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="header-cell" style="padding: 24px 32px 20px 32px; border-bottom: 1px solid #F1F5F9; background-color: #FFFFFF;">
         <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
           <tr>
-            <td valign="middle">
+            <td valign="middle" align="left">
               <table role="presentation" border="0" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.03em; font-family: ${FONT_STACK};">
-                    Stack<span style="color: #4F46E5;">Save</span>
-                  </td>
-                  <td style="padding-left: 10px; border-left: 1px solid #E2E8F0; margin-left: 10px;">
-                    <span style="font-size: 10px; font-weight: 700; color: #64748B; letter-spacing: 0.08em; text-transform: uppercase; font-family: ${FONT_STACK}; display: inline-block; padding-left: 10px;">
+                  <td valign="middle">
+                    <div style="font-size: 19px; font-weight: 800; color: #0A0D14; letter-spacing: -0.03em; font-family: ${FONT_STACK}; line-height: 1.1;">
+                      Stack<span style="color: #10B981; font-weight: 800;">Save</span>
+                    </div>
+                    <div style="font-size: 9px; font-weight: 700; color: #059669; letter-spacing: 0.1em; text-transform: uppercase; font-family: ${FONT_STACK}; margin-top: 3px;">
                       AI Spend Intelligence
-                    </span>
+                    </div>
                   </td>
                 </tr>
               </table>
             </td>
-            <td align="right" valign="middle">
+            <td valign="middle" align="right" style="white-space: nowrap; padding-left: 12px;">
               ${eyebrowBadgeHtml}
             </td>
           </tr>
@@ -99,8 +102,8 @@ function renderEmailFooter(appUrl: string, unsubLinkHtml = ''): string {
   return `
     <tr>
       <td style="background-color: #FAFAFA; border-top: 1px solid #F1F5F9; padding: 24px 32px; text-align: center;">
-        <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: #334155; font-family: ${FONT_STACK};">
-          StackSave &middot; AI Spend Intelligence &amp; Optimization
+        <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: #0A0D14; font-family: ${FONT_STACK};">
+          Stack<span style="color: #10B981;">Save</span> &middot; AI Spend Intelligence &amp; Optimization
         </p>
         <p style="margin: 0 0 10px 0; font-size: 11px; color: #94A3B8; line-height: 1.4; font-family: ${FONT_STACK};">
           Continuous monitoring across official vendor pricing feeds and subscription tiers.
@@ -120,20 +123,31 @@ function renderEmailFooter(appUrl: string, unsubLinkHtml = ''): string {
 
 function renderPremiumUpgradeSection(appUrl: string): string {
   return `
-    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #FAFAFA; border: 1px solid #EAECF0; border-radius: 10px; margin-top: 28px; margin-bottom: 8px;">
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; margin-top: 28px; margin-bottom: 8px;">
       <tr>
         <td style="padding: 20px 24px;">
-          <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-bottom: 4px; font-family: ${FONT_STACK};">
-            Unlock more with StackSave Premium
-          </div>
-          <p style="font-size: 12px; color: #64748B; line-height: 1.5; margin: 0 0 14px 0; font-family: ${FONT_STACK};">
-            Get access to additional verified AI savings opportunities, deeper audit history, and Premium features as they become available.
+          <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 6px;">
+            <tr>
+              <td valign="middle">
+                <span style="display: inline-block; background-color: #DCFCE7; border: 1px solid #86EFAC; color: #166534; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 9999px; font-family: ${FONT_STACK}; margin-right: 8px;">
+                  PREMIUM
+                </span>
+              </td>
+              <td valign="middle">
+                <span style="font-size: 13px; font-weight: 700; color: #065F46; font-family: ${FONT_STACK};">
+                  Unlock More with StackSave Premium
+                </span>
+              </td>
+            </tr>
+          </table>
+          <p style="font-size: 12px; color: #047857; line-height: 1.5; margin: 0 0 14px 0; font-family: ${FONT_STACK};">
+            Get access to additional verified AI savings opportunities, deeper audit history, and shareable team reports.
           </p>
           <table role="presentation" border="0" cellspacing="0" cellpadding="0">
             <tr>
-              <td style="border-radius: 6px; background-color: #4F46E5;">
-                <a href="${appUrl}/#pricing" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 8px 18px; font-family: ${FONT_STACK}; font-size: 12px; font-weight: 600; color: #FFFFFF; text-decoration: none; border-radius: 6px; letter-spacing: -0.01em;">
-                  Explore Premium &rarr;
+              <td style="border-radius: 6px; background-color: #0A0D14;">
+                <a href="${appUrl}/#pricing" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 9px 18px; font-family: ${FONT_STACK}; font-size: 12px; font-weight: 600; color: #FFFFFF; text-decoration: none; border-radius: 6px; letter-spacing: -0.01em; border: 1px solid #1E293B;">
+                  Explore Premium <span style="color: #10B981; font-weight: 700; margin-left: 2px;">&rarr;</span>
                 </a>
               </td>
             </tr>
@@ -150,7 +164,7 @@ function renderPremiumActiveClosingSection(): string {
       <tr>
         <td style="padding: 16px 20px; text-align: center;">
           <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.5; font-family: ${FONT_STACK};">
-            <strong style="color: #0F172A;">StackSave Continuous Intelligence</strong> &middot; More verified AI opportunities are being tracked for you.
+            <strong style="color: #0A0D14;">StackSave Continuous Intelligence</strong> &middot; More verified AI opportunities are being monitored for you.
           </p>
         </td>
       </tr>
@@ -257,7 +271,7 @@ StackSave · AI Spend Intelligence & Optimization
 https://stacksaveai.com
 `.trim();
 
-  const eyebrowBadge = `<span style="display: inline-block; background-color: #EEF2FF; border: 1px solid #E0E7FF; color: #4338CA; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 6px; font-family: ${FONT_STACK};">Welcome</span>`;
+  const eyebrowBadge = `<span style="display: inline-block; background-color: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 11px; border-radius: 9999px; font-family: ${FONT_STACK};">Welcome</span>`;
 
   const htmlContent = `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -268,24 +282,32 @@ https://stacksaveai.com
   <meta name="color-scheme" content="light" />
   <meta name="supported-color-schemes" content="light" />
   <title>${subject}</title>
+  <style type="text/css">
+    @media only screen and (max-width: 480px) {
+      .email-container { width: 100% !important; border-radius: 0 !important; }
+      .email-content { padding: 24px 18px !important; }
+      .header-cell { padding: 20px 18px 16px 18px !important; }
+      .cta-button { width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #F8FAFC; font-family: ${FONT_STACK}; -webkit-font-smoothing: antialiased; color: #0F172A;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; padding: 36px 12px;">
+<body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: ${FONT_STACK}; -webkit-font-smoothing: antialiased; color: #0F172A;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F1F5F9; padding: 36px 12px;">
     <tr>
       <td align="center">
         <!-- Main Container (580px max) -->
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);">
+        <table role="presentation" class="email-container" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">
           
           <!-- Header -->
           ${renderEmailHeader(eyebrowBadge)}
 
           <!-- Body Content -->
           <tr>
-            <td style="padding: 32px 32px 24px 32px;">
-              <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #0F172A; line-height: 1.3; letter-spacing: -0.02em; font-family: ${FONT_STACK};">
+            <td class="email-content" style="padding: 32px 32px 24px 32px;">
+              <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #0A0D14; line-height: 1.3; letter-spacing: -0.02em; font-family: ${FONT_STACK};">
                 Welcome to StackSave, ${firstName}
               </h1>
-              <p style="margin: 0 0 24px 0; font-size: 14px; color: #475569; line-height: 1.55; font-family: ${FONT_STACK};">
+              <p style="margin: 0 0 24px 0; font-size: 14px; color: #475569; line-height: 1.6; font-family: ${FONT_STACK};">
                 Your intelligent copilot for AI spend management, continuous pricing benchmarks, and verified vendor deals.
               </p>
 
@@ -293,45 +315,57 @@ https://stacksaveai.com
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px 22px;">
-                    <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; font-family: ${FONT_STACK};">
+                    <div style="font-size: 11px; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; font-family: ${FONT_STACK};">
                       What You Can Do on StackSave
                     </div>
 
-                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 12px;">
+                    <!-- Item 1 -->
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 14px;">
                       <tr>
-                        <td width="16" valign="top" style="color: #4F46E5; font-weight: 700; font-size: 13px;">&bull;</td>
-                        <td style="padding-left: 8px;">
-                          <div style="font-size: 13px; font-weight: 700; color: #0F172A; font-family: ${FONT_STACK};">Live AI Pricing Intelligence</div>
+                        <td width="26" valign="top" style="padding-top: 1px;">
+                          <div style="width: 20px; height: 20px; line-height: 20px; text-align: center; background-color: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 50%; color: #059669; font-size: 11px; font-weight: 800; font-family: ${FONT_STACK};">&#10003;</div>
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <div style="font-size: 13px; font-weight: 700; color: #0A0D14; font-family: ${FONT_STACK};">Live AI Pricing Intelligence</div>
                           <div style="font-size: 12px; color: #64748B; line-height: 1.45; margin-top: 2px; font-family: ${FONT_STACK};">Real-time benchmarks across models, tokens, and seat tiers for 25+ providers.</div>
                         </td>
                       </tr>
                     </table>
 
-                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 12px;">
+                    <!-- Item 2 -->
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 14px;">
                       <tr>
-                        <td width="16" valign="top" style="color: #4F46E5; font-weight: 700; font-size: 13px;">&bull;</td>
-                        <td style="padding-left: 8px;">
-                          <div style="font-size: 13px; font-weight: 700; color: #0F172A; font-family: ${FONT_STACK};">Verified AI Deals &amp; Discounts</div>
+                        <td width="26" valign="top" style="padding-top: 1px;">
+                          <div style="width: 20px; height: 20px; line-height: 20px; text-align: center; background-color: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 50%; color: #059669; font-size: 11px; font-weight: 800; font-family: ${FONT_STACK};">&#10003;</div>
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <div style="font-size: 13px; font-weight: 700; color: #0A0D14; font-family: ${FONT_STACK};">Verified AI Deals &amp; Discounts</div>
                           <div style="font-size: 12px; color: #64748B; line-height: 1.45; margin-top: 2px; font-family: ${FONT_STACK};">Curated promo codes, academic discounts, and verified partner promotions.</div>
                         </td>
                       </tr>
                     </table>
 
-                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 12px;">
+                    <!-- Item 3 -->
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 14px;">
                       <tr>
-                        <td width="16" valign="top" style="color: #4F46E5; font-weight: 700; font-size: 13px;">&bull;</td>
-                        <td style="padding-left: 8px;">
-                          <div style="font-size: 13px; font-weight: 700; color: #0F172A; font-family: ${FONT_STACK};">Instant Stack Audits</div>
+                        <td width="26" valign="top" style="padding-top: 1px;">
+                          <div style="width: 20px; height: 20px; line-height: 20px; text-align: center; background-color: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 50%; color: #059669; font-size: 11px; font-weight: 800; font-family: ${FONT_STACK};">&#10003;</div>
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <div style="font-size: 13px; font-weight: 700; color: #0A0D14; font-family: ${FONT_STACK};">Instant Stack Audits</div>
                           <div style="font-size: 12px; color: #64748B; line-height: 1.45; margin-top: 2px; font-family: ${FONT_STACK};">Evaluate your team's tool list for overlaps, alternatives, and migration savings.</div>
                         </td>
                       </tr>
                     </table>
 
+                    <!-- Item 4 -->
                     <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                       <tr>
-                        <td width="16" valign="top" style="color: #4F46E5; font-weight: 700; font-size: 13px;">&bull;</td>
-                        <td style="padding-left: 8px;">
-                          <div style="font-size: 13px; font-weight: 700; color: #0F172A; font-family: ${FONT_STACK};">StackSave Premium</div>
+                        <td width="26" valign="top" style="padding-top: 1px;">
+                          <div style="width: 20px; height: 20px; line-height: 20px; text-align: center; background-color: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 50%; color: #059669; font-size: 11px; font-weight: 800; font-family: ${FONT_STACK};">&#10003;</div>
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <div style="font-size: 13px; font-weight: 700; color: #0A0D14; font-family: ${FONT_STACK};">StackSave Premium</div>
                           <div style="font-size: 12px; color: #64748B; line-height: 1.45; margin-top: 2px; font-family: ${FONT_STACK};">Unlimited audit history, shareable team reports, and curated AI savings briefs.</div>
                         </td>
                       </tr>
@@ -344,8 +378,8 @@ https://stacksaveai.com
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
                 <tr>
                   <td align="center">
-                    <a href="${appUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0F172A; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; padding: 13px 32px; border-radius: 8px; letter-spacing: -0.01em; font-family: ${FONT_STACK};">
-                      Launch StackSave Dashboard &rarr;
+                    <a href="${appUrl}" target="_blank" rel="noopener noreferrer" class="cta-button" style="display: inline-block; background-color: #0A0D14; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px; border: 1px solid #1E293B; letter-spacing: -0.01em; font-family: ${FONT_STACK}; box-shadow: 0 2px 6px rgba(10, 13, 20, 0.2);">
+                      Launch StackSave Dashboard <span style="color: #10B981; font-weight: 700; margin-left: 4px;">&rarr;</span>
                     </a>
                   </td>
                 </tr>
@@ -442,7 +476,7 @@ StackSave Continuous Intelligence · More verified AI opportunities are being tr
 https://stacksaveai.com
 `.trim();
 
-  const eyebrowBadge = `<span style="display: inline-block; background-color: #ECFDF5; border: 1px solid #A7F3D0; color: #047857; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 6px; font-family: ${FONT_STACK};">Premium Active</span>`;
+  const eyebrowBadge = `<span style="display: inline-block; background-color: #ECFDF5; border: 1px solid #A7F3D0; color: #047857; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 11px; border-radius: 9999px; font-family: ${FONT_STACK};">Premium Active</span>`;
 
   const htmlContent = `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -453,24 +487,32 @@ https://stacksaveai.com
   <meta name="color-scheme" content="light" />
   <meta name="supported-color-schemes" content="light" />
   <title>${subject}</title>
+  <style type="text/css">
+    @media only screen and (max-width: 480px) {
+      .email-container { width: 100% !important; border-radius: 0 !important; }
+      .email-content { padding: 24px 18px !important; }
+      .header-cell { padding: 20px 18px 16px 18px !important; }
+      .cta-button { width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #F8FAFC; font-family: ${FONT_STACK}; -webkit-font-smoothing: antialiased; color: #0F172A;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; padding: 36px 12px;">
+<body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: ${FONT_STACK}; -webkit-font-smoothing: antialiased; color: #0F172A;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F1F5F9; padding: 36px 12px;">
     <tr>
       <td align="center">
         <!-- Main Container (580px max) -->
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);">
+        <table role="presentation" class="email-container" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">
           
           <!-- Header -->
           ${renderEmailHeader(eyebrowBadge)}
 
           <!-- Body Content -->
           <tr>
-            <td style="padding: 32px 32px 24px 32px;">
-              <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #0F172A; line-height: 1.3; letter-spacing: -0.02em; font-family: ${FONT_STACK};">
+            <td class="email-content" style="padding: 32px 32px 24px 32px;">
+              <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #0A0D14; line-height: 1.3; letter-spacing: -0.02em; font-family: ${FONT_STACK};">
                 You're now on StackSave Premium
               </h1>
-              <p style="margin: 0 0 24px 0; font-size: 14px; color: #475569; line-height: 1.55; font-family: ${FONT_STACK};">
+              <p style="margin: 0 0 24px 0; font-size: 14px; color: #475569; line-height: 1.6; font-family: ${FONT_STACK};">
                 Your payment was confirmed and your account is upgraded to the <strong>${planName} Plan</strong>. All usage limits have been lifted.
               </p>
 
@@ -478,35 +520,41 @@ https://stacksaveai.com
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px 22px;">
-                    <div style="font-size: 11px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; font-family: ${FONT_STACK};">
+                    <div style="font-size: 11px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; font-family: ${FONT_STACK};">
                       Active Premium Capabilities
                     </div>
 
-                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 12px;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 14px;">
                       <tr>
-                        <td width="16" valign="top" style="color: #059669; font-weight: 700; font-size: 13px;">&bull;</td>
-                        <td style="padding-left: 8px;">
-                          <div style="font-size: 13px; font-weight: 700; color: #0F172A; font-family: ${FONT_STACK};">Unlimited Saved Audits</div>
+                        <td width="26" valign="top" style="padding-top: 1px;">
+                          <div style="width: 20px; height: 20px; line-height: 20px; text-align: center; background-color: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 50%; color: #059669; font-size: 11px; font-weight: 800; font-family: ${FONT_STACK};">&#10003;</div>
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <div style="font-size: 13px; font-weight: 700; color: #0A0D14; font-family: ${FONT_STACK};">Unlimited Saved Audits</div>
                           <div style="font-size: 12px; color: #64748B; line-height: 1.45; margin-top: 2px; font-family: ${FONT_STACK};">Save, track, and compare unlimited AI audits without plan restrictions.</div>
                         </td>
                       </tr>
                     </table>
 
-                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 12px;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 14px;">
                       <tr>
-                        <td width="16" valign="top" style="color: #059669; font-weight: 700; font-size: 13px;">&bull;</td>
-                        <td style="padding-left: 8px;">
-                          <div style="font-size: 13px; font-weight: 700; color: #0F172A; font-family: ${FONT_STACK};">Unlimited Shareable Reports</div>
+                        <td width="26" valign="top" style="padding-top: 1px;">
+                          <div style="width: 20px; height: 20px; line-height: 20px; text-align: center; background-color: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 50%; color: #059669; font-size: 11px; font-weight: 800; font-family: ${FONT_STACK};">&#10003;</div>
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <div style="font-size: 13px; font-weight: 700; color: #0A0D14; font-family: ${FONT_STACK};">Unlimited Shareable Reports</div>
                           <div style="font-size: 12px; color: #64748B; line-height: 1.45; margin-top: 2px; font-family: ${FONT_STACK};">Generate permanent public or private report links for stakeholders and teammates.</div>
                         </td>
                       </tr>
                     </table>
 
-                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 12px;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 14px;">
                       <tr>
-                        <td width="16" valign="top" style="color: #059669; font-weight: 700; font-size: 13px;">&bull;</td>
-                        <td style="padding-left: 8px;">
-                          <div style="font-size: 13px; font-weight: 700; color: #0F172A; font-family: ${FONT_STACK};">Verified AI Deals &amp; Promo Codes</div>
+                        <td width="26" valign="top" style="padding-top: 1px;">
+                          <div style="width: 20px; height: 20px; line-height: 20px; text-align: center; background-color: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 50%; color: #059669; font-size: 11px; font-weight: 800; font-family: ${FONT_STACK};">&#10003;</div>
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <div style="font-size: 13px; font-weight: 700; color: #0A0D14; font-family: ${FONT_STACK};">Verified AI Deals &amp; Promo Codes</div>
                           <div style="font-size: 12px; color: #64748B; line-height: 1.45; margin-top: 2px; font-family: ${FONT_STACK};">Unrestricted access to verified AI offers, promo codes, and partner bundles.</div>
                         </td>
                       </tr>
@@ -514,9 +562,11 @@ https://stacksaveai.com
 
                     <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                       <tr>
-                        <td width="16" valign="top" style="color: #059669; font-weight: 700; font-size: 13px;">&bull;</td>
-                        <td style="padding-left: 8px;">
-                          <div style="font-size: 13px; font-weight: 700; color: #0F172A; font-family: ${FONT_STACK};">AI Savings Brief</div>
+                        <td width="26" valign="top" style="padding-top: 1px;">
+                          <div style="width: 20px; height: 20px; line-height: 20px; text-align: center; background-color: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 50%; color: #059669; font-size: 11px; font-weight: 800; font-family: ${FONT_STACK};">&#10003;</div>
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <div style="font-size: 13px; font-weight: 700; color: #0A0D14; font-family: ${FONT_STACK};">AI Savings Brief</div>
                           <div style="font-size: 12px; color: #64748B; line-height: 1.45; margin-top: 2px; font-family: ${FONT_STACK};">Direct email alerts whenever newly confirmed AI discounts and partner deals go live.</div>
                         </td>
                       </tr>
@@ -529,8 +579,8 @@ https://stacksaveai.com
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
                 <tr>
                   <td align="center">
-                    <a href="${appUrl}/offers" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0F172A; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; padding: 13px 32px; border-radius: 8px; letter-spacing: -0.01em; font-family: ${FONT_STACK};">
-                      Explore Verified AI Offers &rarr;
+                    <a href="${appUrl}/offers" target="_blank" rel="noopener noreferrer" class="cta-button" style="display: inline-block; background-color: #0A0D14; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px; border: 1px solid #1E293B; letter-spacing: -0.01em; font-family: ${FONT_STACK}; box-shadow: 0 2px 6px rgba(10, 13, 20, 0.2);">
+                      Explore Verified AI Offers <span style="color: #10B981; font-weight: 700; margin-left: 4px;">&rarr;</span>
                     </a>
                   </td>
                 </tr>
@@ -662,12 +712,12 @@ https://stacksaveai.com
   const offersHtmlRows = offers
     .map((o) => {
       const badgeHtml = o.isNew
-        ? `<span style="display: inline-block; background-color: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 4px; font-family: ${FONT_STACK};">New</span>`
+        ? `<span style="display: inline-block; background-color: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 9999px; font-family: ${FONT_STACK};">New</span>`
         : o.isUpdated
-        ? `<span style="display: inline-block; background-color: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 4px; font-family: ${FONT_STACK};">Updated</span>`
+        ? `<span style="display: inline-block; background-color: #F0FDF4; border: 1px solid #86EFAC; color: #166534; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 9999px; font-family: ${FONT_STACK};">Updated</span>`
         : o.isMissed
-        ? `<span style="display: inline-block; background-color: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 4px; font-family: ${FONT_STACK};">Still available</span>`
-        : `<span style="display: inline-block; background-color: #F8FAFC; border: 1px solid #E2E8F0; color: #64748B; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 4px; font-family: ${FONT_STACK};">Verified</span>`;
+        ? `<span style="display: inline-block; background-color: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 9999px; font-family: ${FONT_STACK};">Still available</span>`
+        : `<span style="display: inline-block; background-color: #F8FAFC; border: 1px solid #E2E8F0; color: #64748B; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 9999px; font-family: ${FONT_STACK};">Verified</span>`;
 
       const discountHtml = o.discount || o.value
         ? `<span style="display: inline-block; background-color: #ECFDF5; border: 1px solid #A7F3D0; color: #047857; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-family: ${FONT_STACK}; margin-left: 8px;">${o.discount || o.value}</span>`
@@ -681,7 +731,7 @@ https://stacksaveai.com
           <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 6px;">
             <tr>
               <td valign="middle">
-                ${partnerOrProvider ? `<span style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; font-family: ${FONT_STACK};">${partnerOrProvider}</span>` : ''}
+                ${partnerOrProvider ? `<span style="font-size: 11px; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; font-family: ${FONT_STACK};">${partnerOrProvider}</span>` : ''}
                 ${category ? `<span style="font-size: 11px; color: #94A3B8; font-family: ${FONT_STACK}; margin-left: 6px;">&middot; ${category}</span>` : ''}
               </td>
               <td align="right" valign="middle">
@@ -693,7 +743,7 @@ https://stacksaveai.com
           <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 6px;">
             <tr>
               <td valign="baseline">
-                <span style="font-size: 14px; font-weight: 700; color: #0F172A; line-height: 1.35; font-family: ${FONT_STACK};">${o.title}</span>
+                <span style="font-size: 14px; font-weight: 700; color: #0A0D14; line-height: 1.35; font-family: ${FONT_STACK};">${o.title}</span>
               </td>
               <td align="right" valign="baseline" style="white-space: nowrap;">
                 ${discountHtml}
@@ -706,7 +756,7 @@ https://stacksaveai.com
           <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
             <tr>
               <td align="right">
-                <a href="${o.url || `${appUrl}/offers`}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; font-weight: 600; color: #4F46E5; text-decoration: none; font-family: ${FONT_STACK};">
+                <a href="${o.url || `${appUrl}/offers`}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; font-weight: 700; color: #059669; text-decoration: none; font-family: ${FONT_STACK};">
                   View Offer &rarr;
                 </a>
               </td>
@@ -717,7 +767,7 @@ https://stacksaveai.com
     })
     .join('');
 
-  const eyebrowBadge = `<span style="display: inline-block; background-color: #F8FAFC; border: 1px solid #E2E8F0; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 6px; font-family: ${FONT_STACK};">Savings Brief</span>`;
+  const eyebrowBadge = `<span style="display: inline-block; background-color: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 11px; border-radius: 9999px; font-family: ${FONT_STACK};">Savings Brief</span>`;
 
   const htmlContent = `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -728,24 +778,32 @@ https://stacksaveai.com
   <meta name="color-scheme" content="light" />
   <meta name="supported-color-schemes" content="light" />
   <title>${subject}</title>
+  <style type="text/css">
+    @media only screen and (max-width: 480px) {
+      .email-container { width: 100% !important; border-radius: 0 !important; }
+      .email-content { padding: 24px 18px !important; }
+      .header-cell { padding: 20px 18px 16px 18px !important; }
+      .cta-button { width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #F8FAFC; font-family: ${FONT_STACK}; -webkit-font-smoothing: antialiased; color: #0F172A;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; padding: 36px 12px;">
+<body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: ${FONT_STACK}; -webkit-font-smoothing: antialiased; color: #0F172A;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F1F5F9; padding: 36px 12px;">
     <tr>
       <td align="center">
         <!-- Main Container (580px max) -->
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);">
+        <table role="presentation" class="email-container" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">
           
           <!-- Header -->
           ${renderEmailHeader(eyebrowBadge)}
 
           <!-- Body Content -->
           <tr>
-            <td style="padding: 32px 32px 24px 32px;">
-              <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #0F172A; line-height: 1.3; letter-spacing: -0.02em; font-family: ${FONT_STACK};">
+            <td class="email-content" style="padding: 32px 32px 24px 32px;">
+              <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #0A0D14; line-height: 1.3; letter-spacing: -0.02em; font-family: ${FONT_STACK};">
                 Your StackSave AI Savings Brief
               </h1>
-              <p style="margin: 0 0 20px 0; font-size: 14px; color: #475569; line-height: 1.55; font-family: ${FONT_STACK};">
+              <p style="margin: 0 0 20px 0; font-size: 14px; color: #475569; line-height: 1.6; font-family: ${FONT_STACK};">
                 Hi ${firstName}, here are the latest <strong>${offers.length} verified AI savings opportunities</strong> tracked for your stack:
               </p>
 
@@ -758,8 +816,8 @@ https://stacksaveai.com
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
                 <tr>
                   <td align="center">
-                    <a href="${appUrl}/offers" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0F172A; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; padding: 13px 32px; border-radius: 8px; letter-spacing: -0.01em; font-family: ${FONT_STACK};">
-                      View All Offers in Dashboard &rarr;
+                    <a href="${appUrl}/offers" target="_blank" rel="noopener noreferrer" class="cta-button" style="display: inline-block; background-color: #0A0D14; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px; border: 1px solid #1E293B; letter-spacing: -0.01em; font-family: ${FONT_STACK}; box-shadow: 0 2px 6px rgba(10, 13, 20, 0.2);">
+                      View All Offers in Dashboard <span style="color: #10B981; font-weight: 700; margin-left: 4px;">&rarr;</span>
                     </a>
                   </td>
                 </tr>
@@ -886,7 +944,7 @@ StackSave · AI Spend Intelligence & Optimization
 https://stacksaveai.com
 `.trim();
 
-  const eyebrowBadge = `<span style="display: inline-block; background-color: #ECFDF5; border: 1px solid #A7F3D0; color: #047857; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 6px; font-family: ${FONT_STACK};">Audit Report</span>`;
+  const eyebrowBadge = `<span style="display: inline-block; background-color: #ECFDF5; border: 1px solid #A7F3D0; color: #047857; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 11px; border-radius: 9999px; font-family: ${FONT_STACK};">Audit Report</span>`;
 
   const htmlContent = `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -897,24 +955,32 @@ https://stacksaveai.com
   <meta name="color-scheme" content="light" />
   <meta name="supported-color-schemes" content="light" />
   <title>${subject}</title>
+  <style type="text/css">
+    @media only screen and (max-width: 480px) {
+      .email-container { width: 100% !important; border-radius: 0 !important; }
+      .email-content { padding: 24px 18px !important; }
+      .header-cell { padding: 20px 18px 16px 18px !important; }
+      .cta-button { width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #F8FAFC; font-family: ${FONT_STACK}; -webkit-font-smoothing: antialiased; color: #0F172A;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; padding: 36px 12px;">
+<body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: ${FONT_STACK}; -webkit-font-smoothing: antialiased; color: #0F172A;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F1F5F9; padding: 36px 12px;">
     <tr>
       <td align="center">
         <!-- Main Container (580px max) -->
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);">
+        <table role="presentation" class="email-container" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">
           
           <!-- Header -->
           ${renderEmailHeader(eyebrowBadge)}
 
           <!-- Body Content -->
           <tr>
-            <td style="padding: 32px 32px 24px 32px;">
-              <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #0F172A; line-height: 1.3; letter-spacing: -0.02em; font-family: ${FONT_STACK};">
+            <td class="email-content" style="padding: 32px 32px 24px 32px;">
+              <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #0A0D14; line-height: 1.3; letter-spacing: -0.02em; font-family: ${FONT_STACK};">
                 Your AI Stack Audit is Complete${companyName ? `, ${companyName}` : ''}
               </h1>
-              <p style="margin: 0 0 24px 0; font-size: 14px; color: #475569; line-height: 1.55; font-family: ${FONT_STACK};">
+              <p style="margin: 0 0 24px 0; font-size: 14px; color: #475569; line-height: 1.6; font-family: ${FONT_STACK};">
                 We evaluated your AI subscriptions against official vendor pricing models, workflow overlap benchmarks, and optimization candidates.
               </p>
 
@@ -941,7 +1007,7 @@ https://stacksaveai.com
                   ${formattedTotal ? `
                   <td style="padding: 14px 16px; border-right: 1px solid #E2E8F0; text-align: center; width: 33%;">
                     <div style="font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; font-family: ${FONT_STACK};">Current Spend</div>
-                    <div style="font-size: 14px; font-weight: 700; color: #0F172A; font-family: ${FONT_STACK};">${formattedTotal}</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #0A0D14; font-family: ${FONT_STACK};">${formattedTotal}</div>
                   </td>` : ''}
                   ${formattedOptimized ? `
                   <td style="padding: 14px 16px; ${toolCount ? 'border-right: 1px solid #E2E8F0;' : ''} text-align: center; width: 33%;">
@@ -950,7 +1016,7 @@ https://stacksaveai.com
                   </td>` : ''}
                   <td style="padding: 14px 16px; text-align: center; width: 33%;">
                     <div style="font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; font-family: ${FONT_STACK};">Audit Scope</div>
-                    <div style="font-size: 14px; font-weight: 700; color: #0F172A; font-family: ${FONT_STACK};">
+                    <div style="font-size: 14px; font-weight: 700; color: #0A0D14; font-family: ${FONT_STACK};">
                       ${toolCount ? `${toolCount} Tool${toolCount !== 1 ? 's' : ''}` : `${teamSize || 1} Seat${teamSize !== 1 ? 's' : ''}`}
                     </div>
                   </td>
@@ -961,8 +1027,8 @@ https://stacksaveai.com
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
                 <tr>
                   <td align="center">
-                    <a href="${publicUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0F172A; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; padding: 13px 32px; border-radius: 8px; letter-spacing: -0.01em; font-family: ${FONT_STACK};">
-                      View Full Interactive Audit Report &rarr;
+                    <a href="${publicUrl}" target="_blank" rel="noopener noreferrer" class="cta-button" style="display: inline-block; background-color: #0A0D14; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px; border: 1px solid #1E293B; letter-spacing: -0.01em; font-family: ${FONT_STACK}; box-shadow: 0 2px 6px rgba(10, 13, 20, 0.2);">
+                      View Full Interactive Audit Report <span style="color: #10B981; font-weight: 700; margin-left: 4px;">&rarr;</span>
                     </a>
                   </td>
                 </tr>
@@ -970,7 +1036,7 @@ https://stacksaveai.com
 
               <!-- Fallback Direct Link -->
               <p style="margin: 0 0 20px 0; font-size: 12px; color: #94A3B8; line-height: 1.5; font-family: ${FONT_STACK};">
-                Direct report link: <a href="${publicUrl}" target="_blank" rel="noopener noreferrer" style="color: #4F46E5; word-break: break-all; text-decoration: underline;">${publicUrl}</a>
+                Direct report link: <a href="${publicUrl}" target="_blank" rel="noopener noreferrer" style="color: #059669; word-break: break-all; text-decoration: underline;">${publicUrl}</a>
               </p>
 
               <!-- Premium Upgrade Section (Free Users) -->
@@ -1098,7 +1164,7 @@ StackSave · AI Spend Intelligence & Optimization
 https://stacksaveai.com
 `.trim();
 
-  const eyebrowBadge = `<span style="display: inline-block; background-color: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 6px; font-family: ${FONT_STACK};">Pricing Alert</span>`;
+  const eyebrowBadge = `<span style="display: inline-block; background-color: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 11px; border-radius: 9999px; font-family: ${FONT_STACK};">Pricing Alert</span>`;
 
   const htmlContent = `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -1109,24 +1175,32 @@ https://stacksaveai.com
   <meta name="color-scheme" content="light" />
   <meta name="supported-color-schemes" content="light" />
   <title>${subject}</title>
+  <style type="text/css">
+    @media only screen and (max-width: 480px) {
+      .email-container { width: 100% !important; border-radius: 0 !important; }
+      .email-content { padding: 24px 18px !important; }
+      .header-cell { padding: 20px 18px 16px 18px !important; }
+      .cta-button { width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #F8FAFC; font-family: ${FONT_STACK}; -webkit-font-smoothing: antialiased; color: #0F172A;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; padding: 36px 12px;">
+<body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: ${FONT_STACK}; -webkit-font-smoothing: antialiased; color: #0F172A;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F1F5F9; padding: 36px 12px;">
     <tr>
       <td align="center">
         <!-- Main Container (580px max) -->
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);">
+        <table role="presentation" class="email-container" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">
           
           <!-- Header -->
           ${renderEmailHeader(eyebrowBadge)}
 
           <!-- Body Content -->
           <tr>
-            <td style="padding: 32px 32px 24px 32px;">
-              <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #0F172A; line-height: 1.3; letter-spacing: -0.02em; font-family: ${FONT_STACK};">
+            <td class="email-content" style="padding: 32px 32px 24px 32px;">
+              <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #0A0D14; line-height: 1.3; letter-spacing: -0.02em; font-family: ${FONT_STACK};">
                 Provider Pricing Updates Detected${companyName ? `, ${companyName}` : ''}
               </h1>
-              <p style="margin: 0 0 24px 0; font-size: 14px; color: #475569; line-height: 1.55; font-family: ${FONT_STACK};">
+              <p style="margin: 0 0 24px 0; font-size: 14px; color: #475569; line-height: 1.6; font-family: ${FONT_STACK};">
                 We detected official pricing modifications from your configured AI providers. Your potential monthly savings have <strong>${deltaText}</strong>.
               </p>
 
@@ -1180,8 +1254,8 @@ https://stacksaveai.com
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
                 <tr>
                   <td align="center">
-                    <a href="${comparisonUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0F172A; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; padding: 13px 32px; border-radius: 8px; letter-spacing: -0.01em; font-family: ${FONT_STACK};">
-                      View Re-Audit Comparison Diff &rarr;
+                    <a href="${comparisonUrl}" target="_blank" rel="noopener noreferrer" class="cta-button" style="display: inline-block; background-color: #0A0D14; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px; border: 1px solid #1E293B; letter-spacing: -0.01em; font-family: ${FONT_STACK}; box-shadow: 0 2px 6px rgba(10, 13, 20, 0.2);">
+                      View Re-Audit Comparison Diff <span style="color: #10B981; font-weight: 700; margin-left: 4px;">&rarr;</span>
                     </a>
                   </td>
                 </tr>
@@ -1189,7 +1263,7 @@ https://stacksaveai.com
 
               <!-- Fallback Direct Link -->
               <p style="margin: 0 0 20px 0; font-size: 12px; color: #94A3B8; line-height: 1.5; font-family: ${FONT_STACK};">
-                Direct link: <a href="${comparisonUrl}" target="_blank" rel="noopener noreferrer" style="color: #4F46E5; word-break: break-all; text-decoration: underline;">${comparisonUrl}</a>
+                Direct link: <a href="${comparisonUrl}" target="_blank" rel="noopener noreferrer" style="color: #059669; word-break: break-all; text-decoration: underline;">${comparisonUrl}</a>
               </p>
 
               <!-- Premium Upgrade Section (Free Users) -->
