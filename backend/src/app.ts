@@ -22,10 +22,12 @@ import adminRouter from './routes/admin';
 import analyticsRouter from './routes/analytics';
 import pricingRouter from './routes/pricing';
 import billingRouter from './routes/billing';
+import internalRouter from './routes/internal';
 import { globalLimiter, leadLimiter } from './middleware/rateLimit';
 import { requestLogger } from './middleware/logger';
 import { findAvailablePort } from './utils/port';
 import { PricingOverlayService } from './pricing/pricingOverlay';
+import { startEmailScheduler } from './services/emailScheduler';
 
 const app = express();
 const preferredPort = Number(process.env.PORT) || 5000;
@@ -141,6 +143,7 @@ app.use('/api/chat', chatRouter);
 app.use('/api/stack-builder', stackBuilderRouter);
 app.use('/api/intelligence', intelligenceRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/internal', internalRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/pricing', pricingRouter);
 
@@ -163,6 +166,9 @@ async function start() {
     // Non-fatal: server starts with static plans if DB overlay fails
     console.error('[PricingOverlay] Startup overlay failed — using static plans:', err);
   });
+
+  // ── Start Daily Premium AI Offer Digest Scheduler ────────
+  startEmailScheduler();
 
   const PORT = await findAvailablePort(preferredPort);
   app.listen(PORT, () => {

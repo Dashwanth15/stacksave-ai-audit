@@ -53,4 +53,6 @@ coverage/
 # Temp
 tmp/
 temp/
+scratch/
+backend/scratch/
 pdf_content.txt

@@ -26,6 +26,7 @@ import {
   processRazorpayWebhookEvent,
   BillingServiceError,
 } from '../services/billingService';
+import { sendPremiumActivationEmail } from '../services/emailService';
 
 const router = Router();
 
@@ -202,6 +203,30 @@ router.post('/verify', authenticate, async (req: Request, res: Response) => {
 
     // 4. Synchronize user entitlement authoritatively
     await syncUserEntitlement(user._id, subscription);
+
+    // Fire-and-forget Premium Activation Email if not yet sent for this subscription
+    if (!subscription.activationEmailSentAt) {
+      const freshUser = await UserModel.findById(user._id);
+      if (freshUser && isPremiumUser(freshUser, subscription)) {
+        const userId = freshUser._id;
+        const subId = subscription._id;
+        const email = freshUser.email;
+        const name = freshUser.name;
+        const planKey = subscription.planKey;
+        sendPremiumActivationEmail({ email, name, plan: planKey })
+          .then(async (result) => {
+            if (result.success) {
+              await Promise.all([
+                SubscriptionModel.findByIdAndUpdate(subId, { activationEmailSentAt: new Date() }),
+                UserModel.findByIdAndUpdate(userId, { premiumEmailSentAt: new Date() }),
+              ]);
+            }
+          })
+          .catch((err) => {
+            console.error('[Billing] Premium activation email delivery failed:', err);
+          });
+      }
+    }
 
     return res.status(200).json({
       success: true,

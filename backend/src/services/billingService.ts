@@ -13,6 +13,7 @@ import {
   SubscriptionModel,
   WebhookEventModel,
 } from './dbService';
+import { sendPremiumActivationEmail } from './emailService';
 
 export interface RazorpayBillingConfig {
   keyId: string;
@@ -526,6 +527,32 @@ export async function processRazorpayWebhookEvent(params: {
 
         // Authoritatively synchronize user entitlement
         await syncUserEntitlement(subscription.userId, subscription);
+
+        // Fire-and-forget Premium Activation Email if newly activated/charged and not yet sent for this subscription
+        if (eventType === 'subscription.activated' || eventType === 'subscription.charged') {
+          if (!subscription.activationEmailSentAt) {
+            const freshUser = await UserModel.findById(subscription.userId);
+            if (freshUser && isPremiumUser(freshUser, subscription)) {
+              const userId = freshUser._id;
+              const subId = subscription._id;
+              const email = freshUser.email;
+              const name = freshUser.name;
+              const planKey = subscription.planKey;
+              sendPremiumActivationEmail({ email, name, plan: planKey })
+                .then(async (result) => {
+                  if (result.success) {
+                    await Promise.all([
+                      SubscriptionModel.findByIdAndUpdate(subId, { activationEmailSentAt: new Date() }),
+                      UserModel.findByIdAndUpdate(userId, { premiumEmailSentAt: new Date() }),
+                    ]);
+                  }
+                })
+                .catch((err) => {
+                  console.error('[BillingService] Premium activation email delivery failed in webhook:', err);
+                });
+            }
+          }
+        }
       }
     }
   }

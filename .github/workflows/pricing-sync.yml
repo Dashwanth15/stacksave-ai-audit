@@ -149,3 +149,26 @@ jobs:
 
           print('✅ Production authority verification successfully completed!')
           "
+
+      - name: Trigger Production Daily Premium Offer Email Digest
+        if: ${{ inputs.target == 'both' || inputs.target == 'offers' || github.event_name == 'schedule' }}
+        run: |
+          echo "▶ Triggering production daily Premium offer email digest..."
+          DIGEST_SECRET="${{ secrets.PREMIUM_DIGEST_CRON_SECRET || secrets.ADMIN_SECRET }}"
+          if [ -n "$DIGEST_SECRET" ] && [ -n "${{ secrets.BACKEND_URL }}" ]; then
+            HTTP_CODE=$(curl -s -w "%{http_code}" -o /tmp/digest_response.json \
+              -X POST "${{ secrets.BACKEND_URL }}/api/internal/email/premium-digest" \
+              -H "Authorization: Bearer $DIGEST_SECRET" \
+              -H "Content-Type: application/json" \
+              --max-time 60)
+            echo "HTTP Status: $HTTP_CODE"
+            cat /tmp/digest_response.json || true
+            if [ "$HTTP_CODE" -ne 200 ]; then
+              echo "⚠️ [Digest Warning] Digest trigger returned status: $HTTP_CODE"
+            else
+              echo "✅ Daily Premium AI offer email digest executed successfully."
+            fi
+          else
+            echo "ℹ️ Skipping digest trigger: BACKEND_URL or CRON secret not set"
+          fi
+

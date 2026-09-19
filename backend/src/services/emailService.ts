@@ -4,6 +4,8 @@
 // ============================================================
 
 import { Resend } from 'resend';
+import crypto from 'crypto';
+import { getFrontendUrl } from './dbService';
 
 function getResendClient(): Resend | null {
   const apiKey = process.env.RESEND_API_KEY;
@@ -16,9 +18,9 @@ function getResendClient(): Resend | null {
 /**
  * Resolve the sender email address.
  * Precedence:
- * 1. process.env.EMAIL_FROM (e.g. "StackSave AI Audit <notifications@stacksaveai.com>")
+ * 1. process.env.EMAIL_FROM (e.g. "StackSave <notifications@stacksaveai.com>")
  * 2. process.env.RESEND_FROM
- * 3. Default: "StackSave AI Audit <notifications@stacksaveai.com>"
+ * 3. Default: "StackSave <notifications@stacksaveai.com>"
  */
 export function getSenderAddress(): string {
   if (process.env.EMAIL_FROM && process.env.EMAIL_FROM.trim()) {
@@ -27,48 +29,34 @@ export function getSenderAddress(): string {
   if (process.env.RESEND_FROM && process.env.RESEND_FROM.trim()) {
     return process.env.RESEND_FROM.trim();
   }
-  return 'StackSave AI Audit <notifications@stacksaveai.com>';
+  return 'StackSave <notifications@stacksaveai.com>';
 }
 
 /**
- * Wrapper around resend.emails.send that auto-retries with the Resend sandbox
- * sender (onboarding@resend.dev) when the custom domain is not yet verified
- * (HTTP 403 / validation_error from Resend).
- *
- * DNS setup instructions are printed to the console to help the operator
- * complete domain verification.
+ * Resolve the Reply-To email address.
+ * Precedence:
+ * 1. process.env.EMAIL_REPLY_TO
+ * 2. process.env.SUPPORT_EMAIL
+ * 3. Default: "StackSave Support <support@stacksaveai.com>"
+ */
+export function getReplyToAddress(): string {
+  if (process.env.EMAIL_REPLY_TO && process.env.EMAIL_REPLY_TO.trim()) {
+    return process.env.EMAIL_REPLY_TO.trim();
+  }
+  if (process.env.SUPPORT_EMAIL && process.env.SUPPORT_EMAIL.trim()) {
+    return process.env.SUPPORT_EMAIL.trim();
+  }
+  return 'StackSave Support <support@stacksaveai.com>';
+}
+
+/**
+ * Production dispatch via Resend SDK using the verified stacksaveai.com domain.
  */
 async function sendWithDomainFallback(
   resend: Resend,
-  payload: { from: string; to: string; subject: string; text: string; html: string }
+  payload: { from: string; to: string; subject: string; text: string; html: string; reply_to?: string }
 ): Promise<{ data: { id?: string } | null; error: { message: string } | null }> {
-  let result = await resend.emails.send(payload);
-
-  // Detect unverified domain error from Resend (403 or message contains 'not verified')
-  const isUnverified =
-    result.error &&
-    (result.error.message?.toLowerCase().includes('not verified') ||
-      result.error.message?.toLowerCase().includes('domain'));
-
-  if (isUnverified) {
-    console.warn(
-      '[EmailService] ⚠️  Domain not verified in Resend. Retrying with onboarding@resend.dev sandbox sender.'
-    );
-    console.warn(
-      '[EmailService] 📋 To fix this permanently, add these DNS records for stacksaveai.com in GoDaddy/Cloudflare:\n' +
-        '  1. Go to https://resend.com/domains and click "Add Domain"\n' +
-        '  2. Enter: stacksaveai.com\n' +
-        '  3. Add the TXT record (SPF) shown — usually: v=spf1 include:amazonses.com ~all\n' +
-        '  4. Add the CNAME record (DKIM) shown\n' +
-        '  5. DNS propagation takes 15–60 minutes; then click "Verify" in Resend.'
-    );
-
-    result = await resend.emails.send({
-      ...payload,
-      from: 'StackSave AI <onboarding@resend.dev>',
-    });
-  }
-
+  const result = await resend.emails.send(payload);
   return result as { data: { id?: string } | null; error: { message: string } | null };
 }
 
@@ -307,6 +295,7 @@ Your data is private, isolated, and encrypted.
     const { data, error } = await sendWithDomainFallback(resend, {
       from,
       to: email,
+      reply_to: getReplyToAddress(),
       subject,
       text: textContent,
       html: htmlContent,
@@ -549,6 +538,7 @@ This notification was triggered automatically by StackSave Continuous Intelligen
     const { data, error } = await sendWithDomainFallback(resend, {
       from,
       to: email,
+      reply_to: getReplyToAddress(),
       subject,
       text: textContent,
       html: htmlContent,
@@ -567,3 +557,712 @@ This notification was triggered automatically by StackSave Continuous Intelligen
     return { success: false, error: msg };
   }
 }
+
+// ── Unsubscribe Token Helpers ─────────────────────────────────
+// Authenticated encryption (AES-256-GCM) so internal user IDs are never exposed in the URL,
+// and tokens cannot be forged or tampered with.
+
+const UNKNOWN_SECRET = 'stacksave_email_unsub_fallback_key';
+
+function getUnsubKey(): Buffer {
+  const secret = process.env.SESSION_SECRET || process.env.JWT_SECRET || UNKNOWN_SECRET;
+  return crypto.createHash('sha256').update(secret).digest();
+}
+
+export function generateUnsubscribeToken(userId: string): string {
+  const key = getUnsubKey();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const payload = JSON.stringify({ u: userId, t: Date.now() });
+  const encrypted = Buffer.concat([cipher.update(payload, 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  // Packed format: 12-byte IV + 16-byte AuthTag + encrypted payload
+  const combined = Buffer.concat([iv, tag, encrypted]);
+  return combined.toString('base64url');
+}
+
+export function verifyUnsubscribeToken(token: string): string | null {
+  try {
+    if (!token || typeof token !== 'string') return null;
+    const combined = Buffer.from(token, 'base64url');
+    if (combined.length < 29) return null; // 12 IV + 16 Tag + >=1 byte ciphertext
+
+    const iv = combined.subarray(0, 12);
+    const tag = combined.subarray(12, 28);
+    const ciphertext = combined.subarray(28);
+
+    const key = getUnsubKey();
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(tag);
+    const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+    const parsed = JSON.parse(decrypted.toString('utf8'));
+    return parsed.u || null;
+  } catch {
+    return null;
+  }
+}
+
+// ── 1. Welcome Email ──────────────────────────────────────────
+
+export interface SendWelcomeEmailParams {
+  email: string;
+  name?: string;
+}
+
+export async function sendWelcomeEmail(
+  params: SendWelcomeEmailParams
+): Promise<{ success: boolean; id?: string; error?: string }> {
+  const { email, name } = params;
+
+  if (!email || !email.includes('@')) {
+    console.warn(`[EmailService] Invalid or missing recipient email: "${email}". Skipping.`);
+    return { success: false, error: 'Invalid recipient email' };
+  }
+
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn('[EmailService] RESEND_API_KEY is not configured in environment. Skipping email dispatch.');
+    return { success: false, error: 'RESEND_API_KEY not configured' };
+  }
+
+  const from = getSenderAddress();
+  const firstName = name ? name.trim().split(' ')[0] : 'there';
+  const appUrl = getFrontendUrl();
+
+  const subject = 'Welcome to StackSave — Smarter AI Spend Starts Here';
+
+  const textContent = `
+Hi ${firstName},
+
+Welcome to StackSave! We are excited to have you on board.
+
+StackSave gives you continuous intelligence on AI model and tool pricing, helping you optimize spend, discover verified partner deals, and eliminate wasted software costs.
+
+Key features you can explore right now:
+1. AI Pricing Intelligence: Live tracking of model prices, input/output tokens, and seat costs across major AI providers.
+2. Verified AI Deals & Promotions: Authentic promo codes, academic perks, and carrier partner bundles.
+3. Build My AI Stack: Intelligent recommendations tailored to your team's workflow and budget.
+4. Audit Existing Stack: Upload your tool list for instant overlap detection and migration savings.
+5. StackSave Premium: Unlock unlimited saved audits, shareable team reports, and daily deal notifications.
+
+Get started with your dashboard:
+${appUrl}
+
+If you have any questions or feedback, reply directly to this email.
+
+Best regards,
+The StackSave Team
+https://stacksaveai.com
+`.trim();
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0F172A; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0F172A; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); padding: 36px 32px; text-align: left; border-bottom: 1px solid #334155;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td>
+                    <span style="font-size: 22px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.03em;">
+                      Stack<span style="color: #6366F1;">Save</span>
+                    </span>
+                  </td>
+                  <td align="right">
+                    <span style="display: inline-block; background-color: rgba(99, 102, 241, 0.18); border: 1px solid rgba(99, 102, 241, 0.4); color: #818CF8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 9999px;">
+                      Welcome
+                    </span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="margin: 20px 0 0 0; color: #FFFFFF; font-size: 24px; font-weight: 800; line-height: 1.3; letter-spacing: -0.02em;">
+                Welcome to StackSave, ${firstName}!
+              </h1>
+              <p style="margin: 8px 0 0 0; color: #94A3B8; font-size: 14px; line-height: 1.5;">
+                Your intelligent copilot for AI spend management & verified vendor deals.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 32px 32px 24px 32px;">
+              <p style="margin: 0 0 20px 0; font-size: 15px; color: #334155; line-height: 1.6;">
+                Thanks for joining StackSave. We monitor AI pricing, detect vendor overlaps, and surface authentic cost-saving opportunities so you never overpay for your AI stack.
+              </p>
+
+              <!-- Feature Highlights Box -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <div style="font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px;">
+                      What You Can Do Today
+                    </div>
+
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 12px;">
+                      <tr>
+                        <td width="28" valign="top" style="font-size: 16px;">⚡</td>
+                        <td style="padding-left: 8px;">
+                          <strong style="color: #0F172A; font-size: 13px;">Live AI Pricing Intelligence</strong>
+                          <p style="margin: 2px 0 0 0; color: #64748B; font-size: 12px; line-height: 1.4;">Real-time benchmark of models, tokens, and seats across 25+ providers.</p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 12px;">
+                      <tr>
+                        <td width="28" valign="top" style="font-size: 16px;">🏷️</td>
+                        <td style="padding-left: 8px;">
+                          <strong style="color: #0F172A; font-size: 13px;">Verified AI Deals & Bundles</strong>
+                          <p style="margin: 2px 0 0 0; color: #64748B; font-size: 12px; line-height: 1.4;">Curated promo codes, student discounts, and partner perks.</p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 12px;">
+                      <tr>
+                        <td width="28" valign="top" style="font-size: 16px;">🔍</td>
+                        <td style="padding-left: 8px;">
+                          <strong style="color: #0F172A; font-size: 13px;">Instant Stack Audits</strong>
+                          <p style="margin: 2px 0 0 0; color: #64748B; font-size: 12px; line-height: 1.4;">Find tool overlaps, evaluate alternatives, and simulate cost migrations.</p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td width="28" valign="top" style="font-size: 16px;">💎</td>
+                        <td style="padding-left: 8px;">
+                          <strong style="color: #0F172A; font-size: 13px;">StackSave Premium</strong>
+                          <p style="margin: 2px 0 0 0; color: #64748B; font-size: 12px; line-height: 1.4;">Unlimited audit history, shareable reports, and daily deal notifications.</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td align="center">
+                    <a href="${appUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #4F46E5; color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 10px; letter-spacing: -0.01em; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);">
+                      Launch StackSave Dashboard &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Link Fallback -->
+              <p style="margin: 0; font-size: 12px; color: #94A3B8; text-align: center;">
+                Direct link: <a href="${appUrl}" target="_blank" rel="noopener noreferrer" style="color: #6366F1; text-decoration: underline;">${appUrl}</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 24px 32px; text-align: center;">
+              <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: #475569;">
+                StackSave &middot; Continuous AI Spend Intelligence
+              </p>
+              <p style="margin: 0; font-size: 11px; color: #94A3B8;">
+                &copy; ${new Date().getFullYear()} StackSave &middot; <a href="${appUrl}" target="_blank" rel="noopener noreferrer" style="color: #94A3B8; text-decoration: underline;">stacksaveai.com</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`.trim();
+
+  try {
+    const { data, error } = await sendWithDomainFallback(resend, {
+      from,
+      to: email,
+      reply_to: getReplyToAddress(),
+      subject,
+      text: textContent,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error('[EmailService] Resend API error sending welcome email:', JSON.stringify(error));
+      return { success: false, error: error.message };
+    }
+
+    console.log(`[EmailService] ✅ Welcome email sent to ${email} (Resend ID: ${data?.id})`);
+    return { success: true, id: data?.id };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[EmailService] Unexpected error sending welcome email:', msg);
+    return { success: false, error: msg };
+  }
+}
+
+// ── 2. Premium Activation Email ───────────────────────────────
+
+export interface SendPremiumActivationEmailParams {
+  email: string;
+  name?: string;
+  plan?: string;
+}
+
+export async function sendPremiumActivationEmail(
+  params: SendPremiumActivationEmailParams
+): Promise<{ success: boolean; id?: string; error?: string }> {
+  const { email, name, plan } = params;
+
+  if (!email || !email.includes('@')) {
+    console.warn(`[EmailService] Invalid or missing recipient email: "${email}". Skipping.`);
+    return { success: false, error: 'Invalid recipient email' };
+  }
+
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn('[EmailService] RESEND_API_KEY is not configured in environment. Skipping email dispatch.');
+    return { success: false, error: 'RESEND_API_KEY not configured' };
+  }
+
+  const from = getSenderAddress();
+  const firstName = name ? name.trim().split(' ')[0] : 'there';
+  const planName = plan ? (plan.toUpperCase().includes('YEAR') ? 'Annual' : 'Quarterly') : 'Premium';
+  const appUrl = getFrontendUrl();
+
+  const subject = 'StackSave Premium is Now Active! 🚀';
+
+  const textContent = `
+Hi ${firstName},
+
+Congratulations! Your StackSave Premium subscription (${planName} Plan) is now active.
+
+Here are the unlocked capabilities available in your account:
+- Unlimited Saved Audits: Track, compare, and manage your AI stacks indefinitely.
+- Unlimited Shareable Reports: Generate and export branded audit links for your team or leadership.
+- Curated AI Deals & Promo Codes: Full access to verified provider promotions and exclusive discounts.
+- Daily AI Offers Digest: Receive scheduled email updates with newly verified deals.
+- Priority Intelligence & Early Access: Early access to new benchmarking tools and cost calculators.
+
+Explore your Premium benefits:
+${appUrl}/offers
+
+Thank you for choosing StackSave. If you need any assistance, simply reply to this email.
+
+Best regards,
+The StackSave Team
+https://stacksaveai.com
+`.trim();
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0F172A; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0F172A; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1E1B4B 0%, #0F172A 100%); padding: 36px 32px; text-align: left; border-bottom: 1px solid #3730A3;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td>
+                    <span style="font-size: 22px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.03em;">
+                      Stack<span style="color: #818CF8;">Save</span>
+                    </span>
+                  </td>
+                  <td align="right">
+                    <span style="display: inline-block; background-color: rgba(99, 102, 241, 0.25); border: 1px solid rgba(129, 140, 248, 0.5); color: #A5B4FC; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 9999px;">
+                      ✨ Premium Active
+                    </span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="margin: 20px 0 0 0; color: #FFFFFF; font-size: 24px; font-weight: 800; line-height: 1.3; letter-spacing: -0.02em;">
+                You're officially a Premium Member!
+              </h1>
+              <p style="margin: 8px 0 0 0; color: #C7D2FE; font-size: 14px; line-height: 1.5;">
+                Plan: <strong style="color: #FFFFFF;">${planName} Membership</strong> &middot; All limits unlocked
+              </p>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 32px 32px 24px 32px;">
+              <p style="margin: 0 0 20px 0; font-size: 15px; color: #334155; line-height: 1.6;">
+                Hi ${firstName}, your payment was successful and your account has been upgraded to <strong>StackSave Premium</strong>. You now have unrestricted access to all advanced cost intelligence features.
+              </p>
+
+              <!-- Premium Feature Grid -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <div style="font-size: 12px; font-weight: 800; color: #4338CA; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px;">
+                      Your Unlocked Premium Features
+                    </div>
+
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 12px;">
+                      <tr>
+                        <td width="28" valign="top" style="font-size: 16px;">💾</td>
+                        <td style="padding-left: 8px;">
+                          <strong style="color: #0F172A; font-size: 13px;">Unlimited Saved Audits</strong>
+                          <p style="margin: 2px 0 0 0; color: #64748B; font-size: 12px; line-height: 1.4;">Save as many audits and stack comparisons as you need without limits.</p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 12px;">
+                      <tr>
+                        <td width="28" valign="top" style="font-size: 16px;">🔗</td>
+                        <td style="padding-left: 8px;">
+                          <strong style="color: #0F172A; font-size: 13px;">Unlimited Shareable Reports</strong>
+                          <p style="margin: 2px 0 0 0; color: #64748B; font-size: 12px; line-height: 1.4;">Generate public or private links to share audit breakdowns with your team.</p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 12px;">
+                      <tr>
+                        <td width="28" valign="top" style="font-size: 16px;">🔥</td>
+                        <td style="padding-left: 8px;">
+                          <strong style="color: #0F172A; font-size: 13px;">Verified AI Deals & Promo Codes</strong>
+                          <p style="margin: 2px 0 0 0; color: #64748B; font-size: 12px; line-height: 1.4;">Full access to locked AI offers, partner deals, and high-value promo codes.</p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td width="28" valign="top" style="font-size: 16px;">📬</td>
+                        <td style="padding-left: 8px;">
+                          <strong style="color: #0F172A; font-size: 13px;">Daily AI Savings Digest</strong>
+                          <p style="margin: 2px 0 0 0; color: #64748B; font-size: 12px; line-height: 1.4;">Direct email alerts whenever newly confirmed AI discounts and partner deals go live.</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td align="center">
+                    <a href="${appUrl}/offers" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #4F46E5; color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 10px; letter-spacing: -0.01em; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);">
+                      Explore Verified AI Offers &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Link Fallback -->
+              <p style="margin: 0; font-size: 12px; color: #94A3B8; text-align: center;">
+                Direct link: <a href="${appUrl}/offers" target="_blank" rel="noopener noreferrer" style="color: #6366F1; text-decoration: underline;">${appUrl}/offers</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 24px 32px; text-align: center;">
+              <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: #475569;">
+                StackSave &middot; Continuous AI Spend Intelligence
+              </p>
+              <p style="margin: 0; font-size: 11px; color: #94A3B8;">
+                &copy; ${new Date().getFullYear()} StackSave &middot; <a href="${appUrl}" target="_blank" rel="noopener noreferrer" style="color: #94A3B8; text-decoration: underline;">stacksaveai.com</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`.trim();
+
+  try {
+    const { data, error } = await sendWithDomainFallback(resend, {
+      from,
+      to: email,
+      reply_to: getReplyToAddress(),
+      subject,
+      text: textContent,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error('[EmailService] Resend API error sending premium activation email:', JSON.stringify(error));
+      return { success: false, error: error.message };
+    }
+
+    console.log(`[EmailService] ✅ Premium activation email sent to ${email} (Resend ID: ${data?.id})`);
+    return { success: true, id: data?.id };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[EmailService] Unexpected error sending premium activation email:', msg);
+    return { success: false, error: msg };
+  }
+}
+
+// ── 3. Daily AI Offers Digest Email ───────────────────────────
+
+export interface OfferDigestItem {
+  title: string;
+  description?: string;
+  discount?: string;
+  category?: string;
+  provider?: string;
+  partner?: string;
+  url?: string;
+  expiresAt?: Date | string;
+  isNew?: boolean;
+  isUpdated?: boolean;
+  value?: string | number;
+}
+
+export interface SendOfferDigestEmailParams {
+  email: string;
+  name?: string;
+  userId: string;
+  offers: OfferDigestItem[];
+}
+
+export async function sendOfferDigestEmail(
+  params: SendOfferDigestEmailParams
+): Promise<{ success: boolean; id?: string; error?: string }> {
+  const { email, name, userId, offers } = params;
+
+  if (!email || !email.includes('@')) {
+    console.warn(`[EmailService] Invalid or missing recipient email: "${email}". Skipping.`);
+    return { success: false, error: 'Invalid recipient email' };
+  }
+
+  if (!offers || offers.length === 0) {
+    console.warn(`[EmailService] No offers provided for digest to "${email}". Skipping.`);
+    return { success: false, error: 'No offers for digest' };
+  }
+
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn('[EmailService] RESEND_API_KEY is not configured in environment. Skipping email dispatch.');
+    return { success: false, error: 'RESEND_API_KEY not configured' };
+  }
+
+  const from = getSenderAddress();
+  const firstName = name ? name.trim().split(' ')[0] : 'there';
+  const appUrl = getFrontendUrl();
+  const unsubToken = generateUnsubscribeToken(userId);
+  const unsubUrl = `${appUrl}/api/user/unsubscribe?token=${encodeURIComponent(unsubToken)}`;
+
+  const subject = `Your Daily AI Savings Digest — ${offers.length} Verified AI Offers Available`;
+
+  const offersTextList = offers
+    .map((o, idx) => {
+      const badge = o.isNew ? '[NEW TODAY] ' : o.isUpdated ? '[UPDATED] ' : '';
+      const discount = o.discount ? ` (${o.discount})` : o.value ? ` (${o.value})` : '';
+      const desc = o.description ? `\n   ${o.description}` : '';
+      const link = o.url ? `\n   Link: ${o.url}` : '';
+      return `${idx + 1}. ${badge}${o.title}${discount}${desc}${link}`;
+    })
+    .join('\n\n');
+
+  const textContent = `
+Hi ${firstName},
+
+Here is your daily digest of verified AI deals, discounts, and partner bundles currently active on StackSave:
+
+${offersTextList}
+
+View and claim all verified AI offers:
+${appUrl}/offers
+
+---
+You are receiving this digest because you are an active StackSave Premium member.
+To stop receiving daily offer digests, unsubscribe here:
+${unsubUrl}
+
+Best regards,
+The StackSave Team
+https://stacksaveai.com
+`.trim();
+
+  // HTML Offers rows
+  const offersHtmlRows = offers
+    .map((o) => {
+      const badgeHtml = o.isNew
+        ? `<span style="display: inline-block; background-color: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 4px; margin-right: 6px;">New Today</span>`
+        : o.isUpdated
+        ? `<span style="display: inline-block; background-color: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 4px; margin-right: 6px;">Updated</span>`
+        : '';
+
+      const discountHtml = o.discount || o.value
+        ? `<span style="display: inline-block; background-color: #FDF2F8; border: 1px solid #FBCFE8; color: #9D174D; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-left: 6px;">${o.discount || o.value}</span>`
+        : '';
+
+      const categoryHtml = o.category
+        ? `<span style="font-size: 11px; color: #64748B; text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em;">${o.category}</span>`
+        : '';
+
+      const partnerOrProvider = o.partner ? `${o.partner} &middot; ` : o.provider ? `${o.provider} &middot; ` : '';
+
+      return `
+        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+          <div style="margin-bottom: 6px;">
+            ${badgeHtml}
+            ${categoryHtml ? `<span style="color: #94A3B8; font-size: 11px;">${partnerOrProvider}</span>${categoryHtml}` : ''}
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px;">
+            <strong style="color: #0F172A; font-size: 14px; line-height: 1.3;">${o.title}</strong>
+            ${discountHtml}
+          </div>
+          ${o.description ? `<p style="margin: 0 0 10px 0; color: #475569; font-size: 12px; line-height: 1.45;">${o.description}</p>` : ''}
+          <div style="text-align: right;">
+            <a href="${o.url || `${appUrl}/offers`}" target="_blank" rel="noopener noreferrer" style="display: inline-block; color: #4F46E5; font-size: 12px; font-weight: 700; text-decoration: none;">
+              View Offer &rarr;
+            </a>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0F172A; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0F172A; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); padding: 32px; text-align: left; border-bottom: 1px solid #334155;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td>
+                    <span style="font-size: 22px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.03em;">
+                      Stack<span style="color: #6366F1;">Save</span>
+                    </span>
+                  </td>
+                  <td align="right">
+                    <span style="display: inline-block; background-color: rgba(99, 102, 241, 0.18); border: 1px solid rgba(99, 102, 241, 0.4); color: #818CF8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 9999px;">
+                      Daily Digest
+                    </span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="margin: 18px 0 0 0; color: #FFFFFF; font-size: 22px; font-weight: 800; line-height: 1.3; letter-spacing: -0.02em;">
+                Today's Verified AI Deals
+              </h1>
+              <p style="margin: 6px 0 0 0; color: #94A3B8; font-size: 13px; line-height: 1.5;">
+                Curated AI cost-saving opportunities verified on official vendor sites.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="background-color: #F8FAFC; padding: 24px 28px;">
+              <p style="margin: 0 0 16px 0; font-size: 14px; color: #334155;">
+                Hi ${firstName}, here are <strong>${offers.length} active AI promotions & savings</strong> available for your stack:
+              </p>
+
+              <!-- Offers List -->
+              ${offersHtmlRows}
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 24px 0 16px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${appUrl}/offers" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0F172A; color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none; padding: 13px 32px; border-radius: 10px; letter-spacing: -0.01em;">
+                      View All Offers in Dashboard &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #FFFFFF; border-top: 1px solid #E2E8F0; padding: 24px 32px; text-align: center;">
+              <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: #475569;">
+                StackSave &middot; Continuous AI Spend Intelligence
+              </p>
+              <p style="margin: 0 0 12px 0; font-size: 11px; color: #94A3B8;">
+                You are receiving this digest because you are an active StackSave Premium member.
+              </p>
+              <p style="margin: 0; font-size: 11px; color: #94A3B8;">
+                <a href="${unsubUrl}" target="_blank" rel="noopener noreferrer" style="color: #64748B; text-decoration: underline;">
+                  Unsubscribe from daily offer digests
+                </a>
+                &nbsp;&middot;&nbsp;
+                <a href="${appUrl}" target="_blank" rel="noopener noreferrer" style="color: #64748B; text-decoration: underline;">
+                  stacksaveai.com
+                </a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`.trim();
+
+  try {
+    const { data, error } = await sendWithDomainFallback(resend, {
+      from,
+      to: email,
+      reply_to: getReplyToAddress(),
+      subject,
+      text: textContent,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error('[EmailService] Resend API error sending offer digest:', JSON.stringify(error));
+      return { success: false, error: error.message };
+    }
+
+    console.log(`[EmailService] ✅ Offer digest sent to ${email} (Resend ID: ${data?.id})`);
+    return { success: true, id: data?.id };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[EmailService] Unexpected error sending offer digest:', msg);
+    return { success: false, error: msg };
+  }
+}
+

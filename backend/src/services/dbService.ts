@@ -198,6 +198,19 @@ export interface UserDocument extends Document {
   };
   createdAt: Date;
   updatedAt: Date;
+
+  // ── Email Notification Fields ─────────────────────────────
+  // Idempotency: set once so emails are never duplicated
+  welcomeEmailSentAt?: Date;       // Set after first-login welcome email is sent
+  premiumEmailSentAt?: Date;       // Set after Premium activation email is sent
+  // Digest deduplication & offer tracking
+  lastOfferDigestAt?: Date;        // Timestamp of last successful digest delivery
+  sentOfferFingerprints?: string[];// Fingerprints of offers previously sent to this user
+  // Per-user email preferences
+  emailPreferences?: {
+    productEmails: boolean;         // Account / billing / security emails (default: true)
+    premiumOfferDigest: boolean;    // Daily AI offers digest for Premium users (default: true)
+  };
 }
 
 const UserSchema = new Schema<UserDocument>(
@@ -221,6 +234,15 @@ const UserSchema = new Schema<UserDocument>(
       totalMonthlySpend: { type: Number, default: 0 },
       recommendation: { type: Schema.Types.Mixed },
       updatedAt: { type: Date, default: Date.now },
+    },
+    // ── Email Notification Fields ────────────────────────────
+    welcomeEmailSentAt: { type: Date },
+    premiumEmailSentAt: { type: Date },
+    lastOfferDigestAt: { type: Date },
+    sentOfferFingerprints: { type: [String], default: [] },
+    emailPreferences: {
+      productEmails: { type: Boolean, default: true },
+      premiumOfferDigest: { type: Boolean, default: true },
     },
   },
   { 
@@ -570,6 +592,7 @@ export interface SubscriptionDocument extends Document {
   lastPaymentId?: string;
   lastWebhookEventId?: string;
   lastSynchronizedAt: Date;
+  activationEmailSentAt?: Date;   // Persistent subscription-level activation email idempotency
   createdAt: Date;
   updatedAt: Date;
 }
@@ -596,6 +619,7 @@ const SubscriptionSchema = new Schema<SubscriptionDocument>(
     lastPaymentId: { type: String },
     lastWebhookEventId: { type: String },
     lastSynchronizedAt: { type: Date, default: Date.now },
+    activationEmailSentAt: { type: Date },
   },
   { timestamps: true }
 );

@@ -13,6 +13,7 @@ import {
   clearSessionCookie,
 } from '../utils/session';
 import { authenticate } from '../middleware/auth';
+import { sendWelcomeEmail } from '../services/emailService';
 
 const router = Router();
 
@@ -165,6 +166,22 @@ router.post('/google', async (req: Request, res: Response) => {
       if (googleProfile.picture) user.avatarUrl = googleProfile.picture;
       user.lastLoginAt = new Date();
       await user.save();
+    }
+
+    // Fire-and-forget Welcome Email on first login
+    if (!user.welcomeEmailSentAt) {
+      const userId = user._id;
+      const userEmail = user.email;
+      const userName = user.name;
+      sendWelcomeEmail({ email: userEmail, name: userName })
+        .then(async (result) => {
+          if (result.success) {
+            await UserModel.findByIdAndUpdate(userId, { welcomeEmailSentAt: new Date() });
+          }
+        })
+        .catch((err) => {
+          console.error('[Auth] Welcome email delivery failed:', err);
+        });
     }
 
     // Generate signed JWT session and set HttpOnly cookie

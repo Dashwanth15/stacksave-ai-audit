@@ -6,8 +6,9 @@
 
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../middleware/auth';
-import { AuditModel, AuditShareLinkModel, SavedUserStackModel, SubscriptionModel } from '../services/dbService';
+import { AuditModel, AuditShareLinkModel, SavedUserStackModel, SubscriptionModel, UserModel } from '../services/dbService';
 import { isPremiumUser, syncUserEntitlement } from '../services/billingService';
+import { verifyUnsubscribeToken } from '../services/emailService';
 
 const router = Router();
 
@@ -164,4 +165,115 @@ router.post('/stack', authenticate, async (req: Request, res: Response) => {
   }
 });
 
+// ── GET /api/user/unsubscribe ────────────────────────────────
+// Unsubscribe from daily AI offer digests via HMAC-signed token
+function renderUnsubscribeHtml(title: string, message: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title} — StackSave</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0F172A;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #F8FAFC;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background-color: #1E293B;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 40px 32px;
+      max-width: 480px;
+      margin: 20px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    .brand {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 24px;
+    }
+    .brand span {
+      color: #6366F1;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 12px 0;
+      color: #FFFFFF;
+    }
+    p {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #94A3B8;
+      margin: 0 0 24px 0;
+    }
+    a.btn {
+      display: inline-block;
+      background-color: #4F46E5;
+      color: #FFFFFF;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 24px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">Stack<span>Save</span></div>
+    <h1>${title}</h1>
+    <p>${message}</p>
+    <a href="https://stacksaveai.com" class="btn">Return to StackSave</a>
+  </div>
+</body>
+</html>`;
+}
+
+router.get('/unsubscribe', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.query;
+    if (!token || typeof token !== 'string') {
+      return res.status(400).send(renderUnsubscribeHtml('Invalid Link', 'The unsubscribe token is missing or malformed.'));
+    }
+
+    const userId = verifyUnsubscribeToken(token);
+    if (!userId) {
+      return res.status(400).send(renderUnsubscribeHtml('Link Expired or Invalid', 'This unsubscribe link is invalid or has expired.'));
+    }
+
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).send(renderUnsubscribeHtml('User Not Found', 'We could not find an account associated with this request.'));
+    }
+
+    // Update email preference
+    if (!user.emailPreferences) {
+      user.emailPreferences = { productEmails: true, premiumOfferDigest: false };
+    } else {
+      user.emailPreferences.premiumOfferDigest = false;
+    }
+    await user.save();
+
+    return res.status(200).send(renderUnsubscribeHtml(
+      'Unsubscribed Successfully',
+      `You (${user.email}) have been unsubscribed from daily AI offer digests. You will still receive essential account and billing notifications.`
+    ));
+  } catch (err) {
+    console.error('GET /api/user/unsubscribe error:', err);
+    return res.status(500).send(renderUnsubscribeHtml('Error', 'An unexpected error occurred while processing your unsubscribe request.'));
+  }
+});
+
 export default router;
+
