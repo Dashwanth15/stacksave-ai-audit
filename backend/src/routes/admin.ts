@@ -17,6 +17,7 @@ import { runOfferMonitor } from '../pricing/offerMonitor';
 import { PartnerOfferScanner } from '../pricing/partnerOfferScanner';
 import { PartnerDiscoveryService } from '../pricing/partnerDiscoveryService';
 import { sendAuditConfirmation, sendReAuditNotification, getSenderAddress } from '../services/emailService';
+import { invalidatePublicOffersCache } from './intelligence';
 
 const router = Router();
 
@@ -55,6 +56,7 @@ router.post('/pricing/ingest', async (req: Request, res: Response) => {
     }
     const triggeredBy = (req.headers['x-triggered-by'] as string) || 'github_actions_playwright';
     const result = await ingestOfficialExtractedPricing(payload, triggeredBy);
+    invalidatePublicOffersCache();
     res.json({ success: true, data: result });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -84,6 +86,7 @@ router.post('/pricing/sync', async (req: Request, res: Response) => {
 router.post('/offers/scan', async (_req: Request, res: Response) => {
   try {
     const result = await runOfferMonitor();
+    invalidatePublicOffersCache();
     res.json({ success: true, data: result });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -99,6 +102,7 @@ router.post('/partner-offers/scan', async (req: Request, res: Response) => {
   try {
     const liveExtractedOffers = req.body?.liveExtractedOffers;
     const result = await PartnerOfferScanner.runFullScan(liveExtractedOffers);
+    invalidatePublicOffersCache();
     res.json({ success: true, data: result });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

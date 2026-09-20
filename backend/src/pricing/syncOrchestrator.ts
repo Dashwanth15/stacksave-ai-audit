@@ -484,6 +484,14 @@ export async function runPricingSync(triggeredBy: string = 'api'): Promise<SyncR
     });
   }
 
+  // Invalidate public offers in-memory cache to ensure fresh snapshot
+  try {
+    const { invalidatePublicOffersCache } = await import('../routes/intelligence');
+    invalidatePublicOffersCache();
+  } catch {
+    // Non-blocking
+  }
+
   // ── 24-Hour Partner AI Offer Discovery & Sync ────────────────
   // Automatically runs during the scheduled daily sync cycle.
   // Isolated in try/catch so partner scan errors NEVER break provider pricing sync.
@@ -758,6 +766,14 @@ export async function ingestOfficialExtractedPricing(
     PricingOverlayService.applyVerifiedPricing().catch((err) => {
       console.error('[PricingSync:Ingest] Post-ingest overlay failed:', err);
     });
+  }
+
+  // Invalidate public offers in-memory cache to ensure fresh snapshot
+  try {
+    const { invalidatePublicOffersCache } = await import('../routes/intelligence');
+    invalidatePublicOffersCache();
+  } catch {
+    // Non-blocking
   }
 
   // ── 24-Hour Partner AI Offer Discovery & Sync (Post-Ingest) ───

@@ -67,7 +67,7 @@ vi.mock('../src/services/dbService', () => ({
   },
 }));
 
-import intelligenceRouter from '../src/routes/intelligence';
+import intelligenceRouter, { invalidatePublicOffersCache } from '../src/routes/intelligence';
 
 async function withIntelligenceApp<T>(fn: (fetch: (path: string, options?: RequestInit) => Promise<Response>) => Promise<T>): Promise<T> {
   const app = express();
@@ -88,6 +88,7 @@ async function withIntelligenceApp<T>(fn: (fetch: (path: string, options?: Reque
 describe('GET /api/intelligence/offers regression test', () => {
   beforeEach(() => {
     mockRecords.length = 0;
+    invalidatePublicOffersCache();
   });
 
   it('preserves isPublic in select projection and returns qualifying public offers', async () => {

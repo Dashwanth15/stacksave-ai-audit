@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { fetchPublicOffers, fetchPricingStatus, getCachedPublicOffers, type PublicOffersResponse } from '../services/api';
+import { fetchPublicOffers, fetchPricingStatus, getCachedPublicOffers } from '../services/api';
 import { useUserScopedStorage } from '../hooks/useUserScopedStorage';
 import Logo from '../components/Logo';
 import ProviderLogo from '../components/ProviderLogo';
@@ -103,42 +103,46 @@ export default function OffersPage() {
   // USER-SCOPED: read offer IDs are stored per user session
   const [readOfferIds, setReadOfferIds] = useUserScopedStorage<string[]>('read_offer_ids', []);
 
+  const loadOffersData = React.useCallback(async (showSkeleton = false) => {
+    if (showSkeleton) setLoading(true);
+    setError(null);
+
+    try {
+      const [offersRes, statusRes] = await Promise.all([
+        fetchPublicOffers(),
+        fetchPricingStatus().catch(() => null),
+      ]);
+
+      if (offersRes && Array.isArray(offersRes.offers)) {
+        setOffers(offersRes.offers);
+        if (offersRes.providerCount !== undefined) {
+          setCanonicalProviderCount(offersRes.providerCount);
+        }
+        if (offersRes.isPremiumUser !== undefined) {
+          setIsServerPremium(offersRes.isPremiumUser);
+        }
+      }
+      if (statusRes?.summary?.lastSuccessfulSyncAt) {
+        setLastSyncDate(statusRes.summary.lastSuccessfulSyncAt);
+      }
+    } catch (err) {
+      // Retain stale cached offers if available (SWR); otherwise set explicit error
+      const msg = err instanceof Error ? err.message : 'Failed to load offers';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
-
-    Promise.all([
-      fetchPublicOffers().catch((): PublicOffersResponse => ({ offers: [], count: 0, note: '' })),
-      fetchPricingStatus().catch(() => null),
-    ])
-      .then(([offersRes, statusRes]) => {
-        if (isMounted) {
-          if (offersRes) {
-            if (Array.isArray(offersRes.offers)) {
-              setOffers(offersRes.offers);
-            }
-            if (offersRes.providerCount !== undefined) {
-              setCanonicalProviderCount(offersRes.providerCount);
-            }
-            if (offersRes.isPremiumUser !== undefined) {
-              setIsServerPremium(offersRes.isPremiumUser);
-            }
-          }
-          if (statusRes?.summary?.lastSuccessfulSyncAt) {
-            setLastSyncDate(statusRes.summary.lastSuccessfulSyncAt);
-          }
-        }
-      })
-      .catch((err) => {
-        if (isMounted) setError(err instanceof Error ? err.message : 'Failed to load offers');
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
-
+    if (isMounted) {
+      loadOffersData(!cachedOnMount || cachedOnMount.offers.length === 0);
+    }
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [loadOffersData, cachedOnMount]);
 
   // Format and deduplicate offers semantically
   const formattedOffers = useMemo(() => {
@@ -360,12 +364,12 @@ export default function OffersPage() {
         <section className="mb-6 border-b border-slate-200/80 pb-6">
           <div className="flex w-fit max-w-full flex-wrap items-center gap-x-2.5 gap-y-1 text-xs leading-none font-semibold">
             <span className="inline-flex items-center gap-2 text-slate-900">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-              {formattedOffers.length} Active Promotions
+              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${loading ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'}`} />
+              {loading && formattedOffers.length === 0 ? '—' : formattedOffers.length} Active Promotions
             </span>
             <span className="text-slate-300" aria-hidden="true">•</span>
             <span className="text-slate-600">
-              <span className="font-semibold">{canonicalProviderCount ?? uniqueProviders.length}</span>{' '}
+              <span className="font-semibold">{loading && formattedOffers.length === 0 ? '—' : (canonicalProviderCount ?? uniqueProviders.length)}</span>{' '}
               AI Providers Monitored
             </span>
           </div>
@@ -531,10 +535,19 @@ export default function OffersPage() {
               </div>
             ))}
           </div>
-        ) : error ? (
-          <div className="p-8 rounded-2xl bg-rose-50 border border-rose-200 text-center">
-            <p className="text-sm font-bold text-rose-900">Unable to load intelligence offers</p>
-            <p className="text-xs text-rose-600 mt-1">{error}</p>
+        ) : error && formattedOffers.length === 0 ? (
+          <div className="p-8 rounded-2xl bg-white border border-slate-200 text-center max-w-md mx-auto my-8 shadow-xs">
+            <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-3 text-amber-600">
+              <UiIcon name="clock" size={20} />
+            </div>
+            <p className="text-sm font-bold text-slate-900">Unable to load intelligence offers</p>
+            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">{error}</p>
+            <button
+              onClick={() => loadOffersData(true)}
+              className="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              Try Again
+            </button>
           </div>
         ) : filteredAndSortedOffers.length === 0 ? (
           <div className="p-12 rounded-3xl bg-white border border-slate-200/90 text-center shadow-2xs">

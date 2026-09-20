@@ -1,0 +1,49 @@
+name: Backend Service Keep-Alive
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# StackSave Backend Keep-Alive Workflow
+#
+# Mitigates Render Free Tier 15-minute container spin-down by pinging GET /health
+# every 10 minutes.
+#
+# Rules:
+#   - Calls ONLY GET /health with a strict bounded timeout (25 seconds).
+#   - Does NOT call /api/intelligence/offers or any heavy endpoints.
+#   - Does NOT trigger Playwright, scraping, pricing sync, DB mutations, or email.
+#   - Safe, bounded, lightweight HTTP probe.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+on:
+  schedule:
+    # Run every 10 minutes to prevent Render Free 15-minute inactivity spin-down
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  health-probe:
+    name: Health Check Probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Ping Backend Health Endpoint
+        run: |
+          TARGET_URL="${{ secrets.BACKEND_URL }}"
+          if [ -z "$TARGET_URL" ]; then
+            TARGET_URL="https://api.stacksaveai.com"
+          fi
+          # Strip trailing slash if present
+          CLEAN_URL="${TARGET_URL%/}"
+
+          echo "▶ Pinging health check probe at ${CLEAN_URL}/health..."
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 25 "${CLEAN_URL}/health" || echo "000")
+
+          echo "HTTP Response Code: ${HTTP_CODE}"
+
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Backend health check probe succeeded (HTTP 200)."
+          else
+            echo "⚠️ Health check returned HTTP ${HTTP_CODE} (cold start or warming up)."
+            # Non-fatal exit: keepalive's purpose is to wake up / warm the instance
+          fi
