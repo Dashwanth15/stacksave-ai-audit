@@ -172,3 +172,25 @@ jobs:
             echo "ℹ️ Skipping digest trigger: BACKEND_URL or CRON secret not set"
           fi
 
+      - name: Trigger Free-User Premium Upgrade Email Campaign
+        if: ${{ inputs.target == 'both' || inputs.target == 'offers' || github.event_name == 'schedule' }}
+        run: |
+          echo "▶ Triggering Free-user Premium upgrade email campaign..."
+          CRON_SECRET="${{ secrets.PREMIUM_DIGEST_CRON_SECRET || secrets.ADMIN_SECRET }}"
+          if [ -n "$CRON_SECRET" ] && [ -n "${{ secrets.BACKEND_URL }}" ]; then
+            HTTP_CODE=$(curl -s -w "%{http_code}" -o /tmp/upgrade_campaign_response.json \
+              -X POST "${{ secrets.BACKEND_URL }}/api/internal/email/premium-upgrade-campaign" \
+              -H "Authorization: Bearer $CRON_SECRET" \
+              -H "Content-Type: application/json" \
+              --max-time 60)
+            echo "HTTP Status: $HTTP_CODE"
+            cat /tmp/upgrade_campaign_response.json || true
+            if [ "$HTTP_CODE" -ne 200 ]; then
+              echo "⚠️ [Campaign Warning] Premium upgrade campaign trigger returned status: $HTTP_CODE"
+            else
+              echo "✅ Free-user Premium upgrade email campaign executed successfully."
+            fi
+          else
+            echo "ℹ️ Skipping upgrade campaign trigger: BACKEND_URL or CRON secret not set"
+          fi
+
