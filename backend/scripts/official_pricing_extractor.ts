@@ -2639,6 +2639,226 @@ async function extractPoe(browser: Browser): Promise<OfficialExtractedProviderDa
 }
 
 /**
+ * Lovable — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractLovable(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'lovable',
+    'Lovable',
+    'https://lovable.dev/pricing'
+  );
+}
+
+/**
+ * Framer — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractFramer(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'framer',
+    'Framer',
+    'https://www.framer.com/pricing/'
+  );
+}
+
+/**
+ * Kling AI — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractKlingAI(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'kling-ai',
+    'Kling AI',
+    'https://klingai.com/pricing'
+  );
+}
+
+/**
+ * Luma AI — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractLumaAI(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'luma-ai',
+    'Luma AI',
+    'https://lumalabs.ai/dream-machine/pricing'
+  );
+}
+
+/**
+ * Udio — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractUdio(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'udio',
+    'Udio',
+    'https://www.udio.com/pricing'
+  );
+}
+
+/**
+ * Speechify — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractSpeechify(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'speechify',
+    'Speechify',
+    'https://speechify.com/pricing/'
+  );
+}
+
+/**
+ * Cerebras — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractCerebras(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'cerebras',
+    'Cerebras',
+    'https://cerebras.ai/pricing'
+  );
+}
+
+/**
+ * SambaNova — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractSambaNova(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'sambanova',
+    'SambaNova',
+    'https://cloud.sambanova.ai/pricing'
+  );
+}
+
+/**
+ * Beautiful.ai — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractBeautifulAI(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'beautiful-ai',
+    'Beautiful.ai',
+    'https://www.beautiful.ai/pricing'
+  );
+}
+
+/**
+ * Gamma — Playwright Live Multi-Signal DOM Extractor (Reused / Aliased)
+ */
+
+/**
+ * Consensus — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractConsensus(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'consensus',
+    'Consensus',
+    'https://consensus.app/pricing/'
+  );
+}
+
+/**
+ * Amazon Q Developer — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractAmazonQ(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'amazon-q',
+    'Amazon Q Developer',
+    'https://aws.amazon.com/q/developer/pricing/'
+  );
+}
+
+/**
+ * Jasper — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractJasper(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'jasper',
+    'Jasper',
+    'https://www.jasper.ai/pricing'
+  );
+}
+
+/**
+ * Copy.ai — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractCopyAI(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'copy-ai',
+    'Copy.ai',
+    'https://www.copy.ai/prices'
+  );
+}
+
+/**
+ * Writesonic — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractWritesonic(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'writesonic',
+    'Writesonic',
+    'https://writesonic.com/pricing'
+  );
+}
+
+/**
+ * Uizard — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractUizard(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'uizard',
+    'Uizard',
+    'https://uizard.io/pricing/'
+  );
+}
+
+/**
+ * Elicit — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractElicit(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'elicit',
+    'Elicit',
+    'https://elicit.com/pricing'
+  );
+}
+
+/**
+ * Scite — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractScite(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'scite',
+    'Scite',
+    'https://scite.ai/pricing'
+  );
+}
+
+/**
+ * Bolt.new — Playwright Live Multi-Signal DOM Extractor
+ */
+async function extractBoltNew(browser: Browser): Promise<OfficialExtractedProviderData> {
+  return scanProviderWithMultiSignal(
+    browser,
+    'bolt-new',
+    'Bolt.new',
+    'https://bolt.new/'
+  );
+}
+
+/**
  * Generic scan fallback for future providers added to sourceRegistry
  */
 export async function scanGenericProvider(
@@ -3048,6 +3268,60 @@ export async function runOfficialExtraction(syncTarget: string = 'both'): Promis
 
     const poeData = await extractPoe(browser);
     extractedProviders.push(poeData);
+
+    const lovableData = await extractLovable(browser);
+    extractedProviders.push(lovableData);
+
+    const framerData = await extractFramer(browser);
+    extractedProviders.push(framerData);
+
+    const klingData = await extractKlingAI(browser);
+    extractedProviders.push(klingData);
+
+    const lumaData = await extractLumaAI(browser);
+    extractedProviders.push(lumaData);
+
+    const udioData = await extractUdio(browser);
+    extractedProviders.push(udioData);
+
+    const speechifyData = await extractSpeechify(browser);
+    extractedProviders.push(speechifyData);
+
+    const cerebrasData = await extractCerebras(browser);
+    extractedProviders.push(cerebrasData);
+
+    const sambanovaData = await extractSambaNova(browser);
+    extractedProviders.push(sambanovaData);
+
+    const beautifulAiData = await extractBeautifulAI(browser);
+    extractedProviders.push(beautifulAiData);
+
+    const consensusData = await extractConsensus(browser);
+    extractedProviders.push(consensusData);
+
+    const amazonQData = await extractAmazonQ(browser);
+    extractedProviders.push(amazonQData);
+
+    const jasperData = await extractJasper(browser);
+    extractedProviders.push(jasperData);
+
+    const copyAiData = await extractCopyAI(browser);
+    extractedProviders.push(copyAiData);
+
+    const writesonicData = await extractWritesonic(browser);
+    extractedProviders.push(writesonicData);
+
+    const uizardData = await extractUizard(browser);
+    extractedProviders.push(uizardData);
+
+    const elicitData = await extractElicit(browser);
+    extractedProviders.push(elicitData);
+
+    const sciteData = await extractScite(browser);
+    extractedProviders.push(sciteData);
+
+    const boltNewData = await extractBoltNew(browser);
+    extractedProviders.push(boltNewData);
 
     // Live Playwright Commercial Partner AI Offer Extraction
     try {

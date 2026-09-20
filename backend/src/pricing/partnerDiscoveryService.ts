@@ -72,8 +72,8 @@ export interface NormalizedPartnerOffer {
   value?: string | number;
   eligibility: string;
   activationMethod?: string;
-  country: string;
-  region: string;
+  country?: string;
+  region?: string;
   officialSourceUrl: string;
   sourceDomain?: string;
   providerOfficialUrl?: string;
@@ -95,6 +95,10 @@ export interface NormalizedPartnerOffer {
   destinationUrl?: string;
   offerSubtype?: string;
   category?: 'partner' | 'student' | 'annual' | 'api' | 'trial' | 'startup' | 'free';
+  monthlyEquivalent?: number;
+  annualPrice?: number;
+  annualSavingsPercent?: number;
+  annualSavingsAmount?: number;
 }
 
 // ── Known Aggregator / Coupon / Third-Party Blocklist ─────────
