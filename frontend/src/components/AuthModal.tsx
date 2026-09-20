@@ -55,9 +55,8 @@ declare global {
 export default function AuthModal() {
   const { isAuthModalOpen, closeAuthModal, loginWithGoogleToken, isPremiumIntent, selectedPlanIntent } = useAuth();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [hasOfficialButton, setHasOfficialButton] = useState<boolean>(false);
-  const officialButtonRef = useRef<HTMLDivElement>(null);
+  const [isGoogleSigningIn, setIsGoogleSigningIn] = useState<boolean>(false);
+  const isSubmittingRef = useRef<boolean>(false);
   const shouldReduceMotion = useReducedMotion();
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -73,86 +72,39 @@ export default function AuthModal() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isAuthModalOpen, closeAuthModal]);
 
-  // Attempt to initialize GIS & render official button if supported
+  // Reset transient states when modal opens or closes
   useEffect(() => {
     if (!isAuthModalOpen) {
       setErrorMsg(null);
-      setIsProcessing(false);
-      setHasOfficialButton(false);
+      setIsGoogleSigningIn(false);
+      isSubmittingRef.current = false;
+    }
+  }, [isAuthModalOpen]);
+
+  // Stable, idempotent Google Sign-In handler
+  const handleGoogleLogin = useCallback(() => {
+    // Guard against duplicate clicks/taps
+    if (isSubmittingRef.current || isGoogleSigningIn) {
       return;
     }
 
-    if (!googleClientId) return;
-
-    let intervalId: ReturnType<typeof setInterval>;
-    let checkAttempts = 0;
-
-    const tryInitGis = () => {
-      checkAttempts++;
-      if (window.google?.accounts?.id && officialButtonRef.current) {
-        try {
-          window.google.accounts.id.initialize({
-            client_id: googleClientId,
-            callback: async (response) => {
-              try {
-                setIsProcessing(true);
-                setErrorMsg(null);
-                await loginWithGoogleToken({ credential: response.credential });
-              } catch (err: any) {
-                setErrorMsg(err?.message || "Google sign-in couldn't be completed. Please try again.");
-                setIsProcessing(false);
-              }
-            },
-            auto_select: false,
-            cancel_on_tap_outside: true,
-          });
-
-          officialButtonRef.current.innerHTML = '';
-          const containerWidth = officialButtonRef.current.parentElement?.clientWidth || (window.innerWidth - 64);
-          const computedWidth = Math.min(320, Math.max(220, Math.floor(containerWidth)));
-          window.google.accounts.id.renderButton(officialButtonRef.current, {
-            type: 'standard',
-            theme: 'outline',
-            size: 'large',
-            text: 'continue_with',
-            shape: 'rectangular',
-            logo_alignment: 'left',
-            width: computedWidth,
-          });
-
-          setTimeout(() => {
-            if (officialButtonRef.current && officialButtonRef.current.children.length > 0) {
-              setHasOfficialButton(true);
-            }
-          }, 300);
-        } catch (e) {
-          console.warn('[StackSave Auth] GIS renderButton warning:', e);
-        }
-      }
-
-      if (checkAttempts >= 15 && intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-
-    tryInitGis();
-    intervalId = setInterval(tryInitGis, 200);
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [isAuthModalOpen, googleClientId, loginWithGoogleToken]);
-
-  // Direct OAuth2 popup handler (Always available, robust, and reliable)
-  const handleDirectGoogleLogin = useCallback(() => {
     setErrorMsg(null);
-    setIsProcessing(true);
 
     if (!googleClientId) {
       setErrorMsg('Google Client ID is missing. Please check your environment configuration.');
-      setIsProcessing(false);
       return;
     }
+
+    isSubmittingRef.current = true;
+    setIsGoogleSigningIn(true);
+
+    const resetState = (errMessage?: string | null) => {
+      isSubmittingRef.current = false;
+      setIsGoogleSigningIn(false);
+      if (errMessage) {
+        setErrorMsg(errMessage);
+      }
+    };
 
     if (window.google?.accounts?.oauth2) {
       try {
@@ -161,63 +113,69 @@ export default function AuthModal() {
           scope: 'email profile openid',
           callback: async (tokenResponse) => {
             if (tokenResponse.error) {
-              console.error('Google OAuth token error:', tokenResponse.error);
-              setIsProcessing(false);
-              setErrorMsg(
-                tokenResponse.error === 'access_denied'
-                  ? 'Sign in was cancelled.'
-                  : `Google authentication error: ${tokenResponse.error}`
-              );
+              if (tokenResponse.error === 'access_denied') {
+                // User closed or dismissed the Google popup window
+                resetState(null);
+              } else {
+                console.warn('[StackSave Auth] Google OAuth token error:', tokenResponse.error);
+                resetState(`Google authentication error: ${tokenResponse.error}`);
+              }
               return;
             }
+
             if (tokenResponse.access_token) {
               try {
                 await loginWithGoogleToken({ accessToken: tokenResponse.access_token });
+                // Cleanly reset upon successful authentication and modal dismiss
+                isSubmittingRef.current = false;
+                setIsGoogleSigningIn(false);
               } catch (err: any) {
-                setIsProcessing(false);
-                setErrorMsg(err?.message || "Google sign-in couldn't be completed. Please try again.");
+                resetState(err?.message || "Google sign-in couldn't be completed. Please try again.");
               }
             } else {
-              setIsProcessing(false);
-              setErrorMsg('No access token received from Google.');
+              resetState('No access token received from Google.');
             }
           },
           error_callback: (err: any) => {
-            console.error('Google OAuth popup error:', err);
-            setIsProcessing(false);
-            setErrorMsg(
-              'Could not open Google sign-in window. If popups are blocked, please allow them for localhost.'
-            );
+            console.warn('[StackSave Auth] Google OAuth popup error / dismissed:', err);
+            resetState('Could not open Google sign-in window. If popups are blocked, please allow them.');
           },
         });
 
         tokenClient.requestAccessToken({ prompt: 'select_account' });
       } catch (err: any) {
-        console.error('Failed to trigger token client:', err);
-        setIsProcessing(false);
-        setErrorMsg(err?.message || "Couldn't initiate Google sign-in.");
+        console.error('[StackSave Auth] Failed to trigger Google token client:', err);
+        resetState(err?.message || "Couldn't initiate Google sign-in.");
       }
     } else if (window.google?.accounts?.id?.prompt) {
       try {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: async (response) => {
+            try {
+              await loginWithGoogleToken({ credential: response.credential });
+              isSubmittingRef.current = false;
+              setIsGoogleSigningIn(false);
+            } catch (err: any) {
+              resetState(err?.message || "Google sign-in couldn't be completed. Please try again.");
+            }
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+
         window.google.accounts.id.prompt((notification) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            setIsProcessing(false);
-            setErrorMsg(
-              'Google Sign-In prompt could not be displayed. Please verify Authorized JavaScript origins in Google Cloud Console.'
-            );
+            resetState('Google Sign-In prompt could not be displayed. Please check popup permissions.');
           }
         });
       } catch {
-        setIsProcessing(false);
-        setErrorMsg('Failed to prompt Google sign-in.');
+        resetState('Failed to prompt Google sign-in.');
       }
     } else {
-      setIsProcessing(false);
-      setErrorMsg(
-        'Google Sign-In is still loading or blocked by an ad-blocker. Please pause shields or ad-blocker for localhost.'
-      );
+      resetState('Google Sign-In is still loading. Please wait a moment and try again.');
     }
-  }, [googleClientId, loginWithGoogleToken]);
+  }, [googleClientId, isGoogleSigningIn, loginWithGoogleToken]);
 
   return (
     <AnimatePresence>
@@ -345,52 +303,42 @@ export default function AuthModal() {
 
             {/* ── 2. Primary Action: Continue with Google (Hero CTA) ── */}
             <div className="mt-4 sm:mt-5 flex flex-col items-center justify-center">
-              {isProcessing ? (
-                <div className="w-full h-[46px] sm:h-[50px] flex items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 text-sm font-medium text-slate-600">
-                  <div className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-slate-800 animate-spin" />
-                  <span>Connecting with Google…</span>
-                </div>
-              ) : googleClientId ? (
+              {googleClientId ? (
                 <div className="w-full flex flex-col items-center">
-                  {/* Official GIS Button container (if rendered by Google) */}
-                  <div
-                    ref={officialButtonRef}
-                    className={`flex justify-center w-full transition-opacity ${hasOfficialButton ? 'block' : 'hidden'}`}
-                  />
-
-                  {/* Primary Google CTA with distinct 3D elevation, border darkening, and icon pop */}
-                  {(!hasOfficialButton || !officialButtonRef.current?.children.length) && (
-                    <button
-                      type="button"
-                      onClick={handleDirectGoogleLogin}
-                      disabled={isProcessing}
-                      className="group relative w-full h-[46px] sm:h-[50px] flex items-center justify-center gap-2.5 px-3.5 sm:px-4 rounded-xl border border-slate-200/90 bg-white hover:border-slate-400/80 hover:bg-slate-50/60 text-slate-800 hover:text-slate-950 font-medium text-[13.5px] sm:text-[14.5px] transition-all duration-200 ease-out shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_6px_20px_-4px_rgba(15,23,42,0.12),0_2px_6px_-1px_rgba(15,23,42,0.06)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] active:shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 disabled:opacity-60 disabled:cursor-not-allowed min-h-0"
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    disabled={isGoogleSigningIn}
+                    aria-busy={isGoogleSigningIn}
+                    className="w-full h-[46px] sm:h-[50px] flex items-center justify-center gap-2.5 px-3.5 sm:px-4 rounded-xl border border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-slate-800 hover:text-slate-950 font-medium text-[13.5px] sm:text-[14.5px] transition-colors duration-150 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] active:bg-slate-100/80 cursor-pointer disabled:opacity-75 disabled:cursor-wait min-h-0 select-none"
+                  >
+                    {/* Stable Google G Icon (strictly non-rotating) */}
+                    <svg
+                      className="w-[18px] h-[18px] flex-shrink-0"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
                     >
-                      <svg
-                        className="w-[18px] h-[18px] flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          fill="#4285F4"
-                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                        />
-                        <path
-                          fill="#EA4335"
-                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                        />
-                      </svg>
-                      <span className="tracking-[-0.01em]">Continue with Google</span>
-                    </button>
-                  )}
+                      <path
+                        fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                      />
+                    </svg>
+                    <span className="tracking-[-0.01em]">
+                      {isGoogleSigningIn ? 'Signing in…' : 'Continue with Google'}
+                    </span>
+                  </button>
                 </div>
               ) : (
                 <div className="w-full rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 text-left">

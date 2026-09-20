@@ -282,7 +282,10 @@ describe('3. Daily Offer Digest Filtering, Dedup & Suppression', () => {
       isActive: { $ne: false },
       isPublic: true,
     }).lean();
-    const baselineFPs = allExistingOffers.map((o) => o.fingerprint).filter(Boolean);
+    await NotificationEventModel.updateMany(
+      { _id: { $in: allExistingOffers.map((o) => o._id) } },
+      { isActive: false }
+    );
 
     const offerA = await NotificationEventModel.create({
       providerId: 'gemini',
@@ -307,7 +310,7 @@ describe('3. Daily Offer Digest Filtering, Dedup & Suppression', () => {
       plan: 'PREMIUM',
       subscriptionStatus: 'ACTIVE',
       sessionVersion: 1,
-      sentOfferFingerprints: baselineFPs,
+      sentOfferFingerprints: [],
     });
     testUserIds.push(premiumUser._id);
 
@@ -336,9 +339,13 @@ describe('3. Daily Offer Digest Filtering, Dedup & Suppression', () => {
     expect(updatedUser1?.sentOfferFingerprints).toContain(`fp_a_${timestamp}`);
     expect(updatedUser1?.lastOfferDigestAt).toBeDefined();
 
-    // Reset lastOfferDigestAt to simulate day 2, but offerA is UNCHANGED
+    // Reset lastOfferDigestAt to simulate day 2 (>48h elapsed), but offerA is UNCHANGED
+    await NotificationEventModel.findByIdAndUpdate(offerA._id, {
+      detectedAt: new Date(Date.now() - 48 * 3600 * 1000),
+    });
+
     await UserModel.findByIdAndUpdate(premiumUser._id, {
-      lastOfferDigestAt: new Date(Date.now() - 25 * 60 * 60 * 1000), // 25h ago
+      lastOfferDigestAt: new Date(Date.now() - 50 * 60 * 60 * 1000), // 50h ago
     });
 
     digestSpy.mockClear();
@@ -367,7 +374,11 @@ describe('3. Daily Offer Digest Filtering, Dedup & Suppression', () => {
     });
     testOfferIds.push(offerAUpdated._id);
 
-    // DAY 3 run
+    // DAY 3 run: Reset lastOfferDigestAt (>48h elapsed)
+    await UserModel.findByIdAndUpdate(premiumUser._id, {
+      lastOfferDigestAt: new Date(Date.now() - 50 * 60 * 60 * 1000),
+    });
+
     await triggerDailyOfferDigest();
     expect(digestSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -376,6 +387,12 @@ describe('3. Daily Offer Digest Filtering, Dedup & Suppression', () => {
           expect.objectContaining({ title: '70% Off Annual Plan (Updated)' }),
         ]),
       })
+    );
+
+    // Restore existing offers
+    await NotificationEventModel.updateMany(
+      { _id: { $in: allExistingOffers.map((o) => o._id) } },
+      { isActive: true }
     );
 
     digestSpy.mockRestore();
@@ -1556,13 +1573,18 @@ describe('8. Multi-Day Rotation & Missed-Offer Recovery System', () => {
 
     const freshOffer = await NotificationEventModel.create({
       providerId: 'gemini',
+      providerName: 'Google Gemini',
       eventType: 'NEW_OFFER',
+      offerSubtype: 'PARTNER_BUNDLE',
+      isPartnerOffer: true,
+      partnerType: 'telecom',
+      partner: 'Verizon',
       fingerprint: `fp_cap_fresh_${timestamp}`,
-      title: 'Cap Fresh Test Offer',
+      title: 'Cap Fresh Test Offer Partner Bundle',
       description: 'Official description for cap test with evidence text long enough',
-      evidenceText: 'Official pricing evidence confirmation text length >= 20 characters audit cap',
+      evidenceText: 'Official pricing evidence confirmation text length >= 20 characters audit cap bundle',
       sourceUrl: 'https://gemini.google.com/pricing',
-      discount: '25% off',
+      discount: '90% off',
       isActive: true,
       isPublic: true,
       detectedAt: new Date(),

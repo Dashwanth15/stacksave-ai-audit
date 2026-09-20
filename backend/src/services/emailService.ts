@@ -1393,3 +1393,329 @@ https://stacksaveai.com
     return { success: false, error: msg };
   }
 }
+
+// ── 7. Premium Upgrade Campaign for Free Users ─────────────────
+
+/**
+ * Milestone interval sequence in days for Free user Premium upgrade lifecycle emails.
+ * Cycles continuously: 10 -> 15 -> 10 -> 15 -> 10...
+ */
+export const PREMIUM_UPGRADE_EMAIL_INTERVALS_DAYS = [10, 15, 10] as const;
+
+/**
+ * Returns the cadence interval in days for a given milestone sequence index.
+ */
+export function getUpgradeEmailIntervalDays(sequenceIndex: number): number {
+  if (!Number.isFinite(sequenceIndex) || sequenceIndex < 0) {
+    return PREMIUM_UPGRADE_EMAIL_INTERVALS_DAYS[0];
+  }
+  const idx = sequenceIndex % PREMIUM_UPGRADE_EMAIL_INTERVALS_DAYS.length;
+  return PREMIUM_UPGRADE_EMAIL_INTERVALS_DAYS[idx];
+}
+
+export interface SendPremiumUpgradeEmailParams {
+  email: string;
+  name?: string;
+  userId: string;
+  sequenceIndex?: number;
+}
+
+interface UpgradeCopyVariant {
+  eyebrow: string;
+  subject: string;
+  headline: string;
+  intro: string;
+}
+
+const UPGRADE_EMAIL_VARIANTS: UpgradeCopyVariant[] = [
+  {
+    eyebrow: 'A BETTER WAY TO MANAGE YOUR AI STACK',
+    subject: 'Unlock more with StackSave Premium',
+    headline: 'Unlock more with StackSave Premium',
+    intro: "You're already using StackSave to understand your AI stack. Premium gives you more ways to track, save, and discover valuable AI opportunities.",
+  },
+  {
+    eyebrow: 'PERSISTENT AI SPEND INTELLIGENCE',
+    subject: 'Keep your AI spend history working for you',
+    headline: 'Keep your AI spend history working for you',
+    intro: 'Your stack evolves continuously as models and pricing update. StackSave Premium lets you maintain your full audit history and share dynamic reports with your team without limits.',
+  },
+  {
+    eyebrow: 'CONTINUOUS OPPORTUNITY MONITORING',
+    subject: "Don't miss the next verified AI savings opportunity",
+    headline: "Don't miss the next AI savings opportunity",
+    intro: 'Our intelligence engine continuously indexes verified discounts, academic grants, startup credits, and model pricing drops. StackSave Premium delivers these directly to your inbox.',
+  },
+  {
+    eyebrow: 'ADVANCED AI SPEND OPTIMIZATION',
+    subject: 'Get more from your StackSave workspace',
+    headline: 'Get more from your StackSave workspace',
+    intro: 'Scale your AI stack with confidence. StackSave Premium unlocks comprehensive audit tracking, unconstrained collaboration, and early access to our newest intelligence tools.',
+  },
+];
+
+export async function sendPremiumUpgradeEmail(
+  params: SendPremiumUpgradeEmailParams
+): Promise<{ success: boolean; id?: string; error?: string }> {
+  const { email, name, userId, sequenceIndex = 0 } = params;
+
+  if (!email || !email.includes('@')) {
+    console.warn(`[EmailService] Invalid or missing recipient email for upgrade campaign: "${email}". Skipping.`);
+    return { success: false, error: 'Invalid recipient email' };
+  }
+
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn('[EmailService] RESEND_API_KEY not configured. Skipping premium upgrade email dispatch.');
+    return { success: false, error: 'Resend API key not configured' };
+  }
+
+  const appUrl = getFrontendUrl();
+  const pricingUrl = `${appUrl}/#pricing`;
+  const from = getSenderAddress();
+
+  const variant = UPGRADE_EMAIL_VARIANTS[sequenceIndex % UPGRADE_EMAIL_VARIANTS.length];
+  const subject = variant.subject;
+
+  // Unsubscribe token for promotional/upgrade emails
+  const unsubToken = userId ? generateUnsubscribeToken(userId) : '';
+  const unsubUrl = unsubToken ? `${appUrl}/api/user/unsubscribe?token=${unsubToken}&type=upgrade` : '';
+  const unsubLinkHtml = unsubUrl
+    ? `<a href="${unsubUrl}" target="_blank" rel="noopener noreferrer" style="color: #71717A; text-decoration: underline;">Unsubscribe from promotional emails</a>`
+    : '';
+
+  const firstName = name ? name.trim().split(' ')[0] : '';
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi there,';
+
+  // Plaintext fallback
+  const textContent = `
+StackSave — AI Spend Intelligence
+${variant.eyebrow}
+
+${variant.headline}
+
+${greeting}
+
+${variant.intro}
+
+KEY PREMIUM BENEFITS:
+
+01 Unlimited audit history
+Keep your important AI spend analysis available without the Free-plan saved-audit limit.
+
+02 Unlimited audit sharing
+Share more audit results with your team without the Free-plan share-link limit.
+
+03 Premium AI savings opportunities
+Discover additional verified AI savings opportunities and receive the 48-hour AI Savings Brief.
+
+04 Early access
+Get access to selected new StackSave intelligence features earlier.
+
+Upgrade to Premium: ${pricingUrl}
+
+---
+Privacy: ${appUrl}/privacy | Terms: ${appUrl}/terms
+${unsubUrl ? `Unsubscribe: ${unsubUrl}` : ''}
+StackSave — stacksaveai.com
+`.trim();
+
+  // HTML content adhering strictly to Editorial Black + White + Emerald
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${variant.headline}</title>
+  <style>
+    body, table, td, p, a, li, blockquote { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; width: 100% !important; background-color: #F4F4F5; font-family: ${FONT_STACK}; color: #0A0A0F; }
+    a { color: inherit; }
+    .cta-button:hover { background-color: #18181B !important; }
+    @media only screen and (max-width: 600px) {
+      .email-container { width: 100% !important; max-width: 100% !important; }
+      .content-cell { padding: 24px 20px !important; }
+      .header-cell { padding: 20px 20px 16px 20px !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F4F4F5; font-family: ${FONT_STACK};">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F4F4F5; padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <!-- Main Email Card -->
+        <table role="presentation" class="email-container" width="580" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border: 1px solid #E4E4E7; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+
+          <!-- Header -->
+          ${renderEmailHeader(variant.eyebrow)}
+
+          <!-- Body -->
+          <tr>
+            <td class="content-cell" style="padding: 32px 32px 28px 32px; background-color: #FFFFFF;">
+
+              <!-- Editorial Eyebrow -->
+              <div style="font-size: 11px; font-weight: 700; color: #059669; letter-spacing: 0.08em; text-transform: uppercase; font-family: ${FONT_STACK}; margin-bottom: 10px;">
+                ${variant.eyebrow}
+              </div>
+
+              <!-- Main Headline -->
+              <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 800; color: #0A0A0F; letter-spacing: -0.03em; line-height: 1.25; font-family: ${FONT_STACK};">
+                ${variant.headline}
+              </h1>
+
+              <!-- Greeting & Personalization -->
+              <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #0A0A0F; font-family: ${FONT_STACK};">
+                ${greeting}
+              </p>
+
+              <!-- Intro copy -->
+              <p style="margin: 0 0 28px 0; font-size: 14px; color: #52525B; line-height: 1.6; font-family: ${FONT_STACK};">
+                ${variant.intro}
+              </p>
+
+              <!-- Editorial Benefits List -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 12px; margin-bottom: 24px;">
+                <!-- Benefit 01 -->
+                <tr>
+                  <td style="padding-bottom: 18px;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td valign="top" style="width: 32px; font-size: 13px; font-weight: 800; color: #10B981; font-family: ${FONT_STACK}; line-height: 1.4;">
+                          01
+                        </td>
+                        <td valign="top">
+                          <div style="font-size: 14px; font-weight: 700; color: #0A0A0F; font-family: ${FONT_STACK}; margin-bottom: 3px;">
+                            Unlimited audit history
+                          </div>
+                          <div style="font-size: 13px; color: #71717A; line-height: 1.5; font-family: ${FONT_STACK};">
+                            Keep your important AI spend analysis available without the Free-plan saved-audit limit.
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="border-top: 1px solid #E4E4E7; padding-bottom: 18px;"></td></tr>
+
+                <!-- Benefit 02 -->
+                <tr>
+                  <td style="padding-bottom: 18px;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td valign="top" style="width: 32px; font-size: 13px; font-weight: 800; color: #10B981; font-family: ${FONT_STACK}; line-height: 1.4;">
+                          02
+                        </td>
+                        <td valign="top">
+                          <div style="font-size: 14px; font-weight: 700; color: #0A0A0F; font-family: ${FONT_STACK}; margin-bottom: 3px;">
+                            Unlimited audit sharing
+                          </div>
+                          <div style="font-size: 13px; color: #71717A; line-height: 1.5; font-family: ${FONT_STACK};">
+                            Share more audit results with your team without the Free-plan share-link limit.
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="border-top: 1px solid #E4E4E7; padding-bottom: 18px;"></td></tr>
+
+                <!-- Benefit 03 -->
+                <tr>
+                  <td style="padding-bottom: 18px;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td valign="top" style="width: 32px; font-size: 13px; font-weight: 800; color: #10B981; font-family: ${FONT_STACK}; line-height: 1.4;">
+                          03
+                        </td>
+                        <td valign="top">
+                          <div style="font-size: 14px; font-weight: 700; color: #0A0A0F; font-family: ${FONT_STACK}; margin-bottom: 3px;">
+                            Premium AI opportunities
+                          </div>
+                          <div style="font-size: 13px; color: #71717A; line-height: 1.5; font-family: ${FONT_STACK};">
+                            Discover additional verified AI savings opportunities and receive the 48-hour AI Savings Brief.
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="border-top: 1px solid #E4E4E7; padding-bottom: 18px;"></td></tr>
+
+                <!-- Benefit 04 -->
+                <tr>
+                  <td style="padding-bottom: 6px;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td valign="top" style="width: 32px; font-size: 13px; font-weight: 800; color: #10B981; font-family: ${FONT_STACK}; line-height: 1.4;">
+                          04
+                        </td>
+                        <td valign="top">
+                          <div style="font-size: 14px; font-weight: 700; color: #0A0A0F; font-family: ${FONT_STACK}; margin-bottom: 3px;">
+                            Early access
+                          </div>
+                          <div style="font-size: 13px; color: #71717A; line-height: 1.5; font-family: ${FONT_STACK};">
+                            Get access to selected new StackSave features and intelligence tools earlier.
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Single Primary CTA Button -->
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin: 28px 0 20px 0;">
+                <tr>
+                  <td align="left" style="border-radius: 8px; background-color: #0A0D14;">
+                    <a href="${pricingUrl}" target="_blank" rel="noopener noreferrer" class="cta-button" style="display: inline-block; background-color: #0A0D14; color: #FFFFFF; font-size: 13px; font-weight: 600; text-decoration: none; padding: 13px 26px; border-radius: 8px; letter-spacing: 0.01em; font-family: ${FONT_STACK};">
+                      Upgrade to Premium <span style="color: #10B981; font-weight: 700; margin-left: 4px;">&rarr;</span>
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Fallback Direct URL -->
+              <p style="margin: 0; font-size: 12px; color: #A1A1AA; line-height: 1.5; font-family: ${FONT_STACK};">
+                Explore plan details: <a href="${pricingUrl}" target="_blank" rel="noopener noreferrer" style="color: #71717A; text-decoration: underline;">${pricingUrl}</a>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          ${renderEmailFooter(appUrl, unsubLinkHtml)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`.trim();
+
+  try {
+    const { data, error } = await sendWithDomainFallback(resend, {
+      from,
+      to: email,
+      reply_to: getReplyToAddress(),
+      subject,
+      text: textContent,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error('[EmailService] Resend API error sending premium upgrade email:', JSON.stringify(error));
+      return { success: false, error: error.message };
+    }
+
+    console.log(`[EmailService] ✅ Premium upgrade email sent to ${email} (Resend ID: ${data?.id}, sequence: ${sequenceIndex})`);
+    return { success: true, id: data?.id };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[EmailService] Unexpected error sending premium upgrade email:', msg);
+    return { success: false, error: msg };
+  }
+}

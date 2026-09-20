@@ -12,7 +12,13 @@ import {
   UserDocument,
 } from './dbService';
 import { isPremiumUser } from './billingService';
-import { sendOfferDigestEmail, OfferDigestItem } from './emailService';
+import {
+  sendOfferDigestEmail,
+  sendPremiumUpgradeEmail,
+  getUpgradeEmailIntervalDays,
+  PREMIUM_UPGRADE_EMAIL_INTERVALS_DAYS,
+  OfferDigestItem,
+} from './emailService';
 export type { OfferDigestItem } from './emailService';
 import { canPublishOffer } from '../pricing/offerTrust';
 import { PlatformRankingEngine } from '../audit-engine/services/PlatformRankingEngine';
@@ -678,4 +684,195 @@ export function stopEmailScheduler(): void {
     clearInterval(schedulerInterval);
     schedulerInterval = null;
   }
+}
+
+// ── Free User Premium Upgrade Campaign ─────────────────────────
+
+export interface UpgradeEligibilityResult {
+  eligible: boolean;
+  reason?: string;
+  sequenceIndex: number;
+  requiredIntervalDays: number;
+  elapsedDays?: number;
+}
+
+/**
+ * Pure helper function to determine if a Free user is eligible for an upgrade email
+ * based on their per-user milestone sequence and opt-in status.
+ */
+export function isUserEligibleForUpgradeEmail(
+  user: UserDocument | any,
+  now: Date = new Date()
+): UpgradeEligibilityResult {
+  const sequenceIndex = user.premiumUpgradeEmailState?.sequenceIndex ?? 0;
+  const requiredIntervalDays = getUpgradeEmailIntervalDays(sequenceIndex);
+
+  // 1. Must be on the FREE plan
+  if (user.plan && user.plan !== 'FREE') {
+    return {
+      eligible: false,
+      reason: 'NOT_FREE_PLAN',
+      sequenceIndex,
+      requiredIntervalDays,
+    };
+  }
+
+  // 2. Must have a valid registered email (no anonymous/guests)
+  if (!user.email || typeof user.email !== 'string' || !user.email.includes('@')) {
+    return {
+      eligible: false,
+      reason: 'INVALID_OR_MISSING_EMAIL',
+      sequenceIndex,
+      requiredIntervalDays,
+    };
+  }
+
+  // 3. Must not have opted out of promotional upgrade emails
+  if (user.emailPreferences && user.emailPreferences.premiumUpgradeEmails === false) {
+    return {
+      eligible: false,
+      reason: 'OPTED_OUT',
+      sequenceIndex,
+      requiredIntervalDays,
+    };
+  }
+
+  // 4. Cadence milestone evaluation
+  const nowMs = now.getTime();
+  let baseDate: Date;
+
+  if (user.premiumUpgradeEmailState?.lastSentAt) {
+    baseDate = new Date(user.premiumUpgradeEmailState.lastSentAt);
+  } else if (user.createdAt) {
+    baseDate = new Date(user.createdAt);
+  } else {
+    // If createdAt is missing, default to epoch so first email is eligible
+    baseDate = new Date(0);
+  }
+
+  const elapsedMs = Math.max(0, nowMs - baseDate.getTime());
+  const requiredMs = requiredIntervalDays * 24 * 60 * 60 * 1000;
+  const elapsedDays = Math.floor(elapsedMs / (24 * 60 * 60 * 1000));
+
+  if (elapsedMs < requiredMs) {
+    return {
+      eligible: false,
+      reason: 'INTERVAL_NOT_ELAPSED',
+      sequenceIndex,
+      requiredIntervalDays,
+      elapsedDays,
+    };
+  }
+
+  return {
+    eligible: true,
+    sequenceIndex,
+    requiredIntervalDays,
+    elapsedDays,
+  };
+}
+
+export interface PremiumUpgradeCampaignStats {
+  attempted: number;
+  sent: number;
+  skipped: number;
+  errors: number;
+}
+
+export interface TriggerPremiumUpgradeCampaignOptions {
+  now?: Date;
+  batchSize?: number;
+}
+
+/**
+ * Orchestrates the periodic StackSave Premium upgrade lifecycle campaign for Free users.
+ * Follows a 10 -> 15 -> 10 day per-user milestone cadence.
+ * Idempotent: Campaign state advances strictly upon verified Resend delivery acceptance.
+ */
+export async function triggerPremiumUpgradeCampaign(
+  options: TriggerPremiumUpgradeCampaignOptions = {}
+): Promise<PremiumUpgradeCampaignStats> {
+  const stats: PremiumUpgradeCampaignStats = { attempted: 0, sent: 0, skipped: 0, errors: 0 };
+  const executionTime = options.now || new Date();
+  const batchSize = Math.max(1, options.batchSize || parseInt(process.env.PREMIUM_UPGRADE_BATCH_SIZE || '10', 10));
+
+  console.log('[EmailScheduler] 🚀 Starting Premium Upgrade lifecycle email campaign for Free users...');
+
+  try {
+    // 1. Query candidate Free users with valid emails
+    const candidateUsers = await UserModel.find({
+      plan: 'FREE',
+      email: { $exists: true, $ne: '' },
+    }).sort({ createdAt: 1 });
+
+    stats.attempted = candidateUsers.length;
+    console.log(`[EmailScheduler] Found ${candidateUsers.length} candidate Free user(s) for upgrade evaluation.`);
+
+    // 2. Process users in rate-limited batches
+    for (let i = 0; i < candidateUsers.length; i += batchSize) {
+      const batch = candidateUsers.slice(i, i + batchSize);
+
+      await Promise.all(
+        batch.map(async (user: UserDocument) => {
+          try {
+            // Check cadence eligibility
+            const eligibility = isUserEligibleForUpgradeEmail(user, executionTime);
+            if (!eligibility.eligible) {
+              stats.skipped++;
+              return;
+            }
+
+            // Authoritative Entitlement Check: Fetch latest subscription
+            const sub = await SubscriptionModel.findOne({ userId: user._id }).sort({ createdAt: -1 });
+            if (isPremiumUser(user, sub)) {
+              // User has active Premium entitlement (e.g. upgraded recently) - skip immediately
+              stats.skipped++;
+              return;
+            }
+
+            // Dispatch personalized upgrade email
+            const result = await sendPremiumUpgradeEmail({
+              email: user.email,
+              name: user.name,
+              userId: user._id.toString(),
+              sequenceIndex: eligibility.sequenceIndex,
+            });
+
+            // Idempotency: ONLY update campaign state upon confirmed Resend delivery
+            if (result.success) {
+              const nextSequenceIndex = eligibility.sequenceIndex + 1;
+              await UserModel.findByIdAndUpdate(user._id, {
+                'premiumUpgradeEmailState.lastSentAt': executionTime,
+                'premiumUpgradeEmailState.sequenceIndex': nextSequenceIndex,
+              });
+              stats.sent++;
+            } else {
+              console.warn(
+                `[EmailScheduler] Upgrade email delivery rejected for user ${user._id} (${user.email}): ${result.error || 'Unknown error'}`
+              );
+              stats.errors++;
+            }
+          } catch (userErr: unknown) {
+            const errMsg = userErr instanceof Error ? userErr.message : String(userErr);
+            console.error(`[EmailScheduler] Error processing upgrade email for user ${user._id}: ${errMsg}`);
+            stats.errors++;
+          }
+        })
+      );
+
+      // Brief delay between batches to respect rate limits
+      if (i + batchSize < candidateUsers.length) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    }
+
+    console.log(
+      `[EmailScheduler] ✅ Premium upgrade campaign complete. Attempted: ${stats.attempted}, Sent: ${stats.sent}, Skipped: ${stats.skipped}, Errors: ${stats.errors}`
+    );
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[EmailScheduler] Fatal error during upgrade campaign run:', msg);
+  }
+
+  return stats;
 }

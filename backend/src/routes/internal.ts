@@ -5,7 +5,7 @@
 // ============================================================
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { triggerDailyOfferDigest } from '../services/emailScheduler';
+import { triggerDailyOfferDigest, triggerPremiumUpgradeCampaign } from '../services/emailScheduler';
 
 const router = Router();
 
@@ -61,6 +61,26 @@ router.post('/email/premium-digest', async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       error: 'An internal error occurred while executing the daily digest.',
+    });
+  }
+});
+
+// ── POST /api/internal/email/premium-upgrade-campaign ────────
+// Protected endpoint triggered by GitHub Actions or scheduled cron for Free users
+router.post('/email/premium-upgrade-campaign', async (req: Request, res: Response) => {
+  try {
+    const stats = await triggerPremiumUpgradeCampaign();
+    return res.status(200).json({
+      success: true,
+      message: 'Premium upgrade email campaign executed successfully.',
+      data: stats,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[InternalRoute] Error executing premium upgrade campaign:', msg);
+    return res.status(500).json({
+      success: false,
+      error: 'An internal error occurred while executing the premium upgrade campaign.',
     });
   }
 });

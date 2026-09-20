@@ -214,10 +214,16 @@ export interface UserDocument extends Document {
     date: Date;
     fingerprints: string[];
   }[];
+  // Free-user lifecycle upgrade email cadence tracking
+  premiumUpgradeEmailState?: {
+    lastSentAt?: Date;
+    sequenceIndex?: number;
+  };
   // Per-user email preferences
   emailPreferences?: {
     productEmails: boolean;         // Account / billing / security emails (default: true)
     premiumOfferDigest: boolean;    // Daily AI offers digest for Premium users (default: true)
+    premiumUpgradeEmails: boolean;  // Periodic Premium upgrade invitations for Free users (default: true)
   };
 }
 
@@ -258,9 +264,14 @@ const UserSchema = new Schema<UserDocument>(
       ],
       default: [],
     },
+    premiumUpgradeEmailState: {
+      lastSentAt: { type: Date },
+      sequenceIndex: { type: Number, default: 0 },
+    },
     emailPreferences: {
       productEmails: { type: Boolean, default: true },
       premiumOfferDigest: { type: Boolean, default: true },
+      premiumUpgradeEmails: { type: Boolean, default: true },
     },
   },
   { 
