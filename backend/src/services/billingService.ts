@@ -280,10 +280,10 @@ async function callRazorpayApi<T = any>(
 
 /**
  * Creates an ongoing recurring subscription in Razorpay.
- * Uses Razorpay's 100-year cycle configuration:
- * - Quarterly: 400 cycles (4 cycles/year × 100 years)
- * - Yearly: 100 cycles (1 cycle/year × 100 years)
- * Subscription runs continuously until cancelled by the customer.
+ * Uses a 30-year cycle configuration:
+ * - Quarterly: 120 cycles (4 cycles/year × 30 years)
+ * - Yearly: 30 cycles (1 cycle/year × 30 years)
+ * Ensures UPI mandate end_time remains within Razorpay and NPCI maximum (4765046400).
  */
 export async function createRazorpaySubscription(params: {
   planKey: 'quarterly' | 'yearly';
@@ -313,8 +313,8 @@ export async function createRazorpaySubscription(params: {
     );
   }
 
-  // Ongoing subscription cycles: 100 years duration until customer cancellation
-  const totalCount = planKey === 'quarterly' ? 400 : 100;
+  // Ongoing subscription cycles: 30 years duration (120 quarters or 30 years)
+  const totalCount = planKey === 'quarterly' ? 120 : 30;
 
   const payload = {
     plan_id: planId,

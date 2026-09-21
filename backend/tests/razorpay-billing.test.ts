@@ -977,19 +977,18 @@ describe('Razorpay Live Subscription Billing Suite', () => {
   });
 
   // ── 31. Ongoing subscription configuration ──────────────────
-  it('31. ongoing subscription configuration uses 100-year cycle count (400 for quarterly, 100 for yearly)', async () => {
-    let capturedCycles = 0;
+  it('31. ongoing subscription configuration uses 30-year cycle count (120 for quarterly, 30 for yearly) within UPI mandate limits', async () => {
+    let capturedBody: any = null;
     global.fetch = vi.fn().mockImplementation(async (url: any, opts: any) => {
       if (typeof url === 'string' && url.includes('/v1/subscriptions')) {
-        const parsed = JSON.parse(opts.body);
-        capturedCycles = parsed.total_count;
+        capturedBody = JSON.parse(opts.body);
         return {
           ok: true,
           status: 200,
           json: async () => ({
             id: `sub_test_duration_${Math.random().toString(36).substring(2, 9)}`,
-            plan_id: parsed.plan_id,
-            total_count: parsed.total_count,
+            plan_id: capturedBody.plan_id,
+            total_count: capturedBody.total_count,
             status: 'created',
           }),
         };
@@ -1000,7 +999,7 @@ describe('Razorpay Live Subscription Billing Suite', () => {
     // Clear active subscriptions so create-subscription reaches Razorpay call
     await SubscriptionModel.deleteMany({ userId: { $in: [testUserA._id, testUserB._id] } });
 
-    // Test Quarterly -> 400
+    // Test Quarterly -> 120
     await fetch(`${baseUrl}/api/billing/create-subscription`, {
       method: 'POST',
       headers: {
@@ -1009,9 +1008,15 @@ describe('Razorpay Live Subscription Billing Suite', () => {
       },
       body: JSON.stringify({ plan: 'quarterly' }),
     });
-    expect(capturedCycles).toBe(400);
+    expect(capturedBody).toBeDefined();
+    expect(capturedBody.total_count).toBe(120);
+    expect(capturedBody.plan_id).toBe(TEST_QUARTERLY_PLAN_ID);
 
-    // Test Yearly -> 100
+    // Regression check: calculated mandate end time for quarterly must be <= 4765046400 (Dec 31, 2120)
+    const quarterlyEndTimestampSec = Math.floor(Date.now() / 1000) + (120 * 3 * 30.44 * 24 * 3600);
+    expect(quarterlyEndTimestampSec).toBeLessThan(4765046400);
+
+    // Test Yearly -> 30
     await fetch(`${baseUrl}/api/billing/create-subscription`, {
       method: 'POST',
       headers: {
@@ -1020,7 +1025,13 @@ describe('Razorpay Live Subscription Billing Suite', () => {
       },
       body: JSON.stringify({ plan: 'yearly' }),
     });
-    expect(capturedCycles).toBe(100);
+    expect(capturedBody).toBeDefined();
+    expect(capturedBody.total_count).toBe(30);
+    expect(capturedBody.plan_id).toBe(TEST_YEARLY_PLAN_ID);
+
+    // Regression check: calculated mandate end time for yearly must be <= 4765046400 (Dec 31, 2120)
+    const yearlyEndTimestampSec = Math.floor(Date.now() / 1000) + (30 * 365.25 * 24 * 3600);
+    expect(yearlyEndTimestampSec).toBeLessThan(4765046400);
   });
 
   // ── 32. Halted / Completed / Expired terminal states ─────────
