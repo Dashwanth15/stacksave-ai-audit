@@ -13,6 +13,7 @@ import { m, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import {
   shouldShowUpgradePrompt,
+  recordUpgradePromptShown,
   dismissUpgradePrompt,
   type UpgradePromptVariant,
 } from '../utils/upgradePromptControl';
@@ -57,7 +58,7 @@ export default function PremiumUpgradeNudge({
   }, [variant, id, isPremium, isInline]);
 
   // ────────────────────────────────────────────────────────────
-  // 1. Landing Page Trigger ('scroll') -> Centered Modal after 5s
+  // 1. Landing Page Trigger ('scroll') -> Automatic after 5s
   // ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (variant !== 'scroll' || isPremium || hasTriggeredModalRef.current) return;
@@ -66,6 +67,7 @@ export default function PremiumUpgradeNudge({
     const timerId = window.setTimeout(() => {
       if (!hasTriggeredModalRef.current && shouldShowUpgradePrompt('scroll', id, isPremium)) {
         hasTriggeredModalRef.current = true;
+        recordUpgradePromptShown('scroll', id);
         openUpgradeModal('scroll');
       }
     }, 5000);
@@ -85,6 +87,7 @@ export default function PremiumUpgradeNudge({
     const timerId = window.setTimeout(() => {
       if (!hasTriggeredModalRef.current && shouldShowUpgradePrompt('offers', id, isPremium)) {
         hasTriggeredModalRef.current = true;
+        recordUpgradePromptShown('offers', id);
         openUpgradeModal('offers');
       }
     }, 5000);
@@ -104,6 +107,7 @@ export default function PremiumUpgradeNudge({
     const timerId = window.setTimeout(() => {
       if (!hasTriggeredModalRef.current && shouldShowUpgradePrompt('audit', id, isPremium)) {
         hasTriggeredModalRef.current = true;
+        recordUpgradePromptShown('audit', id);
         openUpgradeModal('audit');
       }
     }, 5000);
@@ -123,6 +127,7 @@ export default function PremiumUpgradeNudge({
     const timerId = window.setTimeout(() => {
       if (!hasTriggeredModalRef.current && shouldShowUpgradePrompt('stack', id, isPremium)) {
         hasTriggeredModalRef.current = true;
+        recordUpgradePromptShown('stack', id);
         openUpgradeModal('stack');
       }
     }, 5000);

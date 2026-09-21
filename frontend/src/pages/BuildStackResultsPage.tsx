@@ -1470,7 +1470,7 @@ export default function BuildStackResultsPage() {
         {/* ── Contextual Premium Upgrade Nudge ───────────────── */}
         {rec && activeStack && !isPremium && (
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <PremiumUpgradeNudge variant="stack" />
+            <PremiumUpgradeNudge variant="stack" id={activeStack?.stackId || 'build-stack'} />
           </div>
         )}
       </main>

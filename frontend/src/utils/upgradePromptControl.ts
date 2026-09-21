@@ -70,8 +70,8 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
  *
  * Rules:
  * 1. If user has active Premium entitlement → false.
- * 2. If prompt was dismissed in current session → false.
- * 3. If prompt is under 7-day localStorage cooldown (for scroll/offers) → false.
+ * 2. If prompt was shown or dismissed in current session → false.
+ * 3. If prompt is under 7-day localStorage cooldown (for scroll/offers in production) → false.
  * 4. For floating prompts (scroll, offers): if another floating surface is active → false.
  */
 export function shouldShowUpgradePrompt(
@@ -89,11 +89,6 @@ export function shouldShowUpgradePrompt(
     return false;
   }
 
-  // In development, do not lock developers and testers out with the 7-day cooldown
-  if (import.meta.env.DEV) {
-    return true;
-  }
-
   // 2. Cooldown and dismissal checks per variant
   if (variant === 'audit') {
     const auditKey = `nudge_audit_dismissed_${id || 'default'}`;
@@ -105,32 +100,38 @@ export function shouldShowUpgradePrompt(
 
   if (variant === 'stack') {
     const stackKey = `nudge_stack_dismissed_${id || 'default'}`;
-    if (getUserSessionItem(stackKey) === 'true' || getUserSessionItem('nudge_stack_dismissed') === 'true') {
+    if (getUserSessionItem(stackKey) === 'true') {
       return false;
     }
     return true;
   }
 
-  // Floating variants (scroll, offers): check session dismissal + 7-day localStorage cooldown
+  // Floating variants (scroll, offers): check session shown / dismissal + 7-day localStorage cooldown
   if (variant === 'scroll' || variant === 'offers') {
-    // Check session dismissal
-    const sessionKey = `nudge_${variant}_dismissed`;
-    if (getUserSessionItem(sessionKey) === 'true') {
+    // Check session shown or dismissed
+    const sessionDismissedKey = `nudge_${variant}_dismissed`;
+    const sessionShownKey = `nudge_${variant}_shown`;
+    if (
+      getUserSessionItem(sessionDismissedKey) === 'true' ||
+      getUserSessionItem(sessionShownKey) === 'true'
+    ) {
       return false;
     }
 
-    // Check 7-day localStorage cooldown
-    try {
-      const cooldownKey = getUserScopedKey(`nudge_${variant}_cooldown_until`);
-      const cooldownUntilStr = window.localStorage.getItem(cooldownKey);
-      if (cooldownUntilStr) {
-        const cooldownUntil = parseInt(cooldownUntilStr, 10);
-        if (!isNaN(cooldownUntil) && Date.now() < cooldownUntil) {
-          return false;
+    // Check 7-day localStorage cooldown in production
+    if (!import.meta.env.DEV) {
+      try {
+        const cooldownKey = getUserScopedKey(`nudge_${variant}_cooldown_until`);
+        const cooldownUntilStr = window.localStorage.getItem(cooldownKey);
+        if (cooldownUntilStr) {
+          const cooldownUntil = parseInt(cooldownUntilStr, 10);
+          if (!isNaN(cooldownUntil) && Date.now() < cooldownUntil) {
+            return false;
+          }
         }
+      } catch {
+        // Ignore storage read errors
       }
-    } catch {
-      // Ignore storage read errors
     }
 
     // Check single active floating surface coordination
@@ -142,6 +143,21 @@ export function shouldShowUpgradePrompt(
   }
 
   return true;
+}
+
+/**
+ * Record that an upgrade prompt has been triggered and presented in the current session.
+ */
+export function recordUpgradePromptShown(variant: UpgradePromptVariant, id?: string): void {
+  if (typeof window === 'undefined') return;
+
+  if (variant === 'scroll' || variant === 'offers') {
+    const sessionShownKey = `nudge_${variant}_shown`;
+    setUserSessionItem(sessionShownKey, 'true');
+  } else if (variant === 'audit' || variant === 'stack') {
+    const shownKey = `nudge_${variant}_shown_${id || 'default'}`;
+    setUserSessionItem(shownKey, 'true');
+  }
 }
 
 /**
@@ -159,15 +175,13 @@ export function dismissUpgradePrompt(variant: UpgradePromptVariant, id?: string)
   } else if (variant === 'stack') {
     const stackKey = `nudge_stack_dismissed_${id || 'default'}`;
     setUserSessionItem(stackKey, 'true');
-    setUserSessionItem('nudge_stack_dismissed', 'true');
   } else if (variant === 'scroll' || variant === 'offers') {
-    // In development mode, don't set a persistent 7-day lockout
-    if (!import.meta.env.DEV) {
-      // Record session dismissal
-      const sessionKey = `nudge_${variant}_dismissed`;
-      setUserSessionItem(sessionKey, 'true');
+    // Record session dismissal
+    const sessionKey = `nudge_${variant}_dismissed`;
+    setUserSessionItem(sessionKey, 'true');
 
-      // Record 7-day cooldown in localStorage
+    // In production mode, record 7-day cooldown in localStorage
+    if (!import.meta.env.DEV) {
       try {
         const cooldownKey = getUserScopedKey(`nudge_${variant}_cooldown_until`);
         const cooldownUntil = Date.now() + SEVEN_DAYS_MS;
