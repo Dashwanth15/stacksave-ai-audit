@@ -16,7 +16,9 @@ import { runPricingSync, ingestOfficialExtractedPricing } from '../pricing/syncO
 import { runOfferMonitor } from '../pricing/offerMonitor';
 import { PartnerOfferScanner } from '../pricing/partnerOfferScanner';
 import { PartnerDiscoveryService } from '../pricing/partnerDiscoveryService';
-import { sendAuditConfirmation, sendReAuditNotification, getSenderAddress } from '../services/emailService';
+import { sendAuditConfirmation, sendReAuditNotification, sendOfferDigestEmail, getSenderAddress } from '../services/emailService';
+import { selectDailyOffersForUser } from '../services/emailScheduler';
+import { canPublishOffer } from '../pricing/offerTrust';
 import { invalidatePublicOffersCache } from './intelligence';
 
 const router = Router();
@@ -283,6 +285,57 @@ router.post('/email/test', async (req: Request, res: Response) => {
         sender,
         recipient: to,
         resendId: result.id,
+        error: result.error,
+      });
+    } else if (type === 'premium-digest') {
+      const rawOffers = await NotificationEventModel.find({
+        eventType: 'NEW_OFFER',
+        isActive: { $ne: false },
+        isPublic: true,
+      })
+        .sort({ detectedAt: -1 })
+        .lean();
+
+      const publishableOffers = (rawOffers || []).filter((o) => canPublishOffer(o));
+      let selectedOffers = selectDailyOffersForUser(publishableOffers);
+
+      if (selectedOffers.length === 0) {
+        selectedOffers = [
+          {
+            title: 'Claude Pro Annual Savings',
+            description: 'Save 20% on Claude Pro with annual billing ($16/mo billed annually vs $20/mo monthly)',
+            discount: '20% off',
+            category: 'annual',
+            provider: 'Claude',
+            url: 'https://claude.com/pricing',
+            isNew: true,
+          },
+          {
+            title: 'GitHub Copilot Student Pack',
+            description: 'Free GitHub Copilot access for verified students and faculty',
+            discount: '100% off',
+            category: 'student',
+            provider: 'GitHub Copilot',
+            url: 'https://github.com/pricing',
+            isNew: true,
+          },
+        ];
+      }
+
+      const result = await sendOfferDigestEmail({
+        email: to,
+        name: companyName || 'StackSave Member',
+        userId: 'test-user-' + Date.now().toString(36),
+        offers: selectedOffers,
+      });
+
+      res.json({
+        success: result.success,
+        type: 'premium-digest',
+        sender,
+        recipient: to,
+        resendId: result.id,
+        offersCount: selectedOffers.length,
         error: result.error,
       });
     } else {

@@ -214,16 +214,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Auto-close upgrade modal if user becomes Premium mid-flow
   useEffect(() => {
-    if (user?.plan === 'PREMIUM' && isUpgradeModalOpen) {
+    if (user?.plan === 'PREMIUM' && isUpgradeModalOpen && upgradeModalType !== 'general') {
       setIsUpgradeModalOpen(false);
     }
-  }, [user?.plan, isUpgradeModalOpen]);
+  }, [user?.plan, isUpgradeModalOpen, upgradeModalType]);
 
   const openUpgradeModal = useCallback((type?: UpgradeModalTrigger) => {
-    if (user?.plan === 'PREMIUM') return;
     setUpgradeModalType(type || 'general');
     setIsUpgradeModalOpen(true);
-  }, [user?.plan]);
+  }, []);
 
   const closeUpgradeModal = useCallback(() => {
     setIsUpgradeModalOpen(false);

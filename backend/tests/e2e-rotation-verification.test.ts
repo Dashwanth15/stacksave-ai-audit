@@ -379,8 +379,8 @@ describe('§6 — Lower-Ranked Fallback When Top Offers Are On 5-Day Cooldown', 
 // §7 — MISSED-OFFER RECOVERY (7–10 DAY)
 // =============================================================================
 
-describe('§7 — Missed-Offer Recovery: 7–10 Day "Still Available" Badge', () => {
-  it('7.1 Offer sent 7 days ago resurfaces with isMissed=true', () => {
+describe('§7 — Missed-Offer Recovery: 20-Day "Still Available" Badge & Strict Non-Bypass', () => {
+  it('7.1 Offer sent 7 days ago is STRICTLY BLOCKED within 20-day cooldown', () => {
     const offer = makeOffer(0, 'm7', 14);
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
     const ctx: UserDigestContext = {
@@ -389,13 +389,10 @@ describe('§7 — Missed-Offer Recovery: 7–10 Day "Still Available" Badge', ()
       fingerprintLastSentDate: new Map([[offer.fingerprint, sevenDaysAgo]]),
     };
     const sel = selectDailyOffersForUser([offer], ctx);
-    expect(sel).toHaveLength(1);
-    expect(sel[0].isMissed).toBe(true);
-    expect(sel[0].isNew).toBe(false);
-    expect(sel[0].isUpdated).toBe(false);
+    expect(sel).toHaveLength(0); // STRICTLY BLOCKED under 20-day rule
   });
 
-  it('7.2 Offer sent 10 days ago resurfaces with isMissed=true', () => {
+  it('7.2 Offer sent 10 days ago is STRICTLY BLOCKED within 20-day cooldown', () => {
     const offer = makeOffer(1, 'm10', 20);
     const ctx: UserDigestContext = {
       recentWindowFPs: new Set(),
@@ -403,33 +400,36 @@ describe('§7 — Missed-Offer Recovery: 7–10 Day "Still Available" Badge', ()
       fingerprintLastSentDate: new Map([[offer.fingerprint, new Date(Date.now() - 10 * 86400000)]]),
     };
     const sel = selectDailyOffersForUser([offer], ctx);
+    expect(sel).toHaveLength(0); // STRICTLY BLOCKED under 20-day rule
+  });
+
+  it('7.3 Offer sent 21 days ago resurfaces with isMissed=true', () => {
+    const offer = makeOffer(2, 'm21', 25);
+    const ctx: UserDigestContext = {
+      recentWindowFPs: new Set(),
+      longTermSentFPs: new Set([offer.fingerprint]),
+      fingerprintLastSentDate: new Map([[offer.fingerprint, new Date(Date.now() - 21 * 86400000)]]),
+    };
+    const sel = selectDailyOffersForUser([offer], ctx);
     expect(sel).toHaveLength(1);
     expect(sel[0].isMissed).toBe(true);
+    expect(sel[0].isNew).toBe(false);
+    expect(sel[0].isUpdated).toBe(false);
   });
 
-  it('7.3 Offer in 5-day cooldown (sent 6d ago) is BLOCKED — not recovered', () => {
-    const offer = makeOffer(2, 'm6', 10);
-    const ctx: UserDigestContext = {
-      recentWindowFPs: new Set([offer.fingerprint]), // in cooldown
-      longTermSentFPs: new Set([offer.fingerprint]),
-      fingerprintLastSentDate: new Map([[offer.fingerprint, new Date(Date.now() - 6 * 86400000)]]),
-    };
-    expect(selectDailyOffersForUser([offer], ctx)).toHaveLength(0);
-  });
-
-  it('7.4 After recovery, offer enters 5-day cooldown again', () => {
-    const offer = makeOffer(3, 'reentry', 14);
+  it('7.4 After 20-day recovery, offer enters 20-day cooldown again', () => {
+    const offer = makeOffer(3, 'reentry', 25);
     const fp = offer.fingerprint;
 
-    // Step A: recovered
+    // Step A: recovered after 21 days
     const ctx1: UserDigestContext = {
       recentWindowFPs: new Set(),
       longTermSentFPs: new Set([fp]),
-      fingerprintLastSentDate: new Map([[fp, new Date(Date.now() - 7 * 86400000)]]),
+      fingerprintLastSentDate: new Map([[fp, new Date(Date.now() - 21 * 86400000)]]),
     };
     expect(selectDailyOffersForUser([offer], ctx1)).toHaveLength(1);
 
-    // Step B: now in 5-day cooldown → blocked
+    // Step B: now delivered today → in cooldown → blocked
     const ctx2: UserDigestContext = {
       recentWindowFPs: new Set([fp]),
       longTermSentFPs: new Set([fp]),
@@ -451,7 +451,7 @@ describe('§7 — Missed-Offer Recovery: 7–10 Day "Still Available" Badge', ()
     expect(selectDailyOffersForUser([offer], ctx)).toHaveLength(0);
   });
 
-  it('7.6 Meaningful update (lastSuccessfulCheckAt + contentHash) DOES break cooldown', () => {
+  it('7.6 Meaningful content update does NOT bypass the 20-day cooldown', () => {
     const offer = makeOffer(5, 'real_update', 5, {
       lastSuccessfulCheckAt: new Date(Date.now() - 3600000),
       contentHash: 'sha256_from_real_playwright_extraction',
@@ -463,8 +463,7 @@ describe('§7 — Missed-Offer Recovery: 7–10 Day "Still Available" Badge', ()
       fingerprintLastSentDate: new Map([[fp, new Date(Date.now() - 3 * 86400000)]]),
     };
     const sel = selectDailyOffersForUser([offer], ctx);
-    expect(sel).toHaveLength(1);
-    expect(sel[0].isUpdated).toBe(true);
+    expect(sel).toHaveLength(0); // STRICTLY BLOCKED: isUpdated cannot bypass 20-day cooldown
   });
 
   it('7.7 isMissed via longTermSentFPs path (no explicit lastSentDate)', () => {
@@ -627,12 +626,12 @@ describe('§10 — Badge Correctness (isNew / isUpdated / isMissed)', () => {
   });
 
   it('10.4 isMissed offer has correct badge, not isNew/isUpdated', () => {
-    const offer = makeOffer(3, 'badge', 14);
+    const offer = makeOffer(3, 'badge', 25);
     const fp = offer.fingerprint;
     const ctx: UserDigestContext = {
       recentWindowFPs: new Set(),
       longTermSentFPs: new Set([fp]),
-      fingerprintLastSentDate: new Map([[fp, new Date(Date.now() - 8 * 86400000)]]),
+      fingerprintLastSentDate: new Map([[fp, new Date(Date.now() - 21 * 86400000)]]),
     };
     const sel = selectDailyOffersForUser([offer], ctx);
     expect(sel[0].isMissed).toBe(true);

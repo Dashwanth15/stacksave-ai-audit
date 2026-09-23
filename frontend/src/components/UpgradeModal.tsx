@@ -7,11 +7,12 @@
 
 import { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
-import { createBillingSubscription, verifyBillingPayment } from '../services/api';
+import { createBillingSubscription, verifyBillingPayment, fetchBillingStatus } from '../services/api';
 import { launchRazorpaySubscriptionCheckout } from '../utils/razorpay';
-import type { SubscriptionPlanKey } from '../types';
+import type { SubscriptionPlanKey, BillingStatusResponse } from '../types';
 import {
   PROMOTION_CONFIG,
   isPromotionActive,
@@ -55,12 +56,38 @@ export default function UpgradeModal({
   type = 'general',
   onUpgradeSuccess,
 }: UpgradeModalProps) {
+  const navigate = useNavigate();
   const { user, authenticated, openAuthModal, refreshUser, startDirectSubscription } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanKey>('yearly');
   const [status, setStatus] = useState<CheckoutStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [billingInfo, setBillingInfo] = useState<BillingStatusResponse | null>(null);
+  const [loadingBilling, setLoadingBilling] = useState<boolean>(false);
 
+  const isPremiumUser = user?.plan === 'PREMIUM';
   const promoActive = isPromotionActive();
+
+  // Fetch live billing info when opened for a Premium user & lock scroll
+  useEffect(() => {
+    if (isOpen && isPremiumUser) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      setLoadingBilling(true);
+      fetchBillingStatus()
+        .then((res) => {
+          setBillingInfo(res);
+        })
+        .catch((err) => {
+          console.error('Failed to load billing status for premium popup:', err);
+        })
+        .finally(() => {
+          setLoadingBilling(false);
+        });
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen, isPremiumUser]);
 
   // Close on Escape when not actively processing payment
   useEffect(() => {
@@ -73,16 +100,18 @@ export default function UpgradeModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, status]);
 
-  // Reset state on modal open
+  // Reset state on modal open & lock body scroll for non-premium
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !isPremiumUser) {
       setStatus('idle');
       setErrorMessage(null);
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
     }
-  }, [isOpen]);
-
-  // Premium users must never see the upgrade modal
-  if (!isOpen || user?.plan === 'PREMIUM') return null;
+  }, [isOpen, isPremiumUser]);
 
   const handleDismiss = () => {
     // Record frequency dismissal cooldown
@@ -400,9 +429,339 @@ export default function UpgradeModal({
       : 'Get unlimited access, full history, and instant price intelligence.';
   }
 
+  const memberSinceFormatted = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : 'Active Member';
+
+  const validityDateFormatted = billingInfo?.currentPeriodEnd
+    ? new Date(billingInfo.currentPeriodEnd).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : null;
+
+  const planIntervalLabel =
+    billingInfo?.billingInterval === 'yearly'
+      ? 'Yearly · ₹199 / year'
+      : billingInfo?.billingInterval === 'quarterly'
+      ? 'Quarterly · ₹59 / 3 months'
+      : 'Premium Plan';
+
+  // ══════════════════════════════════════════════════════════════
+  // PREMIUM USER VIEW: Active Subscription & Validity Dialog
+  // ══════════════════════════════════════════════════════════════
+  if (isPremiumUser) {
+    return (
+      <AnimatePresence>
+        {isOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+            {/* Backdrop */}
+            <m.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 bg-slate-950/45 backdrop-blur-xs cursor-pointer"
+              onClick={handleDismiss}
+              aria-hidden="true"
+            />
+
+            {/* Centered Modal Card */}
+            <m.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="premium-status-modal-title"
+              initial={{ opacity: 0, scale: 0.97, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 4 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="relative w-full max-w-[720px] my-auto bg-white rounded-3xl border border-slate-200/80 shadow-[0_25px_60px_-15px_rgba(15,23,42,0.2)] overflow-hidden z-10 text-left focus:outline-none p-6 sm:p-8"
+            >
+              {/* Header: Logo & Close */}
+              <div className="flex items-center justify-between">
+                <Logo size="sm" asDiv />
+                <button
+                  onClick={handleDismiss}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 bg-slate-100/90 hover:bg-slate-200/90 transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-300"
+                  aria-label="Close dialog"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Title & Subtitle */}
+              <div className="mt-5">
+                <h3 id="premium-status-modal-title" className="text-2xl sm:text-[27px] font-black text-slate-950 tracking-tight leading-tight">
+                  You're on <span className="text-[#057A55]">StackSave Premium</span>
+                </h3>
+                <p className="mt-1.5 text-xs sm:text-[13.5px] text-slate-500 leading-relaxed max-w-2xl">
+                  Your account has active unlimited access to all AI tool audit intelligence, real-time price monitoring, and exclusive features.
+                </p>
+              </div>
+
+              {/* Elevated Mint/Emerald Membership Hero Card */}
+              <div className="mt-5 rounded-2xl bg-gradient-to-br from-[#E7F8F0] via-[#F0FAF5] to-[#DDF5EB] border border-[#BDE8D6] p-5 sm:p-6 relative overflow-hidden shadow-2xs">
+                {/* Decorative Top-Right Watermark */}
+                <div className="absolute top-4 right-5 sm:right-6 hidden sm:flex flex-col items-center select-none pointer-events-none opacity-40">
+                  <span className="font-serif italic text-lg lg:text-xl font-bold text-[#057A55] tracking-tight -rotate-3">
+                    Smarter
+                  </span>
+                  <span className="font-serif italic text-lg lg:text-xl font-bold text-[#057A55] tracking-tight -rotate-3 -mt-1">
+                    Spending
+                  </span>
+                  <span className="font-serif italic text-lg lg:text-xl font-bold text-[#057A55] tracking-tight -rotate-3 -mt-1">
+                    Ahead
+                  </span>
+                  <div className="w-8 h-[1.5px] bg-[#057A55] rounded-full mt-1.5" />
+                </div>
+
+                {/* Top Section: Crown Icon, Plan Info & Active Status */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+                  <div className="flex items-center gap-3.5">
+                    {/* Forest Green Crown Icon Tile */}
+                    <div className="w-11 h-11 rounded-xl bg-[#086F52] text-white flex items-center justify-center shadow-xs shrink-0">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
+                      </svg>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#057A55] block leading-none">
+                        PREMIUM MEMBERSHIP
+                      </span>
+                      <div className="flex items-center gap-2.5 mt-1.5">
+                        <span className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
+                          StackSave Premium
+                        </span>
+                        {/* Status Badge (inline next to plan title) */}
+                        <div
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold shadow-2xs ${
+                            billingInfo?.cancelAtPeriodEnd
+                              ? 'bg-amber-50 border border-amber-200 text-amber-800'
+                              : 'bg-emerald-100/80 border border-emerald-200/90 text-emerald-800'
+                          }`}
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              billingInfo?.cancelAtPeriodEnd ? 'bg-amber-500' : 'bg-[#10B981]'
+                            }`}
+                          />
+                          <span>{billingInfo?.cancelAtPeriodEnd ? 'Cancels at Period End' : 'Active'}</span>
+                        </div>
+                      </div>
+                      <span className="text-xs text-slate-500 font-medium block mt-0.5">
+                        {planIntervalLabel}
+                        {billingInfo?.cancelAtPeriodEnd && (
+                          <span className="text-amber-700 ml-1.5 font-medium">
+                            · Active until {validityDateFormatted || 'period end'}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Metadata Row: Renews & Member Since */}
+                <div className="mt-5 pt-4 border-t border-[#CCEBE0]/90 grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-white/90 border border-[#CCEBE0] text-slate-500 flex items-center justify-center shrink-0 shadow-2xs">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        {billingInfo?.cancelAtPeriodEnd ? 'VALID UNTIL' : 'NEXT RENEWAL'}
+                      </span>
+                      <span className="text-xs sm:text-[13px] font-bold text-slate-800 mt-0.5 block truncate">
+                        {loadingBilling ? (
+                          <span className="text-slate-400 font-normal">Loading...</span>
+                        ) : validityDateFormatted ? (
+                          validityDateFormatted
+                        ) : (
+                          'Active Subscription'
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-white/90 border border-[#CCEBE0] text-slate-500 flex items-center justify-center shrink-0 shadow-2xs">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        MEMBER SINCE
+                      </span>
+                      <span className="text-xs sm:text-[13px] font-bold text-slate-800 mt-0.5 block truncate">
+                        {memberSinceFormatted}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* YOUR PREMIUM BENEFITS Section */}
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    YOUR PREMIUM BENEFITS
+                  </span>
+                  <span className="text-xs font-semibold text-[#057A55] flex items-center gap-1.5">
+                    <span>All features unlocked</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </span>
+                </div>
+
+                {/* 4 Capability Tiles Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {/* Tile 1: Unlimited Saved Audits */}
+                  <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300/80 transition-colors duration-150 flex flex-col justify-between">
+                    <div>
+                      <div className="w-8 h-8 rounded-full bg-emerald-100/80 text-emerald-700 flex items-center justify-center mb-3">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <ellipse cx="12" cy="5" rx="9" ry="3" />
+                          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+                          <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
+                        </svg>
+                      </div>
+                      <span className="text-[12.5px] font-bold text-slate-900 block leading-tight">
+                        Unlimited<br className="hidden sm:inline" /> Saved Audits
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-500 block mt-2 leading-relaxed">
+                      Keep your full audit history, forever.
+                    </span>
+                  </div>
+
+                  {/* Tile 2: Unlimited Sharing */}
+                  <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300/80 transition-colors duration-150 flex flex-col justify-between">
+                    <div>
+                      <div className="w-8 h-8 rounded-full bg-blue-100/80 text-blue-700 flex items-center justify-center mb-3">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                        </svg>
+                      </div>
+                      <span className="text-[12.5px] font-bold text-slate-900 block leading-tight">
+                        Unlimited<br className="hidden sm:inline" /> Sharing
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-500 block mt-2 leading-relaxed">
+                      Permanent share links for your reports.
+                    </span>
+                  </div>
+
+                  {/* Tile 3: Live Intelligence */}
+                  <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300/80 transition-colors duration-150 flex flex-col justify-between">
+                    <div>
+                      <div className="w-8 h-8 rounded-full bg-amber-100/80 text-amber-700 flex items-center justify-center mb-3">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                        </svg>
+                      </div>
+                      <span className="text-[12.5px] font-bold text-slate-900 block leading-tight">
+                        Live Intelligence
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-500 block mt-2 leading-relaxed">
+                      Instant price-drop alerts and opportunities.
+                    </span>
+                  </div>
+
+                  {/* Tile 4: Version Diffing */}
+                  <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300/80 transition-colors duration-150 flex flex-col justify-between">
+                    <div>
+                      <div className="w-8 h-8 rounded-full bg-purple-100/80 text-purple-700 flex items-center justify-center mb-3">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="20" x2="18" y2="10" />
+                          <line x1="12" y1="20" x2="12" y2="4" />
+                          <line x1="6" y1="20" x2="6" y2="14" />
+                        </svg>
+                      </div>
+                      <span className="text-[12.5px] font-bold text-slate-900 block leading-tight">
+                        Version Diffing
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-500 block mt-2 leading-relaxed">
+                      Track changes across audit versions.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer / Member Confirmation & Action Buttons */}
+              <div className="mt-7 pt-4.5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Thank You Note */}
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <div className="w-7 h-7 rounded-full bg-emerald-100/90 text-emerald-700 flex items-center justify-center shrink-0">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-800 leading-tight">
+                      Thank you for being a valued StackSave Premium member.
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">
+                      Together, we make cloud spending smarter.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={handleDismiss}
+                    className="w-full sm:w-auto h-9.5 px-4 rounded-xl text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/90 text-xs font-semibold transition-colors duration-150 cursor-pointer text-center"
+                  >
+                    Close
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleDismiss();
+                      navigate('/dashboard/settings');
+                    }}
+                    className="w-full sm:w-auto h-9.5 px-4.5 rounded-xl bg-slate-950 hover:bg-slate-900 active:bg-black text-white text-xs font-semibold shadow-xs hover:shadow-sm transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
+                  >
+                    <span>Manage in Settings</span>
+                    <span className="text-slate-400">→</span>
+                  </button>
+                </div>
+              </div>
+            </m.div>
+          </div>
+        )}
+      </AnimatePresence>
+    );
+  }
+
+  const isVisible = isOpen && !isPremiumUser;
+
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
+      {isVisible && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
         {/* Backdrop */}
         <m.div
           initial={{ opacity: 0 }}
@@ -727,6 +1086,7 @@ export default function UpgradeModal({
           </div>
         </m.div>
       </div>
-    </AnimatePresence>
+    )}
+  </AnimatePresence>
   );
 }

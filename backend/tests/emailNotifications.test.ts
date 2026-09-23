@@ -49,6 +49,7 @@ const testOfferIds: any[] = [];
 
 beforeAll(async () => {
   await connectDB();
+  await UserModel.updateMany({}, { $set: { isDigestProcessing: false }, $unset: { digestProcessingStartedAt: 1 } });
 
   process.env.ADMIN_SECRET = 'test_admin_secret_123';
   process.env.PREMIUM_DIGEST_CRON_SECRET = 'test_cron_secret_456';
@@ -1345,43 +1346,40 @@ describe('8. Multi-Day Rotation & Missed-Offer Recovery System', () => {
     expect(selectedTitles).not.toContain('Top 1');
   });
 
-  it('8.9. 7-day missed offer becomes eligible for resurfacing with Still Available badge', async () => {
+  it('8.9. 7-day and 10-day delivered offers remain STRICTLY BLOCKED within 20-day cooldown', async () => {
     const { selectDailyOffersForUser } = await import('../src/services/emailScheduler');
     const offerMissed7d = makeOffer('missed_7d', {
-      title: '7-Day Missed AI Deal',
+      title: '7-Day Delivered AI Deal',
       discount: '50% off',
-      detectedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days old
+      detectedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
     });
 
-    const sentDate7dAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // exactly 7 days ago
+    const sentDate7dAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
     const selected = selectDailyOffersForUser([offerMissed7d], {
-      recentWindowFPs: new Set(), // NOT in 5-day window
       longTermSentFPs: new Set([offerMissed7d.fingerprint]),
       fingerprintLastSentDate: new Map([[offerMissed7d.fingerprint, sentDate7dAgo]]),
     });
 
-    expect(selected.length).toBe(1);
-    expect(selected[0].title).toBe('7-Day Missed AI Deal');
-    expect(selected[0].isMissed).toBe(true);
+    expect(selected.length).toBe(0); // STRICTLY BLOCKED under 20-day rule
   });
 
-  it('8.10. 10-day missed offer becomes eligible for resurfacing with Still Available badge', async () => {
+  it('8.10. 21-day missed offer becomes eligible for resurfacing with Still Available badge', async () => {
     const { selectDailyOffersForUser } = await import('../src/services/emailScheduler');
-    const offerMissed10d = makeOffer('missed_10d', {
-      title: '10-Day Missed AI Deal',
+    const offerMissed21d = makeOffer('missed_21d', {
+      title: '21-Day Missed AI Deal',
       discount: '40% off',
-      detectedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+      detectedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
     });
 
-    const sentDate10dAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
-    const selected = selectDailyOffersForUser([offerMissed10d], {
+    const sentDate21dAgo = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000); // 21 days ago
+    const selected = selectDailyOffersForUser([offerMissed21d], {
       recentWindowFPs: new Set(),
-      longTermSentFPs: new Set([offerMissed10d.fingerprint]),
-      fingerprintLastSentDate: new Map([[offerMissed10d.fingerprint, sentDate10dAgo]]),
+      longTermSentFPs: new Set([offerMissed21d.fingerprint]),
+      fingerprintLastSentDate: new Map([[offerMissed21d.fingerprint, sentDate21dAgo]]),
     });
 
     expect(selected.length).toBe(1);
-    expect(selected[0].title).toBe('10-Day Missed AI Deal');
+    expect(selected[0].title).toBe('21-Day Missed AI Deal');
     expect(selected[0].isMissed).toBe(true);
   });
 

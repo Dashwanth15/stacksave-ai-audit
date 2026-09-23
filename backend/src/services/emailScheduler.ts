@@ -20,11 +20,15 @@ import {
   OfferDigestItem,
 } from './emailService';
 export type { OfferDigestItem } from './emailService';
-import { canPublishOffer } from '../pricing/offerTrust';
+import { canPublishOffer, buildCanonicalOfferKey } from '../pricing/offerTrust';
 import { PlatformRankingEngine } from '../audit-engine/services/PlatformRankingEngine';
 
 let schedulerTimeout: NodeJS.Timeout | null = null;
 let schedulerInterval: NodeJS.Timeout | null = null;
+
+export const TWENTY_DAYS_MS = 20 * 24 * 60 * 60 * 1000; // 20 days strict rolling non-repetition window
+export const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000; // 48 hours nominal cadence
+export const MIN_DIGEST_INTERVAL_MS = 36 * 60 * 60 * 1000; // 36-hour minimum interval (accommodates runner jitter on 24h daily cron)
 
 // ── Offer Category Inference Helper ──────────────────────────
 
@@ -257,94 +261,119 @@ export function computeDailyOfferSelectionScore(offer: any): {
 // ── Per-User Offer Selection & Diversity Engine ───────────────
 
 export interface UserDigestContext {
-  recentWindowFPs?: Set<string>;        // Fingerprints from last 5 daily digests (5-day rolling window)
-  longTermSentFPs?: Set<string>;        // All-time sent fingerprints (cap 300)
+  recentWindowKeys?: Set<string>;        // Canonical offer keys from last 20 days
+  recentWindowFPs?: Set<string>;         // Fingerprints from last 20 days (backward compat)
+  longTermSentKeys?: Set<string>;        // All-time sent canonical keys
+  longTermSentFPs?: Set<string>;         // All-time sent fingerprints (cap 300)
+  canonicalKeyLastSentDate?: Map<string, Date>; // CanonicalOfferKey -> Date when last sent
   fingerprintLastSentDate?: Map<string, Date>; // Fingerprint -> Date when last sent
 }
 
 export interface ScoredOfferCandidate {
   offer: any;
+  canonicalKey: string;
   score: number;
   category: 'partner' | 'student' | 'annual' | 'api' | 'trial' | 'startup' | 'free';
   providerId: string;
   isNew: boolean;
   isUpdated: boolean;
   isMissed: boolean;
-  tier: number; // 1 = New, 2 = Updated, 3 = Fresh Unread, 4 = Missed Recovery (7-10d), 5 = Other
+  tier: number; // 1 = New, 2 = Updated, 3 = Fresh Unread, 4 = Missed Recovery (>=20d), 5 = Other
 }
 
 /**
  * Deterministically selects UP TO 5 best offers for a given user using a 5-tier priority pipeline:
- * - Priority 1: Genuine newly discovered offers (last 24h) NOT in 5-day cooldown
- * - Priority 2: Meaningfully updated offers (re-scraped content in last 24h) NOT in 5-day cooldown
- * - Priority 3: Fresh unread verified active offers NOT in 5-day cooldown (score ranked)
- * - Priority 4: Missed-offer recovery (sent >= 7 days ago, NOT in 5-day cooldown, still active)
- * - Priority 5: Other verified active offers NOT in 5-day cooldown
+ * - Priority 1: Genuine newly discovered offers (last 24h) NOT in 20-day cooldown
+ * - Priority 2: Meaningfully updated offers (re-scraped content in last 24h) NOT in 20-day cooldown
+ * - Priority 3: Fresh unread verified active offers NOT in 20-day cooldown (score ranked)
+ * - Priority 4: Missed-offer recovery (sent >= 20 days ago, NOT in 20-day cooldown, still active)
+ * - Priority 5: Other verified active offers NOT in 20-day cooldown
  *
- * Rules:
- * - 5-consecutive-day rolling cooldown: Excludes offers delivered in the user's last 5 digests.
+ * Strict 20-Day Non-Repetition Rule:
+ * - Any offer matching canonicalOfferKey delivered within the previous 20 days (now - deliveredAt < 20 days)
+ *   is strictly excluded, regardless of price changes, description updates, or fingerprint changes.
  * - Platform & Category diversity (max 2 per provider, max 2 per category in Pass 1, relaxed in Pass 2).
  * - Maximum 5 offers per email; fewer if insufficient qualifying offers exist; empty if 0 qualifying.
- * - Resurfaced offers get isMissed = true (renders as "Still available").
+ * - Resurfaced recovery offers get isMissed = true (renders as "Still available").
  */
 export function selectDailyOffersForUser(
   candidateOffers: any[],
   contextOrSentFPs?: Set<string> | UserDigestContext
 ): OfferDigestItem[] {
+  let recentWindowKeys = new Set<string>();
   let recentWindowFPs = new Set<string>();
+  let longTermSentKeys = new Set<string>();
   let longTermSentFPs = new Set<string>();
+  let canonicalKeyLastSentDate = new Map<string, Date>();
   let fingerprintLastSentDate = new Map<string, Date>();
 
   if (contextOrSentFPs instanceof Set) {
-    // Legacy / simple caller passing Set of sent fingerprints
+    // Legacy / simple caller passing Set of sent identifiers (keys or fingerprints)
+    recentWindowKeys = contextOrSentFPs;
     recentWindowFPs = contextOrSentFPs;
+    longTermSentKeys = contextOrSentFPs;
     longTermSentFPs = contextOrSentFPs;
   } else if (contextOrSentFPs && typeof contextOrSentFPs === 'object') {
+    recentWindowKeys = contextOrSentFPs.recentWindowKeys || new Set<string>();
     recentWindowFPs = contextOrSentFPs.recentWindowFPs || new Set<string>();
+    longTermSentKeys = contextOrSentFPs.longTermSentKeys || new Set<string>();
     longTermSentFPs = contextOrSentFPs.longTermSentFPs || new Set<string>();
+    canonicalKeyLastSentDate = contextOrSentFPs.canonicalKeyLastSentDate || new Map<string, Date>();
     fingerprintLastSentDate = contextOrSentFPs.fingerprintLastSentDate || new Map<string, Date>();
   }
 
-  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
   const now = Date.now();
 
   // 1. Score and classify all valid candidate offers
   const candidates: ScoredOfferCandidate[] = [];
 
   for (const o of candidateOffers) {
-    if (!o.fingerprint || !canPublishOffer(o)) {
+    if (!canPublishOffer(o)) {
       continue;
     }
 
-    const fp = o.fingerprint;
+    const canonicalKey = buildCanonicalOfferKey(o);
+    const fp = o.fingerprint || '';
     const { score, category, isNew, isUpdated } = computeDailyOfferSelectionScore(o);
     const providerId = (o.aiProvider || o.providerId || '').toLowerCase().trim();
 
-    const in5DayWindow = recentWindowFPs.has(fp);
-    const inLongTermSent = longTermSentFPs.has(fp);
-    const lastSent = fingerprintLastSentDate.get(fp);
+    // Check 20-day delivery history for this canonical offer
+    const lastSentDate = canonicalKeyLastSentDate.get(canonicalKey) ||
+      (fp ? fingerprintLastSentDate.get(fp) : undefined);
 
-    // 7-10 Day Recovery detection:
-    // Offer is eligible for missed-offer recovery if:
-    // 1. It is NOT in the 5-consecutive-day cooldown window
-    // 2. It is not new and not updated today
-    // 3. Either lastSentDate is >= 7 days ago, OR it exists in longTermSentFPs while outside the 5-day window
-    let isMissed = false;
-    if (!in5DayWindow && !isNew && !isUpdated) {
-      if (lastSent) {
-        const daysAgoMs = now - lastSent.getTime();
-        if (daysAgoMs >= SEVEN_DAYS_MS) {
-          isMissed = true;
-        }
-      } else if (inLongTermSent) {
-        isMissed = true;
+    let in20DayWindow = false;
+    if (lastSentDate) {
+      const elapsedMs = now - lastSentDate.getTime();
+      if (elapsedMs < TWENTY_DAYS_MS) {
+        in20DayWindow = true;
       }
+    } else if (recentWindowKeys.has(canonicalKey) || (fp && recentWindowFPs.has(fp))) {
+      in20DayWindow = true;
     }
 
-    // 5-Day Rolling Cooldown:
-    // If offer is in the 5-day window AND was NOT meaningfully updated today, it is strictly on cooldown
-    if (in5DayWindow && !isNew && !isUpdated) {
+    // STRICT 20-DAY SUPPRESSION:
+    // If offer was delivered within the last 20 days, it is strictly excluded.
+    // Price changes, description changes, fingerprint changes, and isUpdated NEVER bypass this rule!
+    if (in20DayWindow) {
       continue;
+    }
+
+    // 20-Day Recovery detection:
+    // Offer is eligible for missed-offer recovery ONLY when:
+    // 1. It is NOT in the 20-day cooldown window (guaranteed by check above)
+    // 2. It is not new and not updated today
+    // 3. Either lastSentDate is >= 20 days ago (now - lastSentDate >= 20 days),
+    //    OR it exists in longTermSentKeys/longTermSentFPs while outside the 20-day window
+    let isMissed = false;
+    if (!isNew && !isUpdated) {
+      if (lastSentDate) {
+        const daysAgoMs = now - lastSentDate.getTime();
+        if (daysAgoMs >= TWENTY_DAYS_MS) {
+          isMissed = true;
+        }
+      } else if (longTermSentKeys.has(canonicalKey) || (fp && longTermSentFPs.has(fp))) {
+        isMissed = true;
+      }
     }
 
     // Priority Tier assignment
@@ -361,6 +390,7 @@ export function selectDailyOffersForUser(
 
     candidates.push({
       offer: o,
+      canonicalKey,
       score,
       category,
       providerId,
@@ -376,7 +406,7 @@ export function selectDailyOffersForUser(
     return [];
   }
 
-  // 3. Sort candidates deterministically: Tier ASC -> Score DESC -> Fingerprint ASC
+  // 3. Sort candidates deterministically: Tier ASC -> Score DESC -> CanonicalKey ASC
   candidates.sort((a, b) => {
     if (a.tier !== b.tier) {
       return a.tier - b.tier;
@@ -384,7 +414,7 @@ export function selectDailyOffersForUser(
     if (b.score !== a.score) {
       return b.score - a.score;
     }
-    return (a.offer.fingerprint || '').localeCompare(b.offer.fingerprint || '');
+    return a.canonicalKey.localeCompare(b.canonicalKey);
   });
 
   // 4. Select up to 5 offers with Platform & Category Diversity
@@ -463,10 +493,11 @@ export function getMsUntilNextExecution(targetHourUtc = 9, targetMinuteUtc = 0):
 /**
  * Executes the bi-daily digest dispatch for all eligible Premium users.
  * - Fetches verified active offers once
- * - Personalizes selection per Premium user with 5-day rolling window & 7-10d recovery
- * - Enforces 48-hour gap throttling (digest sent at most once every 2 days per user)
+ * - Personalizes selection per Premium user with 20-day canonical offer non-repetition
+ * - Enforces 2-day (~48h) gap throttling with 36h minimum window (accommodating cron jitter)
+ * - Atomic per-user concurrency claim prevents duplicate simultaneous sends
  * - Suppresses empty emails when 0 qualifying offers exist
- * - Persists per-user delivery history (recentDailyDigestHistory + sentOfferFingerprints) on Resend success
+ * - Persists per-user delivery history (deliveredOfferHistory) ONLY upon successful Resend delivery
  */
 export async function triggerDailyOfferDigest(): Promise<{
   attempted: number;
@@ -501,15 +532,33 @@ export async function triggerDailyOfferDigest(): Promise<{
       return stats;
     }
 
-    // 2. Query potential candidate Premium users
+    // Clear any stale locks from crashes or abnormal termination (older than 2 minutes)
+    const staleCutoff = new Date(Date.now() - 2 * 60 * 1000);
+    await UserModel.updateMany(
+      {
+        isDigestProcessing: true,
+        $or: [
+          { digestProcessingStartedAt: { $lt: staleCutoff } },
+          { digestProcessingStartedAt: { $exists: false } },
+        ],
+      },
+      {
+        $set: { isDigestProcessing: false },
+        $unset: { digestProcessingStartedAt: 1 },
+      }
+    );
+
+    // 2. Query potential candidate Premium users (including active/grace subscriptions)
     const candidateUsers = await UserModel.find({
-      plan: 'PREMIUM',
+      $or: [
+        { plan: 'PREMIUM' },
+        { subscriptionStatus: { $in: ['ACTIVE', 'PAST_DUE', 'CANCELED'] } },
+      ],
     });
 
     stats.attempted = candidateUsers.length;
     console.log(`[EmailScheduler] Found ${candidateUsers.length} candidate Premium user(s).`);
 
-    const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000; // Digest sent at most once every 2 days per user
     const now = Date.now();
     const BATCH_SIZE = Math.max(1, parseInt(process.env.PREMIUM_DIGEST_BATCH_SIZE || '10', 10));
 
@@ -519,50 +568,117 @@ export async function triggerDailyOfferDigest(): Promise<{
 
       await Promise.all(
         batch.map(async (user: UserDocument) => {
+          // Concurrency guard: atomically claim user processing lock (2 minute expiration safety)
+          const processingTimeout = new Date(Date.now() - 2 * 60 * 1000);
+          const claimedUser = await UserModel.findOneAndUpdate(
+            {
+              _id: user._id,
+              $or: [
+                { isDigestProcessing: { $ne: true } },
+                { digestProcessingStartedAt: { $lt: processingTimeout } },
+                { digestProcessingStartedAt: { $exists: false } },
+              ],
+            },
+            {
+              $set: {
+                isDigestProcessing: true,
+                digestProcessingStartedAt: new Date(),
+              },
+            },
+            { new: true }
+          );
+
+          if (!claimedUser) {
+            console.log(`[EmailScheduler] User ${user._id} is already being processed by another job. Skipping.`);
+            stats.skipped++;
+            return;
+          }
+
           try {
             // Check opt-out preference
-            if (user.emailPreferences && user.emailPreferences.premiumOfferDigest === false) {
+            if (claimedUser.emailPreferences && claimedUser.emailPreferences.premiumOfferDigest === false) {
               stats.skipped++;
               return;
             }
 
-            // Frequency gate: skip if < 48 hours since last digest (once every 2 days per user)
-            if (user.lastOfferDigestAt) {
-              const timeSinceLast = now - new Date(user.lastOfferDigestAt).getTime();
-              if (timeSinceLast < FORTY_EIGHT_HOURS_MS) {
+            // Frequency gate: digest sent at most once every 2 days per user.
+            // Uses MIN_DIGEST_INTERVAL_MS (36h) to prevent same-day / next-day duplicates
+            // while reliably allowing execution every 2 calendar days on a 24h cron.
+            if (claimedUser.lastOfferDigestAt) {
+              const timeSinceLast = now - new Date(claimedUser.lastOfferDigestAt).getTime();
+              if (timeSinceLast < MIN_DIGEST_INTERVAL_MS) {
                 stats.skipped++;
                 return;
               }
             }
 
             // Authoritative Entitlement Check: Fetch latest subscription
-            const sub = await SubscriptionModel.findOne({ userId: user._id }).sort({ createdAt: -1 });
-            if (!isPremiumUser(user, sub)) {
+            const sub = await SubscriptionModel.findOne({ userId: claimedUser._id }).sort({ createdAt: -1 });
+            if (!isPremiumUser(claimedUser, sub)) {
               stats.skipped++;
               return;
             }
 
-            // Deterministic per-user offer selection (up to 5 offers) with 5-day rolling window & 7-10d recovery
-            const recentHistory = user.recentDailyDigestHistory || [];
+            // Assemble per-user 20-day delivery history
+            const recentWindowKeys = new Set<string>();
             const recentWindowFPs = new Set<string>();
+            const canonicalKeyLastSentDate = new Map<string, Date>();
             const fingerprintLastSentDate = new Map<string, Date>();
 
-            // Read last 5 entries from recentDailyDigestHistory
-            for (const entry of recentHistory.slice(0, 5)) {
+            // 1. Authoritative 20-day delivered history ledger
+            const deliveredHistory = claimedUser.deliveredOfferHistory || [];
+            for (const entry of deliveredHistory) {
+              const deliveredAt = entry.deliveredAt ? new Date(entry.deliveredAt) : new Date();
+              const isWithin20Days = now - deliveredAt.getTime() < TWENTY_DAYS_MS;
+              if (entry.canonicalOfferKey) {
+                if (isWithin20Days) {
+                  recentWindowKeys.add(entry.canonicalOfferKey);
+                }
+                if (
+                  !canonicalKeyLastSentDate.has(entry.canonicalOfferKey) ||
+                  deliveredAt > (canonicalKeyLastSentDate.get(entry.canonicalOfferKey) || new Date(0))
+                ) {
+                  canonicalKeyLastSentDate.set(entry.canonicalOfferKey, deliveredAt);
+                }
+              }
+              if (entry.fingerprint) {
+                if (isWithin20Days) {
+                  recentWindowFPs.add(entry.fingerprint);
+                }
+                if (
+                  !fingerprintLastSentDate.has(entry.fingerprint) ||
+                  deliveredAt > (fingerprintLastSentDate.get(entry.fingerprint) || new Date(0))
+                ) {
+                  fingerprintLastSentDate.set(entry.fingerprint, deliveredAt);
+                }
+              }
+            }
+
+            // 2. Backward compatibility with older recentDailyDigestHistory
+            for (const entry of claimedUser.recentDailyDigestHistory || []) {
               const entryDate = entry.date ? new Date(entry.date) : new Date();
+              const isWithin20Days = now - entryDate.getTime() < TWENTY_DAYS_MS;
               for (const fp of entry.fingerprints || []) {
-                recentWindowFPs.add(fp);
+                if (isWithin20Days) {
+                  recentWindowFPs.add(fp);
+                }
                 if (!fingerprintLastSentDate.has(fp)) {
                   fingerprintLastSentDate.set(fp, entryDate);
                 }
               }
             }
 
-            const longTermSentFPs = new Set(user.sentOfferFingerprints || []);
+            const longTermSentKeys = new Set<string>(
+              deliveredHistory.map((d) => d.canonicalOfferKey).filter(Boolean)
+            );
+            const longTermSentFPs = new Set(claimedUser.sentOfferFingerprints || []);
 
             const selectedOfferItems = selectDailyOffersForUser(publishableOffers, {
+              recentWindowKeys,
               recentWindowFPs,
+              longTermSentKeys,
               longTermSentFPs,
+              canonicalKeyLastSentDate,
               fingerprintLastSentDate,
             });
 
@@ -574,19 +690,30 @@ export async function triggerDailyOfferDigest(): Promise<{
 
             // Dispatch personalized email via Resend
             const result = await sendOfferDigestEmail({
-              email: user.email,
-              name: user.name,
-              userId: user._id.toString(),
+              email: claimedUser.email,
+              name: claimedUser.name,
+              userId: claimedUser._id.toString(),
               offers: selectedOfferItems,
             });
 
             // Only update MongoDB when delivery was accepted by Resend
             if (result.success) {
-              // Find delivered offer fingerprints from publishableOffers
-              const deliveredTitles = new Set(selectedOfferItems.map((item) => item.title));
-              const deliveredFingerprints = publishableOffers
-                .filter((o) => deliveredTitles.has(o.title) && o.fingerprint)
-                .map((o) => o.fingerprint);
+              // Find delivered offer details from publishableOffers
+              const selectedTitles = new Set(selectedOfferItems.map((item) => item.title));
+              const deliveredOffers = publishableOffers.filter((o) => selectedTitles.has(o.title));
+
+              const deliveredEntries = deliveredOffers.map((o) => ({
+                canonicalOfferKey: buildCanonicalOfferKey(o),
+                fingerprint: o.fingerprint,
+                deliveredAt: new Date(),
+              }));
+
+              const deliveredFingerprints = deliveredOffers.map((o) => o.fingerprint).filter(Boolean);
+
+              const updatedDeliveredHistory = [
+                ...deliveredEntries,
+                ...(claimedUser.deliveredOfferHistory || []),
+              ].slice(0, 500); // Retain robust rolling history
 
               const todayEntry = {
                 date: new Date(),
@@ -595,35 +722,48 @@ export async function triggerDailyOfferDigest(): Promise<{
 
               const updatedRecentHistory = [
                 todayEntry,
-                ...(user.recentDailyDigestHistory || []),
-              ].slice(0, 5); // Keep rolling window capped at 5 entries
+                ...(claimedUser.recentDailyDigestHistory || []),
+              ].slice(0, 20);
 
               const mergedFingerprints = Array.from(
-                new Set([...(user.sentOfferFingerprints || []), ...deliveredFingerprints])
-              ).slice(-300); // Retain last 300 fingerprints for long-term recovery detection
+                new Set([...(claimedUser.sentOfferFingerprints || []), ...deliveredFingerprints])
+              ).slice(-300);
 
-              await UserModel.findByIdAndUpdate(user._id, {
-                lastOfferDigestAt: new Date(),
-                sentOfferFingerprints: mergedFingerprints,
-                recentDailyDigestHistory: updatedRecentHistory,
+              await UserModel.findByIdAndUpdate(claimedUser._id, {
+                $set: {
+                  lastOfferDigestAt: new Date(),
+                  sentOfferFingerprints: mergedFingerprints,
+                  recentDailyDigestHistory: updatedRecentHistory,
+                  deliveredOfferHistory: updatedDeliveredHistory,
+                  isDigestProcessing: false,
+                },
+                $unset: {
+                  digestProcessingStartedAt: 1,
+                },
               });
               stats.sent++;
             } else {
               console.warn(
-                `[EmailScheduler] Resend delivery rejected for user ${user._id} (${user.email}): ${result.error || 'Unknown error'}`
+                `[EmailScheduler] Resend delivery rejected for user ${claimedUser._id} (${claimedUser.email}): ${result.error || 'Unknown error'}`
               );
               stats.errors++;
             }
           } catch (userErr: unknown) {
             const errMsg = userErr instanceof Error ? userErr.message : String(userErr);
-            console.error(`[EmailScheduler] Error processing digest for user ${user._id}: ${errMsg}`);
+            console.error(`[EmailScheduler] Error processing digest for user ${claimedUser._id}: ${errMsg}`);
             stats.errors++;
+          } finally {
+            // Always clear lock if still held
+            await UserModel.findByIdAndUpdate(claimedUser._id, {
+              $set: { isDigestProcessing: false },
+              $unset: { digestProcessingStartedAt: 1 },
+            });
           }
         })
       );
 
-      // Brief delay between batches to respect rate limits
-      if (i + BATCH_SIZE < candidateUsers.length) {
+      // Brief delay between batches to respect rate limits (skipped in test environments)
+      if (i + BATCH_SIZE < candidateUsers.length && process.env.NODE_ENV !== 'test') {
         await new Promise((resolve) => setTimeout(resolve, 250));
       }
     }

@@ -211,29 +211,52 @@ export default function DashboardLayout({
 
             {/* Plan / account card */}
             <div
-              className="rounded-xl bg-white border border-slate-200 overflow-hidden"
-              style={{ boxShadow: '0 1px 4px rgba(15,23,42,0.08)' }}
+              className={`rounded-2xl border overflow-hidden transition-all ${
+                isPremium
+                  ? 'bg-white border-[#BDE8D6] shadow-[0_4px_16px_rgba(16,185,129,0.08)]'
+                  : 'bg-white border-slate-200 shadow-xs'
+              }`}
             >
               {/* ── Card header — identity section ─── */}
-              <div className="px-4 pt-4 pb-4 border-b border-slate-100 bg-[#F4F6FF]">
-
+              <div
+                className={`px-4 pt-4 pb-3.5 border-b ${
+                  isPremium
+                    ? 'bg-gradient-to-br from-[#E8F8F1] via-[#F2FBF6] to-[#E5F7EE] border-[#D5E8DA]'
+                    : 'bg-[#F4F6FF] border-slate-100'
+                }`}
+              >
                 {/* Plan name with left accent */}
-                <div className="flex items-center gap-2">
-                  <div className={`w-[3px] h-5 rounded-full shrink-0 ${isPremium ? 'bg-amber-400' : 'bg-indigo-400'}`} />
-                  <p className="text-[15px] font-bold text-slate-900 leading-tight">
-                    {isPremium ? 'Premium Plan' : 'Free Plan'}
-                  </p>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-[3px] h-5 rounded-full shrink-0 ${
+                        isPremium ? 'bg-[#086F52]' : 'bg-indigo-500'
+                      }`}
+                    />
+                    <p className="text-[14.5px] font-bold text-slate-900 leading-tight">
+                      {isPremium ? 'StackSave Premium' : 'Free Plan'}
+                    </p>
+                  </div>
+                  {isPremium && (
+                    <div className="w-5 h-5 rounded-md bg-[#086F52] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
 
                 {/* Account type */}
-                <p className="text-[12px] font-medium text-slate-500 mt-2 ml-[11px]">
-                  {isPremium ? 'Full access' : 'Personal account'}
-                </p>
+                <div className="flex items-center justify-between mt-2 ml-[11px]">
+                  <span className="text-[11.5px] font-semibold text-[#057A55]">
+                    {isPremium ? '● Full Access Unlocked' : 'Personal account'}
+                  </span>
+                </div>
 
                 {/* Email */}
                 {user?.email && (
                   <p
-                    className="text-[11.5px] text-slate-500 mt-1 ml-[11px] truncate"
+                    className="text-[11px] text-slate-500 mt-1 ml-[11px] truncate font-mono"
                     title={user.email}
                   >
                     {user.email}

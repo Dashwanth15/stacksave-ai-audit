@@ -198,45 +198,42 @@ describe('Multi-Day Rotation & Missed-Offer Recovery Unit Tests', () => {
     expect(selectedTitles).not.toContain('Top 1');
   });
 
-  it('9. 7-day missed offer becomes eligible for resurfacing with Still Available badge', () => {
+  it('9. 7-day and 10-day delivered offers remain STRICTLY BLOCKED within 20-day cooldown', () => {
     const offerMissed7d = makeOffer('missed_7d', {
-      title: '7-Day Missed AI Deal',
+      title: '7-Day Delivered AI Deal',
       discount: '50% off',
-      detectedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days old
+      detectedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
     });
 
-    const sentDate7dAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // exactly 7 days ago
+    const sentDate7dAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
     const selected = selectDailyOffersForUser([offerMissed7d], {
-      recentWindowFPs: new Set(), // NOT in 5-day window
       longTermSentFPs: new Set([offerMissed7d.fingerprint]),
       fingerprintLastSentDate: new Map([[offerMissed7d.fingerprint, sentDate7dAgo]]),
     });
 
-    expect(selected.length).toBe(1);
-    expect(selected[0].title).toBe('7-Day Missed AI Deal');
-    expect(selected[0].isMissed).toBe(true);
+    expect(selected.length).toBe(0); // STRICTLY BLOCKED under 20-day rule
   });
 
-  it('10. 10-day missed offer becomes eligible for resurfacing with Still Available badge', () => {
-    const offerMissed10d = makeOffer('missed_10d', {
-      title: '10-Day Missed AI Deal',
+  it('10. 21-day missed offer becomes eligible for resurfacing with Still Available badge', () => {
+    const offerMissed21d = makeOffer('missed_21d', {
+      title: '21-Day Missed AI Deal',
       discount: '40% off',
-      detectedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+      detectedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
     });
 
-    const sentDate10dAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
-    const selected = selectDailyOffersForUser([offerMissed10d], {
+    const sentDate21dAgo = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000); // 21 days ago (>= 20 days)
+    const selected = selectDailyOffersForUser([offerMissed21d], {
       recentWindowFPs: new Set(),
-      longTermSentFPs: new Set([offerMissed10d.fingerprint]),
-      fingerprintLastSentDate: new Map([[offerMissed10d.fingerprint, sentDate10dAgo]]),
+      longTermSentFPs: new Set([offerMissed21d.fingerprint]),
+      fingerprintLastSentDate: new Map([[offerMissed21d.fingerprint, sentDate21dAgo]]),
     });
 
     expect(selected.length).toBe(1);
-    expect(selected[0].title).toBe('10-Day Missed AI Deal');
+    expect(selected[0].title).toBe('21-Day Missed AI Deal');
     expect(selected[0].isMissed).toBe(true);
   });
 
-  it('11. Resurfaced offer enters 5-day cooldown again', () => {
+  it('11. Resurfaced offer enters 20-day cooldown again', () => {
     const resurfacedOffer = makeOffer('resurfaced_1', { title: 'Resurfaced Deal' });
     const altOffers = generateOffers(5, 'alt');
     const allOffers = [resurfacedOffer, ...altOffers];
@@ -244,7 +241,7 @@ describe('Multi-Day Rotation & Missed-Offer Recovery Unit Tests', () => {
     // Day 1: Offer was resurfaced. Today it enters recentWindowFPs.
     const dayAfterWindow = new Set([resurfacedOffer.fingerprint]);
 
-    // Day 2: Next day, resurfacedOffer is in 5-day cooldown
+    // Day 2: Next day, resurfacedOffer is in cooldown
     const selectedNextDay = selectDailyOffersForUser(allOffers, {
       recentWindowFPs: dayAfterWindow,
       longTermSentFPs: new Set([resurfacedOffer.fingerprint]),
@@ -269,7 +266,7 @@ describe('Multi-Day Rotation & Missed-Offer Recovery Unit Tests', () => {
       longTermSentFPs: new Set([offerInCooldown.fingerprint]),
     });
 
-    expect(selected.length).toBe(0); // Strict anti-spam: cannot break 5-day cooldown on ping alone
+    expect(selected.length).toBe(0); // Strict anti-spam: cannot break cooldown on ping alone
   });
 
   it('13. Maximum 5 offers strictly enforced across candidate pool', () => {
@@ -337,7 +334,7 @@ describe('Multi-Day Rotation & Missed-Offer Recovery Unit Tests', () => {
     expect(selected.length).toBe(0); // Publication gate strictly blocks all
   });
 
-  it('17. Meaningful content update breaks cooldown and gets Updated badge', () => {
+  it('17. Content update does NOT bypass the 20-day cooldown', () => {
     const updatedOffer = makeOffer('updated_1', {
       title: 'Updated AI Plan',
       detectedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days old
@@ -346,13 +343,13 @@ describe('Multi-Day Rotation & Missed-Offer Recovery Unit Tests', () => {
       discount: '70% off',
     });
 
+    const sentDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000); // Delivered 5 days ago
     const selected = selectDailyOffersForUser([updatedOffer], {
-      recentWindowFPs: new Set([updatedOffer.fingerprint]), // Was in cooldown, but updated today!
-      longTermSentFPs: new Set([updatedOffer.fingerprint]),
+      recentWindowFPs: new Set([updatedOffer.fingerprint]),
+      fingerprintLastSentDate: new Map([[updatedOffer.fingerprint, sentDate]]),
     });
 
-    expect(selected.length).toBe(1);
-    expect(selected[0].isUpdated).toBe(true);
+    expect(selected.length).toBe(0); // STRICTLY BLOCKED: isUpdated cannot bypass 20-day rule
   });
 });
 

@@ -205,11 +205,14 @@ export interface UserDocument extends Document {
   premiumEmailSentAt?: Date;       // Set after Premium activation email is sent
   // Digest deduplication & offer tracking
   lastOfferDigestAt?: Date;        // Timestamp of last successful digest delivery
-  sentOfferFingerprints?: string[];// Long-term fingerprint history (cap 300) — used for 7-10 day recovery detection
-  // 5-day rolling digest history — each entry records one day's selected offer fingerprints.
-  // Capped at 5 entries. Offers in this window are excluded from repeat selection.
-  // Offers in sentOfferFingerprints but NOT in this window (i.e. >5 days old) become
-  // eligible for 7-10 day missed-offer resurfacing.
+  sentOfferFingerprints?: string[];// Long-term fingerprint history (cap 500)
+  // Authoritative 20-Day Delivery History Ledger (tracks immutable canonical offer keys)
+  deliveredOfferHistory?: Array<{
+    canonicalOfferKey: string;
+    fingerprint?: string;
+    deliveredAt: Date;
+  }>;
+  // Legacy rolling digest history (retained for backward compatibility)
   recentDailyDigestHistory?: {
     date: Date;
     fingerprints: string[];
@@ -219,6 +222,9 @@ export interface UserDocument extends Document {
     lastSentAt?: Date;
     sequenceIndex?: number;
   };
+  // Concurrency guard for digest execution
+  isDigestProcessing?: boolean;
+  digestProcessingStartedAt?: Date;
   // Per-user email preferences
   emailPreferences?: {
     productEmails: boolean;         // Account / billing / security emails (default: true)
@@ -254,7 +260,17 @@ const UserSchema = new Schema<UserDocument>(
     premiumEmailSentAt: { type: Date },
     lastOfferDigestAt: { type: Date },
     sentOfferFingerprints: { type: [String], default: [] },
-    // 5-day rolling daily digest history — bounded at 5 entries
+    deliveredOfferHistory: {
+      type: [
+        {
+          canonicalOfferKey: { type: String, required: true },
+          fingerprint: { type: String },
+          deliveredAt: { type: Date, required: true },
+        },
+      ],
+      default: [],
+    },
+    // Legacy daily digest history
     recentDailyDigestHistory: {
       type: [
         {
@@ -268,6 +284,8 @@ const UserSchema = new Schema<UserDocument>(
       lastSentAt: { type: Date },
       sequenceIndex: { type: Number, default: 0 },
     },
+    isDigestProcessing: { type: Boolean, default: false },
+    digestProcessingStartedAt: { type: Date },
     emailPreferences: {
       productEmails: { type: Boolean, default: true },
       premiumOfferDigest: { type: Boolean, default: true },

@@ -245,3 +245,35 @@ export function buildCanonicalOfferFingerprint(offer: NormalizedOffer): string {
   ])).digest('hex').slice(0, 32);
 }
 
+/**
+ * Generates an immutable, stable canonical offer key for email rotation and anti-duplication.
+ * - Stable across price changes, discount variations, description updates, and extraction timestamps.
+ * - Distinct across different commercial plans (e.g. Pro vs Education vs Startup vs Team) and partner bundles.
+ */
+export function buildCanonicalOfferKey(offer: any): string {
+  if (!offer) return 'unknown:unknown';
+
+  const provider = (offer.aiProvider || offer.providerId || 'unknown').toLowerCase().trim();
+  const subtype = ((offer.offerSubtype || '') as string).toLowerCase().trim();
+  const category = ((offer.category || '') as string).toLowerCase().trim();
+  const partner = ((offer.partner || '') as string).toLowerCase().trim();
+
+  // Strip volatile pricing numbers, percentages, currencies, and ephemeral promotional phrasing
+  const cleanTitle = (offer.title || '')
+    .toLowerCase()
+    .replace(/\b(save|\$|₹|€|£|\d+[\.,]?\d*|\%|off|mo|month|months|year|annual|up to|credits?|free|usd|inr)\b/gi, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  const partnerSegment = partner ? `partner_${partner.replace(/[^a-z0-9]+/g, '_')}` : '';
+  const categorySegment = subtype || category || 'general';
+  const identitySegment = cleanTitle || subtype || 'offer';
+
+  if (partnerSegment) {
+    return `${provider}:${partnerSegment}:${identitySegment}`;
+  }
+
+  return `${provider}:${categorySegment}:${identitySegment}`;
+}
+
+

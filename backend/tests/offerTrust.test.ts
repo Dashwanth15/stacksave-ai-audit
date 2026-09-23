@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildCanonicalOfferFingerprint,
+  buildCanonicalOfferKey,
   isPubliclyVerifiableOffer,
 } from '../src/pricing/offerTrust';
 import type { NormalizedOffer } from '../src/pricing/types';
@@ -84,5 +85,86 @@ describe('offer trust boundary', () => {
 
   it('does not verify GitHub Models without current commercial evidence', () => {
     expect(isPubliclyVerifiableOffer(makeOffer({ providerId: 'github-models', sourceUrl: 'https://github.com/marketplace/models', evidenceText: undefined }), context)).toBe(false);
+  });
+});
+
+describe('buildCanonicalOfferKey Integrity & Determinism', () => {
+  it('is deterministic: same offer yields exact same key', () => {
+    const offerA = {
+      providerId: 'anthropic',
+      title: 'Claude Pro Annual Plan',
+      category: 'annual',
+      offerSubtype: 'ANNUAL_DISCOUNT',
+    };
+    const offerB = { ...offerA };
+    expect(buildCanonicalOfferKey(offerA)).toBe(buildCanonicalOfferKey(offerB));
+  });
+
+  it('price and currency changes do NOT alter canonical key', () => {
+    const base = {
+      providerId: 'anthropic',
+      title: 'Claude Pro Annual $20/month',
+      category: 'annual',
+      offerSubtype: 'ANNUAL_DISCOUNT',
+    };
+    const priceChanged1 = {
+      ...base,
+      title: 'Claude Pro Annual ₹18/month',
+      discount: '₹18/month',
+    };
+    const priceChanged2 = {
+      ...base,
+      title: 'Claude Pro Annual Save 25%',
+      discount: '25% off',
+    };
+    expect(buildCanonicalOfferKey(base)).toBe(buildCanonicalOfferKey(priceChanged1));
+    expect(buildCanonicalOfferKey(base)).toBe(buildCanonicalOfferKey(priceChanged2));
+  });
+
+  it('description updates do NOT alter canonical key', () => {
+    const v1 = {
+      providerId: 'gemini',
+      title: 'Gemini Advanced Google One 2TB',
+      description: 'Get Gemini Advanced with 2TB storage for $19.99/mo.',
+    };
+    const v2 = {
+      providerId: 'gemini',
+      title: 'Gemini Advanced Google One 2TB',
+      description: 'Completely rewritten description: Unlock Gemini 1.5 Pro and 2TB cloud storage.',
+    };
+    expect(buildCanonicalOfferKey(v1)).toBe(buildCanonicalOfferKey(v2));
+  });
+
+  it('different commercial tiers have distinct canonical keys', () => {
+    const pro = {
+      providerId: 'claude',
+      title: 'Claude Pro Annual',
+      offerSubtype: 'ANNUAL_DISCOUNT',
+    };
+    const edu = {
+      providerId: 'claude',
+      title: 'Claude Education Campus',
+      offerSubtype: 'STUDENT_DISCOUNT',
+    };
+    const api = {
+      providerId: 'claude',
+      title: 'Claude Prompt Caching API',
+      offerSubtype: 'API_DISCOUNT',
+    };
+    expect(buildCanonicalOfferKey(pro)).not.toBe(buildCanonicalOfferKey(edu));
+    expect(buildCanonicalOfferKey(pro)).not.toBe(buildCanonicalOfferKey(api));
+    expect(buildCanonicalOfferKey(edu)).not.toBe(buildCanonicalOfferKey(api));
+  });
+
+  it('different providers never collide even with identical plan titles', () => {
+    const claudePro = {
+      providerId: 'claude',
+      title: 'Pro Annual Subscription',
+    };
+    const cursorPro = {
+      providerId: 'cursor',
+      title: 'Pro Annual Subscription',
+    };
+    expect(buildCanonicalOfferKey(claudePro)).not.toBe(buildCanonicalOfferKey(cursorPro));
   });
 });

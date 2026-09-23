@@ -7,6 +7,7 @@ import OfferNotificationBell from '../components/OfferNotificationBell';
 import UserNavMenu from '../components/UserNavMenu';
 import InteractiveBackground from '../components/InteractiveBackground';
 import PremiumUpgradeNudge from '../components/PremiumUpgradeNudge';
+import { useAuth } from '../context/AuthContext';
 import { trackCtaClicked } from '../utils/analytics';
 import { fetchPublicOffers, getCachedPublicOffers } from '../services/api';
 
@@ -14,7 +15,7 @@ import './LandingBackground.css';
 
 const navItems = [
   { label: 'Features', id: 'features' },
-  { label: 'How It Works', id: 'how-it-works' },
+  { label: 'Pricing', id: 'pricing', isPricing: true },
   { label: 'About', id: 'about' },
   { label: 'FAQ', id: 'faq' },
   { label: 'Contact', id: 'contact' },
@@ -494,6 +495,7 @@ function AuditDemoCard() {
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { openUpgradeModal } = useAuth();
   const shouldReduceMotion = useReducedMotion();
   const [activeSection, setActiveSection] = useState('features');
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -504,6 +506,15 @@ export default function LandingPage() {
   });
 
   const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), []);
+
+  const handlePricingClick = useCallback((e?: React.MouseEvent | React.KeyboardEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    closeMobileMenu();
+    openUpgradeModal('general');
+  }, [openUpgradeModal, closeMobileMenu]);
 
   useEffect(() => {
     let isMounted = true;
@@ -594,16 +605,31 @@ export default function LandingPage() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-[36px] lg:gap-[40px] ml-[40px] lg:ml-[80px]" aria-label="Main navigation">
-            {navItems.map((item) => (
-              <a
-                key={item.id}
-                href={`#${item.id}`}
-                className={`text-[15px] font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-300 hover:-translate-y-0.5 ${activeSection === item.id ? 'text-slate-950' : 'text-slate-500 hover:text-slate-900'}`}
-                aria-current={activeSection === item.id ? 'page' : undefined}
-              >
-                {item.label}
-              </a>
-            ))}
+            {navItems.map((item) => {
+              if (item.isPricing) {
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={handlePricingClick}
+                    className="text-[15px] font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 hover:-translate-y-0.5 text-slate-500 hover:text-slate-900 bg-transparent border-none p-0 m-0 cursor-pointer font-sans leading-normal select-none"
+                    aria-label="StackSave Pricing & Plans"
+                  >
+                    {item.label}
+                  </button>
+                );
+              }
+              return (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  className={`text-[15px] font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-300 hover:-translate-y-0.5 ${activeSection === item.id ? 'text-slate-950' : 'text-slate-500 hover:text-slate-900'}`}
+                  aria-current={activeSection === item.id ? 'page' : undefined}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
           </nav>
 
           {/* Right actions */}
@@ -666,16 +692,30 @@ export default function LandingPage() {
               </div>
 
               <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 0' }}>
-                {navItems.map((item) => (
-                  <a
-                    key={item.id}
-                    href={`#${item.id}`}
-                    className={`mobile-nav-item ${activeSection === item.id ? 'active' : ''}`}
-                    onClick={closeMobileMenu}
-                  >
-                    {item.label}
-                  </a>
-                ))}
+                {navItems.map((item) => {
+                  if (item.isPricing) {
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className="mobile-nav-item"
+                        onClick={handlePricingClick}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  }
+                  return (
+                    <a
+                      key={item.id}
+                      href={`#${item.id}`}
+                      className={`mobile-nav-item ${activeSection === item.id ? 'active' : ''}`}
+                      onClick={closeMobileMenu}
+                    >
+                      {item.label}
+                    </a>
+                  );
+                })}
               </div>
 
               {/* Mobile CTA */}
