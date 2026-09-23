@@ -608,6 +608,7 @@ export interface PublicOffer {
   annualPrice?: number | null;
   annualSavingsPercent?: number | null;
   annualSavingsAmount?: number | null;
+  isPremiumOnly?: boolean;
 }
 
 export type OfferFilterTab = 'all' | 'new' | 'active' | 'expired';

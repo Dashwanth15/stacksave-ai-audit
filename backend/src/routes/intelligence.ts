@@ -14,7 +14,7 @@ import { PlatformRankingEngine, RankingCategory } from '../audit-engine/services
 import { ProviderDiscoveryService } from '../pricing/providerDiscoveryService';
 import { optionalAuthenticate } from '../middleware/auth';
 import { isPremiumUser, syncUserEntitlement } from '../services/billingService';
-import { OFFERS_ACCESS_CONFIG } from '../config/offersConfig';
+import { OFFERS_ACCESS_CONFIG, isOfferPremiumOnly } from '../config/offersConfig';
 
 // ── Canonical AI Provider Names (Zero Hardcoded Redundancy) ──
 export const CANONICAL_AI_PROVIDER_NAMES: Record<string, string> = {
@@ -478,7 +478,7 @@ export async function getOrBuildPublicOffersSnapshot(): Promise<PublicOffersCach
     isPublic: true,
   })
     .sort({ detectedAt: -1 })
-    .select('providerId providerName title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive isPublic lastSeenAt lastConfirmedAt isPartnerOffer partner partnerType aiProvider aiPlan offerType benefit duration value eligibility activationMethod country region termsUrl sourceType status category destinationUrl offerSubtype monthlyEquivalent annualPrice annualSavingsPercent annualSavingsAmount')
+    .select('providerId providerName title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive isPublic lastSeenAt lastConfirmedAt isPartnerOffer partner partnerType aiProvider aiPlan offerType benefit duration value eligibility activationMethod country region termsUrl sourceType status category destinationUrl offerSubtype monthlyEquivalent annualPrice annualSavingsPercent annualSavingsAmount isPremiumOnly')
     .lean();
 
   // ── offerTypeWeight map ──────────────────────────────────────
@@ -661,6 +661,7 @@ export async function getOrBuildPublicOffersSnapshot(): Promise<PublicOffersCach
         termsUrl: e.termsUrl || null,
         sourceType: (e as any).sourceType || 'official',
         status: (e as any).status || 'ACTIVE',
+        isPremiumOnly: isOfferPremiumOnly(e),
         platformIntelligenceScore,
         offerOpportunityScore,
         finalRecommendedScore,
@@ -714,7 +715,8 @@ export async function getOrBuildPublicOffersSnapshot(): Promise<PublicOffersCach
     const catKey = (offer.category || '').toLowerCase().trim();
     const provKey = (offer.canonicalProviderId || offer.providerId || '').toLowerCase().trim();
 
-    if (premiumCategoriesSet.has(catKey) || premiumProvidersSet.has(provKey)) {
+    // Strict server-side gate: exclude any offer flagged as Premium-only
+    if (isOfferPremiumOnly(offer) || premiumCategoriesSet.has(catKey) || premiumProvidersSet.has(provKey)) {
       continue;
     }
 

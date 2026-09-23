@@ -24,17 +24,64 @@ export interface OffersAccessConfig {
   PREMIUM_PROVIDER_ACCESS: string[];
 }
 
-/**
- * Single source of truth for Offers access control.
- * Easily update PREMIUM_PROVIDER_ACCESS or PREMIUM_OFFER_CATEGORIES
- * to designate platforms or categories as Premium-only without touching application code.
- */
 export const OFFERS_ACCESS_CONFIG: OffersAccessConfig = {
   PREMIUM_OFFERS_ENABLED: true,
   // Preserves existing Free-accessible offers without artificial truncation
   FREE_VISIBLE_OFFER_LIMIT: null,
   PREMIUM_OFFER_PREVIEW_COUNT: 3,
-  // Ready for future platform designations:
+  // Ready for category-level designations:
   PREMIUM_OFFER_CATEGORIES: [],
-  PREMIUM_PROVIDER_ACCESS: [],
+  // Canonical provider IDs designated as Premium-only offers:
+  PREMIUM_PROVIDER_ACCESS: [
+    'copy-ai',
+    'ideogram',
+    'writesonic',
+    'speechify',
+    'framer',
+    'beautiful-ai',
+    'suno',
+  ],
 };
+
+/**
+ * Single Authoritative Classification Helper for Premium-Only Offers.
+ * Evaluates offer-level flag, category rules, and provider-level configuration.
+ */
+export function isOfferPremiumOnly(offer: {
+  isPremiumOnly?: boolean;
+  category?: string;
+  providerId?: string;
+  aiProvider?: string;
+  canonicalProviderId?: string;
+}): boolean {
+  if (!offer) return false;
+  if (offer.isPremiumOnly === true) return true;
+
+  const cat = (offer.category || '').toLowerCase().trim();
+  if (
+    cat &&
+    Array.isArray(OFFERS_ACCESS_CONFIG.PREMIUM_OFFER_CATEGORIES) &&
+    OFFERS_ACCESS_CONFIG.PREMIUM_OFFER_CATEGORIES.some((c) => c.toLowerCase().trim() === cat)
+  ) {
+    return true;
+  }
+
+  const provId = (offer.canonicalProviderId || offer.aiProvider || offer.providerId || '')
+    .toLowerCase()
+    .trim();
+  if (
+    provId &&
+    Array.isArray(OFFERS_ACCESS_CONFIG.PREMIUM_PROVIDER_ACCESS) &&
+    OFFERS_ACCESS_CONFIG.PREMIUM_PROVIDER_ACCESS.some((p) => p.toLowerCase().trim() === provId)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export function isPremiumEligibleProvider(providerId: string): boolean {
+  if (!providerId) return false;
+  const normalized = providerId.toLowerCase().trim();
+  return OFFERS_ACCESS_CONFIG.PREMIUM_PROVIDER_ACCESS.some((p) => p.toLowerCase().trim() === normalized);
+}
+

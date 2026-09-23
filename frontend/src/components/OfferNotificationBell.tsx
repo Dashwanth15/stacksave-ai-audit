@@ -12,8 +12,9 @@ import { getUserScopedKey } from '../utils/userSession';
 import ProviderLogo from './ProviderLogo';
 import { formatOfferForDisplay, formatCompactTime } from '../utils/offerFormatter';
 import { renderEmphasizedDescription } from '../utils/descriptionFormatter';
-import type { PublicOffer } from '../types';
+import { useAuth } from '../context/AuthContext';
 import { trackNotificationOpened, trackOfferClicked } from '../utils/analytics';
+import type { PublicOffer } from '../types';
 
 
 // Module-level flag: true after the hint has auto-shown once in this JS session.
@@ -24,6 +25,7 @@ let hintShownThisSession = false;
 
 export default function OfferNotificationBell() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   // Initialize with cached offers to prevent initial empty 0-offer flash
   const [offers, setOffers] = useState<PublicOffer[]>(() => getCachedPublicOffers()?.offers ?? []);
   const [isOpen, setIsOpen] = useState(false);
@@ -32,7 +34,7 @@ export default function OfferNotificationBell() {
   const [readOfferIds, setReadOfferIds] = useUserScopedStorage<string[]>('read_offer_ids', []);
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  // Load public offers from official backend API on mount
+  // Load public offers from official backend API on mount & react to plan changes
   useEffect(() => {
     let isMounted = true;
     fetchPublicOffers()
@@ -41,10 +43,6 @@ export default function OfferNotificationBell() {
           setOffers(res.offers);
 
           // Auto-show the hint ONLY if it has not been shown yet in this browser session.
-          // hintShownThisSession is a module-level flag that survives SPA navigation
-          // (component unmount/remount) but resets on a real page refresh.
-          // This means the hint appears only on the first landing-page load, not on
-          // every internal route change (e.g. / → /offers → /build-stack → /).
           if (res.offers.length > 0 && !hintShownThisSession) {
             hintShownThisSession = true;
             setShowHint(true);
@@ -58,7 +56,7 @@ export default function OfferNotificationBell() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user?.plan, user?.id]);
 
   // Deduplicate offers semantically by providerId and normalized title (newest first)
   const formattedOffers = useMemo(() => {
@@ -322,6 +320,17 @@ export default function OfferNotificationBell() {
                         <span className="text-xs font-extrabold text-slate-950 truncate">
                           {offer.providerName}
                         </span>
+                        {offer.isPremiumOnly && (
+                          <span
+                            className="inline-flex items-center gap-0.5 text-[9.5px] font-semibold text-amber-800 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded shrink-0 select-none"
+                            title="StackSave Premium Intelligence Offer"
+                          >
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="text-amber-600 shrink-0">
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                            <span>Premium</span>
+                          </span>
+                        )}
                         {offer.isUnread && (
                           <span
                             className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"

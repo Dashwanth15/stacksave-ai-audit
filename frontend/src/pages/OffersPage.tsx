@@ -578,7 +578,11 @@ export default function OffersPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackOfferClicked(offer.providerName)}
-                  className="group flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 cursor-pointer"
+                  className={`group flex flex-col justify-between rounded-2xl bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 cursor-pointer ${
+                    offer.isPremiumOnly
+                      ? 'border-2 border-amber-400/90 hover:border-amber-500 shadow-[0_2px_12px_-3px_rgba(245,158,11,0.12)]'
+                      : 'border border-slate-200/80 hover:border-slate-300'
+                  }`}
                 >
                   <div>
                     {/* Provider identity and subtle live status */}
@@ -586,10 +590,25 @@ export default function OffersPage() {
                       <div className="flex items-center gap-3 min-w-0">
                         <ProviderLogo providerId={offer.providerId} providerName={offer.providerName} size="md" />
                         <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-2">
                             <h3 className="text-sm font-semibold tracking-tight text-slate-900 truncate">
                               {offer.providerName}
                             </h3>
+                            {offer.isPremiumOnly && (
+                              <span
+                                className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-amber-800 bg-amber-50 border border-amber-300 px-1.5 py-0.5 rounded shadow-2xs shrink-0 select-none"
+                                title="StackSave Premium Intelligence Offer"
+                              >
+                                <svg
+                                  className="w-2.5 h-2.5 text-amber-600 fill-amber-500 shrink-0"
+                                  viewBox="0 0 24 24"
+                                  aria-hidden="true"
+                                >
+                                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <span>Premium</span>
+                              </span>
+                            )}
                             {offer.isUnread && (
                               <span
                                 className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"
@@ -597,9 +616,9 @@ export default function OffersPage() {
                               />
                             )}
                           </div>
-                          <span className="mt-0.5 block text-[11px] text-slate-400 truncate">
+                          <div className="mt-0.5 text-[11px] text-slate-400 truncate">
                             {offer.partner ? `${offer.partner} • Partner Bundle` : offer.categoryLabel}
-                          </span>
+                          </div>
                         </div>
                       </div>
 
@@ -624,7 +643,7 @@ export default function OffersPage() {
                           {offer.discountBadge}
                         </span>
                         {offer.partner && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 uppercase tracking-wider">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 uppercase tracking-wider shrink-0">
                             Bundled
                           </span>
                         )}

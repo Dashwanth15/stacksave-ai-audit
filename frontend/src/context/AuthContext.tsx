@@ -19,6 +19,7 @@ import {
   logoutUser,
   createBillingSubscription,
   verifyBillingPayment,
+  invalidateOffersCache,
 } from '../services/api';
 import { launchRazorpaySubscriptionCheckout } from '../utils/razorpay';
 
@@ -126,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithGoogleToken = useCallback(
     async (params: string | { credential?: string; accessToken?: string }): Promise<User> => {
       const authenticatedUser = await loginWithGoogle(params);
+      invalidateOffersCache();
       setUser(authenticatedUser);
       setIsAuthModalOpen(false);
       setIsPremiumIntent(false);
@@ -149,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
+      invalidateOffersCache();
       await logoutUser();
     } catch (err) {
       console.warn('Logout request failed:', err);
@@ -160,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = useCallback(async (): Promise<User | null> => {
     try {
       const refreshed = await fetchCurrentUser();
+      invalidateOffersCache();
       setUser(refreshed);
       return refreshed;
     } catch {
@@ -190,10 +194,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 razorpay_subscription_id: rzpResponse.razorpay_subscription_id,
                 razorpay_signature: rzpResponse.razorpay_signature,
               });
+              invalidateOffersCache();
               await refreshUser();
             } catch (verifyErr) {
               console.error('Subscription verification error:', verifyErr);
               setTimeout(async () => {
+                invalidateOffersCache();
                 await refreshUser();
               }, 3000);
             }

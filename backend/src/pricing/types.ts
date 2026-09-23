@@ -121,6 +121,7 @@ export interface NormalizedOffer {
   annualPrice?: number;
   annualSavingsPercent?: number;
   annualSavingsAmount?: number;
+  isPremiumOnly?: boolean;
 }
 
 // ── Multi-Page Scanned Source Status ──────────────────────────

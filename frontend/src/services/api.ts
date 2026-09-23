@@ -375,6 +375,21 @@ export function getCachedPublicOffers(): PublicOffersResponse | null {
 }
 
 /**
+ * Explicitly invalidates the client-side offers cache upon auth or entitlement state transitions.
+ */
+export function invalidateOffersCache(): void {
+  cachedOffersPayload = null;
+  lastOffersFetchedAt = 0;
+  try {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      window.sessionStorage.removeItem('stacksave_cached_public_offers');
+    }
+  } catch {
+    // Ignore storage deletion errors
+  }
+}
+
+/**
  * GET /api/intelligence/offers
  * Returns recent new public offers detected from official provider sources.
  * PUBLIC endpoint — no admin secret required.

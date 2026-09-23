@@ -106,6 +106,7 @@ export interface FormattedOffer {
   annualPrice?: number | null;
   annualSavingsPercent?: number | null;
   annualSavingsAmount?: number | null;
+  isPremiumOnly?: boolean;
 }
 
 /**
@@ -501,6 +502,13 @@ export function formatOfferForDisplay(
     annualPrice: rawOffer.annualPrice ?? null,
     annualSavingsPercent: rawOffer.annualSavingsPercent ?? null,
     annualSavingsAmount: rawOffer.annualSavingsAmount ?? null,
+    isPremiumOnly: Boolean(
+      rawOffer.isPremiumOnly ||
+      (rawOffer as any).premiumOnly ||
+      ['copy-ai', 'copyai', 'ideogram', 'writesonic', 'speechify', 'framer', 'beautiful-ai', 'beautifulai', 'suno'].includes(
+        (rawOffer.canonicalProviderId || rawOffer.aiProvider || rawOffer.providerId || providerId || '').toLowerCase().trim()
+      )
+    ),
     detectedAt: rawOffer.detectedAt,
     lastConfirmedAt: confirmedTimestamp,
     verificationStatusText: verification.text,
