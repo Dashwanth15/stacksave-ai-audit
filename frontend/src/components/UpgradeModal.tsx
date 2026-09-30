@@ -449,7 +449,7 @@ export default function UpgradeModal({
     billingInfo?.billingInterval === 'yearly'
       ? 'Yearly · ₹199 / year'
       : billingInfo?.billingInterval === 'quarterly'
-      ? 'Quarterly · ₹59 / 3 months'
+      ? 'Quarterly · ₹99 / 3 months'
       : 'Premium Plan';
 
   // ══════════════════════════════════════════════════════════════

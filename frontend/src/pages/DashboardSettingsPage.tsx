@@ -95,7 +95,7 @@ export default function DashboardSettingsPage() {
     billing?.billingInterval === 'yearly'
       ? 'Yearly Plan · ₹199 / year'
       : billing?.billingInterval === 'quarterly'
-      ? 'Quarterly Plan · ₹59 / 3 months'
+      ? 'Quarterly Plan · ₹99 / 3 months'
       : 'Premium Plan';
 
   const startSubscriptionProcess = async (targetUser: { name: string; email: string }) => {

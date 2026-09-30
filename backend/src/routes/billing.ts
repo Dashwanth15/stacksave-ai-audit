@@ -111,12 +111,12 @@ router.post('/create-subscription', authenticate, async (req: Request, res: Resp
         subscriptionId: rzpSub.id,
         keyId: config.keyId,
         plan,
-        amount: plan === 'quarterly' ? 5900 : 19900, // paise (₹59 or ₹199)
+        amount: plan === 'quarterly' ? 9900 : 19900, // paise (₹99 or ₹199)
         currency: 'INR',
         name: 'StackSave',
         description:
           plan === 'quarterly'
-            ? 'StackSave Premium – Quarterly (₹59 every 3 months)'
+            ? 'StackSave Premium – Quarterly (₹99 every 3 months)'
             : 'StackSave Premium – Yearly (₹199 per year)',
       },
     });

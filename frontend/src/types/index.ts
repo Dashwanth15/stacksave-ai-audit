@@ -681,7 +681,7 @@ export interface CreateSubscriptionResponse {
   subscriptionId: string;
   keyId: string;
   plan: SubscriptionPlanKey;
-  amount: number; // in paise (₹5900 or ₹19900)
+  amount: number; // in paise (₹9900 or ₹19900)
   currency: string;
   name: string;
   description: string;

@@ -32,7 +32,7 @@ let testUserB: any;
 let tokenA: string;
 let tokenB: string;
 
-const TEST_QUARTERLY_PLAN_ID = 'plan_TdBzJC150yBO6v';
+const TEST_QUARTERLY_PLAN_ID = 'plan_TiJeYu3dB14RZh';
 const TEST_YEARLY_PLAN_ID = 'plan_TdCHh8CcDcfa42';
 const TEST_KEY_ID = 'rzp_live_test_key_id';
 const TEST_KEY_SECRET = 'test_razorpay_key_secret_12345';
@@ -174,7 +174,7 @@ describe('Razorpay Live Subscription Billing Suite', () => {
     expect(capturedPlanId).toBe(TEST_QUARTERLY_PLAN_ID);
     const body = await res.json();
     expect(body.data.subscriptionId).toBe('sub_test_quarterly_1');
-    expect(body.data.amount).toBe(5900);
+    expect(body.data.amount).toBe(9900);
   });
 
   // ── 4. Yearly plan mapping ──────────────────────────────────
@@ -215,11 +215,54 @@ describe('Razorpay Live Subscription Billing Suite', () => {
 
   // ── 4b. Plan ID normalization (font / OCR defense-in-depth) ──
   it('4b. normalizes typographical font confusions (0 to O, h to H) in plan IDs', () => {
+    expect(normalizeRazorpayPlanId('plan_TiJeYu3dB14RZh')).toBe('plan_TiJeYu3dB14RZh');
     expect(normalizeRazorpayPlanId('plan_TdBzJC150yB06v')).toBe('plan_TdBzJC150yBO6v');
     expect(normalizeRazorpayPlanId('plan_TdChh8CcDcfa42')).toBe('plan_TdCHh8CcDcfa42');
     expect(normalizeRazorpayPlanId('plan_TdBzJC150yBO6v')).toBe('plan_TdBzJC150yBO6v');
     expect(normalizeRazorpayPlanId('plan_TdCHh8CcDcfa42')).toBe('plan_TdCHh8CcDcfa42');
     expect(normalizeRazorpayPlanId(undefined)).toBeUndefined();
+  });
+
+  // ── 4c. Focused Regression Test: Quarterly Plan Resolution ──
+  it('4c. REGRESSION: quarterly resolves strictly to plan_TiJeYu3dB14RZh and never uses old plan_TdBzJC150yB06v', async () => {
+    process.env.RAZORPAY_PREMIUM_QUARTERLY_PLAN_ID = 'plan_TiJeYu3dB14RZh';
+    process.env.RAZORPAY_PREMIUM_YEARLY_PLAN_ID = 'plan_TdChh8CcDcfa42';
+
+    let capturedPlanId = '';
+    global.fetch = vi.fn().mockImplementation(async (url: any, opts: any) => {
+      if (typeof url === 'string' && url.includes('/v1/subscriptions')) {
+        const parsed = JSON.parse(opts.body);
+        capturedPlanId = parsed.plan_id;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            id: 'sub_test_regression_q99',
+            plan_id: capturedPlanId,
+            status: 'created',
+          }),
+        };
+      }
+      return originalFetch(url, opts);
+    });
+
+    const res = await fetch(`${baseUrl}/api/billing/create-subscription`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: `${SESSION_COOKIE_NAME}=${tokenA}`,
+      },
+      body: JSON.stringify({ plan: 'quarterly' }),
+    });
+
+    expect(res.status).toBe(201);
+    expect(capturedPlanId).toBe('plan_TiJeYu3dB14RZh');
+    expect(capturedPlanId).not.toBe('plan_TdBzJC150yB06v');
+    expect(capturedPlanId).not.toBe('plan_TdBzJC150yBO6v');
+
+    const body = await res.json();
+    expect(body.data.amount).toBe(9900);
+    expect(body.data.description).toContain('₹99 every 3 months');
   });
 
   // ── 5. Frontend cannot inject Plan ID ───────────────────────

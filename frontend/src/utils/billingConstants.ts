@@ -36,11 +36,11 @@ export const PROMOTION_CONFIG: PromotionConfig = {
   savingsPercentage: 50,
   referencePrice: 398,
   promotionalPrice: 199,
-  referencePriceQuarterly: 118,
-  promotionalPriceQuarterly: 59,
+  referencePriceQuarterly: 198,
+  promotionalPriceQuarterly: 99,
   referencePriceYearly: 398,
   promotionalPriceYearly: 199,
-  savingsVsQuarterly: 37, // 4 quarters = 4 × ₹59 = ₹236; ₹236 - ₹199 = ₹37
+  savingsVsQuarterly: 197, // 4 quarters = 4 × ₹99 = ₹396; ₹396 - ₹199 = ₹197
 };
 
 export const BILLING_PRICING = {
@@ -96,7 +96,7 @@ export function formatDiscountBadge(plan: BillingPlanKey): string {
 
 /**
  * Format original strikethrough price string.
- * Example: "₹118" or "₹398"
+ * Example: "₹198" or "₹398"
  */
 export function formatOriginalPrice(plan: BillingPlanKey): string {
   if (!isPromotionActive()) return '';
@@ -107,7 +107,7 @@ export function formatOriginalPrice(plan: BillingPlanKey): string {
 
 /**
  * Format active price string.
- * Example: "₹59" or "₹199"
+ * Example: "₹99" or "₹199"
  */
 export function formatCurrentPrice(plan: BillingPlanKey): string {
   const config = BILLING_PRICING[plan];
@@ -116,7 +116,7 @@ export function formatCurrentPrice(plan: BillingPlanKey): string {
 
 /**
  * Format per-month breakdown string.
- * Example: "₹19.67 per month" for quarterly, "₹16.58 per month" for yearly.
+ * Example: "₹33.00 per month" for quarterly, "₹16.58 per month" for yearly.
  */
 export function formatMonthlyBreakdown(plan: BillingPlanKey): string {
   const config = BILLING_PRICING[plan];
@@ -127,7 +127,7 @@ export function formatMonthlyBreakdown(plan: BillingPlanKey): string {
 
 /**
  * Format yearly savings string.
- * Example: "Save ₹37/year"
+ * Example: "Save ₹197/year"
  */
 export function formatYearlySavingsBadge(): string {
   return `Save ₹${BILLING_PRICING.yearly.savingsVsQuarterly}/year`;
@@ -135,7 +135,7 @@ export function formatYearlySavingsBadge(): string {
 
 /**
  * Detailed savings explanation.
- * Example: "Yearly saves ₹37 compared to quarterly billing"
+ * Example: "Yearly saves ₹197 compared to quarterly billing"
  */
 export function formatYearlySavingsComparison(): string {
   return `Yearly saves ₹${BILLING_PRICING.yearly.savingsVsQuarterly} compared to quarterly billing`;
