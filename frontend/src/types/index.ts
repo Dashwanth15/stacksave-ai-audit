@@ -609,7 +609,24 @@ export interface PublicOffer {
   annualSavingsPercent?: number | null;
   annualSavingsAmount?: number | null;
   isPremiumOnly?: boolean;
+
+  // Premium Intelligence Lifecycle Fields
+  isIntelligenceAlert?: boolean;
+  alertType?: OfferAlertType | null;
+  alertPriority?: 'high' | 'medium' | 'standard' | null;
+  alertDetectedAt?: string | Date | null;
+  alertExpiresAt?: string | Date | null;
+  alertReason?: string | null;
 }
+
+export type OfferAlertType =
+  | 'EARLY_ACCESS'
+  | 'PRICE_DROP'
+  | 'NEW'
+  | 'LIMITED_TIME'
+  | 'IMPORTANT'
+  | 'PRICE_CHANGE'
+  | 'PREMIUM_INTELLIGENCE';
 
 export type OfferFilterTab = 'all' | 'new' | 'active' | 'expired';
 

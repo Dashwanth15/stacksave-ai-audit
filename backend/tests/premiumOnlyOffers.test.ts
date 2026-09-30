@@ -401,7 +401,7 @@ describe('Premium-Only AI Offers & Dynamic Notification Count Suite', () => {
         evidenceText: 'Valid official offer evidence text with more than twenty characters.',
         sourceStatus: 'VERIFIED',
         sourceUrl: 'https://perplexity.ai/pro',
-        detectedAt: new Date(),
+        detectedAt: new Date('2026-09-20T10:00:00Z'),
         isActive: true,
         isPublic: true,
         eventType: 'NEW_OFFER',

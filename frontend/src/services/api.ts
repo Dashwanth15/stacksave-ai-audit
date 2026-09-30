@@ -359,7 +359,7 @@ export function getCachedPublicOffers(): PublicOffersResponse | null {
   }
   try {
     if (typeof window !== 'undefined' && window.sessionStorage) {
-      const stored = window.sessionStorage.getItem('stacksave_cached_public_offers');
+      const stored = window.sessionStorage.getItem('stacksave_cached_public_offers_v3');
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed && Array.isArray(parsed.offers) && parsed.offers.length > 0) {
@@ -382,6 +382,7 @@ export function invalidateOffersCache(): void {
   lastOffersFetchedAt = 0;
   try {
     if (typeof window !== 'undefined' && window.sessionStorage) {
+      window.sessionStorage.removeItem('stacksave_cached_public_offers_v3');
       window.sessionStorage.removeItem('stacksave_cached_public_offers');
     }
   } catch {
@@ -428,7 +429,7 @@ export async function fetchPublicOffers(): Promise<PublicOffersResponse> {
           if (data.offers.length > 0) {
             try {
               if (typeof window !== 'undefined' && window.sessionStorage) {
-                window.sessionStorage.setItem('stacksave_cached_public_offers', JSON.stringify(data));
+                window.sessionStorage.setItem('stacksave_cached_public_offers_v3', JSON.stringify(data));
               }
             } catch {
               // Ignore sessionStorage quota / privacy errors

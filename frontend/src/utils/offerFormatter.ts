@@ -5,7 +5,7 @@
 // Supports Direct Vendor Promotions & Partner / Bundled AI Offers
 // ============================================================
 
-import type { PublicOffer } from '../types';
+import type { PublicOffer, OfferAlertType } from '../types';
 
 /**
  * Decodes common HTML entities from scraped web content.
@@ -107,6 +107,14 @@ export interface FormattedOffer {
   annualSavingsPercent?: number | null;
   annualSavingsAmount?: number | null;
   isPremiumOnly?: boolean;
+
+  // Premium Intelligence Lifecycle Fields
+  isIntelligenceAlert?: boolean;
+  alertType?: OfferAlertType | null;
+  alertPriority?: 'high' | 'medium' | 'standard' | null;
+  alertDetectedAt?: string | null;
+  alertExpiresAt?: string | null;
+  alertReason?: string | null;
 }
 
 /**
@@ -532,6 +540,12 @@ export function formatOfferForDisplay(
     offerOpportunityScore: rawOffer.offerOpportunityScore,
     platformIntelligenceScore: rawOffer.platformIntelligenceScore,
     finalRecommendedScore: rawOffer.finalRecommendedScore,
+    isIntelligenceAlert: Boolean(rawOffer.isIntelligenceAlert),
+    alertType: rawOffer.alertType || null,
+    alertPriority: rawOffer.alertPriority || null,
+    alertDetectedAt: rawOffer.alertDetectedAt ? String(rawOffer.alertDetectedAt) : null,
+    alertExpiresAt: rawOffer.alertExpiresAt ? String(rawOffer.alertExpiresAt) : null,
+    alertReason: rawOffer.alertReason || null,
   };
 }
 

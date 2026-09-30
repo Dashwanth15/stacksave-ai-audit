@@ -320,17 +320,82 @@ export default function OfferNotificationBell() {
                         <span className="text-xs font-extrabold text-slate-950 truncate">
                           {offer.providerName}
                         </span>
-                        {offer.isPremiumOnly && (
+                        {offer.isPremiumOnly ? (
                           <span
-                            className="inline-flex items-center gap-0.5 text-[9.5px] font-semibold text-amber-800 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded shrink-0 select-none"
+                            className="inline-flex items-center gap-1 text-[9.5px] font-bold text-amber-700 uppercase tracking-wider shrink-0 select-none"
                             title="StackSave Premium Intelligence Offer"
                           >
-                            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="text-amber-600 shrink-0">
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="text-amber-600 shrink-0">
                               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                             </svg>
                             <span>Premium</span>
                           </span>
-                        )}
+                        ) : offer.isIntelligenceAlert && offer.alertType ? (
+                          <span
+                            className={`inline-flex items-center gap-1 text-[9.5px] font-bold uppercase tracking-wider shrink-0 select-none ${
+                              offer.alertType === 'EARLY_ACCESS'
+                                ? 'text-indigo-700'
+                                : offer.alertType === 'PRICE_DROP'
+                                ? 'text-emerald-700'
+                                : offer.alertType === 'LIMITED_TIME'
+                                ? 'text-orange-700'
+                                : offer.alertType === 'PRICE_CHANGE'
+                                ? 'text-sky-700'
+                                : offer.alertType === 'IMPORTANT'
+                                ? 'text-amber-700'
+                                : 'text-indigo-700'
+                            }`}
+                            title={`StackSave Intelligence: ${offer.alertReason || offer.alertType || 'Active'}`}
+                          >
+                            {offer.alertType === 'EARLY_ACCESS' && (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="text-indigo-600 shrink-0">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                              </svg>
+                            )}
+                            {offer.alertType === 'PRICE_DROP' && (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 shrink-0">
+                                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+                                <polyline points="17 18 23 18 23 12" />
+                              </svg>
+                            )}
+                            {offer.alertType === 'LIMITED_TIME' && (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-orange-600 shrink-0">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                              </svg>
+                            )}
+                            {offer.alertType === 'PRICE_CHANGE' && (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-sky-600 shrink-0">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                              </svg>
+                            )}
+                            {offer.alertType === 'IMPORTANT' && (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 shrink-0">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                              </svg>
+                            )}
+                            {offer.alertType === 'NEW' && (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600 shrink-0">
+                                <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+                              </svg>
+                            )}
+                            <span>
+                              {offer.alertType === 'EARLY_ACCESS'
+                                ? 'Early Access'
+                                : offer.alertType === 'PRICE_DROP'
+                                ? 'Price Drop'
+                                : offer.alertType === 'LIMITED_TIME'
+                                ? 'Limited Time'
+                                : offer.alertType === 'PRICE_CHANGE'
+                                ? 'Rate Update'
+                                : offer.alertType === 'IMPORTANT'
+                                ? 'Important'
+                                : 'Intelligence'}
+                            </span>
+                          </span>
+                        ) : null}
                         {offer.isUnread && (
                           <span
                             className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"

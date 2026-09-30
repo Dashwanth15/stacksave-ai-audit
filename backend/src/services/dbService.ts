@@ -553,6 +553,11 @@ export interface NotificationEventDocument extends Document {
   annualSavingsPercent?: number; // Verified savings percentage vs monthly
   annualSavingsAmount?: number;  // Absolute dollar savings per year
   isPremiumOnly?: boolean;   // Explicit flag for Premium-entitled subscriber offers
+  isPriceDrop?: boolean;
+  isPriceChange?: boolean;
+  isLimitedTime?: boolean;
+  previousPrice?: number;
+  currentPrice?: number;
 }
 
 const NotificationEventSchema = new Schema<NotificationEventDocument>(
@@ -581,6 +586,11 @@ const NotificationEventSchema = new Schema<NotificationEventDocument>(
     discount:        { type: String },
     discountType:    { type: String },
     isPremiumOnly:   { type: Boolean, default: false },
+    isPriceDrop:     { type: Boolean },
+    isPriceChange:   { type: Boolean },
+    isLimitedTime:   { type: Boolean },
+    previousPrice:   { type: Number },
+    currentPrice:    { type: Number },
     // ── Offer Lifecycle Fields ────────────────────────────────────
     isActive:          { type: Boolean, default: true },
     lastConfirmedAt:   { type: Date },

@@ -14,7 +14,13 @@ import { PlatformRankingEngine, RankingCategory } from '../audit-engine/services
 import { ProviderDiscoveryService } from '../pricing/providerDiscoveryService';
 import { optionalAuthenticate } from '../middleware/auth';
 import { isPremiumUser, syncUserEntitlement } from '../services/billingService';
-import { OFFERS_ACCESS_CONFIG, isOfferPremiumOnly } from '../config/offersConfig';
+import {
+  OFFERS_ACCESS_CONFIG,
+  isOfferPremiumOnly,
+  isOfferActiveAndValid,
+  isOfferVisibleForUser,
+  getOfferAlertMetadata,
+} from '../config/offersConfig';
 
 // ── Canonical AI Provider Names (Zero Hardcoded Redundancy) ──
 export const CANONICAL_AI_PROVIDER_NAMES: Record<string, string> = {
@@ -478,7 +484,7 @@ export async function getOrBuildPublicOffersSnapshot(): Promise<PublicOffersCach
     isPublic: true,
   })
     .sort({ detectedAt: -1 })
-    .select('providerId providerName title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive isPublic lastSeenAt lastConfirmedAt isPartnerOffer partner partnerType aiProvider aiPlan offerType benefit duration value eligibility activationMethod country region termsUrl sourceType status category destinationUrl offerSubtype monthlyEquivalent annualPrice annualSavingsPercent annualSavingsAmount isPremiumOnly')
+    .select('providerId providerName eventType title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive isPublic lastSeenAt lastConfirmedAt isPartnerOffer partner partnerType aiProvider aiPlan offerType benefit duration value eligibility activationMethod country region termsUrl sourceType status category destinationUrl offerSubtype monthlyEquivalent annualPrice annualSavingsPercent annualSavingsAmount isPremiumOnly isPriceDrop isPriceChange isLimitedTime previousPrice currentPrice')
     .lean();
 
   // ── offerTypeWeight map ──────────────────────────────────────
@@ -602,8 +608,11 @@ export async function getOrBuildPublicOffersSnapshot(): Promise<PublicOffersCach
     return Math.min(100, Math.round(rawScore * typeWeight));
   }
 
-  const scoredOffers = events
-    .filter((e) => e.isPublic === true && canPublishOffer(e))
+  const validPublishableEvents = events.filter(
+    (e) => isOfferActiveAndValid(e, new Date(now)) && e.isPublic === true && canPublishOffer(e)
+  );
+
+  const scoredOffers = validPublishableEvents
     .map((e) => {
       const category = ((e as any).category as 'partner' | 'student' | 'annual' | 'api' | 'trial' | 'startup' | 'free') || inferOfferCategory(e);
       const platformIntelligenceScore = computePlatformIntelligenceScore(e);
@@ -662,6 +671,12 @@ export async function getOrBuildPublicOffersSnapshot(): Promise<PublicOffersCach
         sourceType: (e as any).sourceType || 'official',
         status: (e as any).status || 'ACTIVE',
         isPremiumOnly: isOfferPremiumOnly(e),
+        eventType: e.eventType || 'NEW_OFFER',
+        isPriceDrop: (e as any).isPriceDrop ?? (e.eventType === 'PRICE_DROP'),
+        isPriceChange: (e as any).isPriceChange ?? (e.eventType === 'PRICE_CHANGE'),
+        isLimitedTime: (e as any).isLimitedTime ?? ((e as any).offerSubtype === 'LIMITED_TIME'),
+        previousPrice: (e as any).previousPrice ?? null,
+        currentPrice: (e as any).currentPrice ?? null,
         platformIntelligenceScore,
         offerOpportunityScore,
         finalRecommendedScore,
@@ -669,9 +684,22 @@ export async function getOrBuildPublicOffersSnapshot(): Promise<PublicOffersCach
     })
     .sort((a, b) => b.finalRecommendedScore - a.finalRecommendedScore);
 
-  // ── 1. Premium Payload (All offers visible) ──
+  // ── 1. Premium Payload (All valid active offers with intelligence alert metadata) ──
+  const premiumOffers = scoredOffers.map((offer) => {
+    const alertMeta = getOfferAlertMetadata(offer, true, new Date(now));
+    return {
+      ...offer,
+      isIntelligenceAlert: alertMeta.isIntelligenceAlert,
+      alertType: alertMeta.alertType || null,
+      alertPriority: alertMeta.alertPriority || null,
+      alertDetectedAt: alertMeta.alertDetectedAt || null,
+      alertExpiresAt: alertMeta.alertExpiresAt || null,
+      alertReason: alertMeta.alertReason || null,
+    };
+  });
+
   const premiumCanonicalProvidersMap = new Map<string, { providerId: string; displayName: string; offerCount: number }>();
-  for (const offer of scoredOffers) {
+  for (const offer of premiumOffers) {
     const canonicalId = ((offer.aiProvider || offer.providerId) || '').toLowerCase().trim();
     const existing = premiumCanonicalProvidersMap.get(canonicalId);
     if (existing) {
@@ -688,8 +716,8 @@ export async function getOrBuildPublicOffersSnapshot(): Promise<PublicOffersCach
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
 
   const premiumData = {
-    offers: scoredOffers,
-    count: scoredOffers.length,
+    offers: premiumOffers,
+    count: premiumOffers.length,
     providerCount: premiumProvidersList.length,
     providers: premiumProvidersList,
     isPremiumUser: true,
@@ -700,7 +728,7 @@ export async function getOrBuildPublicOffersSnapshot(): Promise<PublicOffersCach
     note: 'Offers sorted by finalRecommendedScore (platformIntelligenceScore×0.60 + offerOpportunityScore×0.40). Access control enforced on server.',
   };
 
-  // ── 2. Free / Guest Payload (Server-Side Access Control) ──
+  // ── 2. Free / Guest Payload (Server-Side Early Access & Premium-Only Gating) ──
   const premiumCategoriesSet = new Set(
     (OFFERS_ACCESS_CONFIG.PREMIUM_OFFER_CATEGORIES || []).map((c) => c.toLowerCase().trim())
   );
@@ -708,15 +736,26 @@ export async function getOrBuildPublicOffersSnapshot(): Promise<PublicOffersCach
     (OFFERS_ACCESS_CONFIG.PREMIUM_PROVIDER_ACCESS || []).map((p) => p.toLowerCase().trim())
   );
 
-  const freeEligibleOffers: typeof scoredOffers = [];
+  const freeEligibleOffers: Array<typeof scoredOffers[0] & {
+    isIntelligenceAlert: boolean;
+    alertType: null;
+    alertPriority: null;
+    alertDetectedAt: null;
+    alertExpiresAt: null;
+    alertReason: null;
+  }> = [];
   const categoryCountsMap = new Map<string, number>();
 
   for (const offer of scoredOffers) {
     const catKey = (offer.category || '').toLowerCase().trim();
     const provKey = (offer.canonicalProviderId || offer.providerId || '').toLowerCase().trim();
 
-    // Strict server-side gate: exclude any offer flagged as Premium-only
-    if (isOfferPremiumOnly(offer) || premiumCategoriesSet.has(catKey) || premiumProvidersSet.has(provKey)) {
+    // Strict server-side gate: exclude invalid, early-access (<5 days), or permanent Premium-only offers
+    if (
+      !isOfferVisibleForUser({ offer, isPremium: false, now: new Date(now) }) ||
+      premiumCategoriesSet.has(catKey) ||
+      premiumProvidersSet.has(provKey)
+    ) {
       continue;
     }
 
@@ -730,7 +769,17 @@ export async function getOrBuildPublicOffersSnapshot(): Promise<PublicOffersCach
     }
 
     categoryCountsMap.set(catKey, currentCatCount + 1);
-    freeEligibleOffers.push(offer);
+
+    // Sanitize free payload: NEVER expose intelligence alert metadata to Free/Guest
+    freeEligibleOffers.push({
+      ...offer,
+      isIntelligenceAlert: false,
+      alertType: null,
+      alertPriority: null,
+      alertDetectedAt: null,
+      alertExpiresAt: null,
+      alertReason: null,
+    });
   }
 
   const freeCanonicalProvidersMap = new Map<string, { providerId: string; displayName: string; offerCount: number }>();
