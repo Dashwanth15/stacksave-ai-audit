@@ -151,8 +151,7 @@ app.use('/api/pricing', pricingRouter);
 app.use((_req, res) => {
   res.status(404).json({ success: false, error: 'Route not found' });
 });
-
-
+// ── Intelligence cache refreshed ─────────────────────────────
 
 // ── Start ─────────────────────────────────────────────────────
 async function start() {
@@ -184,5 +183,5 @@ if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
   start();
 }
 
-export default app; // for testing
+export default app; // for testing (live calibration update 2)
 

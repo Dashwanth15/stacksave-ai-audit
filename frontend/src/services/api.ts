@@ -359,7 +359,7 @@ export function getCachedPublicOffers(): PublicOffersResponse | null {
   }
   try {
     if (typeof window !== 'undefined' && window.sessionStorage) {
-      const stored = window.sessionStorage.getItem('stacksave_cached_public_offers_v3');
+      const stored = window.sessionStorage.getItem('stacksave_cached_public_offers_v7');
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed && Array.isArray(parsed.offers) && parsed.offers.length > 0) {
@@ -382,6 +382,9 @@ export function invalidateOffersCache(): void {
   lastOffersFetchedAt = 0;
   try {
     if (typeof window !== 'undefined' && window.sessionStorage) {
+      window.sessionStorage.removeItem('stacksave_cached_public_offers_v7');
+      window.sessionStorage.removeItem('stacksave_cached_public_offers_v6');
+      window.sessionStorage.removeItem('stacksave_cached_public_offers_v5');
       window.sessionStorage.removeItem('stacksave_cached_public_offers_v3');
       window.sessionStorage.removeItem('stacksave_cached_public_offers');
     }
@@ -417,7 +420,7 @@ export async function fetchPublicOffers(): Promise<PublicOffersResponse> {
       try {
         const response = await api.get('/intelligence/offers', { timeout: 10_000 });
         if (!response?.data?.success) {
-          throw new Error(response?.data?.error ?? 'Failed to fetch public offers');
+          throw new Error(response?.data?.error || 'Failed to fetch public offers');
         }
 
         const data: PublicOffersResponse = response.data.data;
@@ -429,7 +432,7 @@ export async function fetchPublicOffers(): Promise<PublicOffersResponse> {
           if (data.offers.length > 0) {
             try {
               if (typeof window !== 'undefined' && window.sessionStorage) {
-                window.sessionStorage.setItem('stacksave_cached_public_offers_v3', JSON.stringify(data));
+                window.sessionStorage.setItem('stacksave_cached_public_offers_v7', JSON.stringify(data));
               }
             } catch {
               // Ignore sessionStorage quota / privacy errors

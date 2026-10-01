@@ -25,6 +25,10 @@ import { renderEmphasizedDescription } from '../utils/descriptionFormatter';
 import type { FormattedOffer, OfferCategory } from '../utils/offerFormatter';
 import type { PublicOffer } from '../types';
 import { trackOfferClicked } from '../utils/analytics';
+import goldCrownImg from '../assets/gold_crown.png';
+import priceDropGraphImg from '../assets/price_drop_graph.png';
+import orangeClockImg from '../assets/orange_clock.png';
+import importantBellImg from '../assets/important-bell-intelligence.png';
 
 type SortOption = 'recommended' | 'savings' | 'newest';
 type CategoryIconName = 'sparkles' | 'graduation' | 'zap' | 'dollar' | 'rocket' | 'gift';
@@ -166,246 +170,94 @@ function formatDetectedTime(dateString: string): string {
 
 function PremiumCrownIllustration() {
   return (
-    <div className="absolute right-2 sm:right-4 top-2 sm:top-3 pointer-events-none select-none z-0 transition-transform duration-300 group-hover:scale-105">
-      {/* Soft warm ambient glow behind crown */}
-      <div className="absolute inset-0 -m-6 bg-gradient-to-br from-amber-300/30 via-amber-200/20 to-transparent rounded-full blur-2xl transform -rotate-12" />
-      <svg
-        className="w-[115px] h-[86px] sm:w-[150px] sm:h-[110px] drop-shadow-[0_12px_24px_rgba(217,119,6,0.22)] opacity-95"
-        viewBox="0 0 160 120"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+    <div className="absolute right-4 sm:right-7 top-9 sm:top-12 pointer-events-none select-none z-0 transition-transform duration-200 ease-out group-hover:translate-x-1 group-hover:-translate-y-0.5">
+      {/* Soft champagne/gold radial glow */}
+      <div className="absolute inset-0 -m-6 bg-gradient-to-br from-amber-300/40 via-amber-200/25 to-transparent rounded-full blur-2xl transform -rotate-6 transition-opacity duration-200 group-hover:opacity-100 opacity-80" />
+      <img
+        src={goldCrownImg}
+        alt=""
         aria-hidden="true"
-      >
-        <defs>
-          <linearGradient id="ssGoldBase" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FEF3C7" />
-            <stop offset="25%" stopColor="#FDE68A" />
-            <stop offset="55%" stopColor="#F59E0B" />
-            <stop offset="85%" stopColor="#D97706" />
-            <stop offset="100%" stopColor="#92400E" />
-          </linearGradient>
-          <linearGradient id="ssGoldFacet" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
-            <stop offset="40%" stopColor="#FDE68A" />
-            <stop offset="80%" stopColor="#F59E0B" />
-            <stop offset="100%" stopColor="#B45309" />
-          </linearGradient>
-          <linearGradient id="ssGoldRim" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#B45309" />
-            <stop offset="25%" stopColor="#FDE68A" />
-            <stop offset="50%" stopColor="#FFFBEB" />
-            <stop offset="75%" stopColor="#F59E0B" />
-            <stop offset="100%" stopColor="#78350F" />
-          </linearGradient>
-          <radialGradient id="ssCrownShine" cx="50%" cy="30%" r="60%">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.8" />
-            <stop offset="60%" stopColor="#FDE68A" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-
-        {/* Crown Base Rim (Curved 3D arch) */}
-        <path
-          d="M 24 92 C 52 104, 112 104, 140 92 C 135 84, 126 81, 116 84 C 88 92, 64 92, 44 84 C 34 81, 28 85, 24 92 Z"
-          fill="url(#ssGoldRim)"
-        />
-
-        {/* Main Crown Body with 5 Elegant Peaks */}
-        <path
-          d="M 24 90 C 22 66, 16 52, 15 44 C 15 40, 20 40, 24 45 C 38 61, 50 66, 54 39 C 56 34, 62 34, 64 39 C 72 55, 82 61, 84 25 C 85 20, 91 20, 92 25 C 94 61, 104 55, 112 39 C 114 34, 120 34, 122 39 C 126 66, 138 61, 152 45 C 156 40, 161 40, 161 44 C 160 52, 154 66, 152 90 C 120 102, 60 102, 24 90 Z"
-          fill="url(#ssGoldBase)"
-        />
-
-        {/* Inner Volumetric Facet Highlights */}
-        <path
-          d="M 54 41 L 66 78 C 76 83, 90 83, 100 78 L 112 41 C 105 56, 95 61, 91 27 C 87 61, 74 56, 54 41 Z"
-          fill="url(#ssGoldFacet)"
-          opacity="0.9"
-        />
-
-        {/* 3D Surface Sheen */}
-        <path
-          d="M 24 90 C 22 66, 16 52, 15 44 C 15 40, 20 40, 24 45 C 38 61, 50 66, 54 39 C 56 34, 62 34, 64 39 C 72 55, 82 61, 84 25 C 85 20, 91 20, 92 25 C 94 61, 104 55, 112 39 C 114 34, 120 34, 122 39 C 126 66, 138 61, 152 45 C 156 40, 161 40, 161 44 C 160 52, 154 66, 152 90 C 120 102, 60 102, 24 90 Z"
-          fill="url(#ssCrownShine)"
-        />
-
-        {/* Jewels / Accents on Peaks */}
-        <circle cx="88" cy="22" r="4.5" fill="#FFFFFF" />
-        <circle cx="88" cy="22" r="2.5" fill="#FDE68A" />
-        <circle cx="18" cy="43" r="3.5" fill="#FFFFFF" />
-        <circle cx="158" cy="43" r="3.5" fill="#FFFFFF" />
-        <circle cx="58" cy="37" r="3.5" fill="#FFFFFF" />
-        <circle cx="118" cy="37" r="3.5" fill="#FFFFFF" />
-
-        {/* Refined Sparkle Glints */}
-        <g transform="translate(82, 58) scale(1.1)">
-          <path d="M 6 0 L 8 4.5 L 12.5 6.5 L 8 8.5 L 6 13 L 4 8.5 L 0 6.5 L 4 4.5 Z" fill="#FFFFFF" opacity="0.95" />
-        </g>
-        <g transform="translate(36, 24) scale(0.7)">
-          <path d="M 6 0 L 8 4.5 L 12.5 6.5 L 8 8.5 L 6 13 L 4 8.5 L 0 6.5 L 4 4.5 Z" fill="#FEF3C7" opacity="0.85" />
-        </g>
-        <g transform="translate(132, 26) scale(0.8)">
-          <path d="M 6 0 L 8 4.5 L 12.5 6.5 L 8 8.5 L 6 13 L 4 8.5 L 0 6.5 L 4 4.5 Z" fill="#FEF3C7" opacity="0.9" />
-        </g>
-      </svg>
+        className="w-[130px] sm:w-[155px] h-auto object-contain drop-shadow-[0_14px_28px_rgba(217,119,6,0.22)] opacity-95 transition-transform duration-200"
+        loading="lazy"
+      />
     </div>
   );
 }
 
 function PriceDropChartIllustration() {
   return (
-    <div className="absolute right-2 sm:right-4 top-2 sm:top-3 pointer-events-none select-none z-0 transition-transform duration-300 group-hover:scale-105">
-      {/* Soft emerald ambient glow */}
-      <div className="absolute inset-0 -m-6 bg-gradient-to-br from-emerald-300/25 via-emerald-200/15 to-transparent rounded-full blur-2xl" />
-      <svg
-        className="w-[115px] h-[82px] sm:w-[145px] sm:h-[105px] drop-shadow-[0_8px_20px_rgba(16,185,129,0.18)] opacity-95"
-        viewBox="0 0 150 110"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+    <div className="absolute right-4 sm:right-6 top-8 sm:top-11 pointer-events-none select-none z-0 transition-transform duration-200 ease-out group-hover:translate-x-1 group-hover:-translate-y-0.5">
+      {/* Soft mint/emerald radial glow */}
+      <div className="absolute inset-0 -m-6 bg-gradient-to-br from-emerald-300/35 via-emerald-200/20 to-transparent rounded-full blur-2xl transition-opacity duration-200 group-hover:opacity-100 opacity-80" />
+      <img
+        src={priceDropGraphImg}
+        alt=""
         aria-hidden="true"
-      >
-        <defs>
-          <linearGradient id="ssGreenFill" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#10B981" stopOpacity="0.28" />
-            <stop offset="50%" stopColor="#34D399" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#A7F3D0" stopOpacity="0.00" />
-          </linearGradient>
-          <linearGradient id="ssGreenLine" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#6EE7B7" />
-            <stop offset="40%" stopColor="#10B981" />
-            <stop offset="100%" stopColor="#047857" />
-          </linearGradient>
-        </defs>
-
-        {/* Soft mountain area wash */}
-        <path
-          d="M 12 36 L 44 54 L 76 40 L 110 80 L 138 60 L 138 104 L 12 104 Z"
-          fill="url(#ssGreenFill)"
-        />
-
-        {/* Crisp downward trend line */}
-        <path
-          d="M 12 36 L 44 54 L 76 40 L 110 80 L 138 60"
-          stroke="url(#ssGreenLine)"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        {/* Prominent downward terminal arrow */}
-        <path
-          d="M 126 60 L 138 60 L 138 72"
-          stroke="url(#ssGreenLine)"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        {/* Milestone Indicator Nodes */}
-        <circle cx="138" cy="60" r="4.5" fill="#047857" />
-        <circle cx="138" cy="60" r="2" fill="#FFFFFF" />
-        <circle cx="76" cy="40" r="3" fill="#10B981" opacity="0.8" />
-      </svg>
+        className="w-[135px] sm:w-[160px] h-auto object-contain drop-shadow-[0_12px_24px_rgba(16,185,129,0.20)] opacity-95 transition-transform duration-200"
+        loading="lazy"
+      />
     </div>
   );
 }
 
 function LimitedTimeClockIllustration() {
   return (
-    <div className="absolute right-2 sm:right-4 top-2 sm:top-3 pointer-events-none select-none z-0 transition-transform duration-300 group-hover:scale-105">
-      {/* Soft warm orange ambient glow */}
-      <div className="absolute inset-0 -m-6 bg-gradient-to-br from-orange-300/30 via-orange-200/20 to-transparent rounded-full blur-2xl" />
-      <svg
-        className="w-[110px] h-[84px] sm:w-[140px] sm:h-[108px] drop-shadow-[0_12px_24px_rgba(234,88,12,0.22)] opacity-95"
-        viewBox="0 0 140 110"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+    <div className="absolute right-4 sm:right-7 top-9 sm:top-12 pointer-events-none select-none z-0 transition-transform duration-200 ease-out group-hover:translate-x-1 group-hover:-translate-y-0.5">
+      {/* Soft warm peach/orange radial glow */}
+      <div className="absolute inset-0 -m-6 bg-gradient-to-br from-orange-300/40 via-orange-200/25 to-transparent rounded-full blur-2xl transition-opacity duration-200 group-hover:opacity-100 opacity-80" />
+      <img
+        src={orangeClockImg}
+        alt=""
         aria-hidden="true"
-      >
-        <defs>
-          <linearGradient id="ssClockRing" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FED7AA" />
-            <stop offset="35%" stopColor="#FB923C" />
-            <stop offset="80%" stopColor="#EA580C" />
-            <stop offset="100%" stopColor="#9A3412" />
-          </linearGradient>
-          <linearGradient id="ssClockFace" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="100%" stopColor="#FFF7ED" />
-          </linearGradient>
-          <linearGradient id="ssBoltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FEF08A" />
-            <stop offset="50%" stopColor="#FBBF24" />
-            <stop offset="100%" stopColor="#F97316" />
-          </linearGradient>
-        </defs>
-
-        {/* 3D Isometric Outer Bezel */}
-        <circle cx="70" cy="55" r="42" fill="url(#ssClockRing)" />
-        <ellipse cx="70" cy="55" rx="35" ry="35" fill="url(#ssClockFace)" />
-
-        {/* Crisp Dial Tick Marks */}
-        <line x1="70" y1="26" x2="70" y2="31" stroke="#FDBA74" strokeWidth="2.5" strokeLinecap="round" />
-        <line x1="70" y1="79" x2="70" y2="84" stroke="#FDBA74" strokeWidth="2.5" strokeLinecap="round" />
-        <line x1="41" y1="55" x2="46" y2="55" stroke="#FDBA74" strokeWidth="2.5" strokeLinecap="round" />
-        <line x1="94" y1="55" x2="99" y2="55" stroke="#FDBA74" strokeWidth="2.5" strokeLinecap="round" />
-
-        {/* Urgency-angled Hands */}
-        <line x1="70" y1="55" x2="70" y2="35" stroke="#EA580C" strokeWidth="3.5" strokeLinecap="round" />
-        <line x1="70" y1="55" x2="84" y2="65" stroke="#EA580C" strokeWidth="3" strokeLinecap="round" />
-        <circle cx="70" cy="55" r="4" fill="#9A3412" />
-
-        {/* Energetic Speed Lightning Flash */}
-        <path
-          d="M 102 50 L 93 65 L 100 65 L 91 82 L 108 62 L 100 62 Z"
-          fill="url(#ssBoltGrad)"
-          stroke="#FFFFFF"
-          strokeWidth="1.5"
-        />
-      </svg>
+        className="w-[125px] sm:w-[150px] h-auto object-contain drop-shadow-[0_14px_28px_rgba(234,88,12,0.22)] opacity-95 transition-transform duration-200"
+        loading="lazy"
+      />
     </div>
   );
 }
 
-function EarlyAccessIllustration() {
+function ImportantIntelligenceIllustration() {
   return (
-    <div className="absolute right-2 sm:right-4 top-2 sm:top-3 pointer-events-none select-none z-0 transition-transform duration-300 group-hover:scale-105">
-      <div className="absolute inset-0 -m-6 bg-gradient-to-br from-indigo-300/25 via-indigo-200/15 to-transparent rounded-full blur-2xl" />
-      <svg
-        className="w-[110px] h-[84px] sm:w-[138px] sm:h-[105px] drop-shadow-[0_12px_24px_rgba(79,70,229,0.20)] opacity-95"
-        viewBox="0 0 140 110"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+    <div className="absolute right-3 sm:right-6 top-7 sm:top-10 pointer-events-none select-none z-0 transition-transform duration-200 ease-out group-hover:translate-x-1 group-hover:-translate-y-0.5">
+      {/* Soft warm amber radial glow */}
+      <div className="absolute inset-0 -m-6 bg-gradient-to-br from-amber-400/35 via-amber-200/20 to-transparent rounded-full blur-2xl transition-opacity duration-200 group-hover:opacity-100 opacity-80" />
+      <img
+        src={importantBellImg}
+        alt=""
         aria-hidden="true"
-      >
-        <defs>
-          <linearGradient id="ssIndigoStar" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#E0E7FF" />
-            <stop offset="40%" stopColor="#818CF8" />
-            <stop offset="85%" stopColor="#4F46E5" />
-            <stop offset="100%" stopColor="#3730A3" />
-          </linearGradient>
-        </defs>
-        <ellipse cx="70" cy="55" rx="42" ry="21" stroke="#C7D2FE" strokeWidth="1.8" strokeDasharray="4 4" transform="rotate(-20 70 55)" opacity="0.65" />
-        <path
-          d="M 70 20 Q 70 55 105 55 Q 70 55 70 90 Q 70 55 35 55 Q 70 55 70 20 Z"
-          fill="url(#ssIndigoStar)"
-        />
-        <circle cx="70" cy="55" r="4.5" fill="#FFFFFF" />
-      </svg>
+        className="w-[160px] sm:w-[195px] h-auto object-contain drop-shadow-[0_14px_28px_rgba(217,119,6,0.22)] opacity-95 transition-transform duration-200"
+        loading="lazy"
+      />
     </div>
   );
 }
 
 function CardSideIllustration({ offer }: { offer: FormattedOffer }) {
-  if (offer.isPremiumOnly) {
+  if (
+    offer.isIntelligenceAlert === true &&
+    offer.alertType === 'PRICE_DROP'
+  ) {
+    return <PriceDropChartIllustration />;
+  }
+
+  if (
+    offer.isIntelligenceAlert === true &&
+    offer.alertType === 'LIMITED_TIME'
+  ) {
+    return <LimitedTimeClockIllustration />;
+  }
+
+  if (
+    offer.isIntelligenceAlert === true &&
+    offer.alertType === 'IMPORTANT'
+  ) {
+    return <ImportantIntelligenceIllustration />;
+  }
+
+  if (offer.isPremiumOnly === true) {
     return <PremiumCrownIllustration />;
   }
-  if (offer.isIntelligenceAlert) {
-    if (offer.alertType === 'PRICE_DROP') return <PriceDropChartIllustration />;
-    if (offer.alertType === 'LIMITED_TIME') return <LimitedTimeClockIllustration />;
-    if (offer.alertType === 'EARLY_ACCESS') return <EarlyAccessIllustration />;
-  }
+
   return null;
 }
 
@@ -909,22 +761,16 @@ export default function OffersPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackOfferClicked(offer.providerName)}
-                  className={`group relative overflow-hidden flex flex-col justify-between rounded-3xl p-6 sm:p-7 transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer ${
-                    offer.isPremiumOnly
-                      ? 'bg-gradient-to-b from-[#FFFDF5] via-[#FFFBF0] to-[#FFFFFF] border-2 border-[#FDE68A] hover:border-amber-400 shadow-[0_8px_28px_rgba(245,158,11,0.08)] focus-visible:ring-amber-400'
-                      : offer.isIntelligenceAlert
-                      ? offer.alertType === 'EARLY_ACCESS'
-                        ? 'bg-gradient-to-b from-[#EEF2FF] via-[#F8FAFC] to-[#FFFFFF] border-2 border-[#C7D2FE] hover:border-indigo-400 shadow-[0_8px_28px_rgba(99,102,241,0.06)] focus-visible:ring-indigo-400'
-                        : offer.alertType === 'PRICE_DROP'
-                        ? 'bg-gradient-to-b from-[#F0FDF4] via-[#F8FEFA] to-[#FFFFFF] border-2 border-[#A7F3D0] hover:border-emerald-400 shadow-[0_8px_28px_rgba(16,185,129,0.06)] focus-visible:ring-emerald-400'
-                        : offer.alertType === 'LIMITED_TIME'
-                        ? 'bg-gradient-to-b from-[#FFF7ED] via-[#FFFAF5] to-[#FFFFFF] border-2 border-[#FDBA74] hover:border-orange-400 shadow-[0_8px_28px_rgba(249,115,22,0.06)] focus-visible:ring-orange-400'
-                        : offer.alertType === 'PRICE_CHANGE'
-                        ? 'bg-gradient-to-b from-[#F0F9FF] via-[#F8FAFC] to-[#FFFFFF] border-2 border-[#BAE6FD] hover:border-sky-400 shadow-[0_8px_28px_rgba(14,165,233,0.06)] focus-visible:ring-sky-400'
-                        : offer.alertType === 'IMPORTANT'
-                        ? 'bg-gradient-to-b from-[#FFFDF5] via-[#FFFBF0] to-[#FFFFFF] border-2 border-[#FDE68A] hover:border-amber-400 shadow-[0_8px_28px_rgba(245,158,11,0.06)] focus-visible:ring-amber-400'
-                        : 'bg-gradient-to-b from-[#EEF2FF] via-[#F8FAFC] to-[#FFFFFF] border-2 border-[#C7D2FE] hover:border-indigo-400 shadow-[0_8px_28px_rgba(99,102,241,0.06)] focus-visible:ring-indigo-400'
-                      : 'bg-white border border-slate-200/90 hover:border-slate-300 shadow-[0_4px_20px_rgba(15,23,42,0.04)] hover:shadow-md focus-visible:ring-slate-400'
+                  className={`group relative overflow-hidden flex flex-col justify-between rounded-3xl p-6 sm:p-7 transition-all duration-200 ease-out hover:-translate-y-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer ${
+                    offer.isIntelligenceAlert === true && offer.alertType === 'PRICE_DROP'
+                      ? 'bg-gradient-to-b from-[#F0FDF4] via-[#F8FEFA] to-[#FFFFFF] border border-[#A7F3D0] hover:border-emerald-400 shadow-[0_4px_20px_rgba(16,185,129,0.05)] hover:shadow-[0_12px_32px_rgba(16,185,129,0.10)] focus-visible:ring-emerald-400'
+                      : offer.isIntelligenceAlert === true && offer.alertType === 'LIMITED_TIME'
+                      ? 'bg-gradient-to-b from-[#FFF7ED] via-[#FFFAF5] to-[#FFFFFF] border border-[#FDBA74] hover:border-orange-400 shadow-[0_4px_20px_rgba(249,115,22,0.05)] hover:shadow-[0_12px_32px_rgba(249,115,22,0.10)] focus-visible:ring-orange-400'
+                      : offer.isIntelligenceAlert === true && offer.alertType === 'IMPORTANT'
+                      ? 'bg-gradient-to-b from-[#FFFDF5] via-[#FFFBF0] to-[#FFFFFF] border border-[#FDE68A]/90 hover:border-amber-400 shadow-[0_4px_20px_rgba(245,158,11,0.05)] hover:shadow-[0_12px_32px_rgba(245,158,11,0.10)] focus-visible:ring-amber-400'
+                      : offer.isPremiumOnly === true
+                      ? 'bg-gradient-to-b from-[#FFFDF5] via-[#FFFBF0] to-[#FFFFFF] border border-[#FDE68A]/90 hover:border-amber-400 shadow-[0_4px_20px_rgba(245,158,11,0.06)] hover:shadow-[0_12px_32px_rgba(245,158,11,0.12)] focus-visible:ring-amber-400'
+                      : 'bg-white border border-slate-200/90 hover:border-slate-300 shadow-[0_2px_12px_rgba(15,23,42,0.04)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] focus-visible:ring-slate-400'
                   }`}
                 >
                   {/* Decorative side illustration on right */}
@@ -967,107 +813,84 @@ export default function OffersPage() {
                     </div>
 
                     {/* Editorial Intelligence Context — Rendered ONLY for genuine alert or Premium-only */}
-                    {offer.isPremiumOnly ? (
-                      <div className="mt-4 flex items-start gap-2.5">
-                        <div className="mt-0.5 shrink-0">
-                          <svg className="w-4 h-4 text-amber-600 fill-amber-500" viewBox="0 0 24 24" aria-hidden="true">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                          </svg>
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-black tracking-wide text-[#92400E] uppercase leading-none">
-                            PREMIUM INTELLIGENCE
-                          </div>
-                          <div className="text-[11.5px] font-normal text-slate-500 mt-1 leading-snug">
-                            Exclusive to StackSave Premium members
-                          </div>
-                        </div>
-                      </div>
-                    ) : offer.isIntelligenceAlert && offer.alertType ? (
-                      <div className="mt-4 flex items-start gap-2.5">
+                    {offer.isIntelligenceAlert === true && (offer.alertType === 'PRICE_DROP' || offer.alertType === 'LIMITED_TIME' || offer.alertType === 'IMPORTANT') ? (
+                      <div
+                        className={`mt-3.5 pb-3 border-b flex items-start gap-2.5 max-w-[68%] ${
+                          offer.alertType === 'PRICE_DROP'
+                            ? 'border-emerald-200/40'
+                            : offer.alertType === 'LIMITED_TIME'
+                            ? 'border-orange-200/40'
+                            : 'border-amber-200/40'
+                        }`}
+                      >
                         <div
                           className={`mt-0.5 shrink-0 ${
-                            offer.alertType === 'EARLY_ACCESS'
-                              ? 'text-indigo-600 fill-indigo-600'
-                              : offer.alertType === 'PRICE_DROP'
+                            offer.alertType === 'PRICE_DROP'
                               ? 'text-emerald-600'
                               : offer.alertType === 'LIMITED_TIME'
                               ? 'text-orange-600'
-                              : offer.alertType === 'PRICE_CHANGE'
-                              ? 'text-sky-600'
                               : 'text-amber-600'
                           }`}
                         >
-                          {offer.alertType === 'EARLY_ACCESS' && (
-                            <svg className="w-4 h-4 fill-indigo-600" viewBox="0 0 24 24" aria-hidden="true">
-                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                            </svg>
-                          )}
                           {offer.alertType === 'PRICE_DROP' && (
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                               <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
                               <polyline points="17 18 23 18 23 12" />
                             </svg>
                           )}
                           {offer.alertType === 'LIMITED_TIME' && (
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                               <circle cx="12" cy="12" r="10" />
                               <polyline points="12 6 12 12 16 14" />
                             </svg>
                           )}
-                          {offer.alertType === 'PRICE_CHANGE' && (
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                            </svg>
-                          )}
                           {offer.alertType === 'IMPORTANT' && (
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                               <circle cx="12" cy="12" r="10" />
                               <line x1="12" y1="8" x2="12" y2="12" />
                               <line x1="12" y1="16" x2="12.01" y2="16" />
                             </svg>
                           )}
-                          {offer.alertType === 'NEW' && (
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                              <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
-                            </svg>
-                          )}
                         </div>
                         <div className="min-w-0">
                           <div
-                            className={`text-xs font-black tracking-wide uppercase leading-none ${
-                              offer.alertType === 'EARLY_ACCESS'
-                                ? 'text-indigo-950'
-                                : offer.alertType === 'PRICE_DROP'
+                            className={`text-[11px] font-black tracking-wider uppercase leading-none ${
+                              offer.alertType === 'PRICE_DROP'
                                 ? 'text-[#065F46]'
                                 : offer.alertType === 'LIMITED_TIME'
                                 ? 'text-[#9A3412]'
-                                : offer.alertType === 'PRICE_CHANGE'
-                                ? 'text-sky-950'
                                 : 'text-amber-950'
                             }`}
                           >
-                            {offer.alertType === 'EARLY_ACCESS'
-                              ? 'EARLY ACCESS'
-                              : offer.alertType === 'PRICE_DROP'
+                            {offer.alertType === 'PRICE_DROP'
                               ? 'PRICE DROP'
                               : offer.alertType === 'LIMITED_TIME'
                               ? 'LIMITED TIME'
-                              : offer.alertType === 'PRICE_CHANGE'
-                              ? 'RATE UPDATE'
-                              : offer.alertType === 'IMPORTANT'
-                              ? 'IMPORTANT INTELLIGENCE'
-                              : 'NEW INTELLIGENCE'}
+                              : 'IMPORTANT INTELLIGENCE'}
                           </div>
-                          <div className="text-[11.5px] font-normal text-slate-500 mt-1 leading-snug">
+                          <div className="text-[11.5px] font-normal text-slate-500 mt-1 leading-tight">
                             {offer.alertReason ||
                               (offer.alertType === 'PRICE_DROP'
                                 ? 'Recent price reduction detected'
                                 : offer.alertType === 'LIMITED_TIME'
-                                ? 'Offer ends soon • Don’t miss out'
-                                : offer.alertType === 'EARLY_ACCESS'
-                                ? 'Available to Premium members first'
-                                : 'Verified pricing intelligence update')}
+                                ? 'Offer ends soon'
+                                : 'Verified high-impact intelligence event')}
+                          </div>
+                        </div>
+                      </div>
+                    ) : offer.isPremiumOnly === true ? (
+                      <div className="mt-3.5 pb-3 border-b border-amber-200/40 flex items-start gap-2.5 max-w-[68%]">
+                        <div className="mt-0.5 shrink-0">
+                          <svg className="w-3.5 h-3.5 text-amber-600 fill-amber-500" viewBox="0 0 24 24" aria-hidden="true">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                          </svg>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-black tracking-wider text-[#92400E] uppercase leading-none">
+                            PREMIUM INTELLIGENCE
+                          </div>
+                          <div className="text-[11.5px] font-normal text-slate-500 mt-1 leading-tight">
+                            Exclusive to StackSave Premium members
                           </div>
                         </div>
                       </div>
@@ -1077,10 +900,10 @@ export default function OffersPage() {
                     {offer.discountBadge && (
                       <div
                         className={`${
-                          offer.isPremiumOnly || offer.isIntelligenceAlert ? 'mt-4' : 'mt-4.5'
+                          offer.isPremiumOnly || offer.isIntelligenceAlert ? 'mt-3.5' : 'mt-4'
                         } flex items-center gap-2.5 flex-wrap`}
                       >
-                        <span className="text-[21px] sm:text-[23px] font-black uppercase tracking-tight text-slate-950">
+                        <span className="text-[20px] sm:text-[22px] font-black uppercase tracking-tight text-slate-950">
                           {offer.discountBadge}
                         </span>
                         {offer.partner && (
@@ -1093,7 +916,7 @@ export default function OffersPage() {
                     )}
 
                     {/* Offer Title */}
-                    <h4 className="mt-1.5 line-clamp-2 min-h-[2.65rem] text-[15px] sm:text-base font-bold leading-snug tracking-tight text-slate-900 transition-colors group-hover:text-slate-950">
+                    <h4 className="mt-1 line-clamp-2 min-h-[2.5rem] text-[15px] sm:text-base font-bold leading-snug tracking-tight text-slate-900 transition-colors group-hover:text-slate-950">
                       {offer.title}
                     </h4>
 
@@ -1148,9 +971,9 @@ export default function OffersPage() {
                         {offer.isUnread ? 'New' : 'Mark unread'}
                       </button>
 
-                      <span className="row-span-1 inline-flex h-10 items-center gap-2 rounded-2xl bg-[#0B0F17] px-5 text-xs font-bold text-white shadow-xs transition-all duration-150 group-hover:bg-slate-800 shrink-0">
+                      <span className="row-span-1 inline-flex h-10 items-center gap-2 rounded-2xl bg-[#0B0F17] px-5 text-xs font-bold text-white shadow-xs transition-all duration-200 group-hover:bg-slate-800 shrink-0">
                         <span>View Offer</span>
-                        <span className="text-slate-400 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-white">
+                        <span className="text-slate-400 transition-transform duration-200 ease-out group-hover:translate-x-1 group-hover:text-white">
                           <UiIcon name="arrow" size={13} />
                         </span>
                       </span>
