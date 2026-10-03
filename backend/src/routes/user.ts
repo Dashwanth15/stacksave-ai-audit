@@ -7,7 +7,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../middleware/auth';
 import { AuditModel, AuditShareLinkModel, SavedUserStackModel, SubscriptionModel, UserModel } from '../services/dbService';
-import { isPremiumUser, syncUserEntitlement } from '../services/billingService';
+import { isPremiumUser, syncUserEntitlement, getAuthoritativeSubscription } from '../services/billingService';
 import { verifyUnsubscribeToken } from '../services/emailService';
 
 const router = Router();
@@ -42,14 +42,12 @@ async function ensureLegacyStackMigrated(user: any): Promise<number> {
 router.get('/usage', authenticate, async (req: Request, res: Response) => {
   try {
     const user = req.user!;
-    let isPremium = isPremiumUser(user);
+    const sub = await getAuthoritativeSubscription(user._id, user);
+    let isPremium = sub ? isPremiumUser(user, sub) : isPremiumUser(user);
 
-    if (isPremium) {
-      const sub = await SubscriptionModel.findOne({ userId: user._id }).sort({ createdAt: -1 });
-      if (sub && !isPremiumUser(user, sub)) {
-        await syncUserEntitlement(user._id, sub);
-        isPremium = false;
-      }
+    if (sub && isPremiumUser(user, sub) !== (user.plan === 'PREMIUM')) {
+      await syncUserEntitlement(user._id, sub);
+      isPremium = isPremiumUser(user, sub);
     }
 
     const [savedAuditsCount, shareLinksCount, savedStacksCount] = await Promise.all([

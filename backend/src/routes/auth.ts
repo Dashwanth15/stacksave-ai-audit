@@ -6,7 +6,7 @@
 import { Router, Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { UserModel, UserDocument, SubscriptionModel } from '../services/dbService';
-import { isPremiumUser, syncUserEntitlement } from '../services/billingService';
+import { isPremiumUser, syncUserEntitlement, getAuthoritativeSubscription } from '../services/billingService';
 import {
   generateSessionToken,
   setSessionCookie,
@@ -168,6 +168,17 @@ router.post('/google', async (req: Request, res: Response) => {
       await user.save();
     }
 
+    // Reconcile user entitlement with authoritative subscription upon login
+    const sub = await getAuthoritativeSubscription(user._id, user);
+    if (sub) {
+      const isEntitled = isPremiumUser(user, sub);
+      if (isEntitled !== (user.plan === 'PREMIUM')) {
+        await syncUserEntitlement(user._id, sub);
+        const refreshed = await UserModel.findById(user._id);
+        if (refreshed) user = refreshed;
+      }
+    }
+
     // Fire-and-forget Welcome Email on first login
     if (!user.welcomeEmailSentAt) {
       const userId = user._id;
@@ -209,10 +220,15 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
   try {
     const user = req.user!;
 
-    // If user is currently marked PREMIUM, check if their subscription has lapsed
-    if (user.plan === 'PREMIUM') {
-      const sub = await SubscriptionModel.findOne({ userId: user._id }).sort({ createdAt: -1 });
-      if (sub && !isPremiumUser(user, sub)) {
+    // Reconcile user entitlement with authoritative subscription (protects grandfathered users & past subscribers)
+    const sub = await getAuthoritativeSubscription(user._id, user);
+    if (sub) {
+      const isEntitled = isPremiumUser(user, sub);
+      const isMismatch =
+        (isEntitled && user.plan !== 'PREMIUM') ||
+        (!isEntitled && user.plan === 'PREMIUM');
+
+      if (isMismatch) {
         await syncUserEntitlement(user._id, sub);
         const refreshedUser = await UserModel.findById(user._id);
         if (refreshedUser) {

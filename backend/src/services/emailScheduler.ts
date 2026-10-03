@@ -11,7 +11,7 @@ import {
   NotificationEventDocument,
   UserDocument,
 } from './dbService';
-import { isPremiumUser } from './billingService';
+import { isPremiumUser, getAuthoritativeSubscription } from './billingService';
 import {
   sendOfferDigestEmail,
   sendPremiumUpgradeEmail,
@@ -613,7 +613,7 @@ export async function triggerDailyOfferDigest(): Promise<{
             }
 
             // Authoritative Entitlement Check: Fetch latest subscription
-            const sub = await SubscriptionModel.findOne({ userId: claimedUser._id }).sort({ createdAt: -1 });
+            const sub = await getAuthoritativeSubscription(claimedUser._id, claimedUser);
             if (!isPremiumUser(claimedUser, sub)) {
               stats.skipped++;
               return;
@@ -963,7 +963,7 @@ export async function triggerPremiumUpgradeCampaign(
             }
 
             // Authoritative Entitlement Check: Fetch latest subscription
-            const sub = await SubscriptionModel.findOne({ userId: user._id }).sort({ createdAt: -1 });
+            const sub = await getAuthoritativeSubscription(user._id, user);
             if (isPremiumUser(user, sub)) {
               // User has active Premium entitlement (e.g. upgraded recently) - skip immediately
               stats.skipped++;

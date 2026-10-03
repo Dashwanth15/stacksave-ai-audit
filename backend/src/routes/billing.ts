@@ -25,6 +25,7 @@ import {
   syncUserEntitlement,
   processRazorpayWebhookEvent,
   BillingServiceError,
+  getAuthoritativeSubscription,
 } from '../services/billingService';
 import { sendPremiumActivationEmail } from '../services/emailService';
 
@@ -65,16 +66,16 @@ router.post('/create-subscription', authenticate, async (req: Request, res: Resp
       });
     }
 
-    // 3. Prevent duplicate active subscriptions
-    const existingActive = await SubscriptionModel.findOne({
-      userId: user._id,
-      status: 'active',
-    });
+    // 3. Prevent duplicate active subscriptions (includes grandfathered/active validity periods)
+    const existingActive = await getAuthoritativeSubscription(user._id, user);
 
-    if (existingActive) {
+    if (existingActive && isPremiumUser(user, existingActive)) {
       return res.status(400).json({
         success: false,
-        error: 'You already have an active Premium subscription.',
+        error:
+          existingActive.cancelAtPeriodEnd && existingActive.currentPeriodEnd
+            ? `You already have active Premium access until ${new Date(existingActive.currentPeriodEnd).toLocaleDateString()}.`
+            : 'You already have an active Premium subscription.',
         code: 'BILLING_ALREADY_SUBSCRIBED',
       });
     }
@@ -262,12 +263,10 @@ router.get('/status', authenticate, async (req: Request, res: Response) => {
   try {
     const user = req.user!;
 
-    // Query most recent subscription for this user
-    const subscription = await SubscriptionModel.findOne({ userId: user._id }).sort({
-      createdAt: -1,
-    });
+    // Query authoritative subscription for this user (prioritizes active/entitled periods over drafts)
+    const subscription = await getAuthoritativeSubscription(user._id, user);
 
-    const isPremium = isPremiumUser(user, subscription);
+    const isPremium = subscription ? isPremiumUser(user, subscription) : isPremiumUser(user);
 
     return res.status(200).json({
       success: true,
@@ -299,12 +298,9 @@ router.post('/cancel', authenticate, async (req: Request, res: Response) => {
     const user = req.user!;
     const { cancelAtCycleEnd = true } = req.body;
 
-    const subscription = await SubscriptionModel.findOne({
-      userId: user._id,
-      status: 'active',
-    });
+    const subscription = await getAuthoritativeSubscription(user._id, user);
 
-    if (!subscription) {
+    if (!subscription || (subscription.status !== 'active' && subscription.status !== 'authenticated')) {
       return res.status(404).json({
         success: false,
         error: 'No active subscription found to cancel.',

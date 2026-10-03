@@ -13,7 +13,7 @@ import { getProviderSource } from '../pricing/sourceRegistry';
 import { PlatformRankingEngine, RankingCategory } from '../audit-engine/services/PlatformRankingEngine';
 import { ProviderDiscoveryService } from '../pricing/providerDiscoveryService';
 import { optionalAuthenticate } from '../middleware/auth';
-import { isPremiumUser, syncUserEntitlement } from '../services/billingService';
+import { isPremiumUser, syncUserEntitlement, getAuthoritativeSubscription } from '../services/billingService';
 import {
   OFFERS_ACCESS_CONFIG,
   isOfferPremiumOnly,
@@ -829,13 +829,10 @@ router.get('/offers', optionalAuthenticate, async (req: Request, res: Response) 
   try {
     let isPremium = false;
     if (req.user) {
-      isPremium = isPremiumUser(req.user);
-      if (isPremium) {
-        const sub = await SubscriptionModel.findOne({ userId: req.user._id }).sort({ createdAt: -1 });
-        if (sub && !isPremiumUser(req.user, sub)) {
-          await syncUserEntitlement(req.user._id, sub);
-          isPremium = false;
-        }
+      const sub = await getAuthoritativeSubscription(req.user._id, req.user);
+      isPremium = sub ? isPremiumUser(req.user, sub) : isPremiumUser(req.user);
+      if (sub && isPremium !== (req.user.plan === 'PREMIUM')) {
+        await syncUserEntitlement(req.user._id, sub);
       }
     }
 

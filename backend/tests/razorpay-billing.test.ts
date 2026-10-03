@@ -265,6 +265,67 @@ describe('Razorpay Live Subscription Billing Suite', () => {
     expect(body.data.description).toContain('₹99 every 3 months');
   });
 
+  // ── 4d. REGRESSION: Grandfathered ₹59 subscribers retain Premium until valid date ──
+  it('4d. REGRESSION: grandfathered user who paid ₹59 retains Premium entitlement until validity date even with newer draft and ₹99 plan active', async () => {
+    // 1. Create a historical ₹59 subscription that was cancelled with cancelAtPeriodEnd=true
+    const validPeriodEnd = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000); // 60 days remaining
+    await SubscriptionModel.create({
+      userId: testUserA._id,
+      provider: 'razorpay',
+      razorpaySubscriptionId: 'sub_test_grandfathered_59',
+      razorpayPlanId: 'plan_TdBzJC150yBO6v', // ₹59 plan
+      planKey: 'quarterly',
+      status: 'cancelled',
+      cancelAtPeriodEnd: true,
+      currentPeriodStart: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      currentPeriodEnd: validPeriodEnd,
+      lastPaymentId: 'pay_test_gf_59',
+      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+    });
+
+    // 2. Simulate user later initiating an unfulfilled checkout for the ₹99 plan
+    await SubscriptionModel.create({
+      userId: testUserA._id,
+      provider: 'razorpay',
+      razorpaySubscriptionId: 'sub_test_unpaid_draft_99',
+      razorpayPlanId: 'plan_TiJeYu3dB14RZh', // ₹99 plan
+      planKey: 'quarterly',
+      status: 'created',
+      cancelAtPeriodEnd: false,
+      createdAt: new Date(),
+    });
+
+    // 3. User status check must report PREMIUM and the valid period end
+    const statusRes = await fetch(`${baseUrl}/api/billing/status`, {
+      method: 'GET',
+      headers: {
+        Cookie: `${SESSION_COOKIE_NAME}=${tokenA}`,
+      },
+    });
+
+    expect(statusRes.status).toBe(200);
+    const statusBody = await statusRes.json();
+    expect(statusBody.data.isPremium).toBe(true);
+    expect(statusBody.data.plan).toBe('PREMIUM');
+    expect(statusBody.data.cancelAtPeriodEnd).toBe(true);
+    expect(new Date(statusBody.data.currentPeriodEnd).getTime()).toBe(validPeriodEnd.getTime());
+
+    // 4. GET /api/auth/me must return user.plan = 'PREMIUM'
+    const meRes = await fetch(`${baseUrl}/api/auth/me`, {
+      method: 'GET',
+      headers: {
+        Cookie: `${SESSION_COOKIE_NAME}=${tokenA}`,
+      },
+    });
+
+    expect(meRes.status).toBe(200);
+    const meBody = await meRes.json();
+    expect(meBody.data.user.plan).toBe('PREMIUM');
+
+    // Clean up
+    await SubscriptionModel.deleteMany({ userId: testUserA._id });
+  });
+
   // ── 5. Frontend cannot inject Plan ID ───────────────────────
   it('5. frontend cannot inject or override server-side Plan ID', async () => {
     let capturedPlanId = '';
