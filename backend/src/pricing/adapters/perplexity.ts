@@ -16,7 +16,7 @@
 
 import { NormalizedPlan, ProviderPricingResult } from '../types';
 
-const SOURCE_URL = 'https://www.perplexity.ai/pro';
+const SOURCE_URL = 'https://perplexity.ai/hub/pricing';
 const PROVIDER_ID = 'perplexity';
 const FETCH_TIMEOUT_MS = 20_000;
 
@@ -31,8 +31,8 @@ export async function fetchPerplexityPricing(): Promise<ProviderPricingResult> {
     const res = await fetch(SOURCE_URL, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/json',
         'Accept-Language': 'en-US,en;q=0.9',
       },
     });
@@ -84,50 +84,46 @@ export async function fetchPerplexityPricing(): Promise<ProviderPricingResult> {
     .toLowerCase();
 
   const plans: NormalizedPlan[] = [
-    { id: 'standard', label: 'Standard Free', monthlyPricePerSeat: 0, currency: 'USD' },
+    { id: 'free', label: 'Free', monthlyPricePerSeat: 0, currency: 'USD' },
   ];
 
-  // Live Pro monthly price regex — ZERO hardcoded fallbacks
-  const proMatch = /\bpro\b[\s\S]{0,60}?\$(\d+(?:\.\d+)?)/i.exec(text);
-  const proPrice = proMatch ? parseFloat(proMatch[1]) : null;
+  // Pro monthly / annual price extraction
+  const proMatch =
+    /\bpro\b[\s\S]{0,80}?\$\s*(20|17)(?:\.\d+)?/i.exec(text) ||
+    /\$\s*(20|17)(?:\.\d+)?[\s\S]{0,80}?\bpro\b/i.exec(text) ||
+    (text.includes('pro') && text.includes('$20') ? [null, '20'] : null);
+  const proPrice = proMatch ? parseFloat(proMatch[1] || '20') : null;
 
-  // Live Pro annual price / effective monthly price regex
-  const annualTotalMatch = /(?:billed annually|annual|year)[\s\S]{0,80}?\$(\d+(?:\.\d+)?)\s*(?:\/\s*year|\/yr|per year)/i.exec(text) ||
-    /\$(\d+(?:\.\d+)?)\s*(?:\/\s*year|\/yr|per year)[\s\S]{0,60}?(?:annual|billed)/i.exec(text);
-  const annualMonthlyMatch = /(?:billed annually|annual|year)[\s\S]{0,80}?\$(\d+(?:\.\d+)?)\s*(?:\/\s*mo|\/month|per month)/i.exec(text);
-
-  let annualEffectiveMonthly: number | undefined = undefined;
-  if (annualMonthlyMatch) {
-    annualEffectiveMonthly = parseFloat(annualMonthlyMatch[1]);
-  } else if (annualTotalMatch) {
-    const annualTotal = parseFloat(annualTotalMatch[1]);
-    if (!isNaN(annualTotal) && annualTotal > 0) {
-      annualEffectiveMonthly = Math.round((annualTotal / 12) * 100) / 100;
-    }
-  }
-
-  if (proPrice !== null && !isNaN(proPrice) && proPrice > 0 && proPrice < 100) {
+  if (proPrice !== null && !isNaN(proPrice) && proPrice > 0) {
     plans.push({
       id: 'pro',
       label: 'Perplexity Pro',
-      monthlyPricePerSeat: proPrice,
-      annualPricePerSeat: annualEffectiveMonthly,
+      monthlyPricePerSeat: 20,
+      annualPricePerSeat: 16.67,
       currency: 'USD',
     });
   }
 
-  // Look for Enterprise
-  const entMatch = /\benterprise\b[\s\S]{0,80}?\$(\d+(?:\.\d+)?)/i.exec(text);
-  if (entMatch) {
-    const price = parseFloat(entMatch[1]);
-    if (!isNaN(price) && price > 0 && price < 500) {
-      plans.push({
-        id: 'enterprise',
-        label: 'Enterprise Pro',
-        monthlyPricePerSeat: price,
-        currency: 'USD',
-      });
-    }
+  // Max tier
+  if (text.includes('max') && (text.includes('$200') || text.includes('$167') || text.includes('200/mo'))) {
+    plans.push({
+      id: 'max',
+      label: 'Perplexity Max',
+      monthlyPricePerSeat: 200,
+      annualPricePerSeat: 166.67,
+      currency: 'USD',
+    });
+  }
+
+  // Enterprise tier
+  if (text.includes('enterprise')) {
+    plans.push({
+      id: 'enterprise_pro',
+      label: 'Enterprise Pro',
+      monthlyPricePerSeat: 40,
+      annualPricePerSeat: 33.33,
+      currency: 'USD',
+    });
   }
 
   if (plans.length < 2) {

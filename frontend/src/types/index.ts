@@ -575,6 +575,9 @@ export interface PublicOffer {
   sourceUrl: string;
   detectedAt: string;
   lastConfirmedAt?: string;
+  lastCatalogSyncAt?: string;
+  lastPriceVerifiedAt?: string;
+  verificationMethod?: string | null;
   expiresAt: string | null;
   isVerified?: boolean;
   category?: 'partner' | 'student' | 'annual' | 'api' | 'trial' | 'startup' | 'free';

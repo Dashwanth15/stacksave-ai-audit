@@ -82,13 +82,16 @@ export interface NormalizedPartnerOffer {
   sourceStatus: 'VERIFIED';
   evidenceText: string;
   contentHash?: string;
-  detectionMethod?: 'PLAYWRIGHT_LIVE' | 'STATIC_FETCH' | 'SEEDED' | 'API_INGEST' | 'OTHER';
+  detectionMethod?: 'PLAYWRIGHT_LIVE' | 'PLAYWRIGHT_DOM' | 'STATIC_FETCH' | 'SEEDED' | 'API_INGEST' | 'OTHER';
   extractorVersion?: string;
   sourceFetchedAt?: Date;
   lastSuccessfulCheckAt?: Date;
   detectedAt: Date;
   lastConfirmedAt: Date;
   lastCheckedAt: Date;
+  lastCatalogSyncAt?: Date;
+  lastPriceVerifiedAt?: Date;
+  verificationMethod?: 'STATIC_SEED' | 'PLAYWRIGHT_DOM' | 'PLAYWRIGHT_LIVE' | 'PARTNER_API' | 'MANUAL_AUDIT' | 'SEEDED' | 'OTHER' | string;
   status: 'ACTIVE' | 'EXPIRED' | 'UPCOMING';
   isActive: boolean;
   isPublic: boolean;

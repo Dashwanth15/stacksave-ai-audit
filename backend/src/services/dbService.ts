@@ -558,6 +558,9 @@ export interface NotificationEventDocument extends Document {
   isLimitedTime?: boolean;
   previousPrice?: number;
   currentPrice?: number;
+  lastCatalogSyncAt?: Date;  // Timestamp when static catalog record was reconciled
+  lastPriceVerifiedAt?: Date;// Timestamp when live price or claim was verified with fresh evidence
+  verificationMethod?: string;// 'STATIC_SEED' | 'PLAYWRIGHT_DOM' | 'PLAYWRIGHT_LIVE' | 'PARTNER_API' | 'MANUAL_AUDIT'
 }
 
 const NotificationEventSchema = new Schema<NotificationEventDocument>(
@@ -592,11 +595,14 @@ const NotificationEventSchema = new Schema<NotificationEventDocument>(
     previousPrice:   { type: Number },
     currentPrice:    { type: Number },
     // ── Offer Lifecycle Fields ────────────────────────────────────
-    isActive:          { type: Boolean, default: true },
-    lastConfirmedAt:   { type: Date },
-    lastSeenAt:        { type: Date },
-    consecutiveMisses: { type: Number, default: 0 },
-    isPublic:          { type: Boolean, default: false },
+    isActive:            { type: Boolean, default: true },
+    lastConfirmedAt:     { type: Date },
+    lastSeenAt:          { type: Date },
+    lastCatalogSyncAt:   { type: Date },
+    lastPriceVerifiedAt: { type: Date },
+    verificationMethod:  { type: String },
+    consecutiveMisses:   { type: Number, default: 0 },
+    isPublic:            { type: Boolean, default: false },
 
     // ── Partner AI Offer Specific Fields ─────────────────────────
     isPartnerOffer:    { type: Boolean, default: false },

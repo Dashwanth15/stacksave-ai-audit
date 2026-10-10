@@ -73,6 +73,9 @@ export interface FormattedOffer {
   sourceUrl: string;
   detectedAt: string;
   lastConfirmedAt?: string;
+  lastCatalogSyncAt?: string;
+  lastPriceVerifiedAt?: string;
+  verificationMethod?: string | null;
   evidenceText?: string | null;
   detectionMethod?: string | null;
   sourceStatus?: string | null;
@@ -118,20 +121,34 @@ export interface FormattedOffer {
 }
 
 /**
- * Derives the verification freshness status of an offer from its confirmation timestamp and source status.
+ * Derives the verification freshness status of an offer from its confirmation timestamp, verification method, and source status.
  */
-export function formatVerificationStatus(dateString?: string, sourceStatus?: string | null): {
+export function formatVerificationStatus(
+  dateString?: string,
+  sourceStatus?: string | null,
+  verificationMethod?: string | null,
+  lastPriceVerifiedAt?: string | null,
+  _lastCatalogSyncAt?: string | null
+): {
   text: string;
   type: 'fresh' | 'recent' | 'aging' | 'unavailable';
 } {
   if (sourceStatus === 'FETCH_BLOCKED' || sourceStatus === 'PARSE_FAILED') {
     return { text: '⚠ Source currently unavailable', type: 'unavailable' };
   }
-  if (!dateString) {
-    return { text: '✓ Verified source', type: 'recent' };
+
+  // If this is a static catalog seed without fresh price-verified evidence:
+  if (verificationMethod === 'STATIC_SEED' || (!lastPriceVerifiedAt && (verificationMethod === 'SEEDED' || !dateString))) {
+    return { text: '✓ Catalog checked', type: 'recent' };
   }
+
+  const effectiveDate = lastPriceVerifiedAt || dateString;
+  if (!effectiveDate) {
+    return { text: '✓ Catalog checked', type: 'recent' };
+  }
+
   try {
-    const date = new Date(dateString);
+    const date = new Date(effectiveDate);
     const now = new Date();
     const diffMs = Math.max(0, now.getTime() - date.getTime());
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
@@ -486,7 +503,13 @@ export function formatOfferForDisplay(
       );
   const savingsScore = computeSavingsScore(discountBadge, title, category);
   const confirmedTimestamp = rawOffer.lastConfirmedAt || rawOffer.detectedAt;
-  const verification = formatVerificationStatus(confirmedTimestamp, rawOffer.sourceStatus);
+  const verification = formatVerificationStatus(
+    confirmedTimestamp,
+    rawOffer.sourceStatus,
+    rawOffer.verificationMethod,
+    rawOffer.lastPriceVerifiedAt,
+    rawOffer.lastCatalogSyncAt
+  );
   const destinationUrl = resolveCanonicalOfferUrl(rawOffer.destinationUrl || rawOffer.sourceUrl);
 
   return {
@@ -519,6 +542,9 @@ export function formatOfferForDisplay(
     ),
     detectedAt: rawOffer.detectedAt,
     lastConfirmedAt: confirmedTimestamp,
+    lastCatalogSyncAt: rawOffer.lastCatalogSyncAt,
+    lastPriceVerifiedAt: rawOffer.lastPriceVerifiedAt,
+    verificationMethod: rawOffer.verificationMethod || null,
     verificationStatusText: verification.text,
     verificationStatusType: verification.type,
     expiresAt: rawOffer.expiresAt,

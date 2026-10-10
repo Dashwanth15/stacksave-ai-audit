@@ -954,7 +954,13 @@ export default function OffersPage() {
                       <div className="min-w-0 flex items-center gap-3.5 flex-wrap">
                         <span className="flex min-w-0 items-center gap-1.5 truncate">
                           <UiIcon name="calendar" size={13} />
-                          <span className="truncate text-slate-500 font-medium">Verified {formatVerificationDate(offer.lastConfirmedAt || offer.detectedAt)}</span>
+                          <span className="truncate text-slate-500 font-medium">
+                            {offer.lastPriceVerifiedAt
+                              ? `Verified ${formatVerificationDate(offer.lastPriceVerifiedAt)}`
+                              : offer.verificationMethod === 'STATIC_SEED' || offer.lastCatalogSyncAt
+                              ? `Catalog checked ${formatVerificationDate(offer.lastCatalogSyncAt || offer.lastConfirmedAt || offer.detectedAt)}`
+                              : `Verified ${formatVerificationDate(offer.lastConfirmedAt || offer.detectedAt)}`}
+                          </span>
                         </span>
                         <span className="flex min-w-0 items-center gap-1.5 text-slate-400 text-xs">
                           <UiIcon name="shield" size={13} />

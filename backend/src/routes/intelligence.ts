@@ -92,6 +92,41 @@ export const CANONICAL_AI_PROVIDER_NAMES: Record<string, string> = {
   'wandb': 'Weights & Biases',
   'windsurf': 'Windsurf',
   'writesonic': 'Writesonic',
+  'sourcegraph-cody': 'Sourcegraph Cody',
+  'supermaven': 'Supermaven',
+  'tabnine': 'Tabnine',
+  'coderabbit': 'CodeRabbit',
+  'sweep-ai': 'Sweep AI',
+  'bito': 'Bito',
+  'pieces-app': 'Pieces for Developers',
+  'deepinfra': 'DeepInfra',
+  'hyperbolic': 'Hyperbolic',
+  'novita-ai': 'Novita AI',
+  'modal-labs': 'Modal Labs',
+  'baseten': 'Baseten',
+  'jenni-ai': 'Jenni AI',
+  'paperpal': 'Paperpal',
+  'chatpdf': 'ChatPDF',
+  'recraft-ai': 'Recraft AI',
+  'pika-art': 'Pika Labs',
+  'invideo-ai': 'InVideo AI',
+  'playground-ai': 'Playground AI',
+  'photoroom': 'Photoroom',
+  'murf-ai': 'Murf AI',
+  'play-ht': 'Play.ht',
+  'fireflies-ai': 'Fireflies.ai',
+  'fathom-ai': 'Fathom AI',
+  'deepgram': 'Deepgram',
+  'assemblyai': 'AssemblyAI',
+  'quillbot': 'QuillBot',
+  'wordtune': 'Wordtune',
+  'rytr': 'Rytr',
+  'miro-ai': 'Miro AI',
+  'eraser-io': 'Eraser.io',
+  'taskade': 'Taskade AI',
+  'zapier-ai': 'Zapier AI',
+  'coze-ai': 'Coze AI',
+  'dify-ai': 'Dify.ai',
 };
 
 export function getCanonicalProviderName(providerId: string, fallbackName?: string): string {
@@ -484,7 +519,7 @@ export async function getOrBuildPublicOffersSnapshot(): Promise<PublicOffersCach
     isPublic: true,
   })
     .sort({ detectedAt: -1 })
-    .select('providerId providerName eventType title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive isPublic lastSeenAt lastConfirmedAt isPartnerOffer partner partnerType aiProvider aiPlan offerType benefit duration value eligibility activationMethod country region termsUrl sourceType status category destinationUrl offerSubtype monthlyEquivalent annualPrice annualSavingsPercent annualSavingsAmount isPremiumOnly isPriceDrop isPriceChange isLimitedTime previousPrice currentPrice')
+    .select('providerId providerName eventType title description discount discountType evidenceText detectionMethod sourceStatus sourceUrl sourceFetchedAt lastSuccessfulCheckAt evidenceLocation contentHash extractorVersion detectedAt expiresAt fingerprint isActive isPublic lastSeenAt lastConfirmedAt lastCatalogSyncAt lastPriceVerifiedAt verificationMethod isPartnerOffer partner partnerType aiProvider aiPlan offerType benefit duration value eligibility activationMethod country region termsUrl sourceType status category destinationUrl offerSubtype monthlyEquivalent annualPrice annualSavingsPercent annualSavingsAmount isPremiumOnly isPriceDrop isPriceChange isLimitedTime previousPrice currentPrice')
     .lean();
 
   // ── offerTypeWeight map ──────────────────────────────────────
@@ -653,6 +688,9 @@ export async function getOrBuildPublicOffersSnapshot(): Promise<PublicOffersCach
         extractorVersion: (e as any).extractorVersion,
         detectedAt: e.detectedAt,
         lastConfirmedAt: e.lastConfirmedAt,
+        lastCatalogSyncAt: (e as any).lastCatalogSyncAt || null,
+        lastPriceVerifiedAt: (e as any).lastPriceVerifiedAt || null,
+        verificationMethod: (e as any).verificationMethod || null,
         expiresAt: e.expiresAt || null,
         isPartnerOffer: e.isPartnerOffer ?? false,
         partner: e.partner || null,
