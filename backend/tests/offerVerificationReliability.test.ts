@@ -3,8 +3,8 @@ import { PartnerOfferScanner } from '../src/pricing/partnerOfferScanner';
 import { formatVerificationStatus, formatVerificationDate, formatOfferForDisplay } from '../../frontend/src/utils/offerFormatter';
 import { checkGenericExpiration } from '../src/pricing/dateExpiryUtils';
 import { isOfferQuarantined, canPublishOffer, isRegisteredOfficialSource } from '../src/pricing/offerTrust';
-import { isOfferVisibleForUser } from '../src/config/offersConfig';
-import { NormalizedPartnerOffer, buildPartnerOfferFingerprint } from '../src/pricing/partnerDiscoveryService';
+import { isOfferVisibleForUser, deriveOfferAlertType, getOfferAlertMetadata } from '../src/config/offersConfig';
+import { NormalizedPartnerOffer, buildPartnerOfferFingerprint, PartnerDiscoveryService } from '../src/pricing/partnerDiscoveryService';
 
 describe('Objective 1-4: Offer Verification Integrity & Workflow Reliability Suite', () => {
 
@@ -148,6 +148,94 @@ describe('Objective 1-4: Offer Verification Integrity & Workflow Reliability Sui
 
       expect(result.deactivatedCount).toBe(0);
       expect(result.preservedCount).toBe(0);
+    });
+  });
+
+  describe('5. Premium Intelligence Alert Rules & Expiration Boundary', () => {
+    it('classifies an active promo with exactly 15 days remaining as LIMITED_TIME', () => {
+      const expiringIn15Days = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
+      const offer = {
+        title: 'Spring Flash Sale Special Promotion',
+        description: 'Special seasonal pricing with active promo deadline.',
+        expiresAt: expiringIn15Days,
+        detectedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      };
+      expect(deriveOfferAlertType(offer)).toBe('LIMITED_TIME');
+      const meta = getOfferAlertMetadata(offer, true);
+      expect(meta.isIntelligenceAlert).toBe(true);
+      expect(meta.alertType).toBe('LIMITED_TIME');
+    });
+
+    it('classifies an offer beyond 15 days (16 days) without urgent ending copy as NORMAL', () => {
+      const expiringIn16Days = new Date(Date.now() + 16 * 24 * 60 * 60 * 1000);
+      const offer = {
+        title: 'Standard Product Tier',
+        description: 'Standard product subscription with extended future expiry.',
+        expiresAt: expiringIn16Days,
+        detectedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      };
+      expect(deriveOfferAlertType(offer)).toBeNull();
+      const meta = getOfferAlertMetadata(offer, true);
+      expect(meta.isIntelligenceAlert).toBe(false);
+    });
+
+    it('preserves existing 50%+ discount condition as PRICE_DROP', () => {
+      const offer50 = {
+        title: 'Cursor Pro Student Discount',
+        discount: '50% OFF',
+        category: 'student',
+        detectedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      };
+      expect(deriveOfferAlertType(offer50)).toBe('PRICE_DROP');
+      const meta = getOfferAlertMetadata(offer50, true);
+      expect(meta.isIntelligenceAlert).toBe(true);
+      expect(meta.alertType).toBe('PRICE_DROP');
+    });
+
+    it('preserves IMPORTANT priority order over PRICE_DROP for Tier-1 platforms with 100% Free access', () => {
+      const tier1Free = {
+        providerId: 'chatgpt',
+        title: 'ChatGPT for Teachers — 100% Free Access',
+        discount: '100% FREE',
+        category: 'student',
+        detectedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      };
+      expect(deriveOfferAlertType(tier1Free)).toBe('IMPORTANT');
+      const meta = getOfferAlertMetadata(tier1Free, true);
+      expect(meta.isIntelligenceAlert).toBe(true);
+      expect(meta.alertType).toBe('IMPORTANT');
+    });
+
+    it('guarantees dynamic discovery candidates receive a valid detectedAt timestamp', () => {
+      const candidate = PartnerDiscoveryService.ingestCandidate({
+        partnerName: 'Deutsche Telekom',
+        category: 'telecom',
+        sourceUrl: 'https://www.telekom.com/en/media',
+        evidenceText: 'Deutsche Telekom customers receive free Perplexity Pro access on select mobile contracts.',
+        possibleAiProvider: 'perplexity',
+        possibleAiPlan: 'Perplexity Pro',
+        benefit: 'Free Perplexity Pro Subscription',
+        duration: '12 Months Free',
+        eligibility: 'Eligible Deutsche Telekom mobile postpaid customers',
+      });
+
+      expect(candidate.discoveredAt).toBeInstanceOf(Date);
+      const evalResult = PartnerDiscoveryService.evaluateCandidate(candidate);
+      expect(evalResult.promoted).toBe(true);
+      expect(evalResult.offer?.detectedAt).toBeInstanceOf(Date);
+    });
+
+    it('ensures Free users never receive Premium alert metadata', () => {
+      const highValueOffer = {
+        providerId: 'chatgpt',
+        title: 'ChatGPT for Teachers — 100% Free Access',
+        discount: '100% FREE',
+        category: 'student',
+        detectedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      };
+      const freeMeta = getOfferAlertMetadata(highValueOffer, false);
+      expect(freeMeta.isIntelligenceAlert).toBe(false);
+      expect(freeMeta.alertType).toBeUndefined();
     });
   });
 });

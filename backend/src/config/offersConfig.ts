@@ -232,7 +232,7 @@ export function isOfferVisibleForUser(params: {
  * Strict Contract:
  * - NORMAL (default): null
  * - PRICE_DROP: Actual verified price drop against historical baseline
- * - LIMITED_TIME: Explicit near-term expiration (<= 14 days) or verified promo ending
+ * - LIMITED_TIME: Explicit near-term expiration (<= 15 days) or verified promo ending
  * - IMPORTANT: Explicit verified high-impact intelligence event signal
  *
  * Static commercial discounts (Startup grants, Student offers, Partner bundles,
@@ -584,8 +584,8 @@ function hasPromotionalExpiration(
       const expTime = new Date(offer.expiresAt).getTime();
       if (!isNaN(expTime)) {
         const msUntilExpiry = expTime - now.getTime();
-        // Promotion ending > 14 days in future is not near-term urgent limited time
-        if (msUntilExpiry > 14 * 24 * 60 * 60 * 1000) {
+        // Promotion ending > 15 days in future is not near-term urgent limited time
+        if (msUntilExpiry > 15 * 24 * 60 * 60 * 1000) {
           return false;
         }
       }
@@ -593,12 +593,12 @@ function hasPromotionalExpiration(
     return true;
   }
 
-  // Active near-term expiration timestamp (<= 14 days)
+  // Active near-term expiration timestamp (<= 15 days)
   if (offer.expiresAt) {
     const expTime = new Date(offer.expiresAt).getTime();
     if (!isNaN(expTime)) {
       const msUntilExpiry = expTime - now.getTime();
-      if (msUntilExpiry > 0 && msUntilExpiry <= 14 * 24 * 60 * 60 * 1000) {
+      if (msUntilExpiry > 0 && msUntilExpiry <= 15 * 24 * 60 * 60 * 1000) {
         // Must have promotional context (avoid routine crawler TTL on standard subscriptions)
         const hasPromoContext =
           text.includes('promo') ||
@@ -1063,7 +1063,7 @@ export function deriveOfferAlertType(
     return 'LIMITED_TIME';
   }
 
-  // C) Explicit expiration language or active near-term deadline (<= 14 days)
+  // C) Explicit expiration language or active near-term deadline (<= 15 days)
   if (hasPromotionalExpiration(offer, now)) {
     return 'LIMITED_TIME';
   }
